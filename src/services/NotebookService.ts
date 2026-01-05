@@ -42,6 +42,36 @@ const TuiTemplates = {
 
     You can start adding notes to your notebook right away.
 `),
+  ContextAlreadyExists: dedent(`
+    # Context Already Exists
+
+    The context path is already associated with this notebook.
+
+    - **Context**: {{contextPath}}
+    - **Notebook**: {{notebookPath}}
+
+    No changes were made.
+`),
+  ContextAdded: dedent(`
+    # Context Added
+
+    The context path has been successfully added to your notebook.
+
+    - **Context**: {{contextPath}}
+    - **Notebook**: {{notebookPath}}
+
+    This notebook will now be available when working in that directory.
+`),
+  TemplateLoadError: dedent(`
+    # Template Load Error
+
+    Failed to load a template for your notebook. This may cause some features to be unavailable.
+
+    - **Template Path**: {{templatePath}}
+    - **Error**: {{error}}
+
+    You may need to check the template file and try again.
+`),
 };
 
 export function createNotebookService(serviceOptions: { config: Config }) {
@@ -99,7 +129,12 @@ export function createNotebookService(serviceOptions: { config: Config }) {
           );
           config.templates[templateName] = template;
         } catch (error) {
-          console.error(`Error loading template at ${templatePath}:`, error);
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          Logger.debug(
+            'NotebookService.getNotebook: ERROR_LOADING_TEMPLATE path=%s error=%s',
+            templatePath,
+            errorMsg
+          );
         }
       }
     }
@@ -113,7 +148,7 @@ export function createNotebookService(serviceOptions: { config: Config }) {
     });
 
     if (notebook instanceof type.errors) {
-      console.warn(`Invalid notebook at ${notebookPath}:`, notebook);
+      Logger.debug('NotebookService.getNotebook: INVALID_NOTEBOOK path=%s', notebookPath);
       return null;
     }
 
@@ -141,13 +176,18 @@ export function createNotebookService(serviceOptions: { config: Config }) {
       const parsed = JSON.parse(content);
       const result = NotebookConfigSchema(parsed);
       if (result instanceof type.errors) {
-        console.warn(`Invalid notebook config at ${configPath}:`, result);
+        Logger.debug('NotebookService.loadNotebookConfig: INVALID_CONFIG path=%s', configPath);
         return null;
       } else {
         return result;
       }
     } catch (error) {
-      console.error(`Error loading notebook config at ${configPath}:`, error);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      Logger.debug(
+        'NotebookService.loadNotebookConfig: ERROR path=%s error=%s',
+        configPath,
+        errorMsg
+      );
       return null;
     }
   }
@@ -160,7 +200,12 @@ export function createNotebookService(serviceOptions: { config: Config }) {
       const content = JSON.stringify(config, null, 2);
       await fs.writeFile(configPath, content, 'utf-8');
     } catch (error) {
-      console.error(`Error writing notebook config at ${configPath}:`, error);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      Logger.debug(
+        'NotebookService.writeNotebookConfig: ERROR path=%s error=%s',
+        configPath,
+        errorMsg
+      );
     }
   }
 
@@ -274,7 +319,10 @@ export function createNotebookService(serviceOptions: { config: Config }) {
 
     // Check if context already exists
     if (configFile.contexts?.includes(contextPath)) {
-      console.log(`Context '${contextPath}' already exists in notebook config at '${configFile}'.`);
+      await RenderMarkdownTui(TuiTemplates.ContextAlreadyExists, {
+        contextPath,
+        notebookPath,
+      });
       return;
     }
 
@@ -283,7 +331,10 @@ export function createNotebookService(serviceOptions: { config: Config }) {
 
     await writeNotebookConfig(notebookPath, configFile);
 
-    console.log(`Added context '${contextPath}' to notebook config at '${configFile}'.`);
+    await RenderMarkdownTui(TuiTemplates.ContextAdded, {
+      contextPath,
+      notebookPath,
+    });
   }
 
   async function discoverNotebooks(cwd: string = process.cwd()): Promise<Notebook[]> {

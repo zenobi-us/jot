@@ -21,6 +21,8 @@ export type Note = typeof NoteSchema.infer;
 
 const Log = Logger.child({ namespace: 'NoteService' });
 
+const TuiTemplates = {};
+
 export function createNoteService(options: {
   dbService: DbService;
   notebook: Notebook | null;
@@ -130,8 +132,8 @@ export function createNoteService(options: {
           `
       ---
       ${Object.entries(args.template.frontmatter)
-        .map(([key, value]) => `${key}: ${value}`)
-        .join('\n')}
+            .map(([key, value]) => `${key}: ${value}`)
+            .join('\n')}
       ---
       
       ${args.template.content}
