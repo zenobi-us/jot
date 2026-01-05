@@ -1,66 +1,69 @@
+import { Cli } from 'clerc';
+import { friendlyErrorPlugin } from '@clerc/plugin-friendly-error';
+import { notFoundPlugin } from '@clerc/plugin-not-found';
+import { strictFlagsPlugin } from '@clerc/plugin-strict-flags';
+import { updateNotifierPlugin } from '@clerc/plugin-update-notifier';
 
-import { Cli } from "clerc";
-import { friendlyErrorPlugin } from "@clerc/plugin-friendly-error";
-import { notFoundPlugin } from "@clerc/plugin-not-found";
-import { strictFlagsPlugin } from "@clerc/plugin-strict-flags";
-import { updateNotifierPlugin } from "@clerc/plugin-update-notifier";
+import pkg from '../package.json' assert { type: 'json' };
 
-import pkg from "../package.json" assert { type: "json" };
+import { getGitTag } from './macros/GitInfo.ts' with { type: 'macro' };
+import { InitCommand } from './cmds/init/InitCmd.ts';
+import { NotebookCommand } from './cmds/notebook/NotebookCmd.ts';
+import { NotebookListCommand } from './cmds/notebook/NotebookListCmd.ts';
+import { NotebookAddContextPathCommand } from './cmds/notebook/NotebookAddContextPathCmd.ts';
+import { NotesCommand } from './cmds/notes/NotesCmd.ts';
+import { NotesAddCommand } from './cmds/notes/NotesAddCmd.ts';
+import { NotesListCommand } from './cmds/notes/NotesListCmd.ts';
+import { NotesRemoveCommand } from './cmds/notes/NotesRemoveCmd.ts';
+import { NotesSearchCommand } from './cmds/notes/NotesSearchCmd.ts';
+import { Logger } from './services/LoggerService.ts';
+import { createConfigService } from './services/ConfigService.ts';
+import { createNotebookService } from './services/NotebookService.ts';
 
-import { getGitTag } from "./macros/GitInfo.ts" with { type: "macro" };
-import { NotebookCommand } from "./cmds/notebook/NotebookCmd.ts";
-import { NotebookListCommand } from "./cmds/notebook/NotebookListCmd.ts";
-import { NotebookAddContextPathCommand } from "./cmds/notebook/NotebookAddContextPathCmd.ts";
-import { NotesCommand } from "./cmds/notes/NotesCmd.ts";
-import { NotesAddCommand } from "./cmds/notes/NotesAddCmd.ts";
-import { NotesListCommand } from "./cmds/notes/NotesListCmd.ts";
-import { NotesRemoveCommand } from "./cmds/notes/NotesRemoveCmd.ts";
-import { NotesSearchCommand } from "./cmds/notes/NotesSearchCmd.ts";
-import { Logger } from "./services/LoggerService.ts";
-import { createConfigService } from "./services/ConfigService.ts";
-import { createNotebookService } from "./services/NotebookService.ts";
-
-import type { Config } from './services/ConfigService.ts';
+import type { ConfigService } from './services/ConfigService.ts';
 import type { NotebookService } from './services/NotebookService.ts';
-import { NotebookCreateCommand } from "./cmds/notebook/NotebookCreateCmd.ts";
-import { createDbService, type DbService } from "./services/Db.ts";
+import { NotebookCreateCommand } from './cmds/notebook/NotebookCreateCmd.ts';
+import { createDbService, type DbService } from './services/Db.ts';
 
-declare module "@clerc/core" {
+declare module '@clerc/core' {
   export interface ContextStore {
-    config: Config
-    notebooKService: NotebookService
-    dbService: DbService
+    config: ConfigService;
+    notebooKService: NotebookService;
+    dbService: DbService;
   }
 }
 
 Cli() // Create a new CLI with help and version plugins
-  .name("wiki") // Optional, CLI readable name
-  .scriptName("wiki") // CLI script name (the command used to run the CLI)
-  .description("A wiki CLI") // CLI description
+  .name('wiki') // Optional, CLI readable name
+  .scriptName('wiki') // CLI script name (the command used to run the CLI)
+  .description('A wiki CLI') // CLI description
   .version(getGitTag() || 'dev') // CLI version
   .use(friendlyErrorPlugin()) // use the friendly error plugin to handle errors gracefully
   .use(notFoundPlugin()) // use the not found plugin to handle unknown commands
   .use(strictFlagsPlugin()) // use the strict flags plugin to enforce strict flag parsing
-  .use(updateNotifierPlugin({
-    notify: {},
-    // @ts-expect-error pkg is json
-    pkg
-  })) // use the update notifier plugin to notify users of updates
+  .use(
+    updateNotifierPlugin({
+      notify: {},
+      // @ts-expect-error pkg is json
+      pkg,
+    })
+  ) // use the update notifier plugin to notify users of updates
   .interceptor(async (ctx, next) => {
-    Logger.debug("Interceptor.before");
+    Logger.debug('Interceptor.before');
 
-    const config = await createConfigService({ directory: process.cwd() });
-    const notebookService = createNotebookService({ config });
+    const configService = await createConfigService({ directory: process.cwd() });
+    const notebookService = createNotebookService({ config: configService.store });
     const dbService = createDbService();
 
-    ctx.store.config = config;
+    ctx.store.config = configService;
     ctx.store.notebooKService = notebookService;
     ctx.store.dbService = dbService;
 
     await next();
-    Logger.debug("Interceptor.after");
+    Logger.debug('Interceptor.after');
   })
   .command([
+    InitCommand,
     NotebookCommand,
     NotebookListCommand,
     NotebookAddContextPathCommand,
@@ -70,5 +73,5 @@ Cli() // Create a new CLI with help and version plugins
     NotesListCommand,
     NotesRemoveCommand,
     NotesSearchCommand,
-  ]) // register the notebook and notes commands
-  .parse(); // Parse the CLI arguments and execute commands 
+  ]) // register the init, notebook and notes commands
+  .parse(); // Parse the CLI arguments and execute commands
