@@ -1,8 +1,8 @@
-import type { Config, ConfigService } from './ConfigService';
+import type { Config } from './ConfigService';
 import { promises as fs } from 'fs';
 import { dirname, join } from 'path';
 import { type } from 'arktype';
-import { dedent, renderTemplateString, slugify } from '../core/strings';
+import { dedent } from '../core/strings';
 import { Logger } from './LoggerService';
 import { RenderMarkdownTui } from './Display';
 
@@ -29,8 +29,8 @@ export interface Notebook {
   path: string;
   config: NotebookConfig;
   saveConfig(): Promise<void>;
-  addContext(contextPath?: string): Promise<void>;
-  loadTemplate(name: string): Promise<string | null>;
+  addContext(_contextPath?: string): Promise<void>;
+  loadTemplate(_name: string): Promise<string | null>;
 }
 
 const TuiTemplates = {
@@ -187,16 +187,16 @@ export function createNotebookService(serviceOptions: { config: Config }) {
     }
 
     /**
-     * Add a path as a context for a notebook.
+     * Add a context path to the notebook.
      *
      * Notebooks contexts are used to determine which notes belong to which notebooks.
      * A context is simply a path that is considered related to the notebook.
      */
-    async addContext(contextPath: string = process.cwd()): Promise<void> {
+    async addContext(_contextPath: string = process.cwd()): Promise<void> {
       // Check if context already exists
-      if (this.config.contexts?.includes(contextPath)) {
+      if (this.config.contexts?.includes(_contextPath)) {
         await RenderMarkdownTui(TuiTemplates.ContextAlreadyExists, {
-          contextPath,
+          contextPath: _contextPath,
           notebookPath: this.path,
         });
 
@@ -204,11 +204,11 @@ export function createNotebookService(serviceOptions: { config: Config }) {
       }
 
       // Add the context
-      this.config.contexts = [...(this.config.contexts || []), contextPath];
+      this.config.contexts = [...(this.config.contexts || []), _contextPath];
       await this.saveConfig();
 
       await RenderMarkdownTui(TuiTemplates.ContextAdded, {
-        contextPath,
+        contextPath: _contextPath,
         notebookPath: this.path,
       });
     }

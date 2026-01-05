@@ -10,6 +10,6 @@ module 'marked-terminal' {
   }
 
   export default class TerminalRenderer extends Renderer {
-    constructor(options?: TerminalRendererOptions);
+    constructor(_options?: TerminalRendererOptions);
   }
 }

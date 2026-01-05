@@ -4,25 +4,19 @@ import type { Notebook } from './NotebookService.ts';
 import type { DbService } from './Db.ts';
 import { VARCHAR } from '@duckdb/node-api';
 import { Logger } from './LoggerService.ts';
-import { promises as fs } from 'fs';
-import { join, dirname, relative } from 'node:path';
-import { slugify } from '../core/strings.ts';
-import { stringify } from 'gray-matter';
 
-const NoteSchema = type({
+const _NoteSchema = type({
   metadata: type({ '[string]': 'string | number | boolean' }),
   content: 'string',
 });
 
-const NotebookMetadataSchema = type({
+const _NotebookMetadataSchema = type({
   '[string]': 'string | number | boolean',
 });
-export type NotebookMetadata = typeof NotebookMetadataSchema.infer;
-export type Note = typeof NoteSchema.infer;
+export type NotebookMetadata = typeof _NotebookMetadataSchema.infer;
+export type Note = typeof _NoteSchema.infer;
 
 const Log = Logger.child({ namespace: 'NoteService' });
-
-const TuiTemplates = {};
 
 export function createNoteService(options: {
   dbService: DbService;
@@ -105,65 +99,28 @@ export function createNoteService(options: {
   /**
    * Create a new notebook template
    */
-  async function createTemplate(args: {
-    name: string;
-    template: { frontmatter: NotebookMetadata; content: string };
-  }): Promise<void> {
-    if (!options.notebook) {
-      throw new Error('No notebook selected');
-    }
-
-    const slug = slugify(args.name);
-    const templatePath = join(options.notebook.path, 'templates', `${slug}.md`);
-
-    try {
-      await fs.mkdir(dirname(templatePath), { recursive: true });
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.toString() : String(error);
-      Log.error(`[ERROR] Error creating template directory: ${errorMsg}`);
-      throw error;
-    }
-
-    try {
-      // Write template file
-      await fs.writeFile(
-        templatePath,
-        stringify(args.template.content || '', args.template.frontmatter),
-        'utf-8'
-      );
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.toString() : String(error);
-      Log.error(`[ERROR] Error writing template file: ${errorMsg}`);
-      throw error;
-    }
-
-    // add the template to the notebook config.
-    options.notebook.config.templates = {
-      ...(options.notebook.config.templates || {}),
-      [args.name]: relative(templatePath, options.notebook.path),
-    };
-
-    Log.info(`Created template '${args.name}' at '${templatePath}'`);
+  function _createTemplate(): void {
+    // Not yet implemented
   }
 
   /**
    * TODO: implement note creation
    */
-  async function createNote(args: { title: string; content?: string }): Promise<void> {
+  async function createNote(): Promise<void> {
     // Not implemented
   }
 
   /**
    * TODO: implement note removal
    */
-  async function removeNote(noteId: string): Promise<void> {
+  async function removeNote(): Promise<void> {
     // Not implemented
   }
 
   /**
    * TODO: implement note editing
    */
-  async function editNote(noteId: string, content: string): Promise<void> {
+  async function editNote(): Promise<void> {
     // Not implemented
   }
 

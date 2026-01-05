@@ -1,5 +1,5 @@
-import { DuckDBConnection } from "@duckdb/node-api";
-import { DuckDBInstance } from "@duckdb/node-api";
+import { DuckDBConnection } from '@duckdb/node-api';
+import { DuckDBInstance } from '@duckdb/node-api';
 
 export type DbService = ReturnType<typeof createDbService>;
 export function createDbService() {
@@ -13,11 +13,10 @@ export function createDbService() {
     db = await DuckDBInstance.create(':memory:');
     const connection = await db.connect();
 
-
     try {
       // Install and load the markdown extension
-      connection.run("INSTALL markdown FROM community;");
-      connection.run("LOAD markdown;");
+      connection.run('INSTALL markdown FROM community;');
+      connection.run('LOAD markdown;');
     } catch (error) {
       throw new Error(
         `Failed to initialize markdown extension: ${error instanceof Error ? error.message : String(error)}`

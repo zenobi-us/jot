@@ -12,23 +12,23 @@ export const NotesListCommand = defineCommand(
     parameters: [],
   },
   async (ctx) => {
-    const notebookPath = await requireNotebookMiddleware({
+    const notebook = await requireNotebookMiddleware({
       notebookService: ctx.store.notebooKService,
       path: ctx.flags.notebook,
     });
 
-    if (!notebookPath) {
+    if (!notebook) {
       return;
     }
 
-    Logger.debug('NotesListCmd %s', notebookPath);
+    Logger.debug('NotesListCmd %s', notebook.path);
 
-    const notebook = await ctx.store.notebooKService?.getNotebook(notebookPath);
     const config = ctx.store.config?.store;
     const dbService = ctx.store.dbService;
 
-    if (!notebook || !config || !dbService) {
-      console.error('Failed to load notebook or config or dbService');
+    if (!config || !dbService) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to load config or dbService');
       return;
     }
 
@@ -41,6 +41,7 @@ export const NotesListCommand = defineCommand(
     const results = await noteService.searchNotes();
 
     for (const note of results) {
+      // eslint-disable-next-line no-console
       console.log(`- ${note.path}`);
     }
   }

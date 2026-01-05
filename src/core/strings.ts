@@ -32,7 +32,9 @@ export function renderTemplateString(
   });
 }
 
-export function objectToFrontmatter(obj: Record<string, any>): string {
+export function objectToFrontmatter(
+  obj: Record<string, string | number | boolean | string[]>
+): string {
   const entries = Object.entries(obj).map(([key, value]) => {
     if (Array.isArray(value)) {
       return `${key}:\n${value.map((item) => `  - ${item}`).join('\n')}`;

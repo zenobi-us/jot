@@ -17,9 +17,11 @@ export const ConfigSchema = type({
 
 export type Config = typeof ConfigSchema.infer;
 
+type ConfigWriter = (config: Config) => Promise<void>;
+
 export type ConfigService = {
   store: Config;
-  write: (config: Config) => Promise<void>;
+  write: ConfigWriter;
 };
 
 const options: ConfigShape<Config> = {
@@ -31,12 +33,12 @@ const options: ConfigShape<Config> = {
   },
 };
 
-export async function createConfigService(args: { directory: string }): Promise<ConfigService> {
+export async function createConfigService(): Promise<ConfigService> {
   const store = await loadConfig(options);
 
-  async function write(config: Config): Promise<void> {
+  async function write(_config: Config): Promise<void> {
     await fs.mkdir(dirname(UserConfigFile), { recursive: true });
-    await fs.writeFile(UserConfigFile, JSON.stringify(config, null, 2));
+    await fs.writeFile(UserConfigFile, JSON.stringify(_config, null, 2));
   }
 
   return {

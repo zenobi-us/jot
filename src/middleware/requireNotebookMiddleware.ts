@@ -6,12 +6,13 @@ export async function requireNotebookMiddleware(args: {
   path?: string;
   notebookService?: NotebookService;
 }) {
-  const notebook = args?.path || (await args.notebookService?.infer());
+  let notebook = args?.path
+    ? await args.notebookService?.open(args.path)
+    : await args.notebookService?.infer();
 
   if (!notebook) {
-    console.error(
-      await RenderMarkdownTui(
-        dedent(`
+    const message = await RenderMarkdownTui(
+      dedent(`
 
         # No Notebook Yet
         
@@ -23,8 +24,9 @@ export async function requireNotebookMiddleware(args: {
         wiki notebook create [path]
         \`\`\`
     `)
-      )
     );
+    // eslint-disable-next-line no-console
+    console.error(message);
     return null;
   }
 

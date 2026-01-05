@@ -1,3 +1,11 @@
 #!/usr/bin/env bash
 #MISE description="Run ESLint"
-eslint . --ext .ts
+#MISE usage="[OPTIONS]"
+#MISE arg="fix:bool:Automatically fix problems:f"
+
+FIX_FLAG=""
+if [ "${fix}" = "true" ]; then
+  FIX_FLAG="--fix"
+fi
+
+eslint . --ext .ts ${FIX_FLAG}
