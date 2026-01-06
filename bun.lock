@@ -12,6 +12,7 @@
         "@duckdb/node-api": "^1.4.3-r.2",
         "@evan/duckdb": "^0.1.5",
         "arktype": "^2.1.29",
+        "binja": "^0.9.1",
         "bunfig": "^0.15.6",
         "clerc": "^1.1.1",
         "env-paths": "^3.0.0",
@@ -293,6 +294,8 @@
     "atomic-sleep": ["atomic-sleep@1.0.0", "", {}, "sha512-kNOjDqAh7px0XWNI+4QbzoiR/nTkHAWNud2uvnJquD1/x5a7EQZMJT0AczqK0Qn67oY/TTQ1LbUKajZpp3I9tQ=="],
 
     "balanced-match": ["balanced-match@1.0.2", "", {}, "sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw=="],
+
+    "binja": ["binja@0.9.1", "", { "peerDependencies": { "@anthropic-ai/sdk": ">=0.30.0", "openai": ">=4.0.0" }, "optionalPeers": ["@anthropic-ai/sdk", "openai"], "bin": { "binja": "dist/cli.js" } }, "sha512-3wC2w4Ce8fb45/IT5Y7hk5gICwkppWpA0y0Q5sJICCSfXdM0jvmHCx3tYFJqHwRGh/JCb6WwH8XAd1YUW7Om7g=="],
 
     "brace-expansion": ["brace-expansion@1.1.12", "", { "dependencies": { "balanced-match": "^1.0.0", "concat-map": "0.0.1" } }, "sha512-9T9UjW3r0UW5c1Q7GTwllptXwhvYmEzFhzMfZ9H7FQWt+uZePjZPjBP/W1ZEyZ1twGWom5/56TF4lPcqjnDHcg=="],
 

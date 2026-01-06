@@ -8,6 +8,8 @@ export const Logger = pino({
     target: 'pino-pretty',
     options: {
       colorize: true,
+      singleLine: true,
+      messageFormat: '{name}{if namespace}.{namespace}{end} {msg}',
     },
   },
 });

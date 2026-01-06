@@ -33,6 +33,8 @@ declare module '@clerc/core' {
   }
 }
 
+const Log = Logger.child({ namespace: 'CLI' });
+
 Cli() // Create a new CLI with help and version plugins
   .name('wiki') // Optional, CLI readable name
   .scriptName('wiki') // CLI script name (the command used to run the CLI)
@@ -49,9 +51,9 @@ Cli() // Create a new CLI with help and version plugins
     })
   ) // use the update notifier plugin to notify users of updates
   .interceptor(async (ctx, next) => {
-    Logger.debug('Interceptor.before');
+    Log.debug('Interceptor.before');
 
-    const configService = await createConfigService({ directory: process.cwd() });
+    const configService = await createConfigService();
     const notebookService = createNotebookService({ config: configService.store });
     const dbService = createDbService();
 
@@ -60,7 +62,7 @@ Cli() // Create a new CLI with help and version plugins
     ctx.store.dbService = dbService;
 
     await next();
-    Logger.debug('Interceptor.after');
+    Log.debug('Interceptor.after');
   })
   .command([
     InitCommand,

@@ -1,0 +1,17 @@
+{
+  "name": "opennotes",
+  "templates": {},
+  "groups": [
+    {
+      "name": "Default",
+      "description": "Default group for all notes",
+      "globs": [
+        "**/*.md"
+      ],
+      "metadata": {}
+    }
+  ],
+  "contexts": [
+    "/mnt/Store/Projects/Mine/Github/opennotes"
+  ]
+}

@@ -1,6 +1,6 @@
 import { type } from 'arktype';
 import type { Config } from './ConfigService.ts';
-import type { Notebook } from './NotebookService.ts';
+import type { INotebook } from './NotebookService.ts';
 import type { DbService } from './Db.ts';
 import { VARCHAR } from '@duckdb/node-api';
 import { Logger } from './LoggerService.ts';
@@ -20,7 +20,7 @@ const Log = Logger.child({ namespace: 'NoteService' });
 
 export function createNoteService(options: {
   dbService: DbService;
-  notebook: Notebook | null;
+  notebook: INotebook | null;
   config: Config;
 }) {
   async function query(query: string) {

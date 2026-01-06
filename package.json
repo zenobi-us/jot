@@ -32,6 +32,7 @@
     "@duckdb/node-api": "^1.4.3-r.2",
     "@evan/duckdb": "^0.1.5",
     "arktype": "^2.1.29",
+    "binja": "^0.9.1",
     "bunfig": "^0.15.6",
     "clerc": "^1.1.1",
     "env-paths": "^3.0.0",

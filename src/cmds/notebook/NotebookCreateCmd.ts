@@ -3,6 +3,7 @@ import { Logger } from '../../services/LoggerService';
 import { slugify } from '../../core/strings';
 import path from 'node:path';
 
+const Log = Logger.child({ namespace: 'NotebookCreateCmd' });
 /**
  * Command to create a new notebook in the wiki system.
  *
@@ -26,8 +27,13 @@ export const NotebookCreateCommand = defineCommand(
     const notebookPath = ctx.parameters.path || process.cwd();
     const notebookName = ctx.flags.name || slugify(path.basename(notebookPath));
 
-    Logger.debug('NotebookCreateCmd: %s, %s', notebookName, notebookPath);
+    Log.debug('Execute: %s, %s', notebookName, notebookPath);
 
-    await ctx.store.notebooKService?.createNotebook({ name: notebookName, path: notebookPath });
+    const notebook = await ctx.store.notebooKService?.create({
+      name: notebookName,
+      path: notebookPath,
+    });
+
+    Log.info('Created notebook: %o', { notebook });
   }
 );

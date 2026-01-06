@@ -19,19 +19,6 @@ export function dedent(text: string): string {
   return lines.map((line) => line.slice(indent)).join('\n');
 }
 
-/**
- * Render a string with template variables
- */
-export function renderTemplateString(
-  template: string,
-  variables: Record<string, string | number | boolean>
-): string {
-  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => {
-    const value = variables[key];
-    return value !== undefined ? String(value) : '';
-  });
-}
-
 export function objectToFrontmatter(
   obj: Record<string, string | number | boolean | string[]>
 ): string {

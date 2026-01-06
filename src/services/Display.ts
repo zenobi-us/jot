@@ -1,17 +1,17 @@
-import { marked } from 'marked';
+import { render } from 'binja';
+import { Marked } from 'marked';
 import TuiRenderer from 'marked-terminal';
-import { renderTemplateString } from '../core/strings.ts';
 
-marked.setOptions({
+const TuiMark = new Marked();
+TuiMark.setOptions({
   renderer: new TuiRenderer(),
+  gfm: true,
+  breaks: false,
 });
 
-const RenderMarkdownTui = async (
-  markdown: string,
-  variables?: Record<string, string | number | boolean>
-): Promise<string> => {
-  const rendered = variables ? renderTemplateString(markdown, variables) : markdown;
-  return await marked(rendered);
+const TuiRender = async (template: string, ctx: Parameters<typeof render>[1]) => {
+  const markdown = await TuiMark.parse(template);
+  return render(markdown, ctx);
 };
 
-export { RenderMarkdownTui };
+export { TuiRender };

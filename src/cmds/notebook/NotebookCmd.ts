@@ -2,6 +2,8 @@ import { defineCommand } from 'clerc';
 import { Logger } from '../../services/LoggerService';
 import { requireNotebookMiddleware } from '../../middleware/requireNotebookMiddleware';
 
+const Log = Logger.child({ namespace: 'NotebookCmd' });
+
 export const NotebookCommand = defineCommand(
   {
     name: 'notebook',
@@ -11,17 +13,17 @@ export const NotebookCommand = defineCommand(
     parameters: [],
   },
   async (ctx) => {
-    Logger.debug('NotebookCmd called');
+    Log.debug('Execute');
 
-    const notebookPath = await requireNotebookMiddleware({
+    const notebook = await requireNotebookMiddleware({
       notebookService: ctx.store.notebooKService,
       path: ctx.flags.notebook,
     });
 
-    Logger.debug('NotebookCmd: %s', notebookPath);
-
-    if (!notebookPath) {
+    if (!notebook) {
       return;
     }
+
+    await ctx.store.notebooKService?.info({ notebook });
   }
 );
