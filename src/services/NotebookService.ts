@@ -377,13 +377,14 @@ export function createNotebookService(serviceOptions: {
     }
 
     static async new(args: { path: string; name: string; register?: boolean }): Promise<Notebook> {
-      const config: NotebookConfig = {
+      const config = NotebookConfigSchema({
         name: args.name,
         /*
          * Store notes relative to the notebook path in a .notes folder
          * This keeps notes organized and separate from other project files.
          */
         root: join('.', '.notes'),
+        path: Notebook.createNotebookConfigPath(args.path),
         templates: {},
         groups: [
           {
@@ -393,7 +394,17 @@ export function createNotebookService(serviceOptions: {
           },
         ],
         contexts: [args.path],
-      };
+      });
+
+      if (config instanceof type.errors) {
+        Log.error(
+          'Notebook.new: INVALID_CONFIG path=%s. \n %s',
+          args.path,
+          prettifyArktypeErrors(config)
+        );
+        throw new Error(`Invalid notebook config: ${prettifyArktypeErrors(config)}`);
+      }
+
       Log.debug('Notebook.new: path=%s name=%s', config.root, config.name);
 
       const noteService = createNoteService({
@@ -459,14 +470,16 @@ export function createNotebookService(serviceOptions: {
       if (args?.register) {
         const notebookPath = this.config.root;
         const notebooks = serviceOptions.configService.store.notebooks || [];
-        if (!notebooks.includes(notebookPath)) {
-          notebooks.push(notebookPath);
-          await serviceOptions.configService.write({
-            ...serviceOptions.configService.store,
-            notebooks,
-          });
-          Log.debug('Notebook registered globally: %s', notebookPath);
+        if (notebooks.includes(notebookPath)) {
+          return;
         }
+
+        notebooks.push(notebookPath);
+        await serviceOptions.configService.write({
+          ...serviceOptions.configService.store,
+          notebooks,
+        });
+        Log.debug('Notebook registered globally: %s', notebookPath);
       }
     }
 
@@ -593,6 +606,7 @@ export function createNotebookService(serviceOptions: {
   async function list(cwd: string = process.cwd()): Promise<Notebook[]> {
     Log.debug('list: cwd=%s', cwd);
     const registered_notebooks: Notebook[] = [];
+    Log.debug('list.notebooks. config: %o', serviceOptions.configService.store);
 
     // STEP 2: Check for notebook configs in config.notebooks
     for (const notebookPath of serviceOptions.configService.store.notebooks) {
