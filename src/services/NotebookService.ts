@@ -77,7 +77,7 @@ export interface INotebook {
   /**
    * Save the notebook configuration to disk
    */
-  saveConfig(): Promise<void>;
+  saveConfig(args?: { register?: boolean }): Promise<void>;
 
   /**
    * Add a context path to the notebook
@@ -96,18 +96,46 @@ export interface INotebook {
 }
 
 export const TuiTemplates = {
+  NotebookRegistered: (ctx: { notebook: INotebook; path: string }) =>
+    TuiRender(
+      dedent(`
+     # Notebook Registered
+
+     Your notebook has been successfully registered globally!
+
+     - **Name**: {{notebook.config.name}}
+     - **Path**: {{path}}
+
+     This notebook is now available from anywhere on your system.
+   `),
+      ctx
+    ),
+  InvalidNotebookConfig: (ctx: { path: string; error: string }) =>
+    TuiRender(
+      dedent(`
+     # Invalid Notebook Configuration
+
+     The notebook at the specified path has an invalid configuration.
+
+     - **Path**: {{path}}
+     - **Error**: {{error}}
+
+     Please fix the .opennotes.json file and try again. You can delete it and create a new notebook if needed.
+   `),
+      ctx
+    ),
   NotebookCreated: (ctx: { notebook: INotebook }) =>
     TuiRender(
       dedent(`
-    # Notebook Created
+     # Notebook Created
 
-    Your new notebook has been successfully created!
+     Your new notebook has been successfully created!
 
-    - **Name**: {{notebook.config.name}}
-    - **Path**: {{notebook.config.path}}
+     - **Name**: {{notebook.config.name}}
+     - **Path**: {{notebook.config.path}}
 
-    You can start adding notes to your notebook right away.
-  `),
+     You can start adding notes to your notebook right away.
+   `),
       ctx
     ),
   ContextAlreadyExists: (ctx: { path: string; notebook: INotebook }) =>
@@ -315,7 +343,7 @@ export function createNotebookService(serviceOptions: {
       return new Notebook(config, noteService);
     }
 
-    static async new(args: { path: string; name: string }): Promise<Notebook> {
+    static async new(args: { path: string; name: string; register?: boolean }): Promise<Notebook> {
       const config: NotebookConfig = {
         name: args.name,
         /*
@@ -342,7 +370,7 @@ export function createNotebookService(serviceOptions: {
       });
 
       const notebook = new Notebook(config, noteService);
-      await notebook.saveConfig();
+      await notebook.saveConfig({ register: args.register });
 
       await TuiTemplates.NotebookCreated({
         notebook,
@@ -366,7 +394,7 @@ export function createNotebookService(serviceOptions: {
     /**
      * Write a notebook config to a given path
      */
-    async saveConfig() {
+    async saveConfig(args?: { register?: boolean }): Promise<void> {
       const config = NotebookConfigSchema(this.config);
       if (config instanceof type.errors) {
         throw new Error(`Invalid notebook config: ${config.toString()}`);
@@ -385,6 +413,20 @@ export function createNotebookService(serviceOptions: {
           errorMsg
         );
         throw error;
+      }
+
+      // Register the notebook globally if requested
+      if (args?.register) {
+        const notebookPath = this.config.path;
+        const notebooks = serviceOptions.configService.store.notebooks || [];
+        if (!notebooks.includes(notebookPath)) {
+          notebooks.push(notebookPath);
+          await serviceOptions.configService.write({
+            ...serviceOptions.configService.store,
+            notebooks,
+          });
+          Log.debug('Notebook registered globally: %s', notebookPath);
+        }
       }
     }
 
@@ -454,11 +496,19 @@ export function createNotebookService(serviceOptions: {
     return Notebook.load(notebookPath);
   }
 
-  async function create(args: { name: string; path?: string }): Promise<Notebook> {
-    return Notebook.new({
+  async function create(args: {
+    name: string;
+    path?: string;
+    register?: boolean;
+  }): Promise<Notebook> {
+    const notebookPath = args.path || process.cwd();
+    const notebook = await Notebook.new({
       name: args.name,
-      path: args.path || process.cwd(),
+      path: notebookPath,
+      register: args.register,
     });
+
+    return notebook;
   }
 
   /**

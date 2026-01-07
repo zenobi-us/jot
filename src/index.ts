@@ -10,6 +10,8 @@ import { getGitTag } from './macros/GitInfo.ts' with { type: 'macro' };
 import { InitCommand } from './cmds/init/InitCmd.ts';
 import { NotebookCommand } from './cmds/notebook/NotebookCmd.ts';
 import { NotebookListCommand } from './cmds/notebook/NotebookListCmd.ts';
+import { NotebookCreateCommand } from './cmds/notebook/NotebookCreateCmd.ts';
+import { NotebookRegisterCommand } from './cmds/notebook/NotebookRegisterCmd.ts';
 import { NotebookAddContextPathCommand } from './cmds/notebook/NotebookAddContextPathCmd.ts';
 import { NotesCommand } from './cmds/notes/NotesCmd.ts';
 import { NotesAddCommand } from './cmds/notes/NotesAddCmd.ts';
@@ -22,7 +24,6 @@ import { createNotebookService } from './services/NotebookService.ts';
 
 import type { ConfigService } from './services/ConfigService.ts';
 import type { NotebookService } from './services/NotebookService.ts';
-import { NotebookCreateCommand } from './cmds/notebook/NotebookCreateCmd.ts';
 import { createDbService, type DbService } from './services/Db.ts';
 
 declare module '@clerc/core' {
@@ -69,8 +70,9 @@ Cli() // Create a new CLI with help and version plugins
     InitCommand,
     NotebookCommand,
     NotebookListCommand,
-    NotebookAddContextPathCommand,
     NotebookCreateCommand,
+    NotebookRegisterCommand,
+    NotebookAddContextPathCommand,
     NotesCommand,
     NotesAddCommand,
     NotesListCommand,

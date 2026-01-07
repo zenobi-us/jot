@@ -12,11 +12,16 @@ const Log = Logger.child({ namespace: 'NotebookCreateCmd' });
 export const NotebookCreateCommand = defineCommand(
   {
     name: 'notebook create',
-    description: 'Manage wiki notebooks',
+    description: 'Create a new notebook or register an existing folder',
     flags: {
       name: {
-        description: 'Name of the notebook to create',
+        description: 'Name of the notebook',
         type: String,
+        required: false,
+      },
+      register: {
+        description: 'Register this notebook globally',
+        type: Boolean,
         required: false,
       },
     },
@@ -26,12 +31,14 @@ export const NotebookCreateCommand = defineCommand(
   async (ctx) => {
     const notebookPath = ctx.parameters.path || process.cwd();
     const notebookName = ctx.flags.name || slugify(path.basename(notebookPath));
+    const register = ctx.flags.register || false;
 
-    Log.debug('Execute: %s, %s', notebookName, notebookPath);
+    Log.debug('Execute: %s, %s, register=%s', notebookName, notebookPath, register);
 
     const notebook = await ctx.store.notebooKService?.create({
       name: notebookName,
       path: notebookPath,
+      register,
     });
 
     Log.info('Created notebook: %o', { notebook });
