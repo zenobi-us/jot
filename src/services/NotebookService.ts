@@ -276,6 +276,16 @@ export function createNotebookService(serviceOptions: {
           return null;
         }
 
+        // verify if the declared config.path exists
+        const notebookNotesPath = resolve(path, config.path);
+        if (!(await fs.exists(notebookNotesPath))) {
+          Log.error(
+            'NotebookService.loadNotebookConfig: NOTES_PATH_NOT_FOUND path=%s',
+            notebookNotesPath
+          );
+          return null;
+        }
+
         return config;
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);

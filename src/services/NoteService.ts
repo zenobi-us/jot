@@ -4,21 +4,54 @@ import type { DbService } from './Db.ts';
 import { VARCHAR } from '@duckdb/node-api';
 import { Logger } from './LoggerService.ts';
 import { join } from 'node:path';
+import { TuiRender } from './Display.ts';
+import { dedent } from '../core/strings.ts';
 
-const _NoteSchema = type({
+const NoteDbSchema = type({
+  file_path: 'string',
   metadata: type({ '[string]': 'string | number | boolean' }),
   content: 'string',
 });
 
-const _NotebookMetadataSchema = type({
+const NotebookMetadataSchema = type({
   '[string]': 'string | number | boolean',
 });
-export type NotebookMetadata = typeof _NotebookMetadataSchema.infer;
-export type Note = typeof _NoteSchema.infer;
+
+const NoteSchema = type({
+  file: type({
+    filepath: 'string',
+    relative: 'string',
+  }),
+  content: 'string',
+  metadata: NotebookMetadataSchema,
+});
+
+export type NotebookMetadata = typeof NotebookMetadataSchema.infer;
+export type Note = typeof NoteSchema.infer;
 
 const Log = Logger.child({ namespace: 'NoteService' });
 
 export type NoteService = ReturnType<typeof createNoteService>;
+
+export const TuiTemplates = {
+  NoteList: async (ctx: { notes: Note[] }) => {
+    return TuiRender(
+      dedent(`
+      {% if notes.length == 0 %}
+      No notes found.
+      {% else %}
+      ## Notes
+
+      {% for note in notes %}
+      - [{{ note.file.relative }}](file://{{ note.file.filepath }})
+      {% endfor %}
+
+      {% endif %}
+      `),
+      { notes: ctx.notes }
+    );
+  },
+};
 
 export function createNoteService(options: {
   dbService: DbService;
@@ -80,7 +113,7 @@ export function createNoteService(options: {
 
     const db = await options.dbService.getDb();
     const prepared = await db.prepare(`
-      SELECT * FROM read_markdown($filepath)
+      SELECT * FROM read_markdown($filepath, include_filepath:=true)
     `);
     prepared.bind(
       {
@@ -95,7 +128,33 @@ export function createNoteService(options: {
 
     const rows = await result.getRowObjectsJson();
 
-    return rows || [];
+    const parsedRows = NoteDbSchema.array()(rows);
+    if (parsedRows instanceof type.errors) {
+      Log.error('searchNotes: failed to parse notes: %o', parsedRows);
+      return [];
+    }
+
+    const parsed = NoteSchema.array()(
+      parsedRows.map((note) => ({
+        file: {
+          filepath: note.file_path,
+          relative: options.notebookPath
+            ? note.file_path.replace(options.notebookPath + '/', '')
+            : note.file_path,
+        },
+        content: note.content,
+        metadata: note.metadata,
+      }))
+    );
+
+    if (parsed instanceof type.errors) {
+      Log.error('searchNotes: failed to parse notes: %o', parsed);
+      return [];
+    }
+
+    Log.debug('searchNotes: found %d notes', parsed.length);
+
+    return parsed;
   }
 
   /**
