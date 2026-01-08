@@ -1,6 +1,6 @@
 import { type } from 'arktype';
 import type { ConfigService } from './ConfigService.ts';
-import type { DbService } from './Db';
+import type { IDbService } from './Db.ts';
 import { Logger } from './LoggerService.ts';
 import { join } from 'node:path';
 import { TuiRender } from './Display.ts';
@@ -54,7 +54,7 @@ export const TuiTemplates = {
 };
 
 export function createNoteService(options: {
-  dbService: DbService;
+  dbService: IDbService;
   notebookPath?: string;
   configService: ConfigService;
 }) {

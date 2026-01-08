@@ -115,3 +115,13 @@ export const CommandName = defineCommand(
 **NoteService**: Provides SQL query interface via DuckDB markdown extension for searching/reading notes.
 
 **DbService**: Singleton DuckDB connection with pre-loaded markdown extension.
+
+
+## Decisions
+
+- **DuckDb** Use neo duckdb. We'd like to use the wasm build, but it doesn't load the markdown extension properly yet.
+- **Clerc**: Chosen for its plugin architecture and flexibility for building CLI tools.
+- **Bun**: Fast runtime with built-in TypeScript support and native bundling. For now we build for node only. no compiling to binary untile duckdb wasm.
+
+
+words

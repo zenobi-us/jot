@@ -24,13 +24,13 @@ import { createNotebookService } from './services/NotebookService.ts';
 
 import type { ConfigService } from './services/ConfigService.ts';
 import type { NotebookService } from './services/NotebookService.ts';
-import { createDbService, type DbService } from './services/Db';
+import { createDbService, type IDbService } from './services/Db.ts';
 
 declare module '@clerc/core' {
   export interface ContextStore {
     config: ConfigService;
     notebooKService: NotebookService;
-    dbService: DbService;
+    dbService: IDbService;
   }
 }
 

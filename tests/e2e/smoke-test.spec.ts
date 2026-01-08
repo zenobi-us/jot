@@ -1,4 +1,4 @@
-import { describe, it, beforeEach, afterEach, expect } from 'vitest';
+import { describe, it, beforeAll, beforeEach, afterEach, expect } from 'vitest';
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
@@ -39,6 +39,16 @@ const runCommand = () => {
 describe('opennotes smoke tests', () => {
   let tmpDir: string;
   let notebookDir: string;
+
+  beforeAll(async () => {
+    // Ensure binary is built before running tests
+    const proc = Bun.spawn(['mise', 'run', 'build'], {
+      cwd: process.cwd(),
+      stdio: ['inherit', 'inherit', 'inherit'],
+    });
+    await proc.exited;
+    expect(existsSync(OPENNOTES_BIN)).toBe(true);
+  });
 
   beforeEach(() => {
     // Create temporary directory
@@ -88,8 +98,16 @@ describe('opennotes smoke tests', () => {
 
     const results = await proc.run([`notes`, `list`], { cwd: notebookDir });
 
+    const stdout = await results.stdout.text();
+    const stderr = await results.stderr.text();
+
+    if (results.exitCode !== 0 || !stdout.trim()) {
+      console.error('notes list stderr:', stderr);
+      console.error('notes list stdout:', stdout);
+    }
+
     expect(results.exitCode).toBe(0);
-    const noteCount = ((await results.stdout.text()).trim().match(/note\d\.md/g) || []).length;
+    const noteCount = (stdout.trim().match(/note\d\.md/g) || []).length;
     expect(noteCount).toBe(3);
   });
 
@@ -113,6 +131,11 @@ describe('opennotes smoke tests', () => {
     const result = await runCommand().run(['notes', 'search', 'First'], {
       cwd: notebookDir,
     });
+
+    const stderr = await result.stderr.text();
+    if (result.exitCode !== 0) {
+      console.error('search stderr:', stderr);
+    }
 
     expect(result.exitCode).toBe(0);
     const output = (await result.stdout.text()).trim();

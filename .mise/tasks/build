@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
 #MISE description="Build the project"
-bun build ./src/index.ts --compile --outfile dist/opennotes
-
+bun build ./src/index.ts \
+	--outdir ./dist \
+	--target node \
+	--format esm
