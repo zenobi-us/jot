@@ -1,0 +1,108 @@
+version: 2
+
+project_name: opennotes
+
+env:
+  # Use Go 1.21 (from go.mod)
+  - GO111MODULE=on
+  - CGO_ENABLED=0
+
+before:
+  hooks:
+    - go mod download
+    - go mod tidy
+
+builds:
+  - id: default
+    main: ./main.go
+    binary: opennotes
+
+    # Build for multiple platforms
+    goos:
+      - linux
+      - darwin
+      - windows
+
+    goarch:
+      - amd64
+      - arm64
+      - arm
+
+    goarm:
+      - '6'
+      - '7'
+
+    ldflags:
+      - -s -w
+      - -X github.com/zenobius/opennotes/cmd.Version={{.Version}}
+      - -X github.com/zenobius/opennotes/cmd.Commit={{.Commit}}
+      - -X github.com/zenobius/opennotes/cmd.Date={{.Date}}
+
+    # Build matrix - skip some combinations
+    ignore:
+      - goos: windows
+        goarch: arm
+      - goos: windows
+        goarch: arm64
+      - goos: darwin
+        goarch: arm
+
+archives:
+  - id: default
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+
+    files:
+      - README.md
+      - LICENSE
+
+changelog:
+  use: github-native
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - Merge pull request
+      - Merge branch
+
+release:
+  # Publish to GitHub Releases
+  github:
+    owner: zenobi-us
+    repo: opennotes
+
+  prerelease: auto # Auto-detect prerelease from tag (rc, alpha, beta, etc.)
+  mode: keep-existing # Don't overwrite existing
+  draft: false
+  footer: |
+    ## SHA256 Checksums
+
+    ```
+    {{ .Checksums }}
+    ```
+
+    **Installation:**
+
+    - **macOS (ARM64)**: `curl -sSL https://github.com/zenobi-us/opennotes/releases/download/{{ .Tag }}/opennotes_{{ .Version }}_Darwin_arm64.tar.gz | tar xz && sudo mv opennotes /usr/local/bin/`
+    - **macOS (Intel)**: `curl -sSL https://github.com/zenobi-us/opennotes/releases/download/{{ .Tag }}/opennotes_{{ .Version }}_Darwin_x86_64.tar.gz | tar xz && sudo mv opennotes /usr/local/bin/`
+    - **Linux (x86_64)**: `curl -sSL https://github.com/zenobi-us/opennotes/releases/download/{{ .Tag }}/opennotes_{{ .Version }}_Linux_x86_64.tar.gz | tar xz && sudo mv opennotes /usr/local/bin/`
+    - **Linux (ARM64)**: `curl -sSL https://github.com/zenobi-us/opennotes/releases/download/{{ .Tag }}/opennotes_{{ .Version }}_Linux_arm64.tar.gz | tar xz && sudo mv opennotes /usr/local/bin/`
+    - **Windows**: Download the `.zip` file from the release page
+
+checksum:
+  name_template: 'checksums.txt'
+  algorithm: sha256

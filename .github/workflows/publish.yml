@@ -21,21 +21,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.21'
-
       - name: Install mise
         uses: jdx/setup-jdx@v1
-
-      - name: Build
-        run: mise run build
-
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v5
         with:
-          version: latest
-          args: release --clean
+          install: true
+          cache: true
+          experimental: true
+
+      - name: Setup
+        run: mise run setup
+
+      - name: Publish
+        run: mise run publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
