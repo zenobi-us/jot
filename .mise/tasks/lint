@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
-#MISE description="Run ESLint"
-#MISE usage="[OPTIONS]"
-#MISE arg="fix:bool:Automatically fix problems:f"
+#MISE description="Run go vet and golangci-lint"
+set -euo pipefail
 
-FIX_FLAG=""
-if [ "${fix}" = "true" ]; then
-  FIX_FLAG="--fix"
-fi
-
-eslint . --ext .ts ${FIX_FLAG}
+go vet ./...
+golangci-lint run ./...

@@ -56,12 +56,12 @@ Final polish including error handling, documentation, testing, and build configu
   - Test ValidateNoteName
   - Test ValidationErrors and Validator
 
-**Deferred to Phase 5:**
+**Completed in Phase 5:**
 
-- [ ] Create `internal/services/config_test.go`
-- [ ] Create `internal/services/notebook_test.go`
-- [ ] Create `internal/services/note_test.go`
-- [ ] Create e2e tests for CLI commands
+- [x] Create `internal/services/config_test.go` (10 tests)
+- [x] Create `internal/services/notebook_test.go` (28 tests)
+- [x] Create `internal/services/note_test.go` (16 tests)
+- [x] Create e2e tests for CLI commands (23 tests in `tests/e2e/go_smoke_test.go`)
 
 ### 4.7 Build Configuration
 
@@ -70,6 +70,9 @@ Final polish including error handling, documentation, testing, and build configu
 - [x] Add `go-test` task: `go test ./...`
 - [x] Add `go-lint` task with go vet/gofmt fallback
 - [ ] Update CI/CD for Go builds (deferred - future work)
+  - **Why**: Ensures automated testing/building on PRs and releases for Go version
+  - **Where**: `.github/workflows/` - needs new workflow or update to existing `pr.yml`/`publish.yml`
+  - **When**: After Go rewrite is merged and ready for production CI integration
 
 ### 4.8 Configuration Compatibility
 
@@ -111,9 +114,12 @@ Final polish including error handling, documentation, testing, and build configu
 ## Acceptance Criteria
 
 - [x] Core tests pass
-- [ ] Service tests pass (deferred to Phase 5)
+- [x] Service tests pass (completed in Phase 5 - 131 total tests)
 - [x] Help text is clear and complete
 - [x] Error messages are user-friendly
 - [x] Config files are compatible between Go and TypeScript
 - [x] Build produces working binary
 - [ ] CI/CD pipeline builds Go version (future work)
+  - **Why**: Automated quality gates for Go code on every PR and release
+  - **Where**: `.github/workflows/` - extend existing workflows or add `go-ci.yml`
+  - **When**: Post-merge, when Go version becomes the primary build target

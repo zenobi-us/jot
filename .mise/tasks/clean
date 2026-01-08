@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Clean build artifacts"
+set -euo pipefail
+
+rm -rf dist/
+go clean -cache -testcache

@@ -1,6 +1,18 @@
 #!/usr/bin/env bash
-#MISE description="Build the project"
-bun build ./src/index.ts \
-	--outdir ./dist \
-	--target node \
-	--format esm
+#MISE description="Build the OpenNotes CLI"
+set -euo pipefail
+
+# Get version info
+VERSION="${VERSION:-$(git describe --tags --always --dirty 2>/dev/null || echo "dev")}"
+COMMIT="${COMMIT:-$(git rev-parse --short HEAD 2>/dev/null || echo "none")}"
+DATE="${DATE:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}"
+
+# Build with ldflags
+go build -ldflags "\
+  -s -w \
+  -X github.com/zenobius/opennotes/cmd.Version=${VERSION} \
+  -X github.com/zenobius/opennotes/cmd.Commit=${COMMIT} \
+  -X github.com/zenobius/opennotes/cmd.Date=${DATE}" \
+  -o dist/opennotes ./main.go
+
+echo "Built dist/opennotes (${VERSION}, ${COMMIT}, ${DATE})"

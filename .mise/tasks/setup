@@ -1,12 +1,5 @@
 #!/usr/bin/env bash
-#MISE description="Setting up project"
+#MISE description="Setup project dependencies"
 
-echo ""
-echo "🍜 Setting up project"
-echo ""
-
-bun install
-
-echo ""
-echo "👍 Done"
-echo ""
+mise install
+go mod tidy

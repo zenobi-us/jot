@@ -1,12 +1,7 @@
 #!/usr/bin/env bash
-#MISE description="Run tests"
-#USAGE arg "[files]" var=#true help="Optional specific test files to run"
-#USAGE flag "-w --watch" help="Run tests in watch mode"
+#MISE description="Run all tests"
+#USAGE flag --coverage default="false"
 
-args=()
+set -euo pipefail
 
-if [ "$usage_watch" = "true" ]; then
-	args+=("--watch")
-fi
-
-bun test "${args[@]}" "$usage_files"
+go test -v -race ./...

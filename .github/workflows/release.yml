@@ -23,7 +23,7 @@ jobs:
         id: release-please
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          release-type: node
+          release-type: go
           skip-github-pull-request: false
 
   dispatch-publish:
