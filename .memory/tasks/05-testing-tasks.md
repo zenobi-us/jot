@@ -1,6 +1,7 @@
 # Phase 5: Testing Tasks
 
 ## Overview
+
 Prioritized and grouped tasks to address testing gaps in the Go implementation.
 
 **Research:** See `.memory/research/testing-gaps.md` for detailed gap analysis.
@@ -10,23 +11,28 @@ Prioritized and grouped tasks to address testing gaps in the Go implementation.
 ## Task Checklist
 
 ### Setup Tasks (Before Starting)
-- [ ] 5.0a Create `internal/testutil/notebook.go` helpers
-- [ ] 5.0b Create `internal/testutil/config.go` helpers
+
+- [x] 5.0a Create `internal/testutil/notebook.go` helpers ✅ (2026-01-09)
+- [x] 5.0b Create `internal/testutil/config.go` helpers ✅ (2026-01-09)
 
 ### Group A: Foundation Services (P0 - Critical)
-- [ ] 5.1 ConfigService Unit Tests (`config_test.go`) - 2-3 hrs
-- [ ] 5.2 DbService Integration Tests (`db_test.go`) - 2-3 hrs
-- [ ] 5.3 NotebookService Unit Tests (`notebook_test.go`) - 4-5 hrs
+
+- [x] 5.1 ConfigService Unit Tests (`config_test.go`) - 2-3 hrs ✅ (2026-01-09) - 10 tests
+- [x] 5.2 DbService Integration Tests (`db_test.go`) - 2-3 hrs ✅ (2026-01-09) - 14 tests
+- [x] 5.3 NotebookService Unit Tests (`notebook_test.go`) - 4-5 hrs ✅ (2026-01-09) - 28 tests
 
 ### Group B: Data Services (P1 - Important)
+
 - [ ] 5.4 NoteService Integration Tests (`note_test.go`) - 2-3 hrs
 
 ### Group C: Display Layer (P2 - Nice to Have)
+
 - [ ] 5.5 Display Service Tests (`display_test.go`) - 1-2 hrs
 - [ ] 5.6 Templates Tests (`templates_test.go`) - 1 hr
 - [ ] 5.7 Logger Tests (`logger_test.go`) - 30 min
 
 ### Group D: E2E/Integration (P2 - Future)
+
 - [ ] 5.8 CLI E2E Tests (`tests/e2e/go_smoke_test.go`) - 4-6 hrs
 
 ---
@@ -36,6 +42,7 @@ Prioritized and grouped tasks to address testing gaps in the Go implementation.
 These must be completed first as other services depend on them.
 
 ### Task 5.1: ConfigService Unit Tests
+
 **Priority:** P0 - Critical  
 **Estimated Effort:** 2-3 hours  
 **Dependencies:** None  
@@ -45,6 +52,7 @@ These must be completed first as other services depend on them.
 ConfigService is the first service initialized and used by all other services. Bugs here cascade through the entire application. The 3-tier config loading (defaults → file → env) is complex logic that needs verification.
 
 **Test Cases to Implement:**
+
 ```go
 // Test default config values when no file/env exists
 TestNewConfigService_Defaults
@@ -72,6 +80,7 @@ TestGlobalConfigFile
 ```
 
 **Implementation Notes:**
+
 - Use `t.TempDir()` for isolated filesystem tests
 - Set/unset env vars with `t.Setenv()`
 - Consider `testify/suite` for setup/teardown
@@ -79,6 +88,7 @@ TestGlobalConfigFile
 ---
 
 ### Task 5.2: DbService Integration Tests
+
 **Priority:** P0 - Critical  
 **Estimated Effort:** 2-3 hours  
 **Dependencies:** None (uses real DuckDB)  
@@ -88,6 +98,7 @@ TestGlobalConfigFile
 DbService wraps DuckDB with the markdown extension. Testing ensures the extension loads correctly and queries work. This is an integration test because mocking DuckDB defeats the purpose.
 
 **Test Cases to Implement:**
+
 ```go
 // Test GetDB() returns valid connection
 TestDbService_GetDB_ReturnsConnection
@@ -112,6 +123,7 @@ TestDbService_ConcurrentAccess
 ```
 
 **Implementation Notes:**
+
 - Test with real DuckDB (in-memory mode is fast)
 - Use `read_markdown()` with temp markdown files to verify extension
 - Use `sync.WaitGroup` for concurrency tests
@@ -119,6 +131,7 @@ TestDbService_ConcurrentAccess
 ---
 
 ### Task 5.3: NotebookService Unit Tests
+
 **Priority:** P0 - Critical  
 **Estimated Effort:** 4-5 hours  
 **Dependencies:** ConfigService, DbService (mock or real)  
@@ -128,6 +141,7 @@ TestDbService_ConcurrentAccess
 NotebookService contains the most complex business logic: notebook discovery (3-step priority), context matching, CRUD operations. This is the core of the application and affects every user-facing command.
 
 **Test Cases to Implement:**
+
 ```go
 // HasNotebook tests
 TestNotebookService_HasNotebook_ExistsTrue
@@ -171,6 +185,7 @@ TestNotebook_SaveConfig_WithRegistration
 ```
 
 **Implementation Notes:**
+
 - Use `t.TempDir()` for filesystem isolation
 - Create helper function `createTestNotebook(t, path, name)` for setup
 - Mock ConfigService for isolation, or use real ConfigService with temp config file
@@ -182,6 +197,7 @@ TestNotebook_SaveConfig_WithRegistration
 These depend on Group A services being stable.
 
 ### Task 5.4: NoteService Integration Tests
+
 **Priority:** P1 - Important  
 **Estimated Effort:** 2-3 hours  
 **Dependencies:** DbService (real), NotebookService (can be minimal)  
@@ -191,6 +207,7 @@ These depend on Group A services being stable.
 NoteService handles all note queries via DuckDB. Testing ensures the SQL queries work correctly with real markdown files and the result mapping is accurate.
 
 **Test Cases to Implement:**
+
 ```go
 // SearchNotes tests
 TestNoteService_SearchNotes_FindsAllNotes
@@ -210,6 +227,7 @@ TestNoteService_Query_ReturnsResults
 ```
 
 **Implementation Notes:**
+
 - Create temp directory with test markdown files
 - Include files with frontmatter to test metadata extraction
 - Test with various glob patterns
@@ -221,6 +239,7 @@ TestNoteService_Query_ReturnsResults
 These are low priority as they're output-only.
 
 ### Task 5.5: Display Service Tests
+
 **Priority:** P2 - Nice to Have  
 **Estimated Effort:** 1-2 hours  
 **Dependencies:** None  
@@ -230,6 +249,7 @@ These are low priority as they're output-only.
 Display service is pure output transformation. Failures are visible but not data-affecting. Tests ensure template fallbacks work correctly.
 
 **Test Cases to Implement:**
+
 ```go
 // Render tests
 TestDisplay_Render_BasicMarkdown
@@ -242,12 +262,14 @@ TestDisplay_RenderTemplate_ExecutionError_Fallback
 ```
 
 **Implementation Notes:**
+
 - Test that fallbacks return sensible output on errors
 - Don't test glamour's rendering itself (external library)
 
 ---
 
 ### Task 5.6: Templates Tests
+
 **Priority:** P2 - Nice to Have  
 **Estimated Effort:** 1 hour  
 **Dependencies:** None  
@@ -257,6 +279,7 @@ TestDisplay_RenderTemplate_ExecutionError_Fallback
 Templates are static strings. Tests ensure they handle edge cases (empty data, nil values) without panicking.
 
 **Test Cases to Implement:**
+
 ```go
 // TuiRender tests
 TestTuiRender_NoteList_WithNotes
@@ -269,6 +292,7 @@ TestTuiRender_NotebookList_Empty
 ---
 
 ### Task 5.7: Logger Tests
+
 **Priority:** P2 - Nice to Have  
 **Estimated Effort:** 30 minutes  
 **Dependencies:** None  
@@ -278,6 +302,7 @@ TestTuiRender_NotebookList_Empty
 Logger is simple initialization. Tests ensure env vars are respected.
 
 **Test Cases to Implement:**
+
 ```go
 // InitLogger tests
 TestInitLogger_DefaultLevel
@@ -294,6 +319,7 @@ TestLog_ReturnsNamespacedLogger
 ## Group D: E2E/Integration (Future)
 
 ### Task 5.8: CLI E2E Tests
+
 **Priority:** P2 - Future  
 **Estimated Effort:** 4-6 hours  
 **Dependencies:** All services stable  
@@ -303,6 +329,7 @@ TestLog_ReturnsNamespacedLogger
 End-to-end tests verify the entire CLI works as expected from a user perspective. Should be implemented after unit/integration tests are stable.
 
 **Test Cases to Implement:**
+
 ```go
 // Init command
 TestCLI_Init_CreatesConfig
@@ -321,6 +348,7 @@ TestCLI_NotesRemove_RemovesNote
 ```
 
 **Implementation Notes:**
+
 - Use `exec.Command` to run the compiled binary
 - Create temp HOME directory for isolated config
 - Create temp notebooks for testing
@@ -329,11 +357,11 @@ TestCLI_NotesRemove_RemovesNote
 
 ## Summary by Priority
 
-| Priority | Tasks | Estimated Total Effort |
-|----------|-------|------------------------|
-| P0 - Critical | 5.1, 5.2, 5.3 | 8-11 hours |
-| P1 - Important | 5.4 | 2-3 hours |
-| P2 - Nice to Have | 5.5, 5.6, 5.7, 5.8 | 6-10 hours |
+| Priority          | Tasks              | Estimated Total Effort |
+| ----------------- | ------------------ | ---------------------- |
+| P0 - Critical     | 5.1, 5.2, 5.3      | 8-11 hours             |
+| P1 - Important    | 5.4                | 2-3 hours              |
+| P2 - Nice to Have | 5.5, 5.6, 5.7, 5.8 | 6-10 hours             |
 
 ## Recommended Implementation Order
 
@@ -362,7 +390,7 @@ Before implementing tests, create these helpers in `internal/testutil/`:
 func CreateTestNotebook(t *testing.T, dir, name string) string
 func CreateTestNote(t *testing.T, notebookDir, filename, content string) string
 
-// testutil/config.go  
+// testutil/config.go
 func CreateTestConfig(t *testing.T, cfg services.Config) string
 func SetupTestEnv(t *testing.T, envVars map[string]string)
 ```

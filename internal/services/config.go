@@ -23,7 +23,7 @@ type Config struct {
 	// Notebooks paths are directories containing .opennotes.json
 	Notebooks []string `koanf:"notebooks" json:"notebooks"`
 	// NotebookPath is the current notebook path (from env, flag, or stored)
-	NotebookPath string `koanf:"notebookpath" json:"notebookPath,omitempty"`
+	NotebookPath string `koanf:"notebookpath" json:"notebookpath,omitempty"`
 }
 
 // ConfigService manages configuration loading and persistence.
@@ -45,9 +45,14 @@ func GlobalConfigFile() string {
 
 // NewConfigService creates and initializes the config service.
 func NewConfigService() (*ConfigService, error) {
+	return NewConfigServiceWithPath(GlobalConfigFile())
+}
+
+// NewConfigServiceWithPath creates a config service with a custom config path.
+// Useful for testing with isolated config files.
+func NewConfigServiceWithPath(configPath string) (*ConfigService, error) {
 	log := Log("ConfigService")
 	k := koanf.New(".")
-	configPath := GlobalConfigFile()
 
 	log.Debug().Str("path", configPath).Msg("loading config")
 

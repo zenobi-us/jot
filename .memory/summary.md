@@ -6,9 +6,9 @@ OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks
 
 ## Current Status
 
-- **Phase**: Phase 1-4 COMPLETE, Phase 5 Planned
+- **Phase**: Phase 5 IN PROGRESS (P0 Complete)
 - **Last Updated**: 2026-01-09
-- **Next Action**: Implement P0 testing tasks (ConfigService, DbService, NotebookService)
+- **Next Action**: Commit P0 testing work, then implement P1 (NoteService tests)
 
 ## Active Task: Go Rewrite
 
@@ -64,15 +64,24 @@ OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks
 | 4.8 Config Compatibility | Done    | Go reads/writes same format as TypeScript                         |
 | 4.9 Feature Parity       | Done    | All commands match, added aliases (nb, ls, rm)                    |
 
-#### Phase 5: Testing Tasks - PLANNED
+#### Phase 5: Testing Tasks - IN PROGRESS
 
 See `.memory/tasks/05-testing-tasks.md` for detailed task breakdown.  
 See `.memory/research/testing-gaps.md` for gap analysis.
 
-**Priority Summary:**
+**Progress:**
+| Task | Status | Tests Added |
+|------|--------|-------------|
+| 5.0 Setup (testutil) | ✅ Complete | - |
+| 5.1 ConfigService | ✅ Complete | 10 tests |
+| 5.2 DbService | ✅ Complete | 14 tests |
+| 5.3 NotebookService | ✅ Complete | 28 tests |
+| 5.4 NoteService | Pending | - |
+| 5.5-5.8 P2 tasks | Pending | - |
+
+**Remaining:**
 | Priority | Tasks | Files | Est. Effort |
 |----------|-------|-------|-------------|
-| P0 Critical | 5.1-5.3 | config_test.go, db_test.go, notebook_test.go | 8-11 hrs |
 | P1 Important | 5.4 | note_test.go | 2-3 hrs |
 | P2 Nice to Have | 5.5-5.8 | display_test.go, templates_test.go, logger_test.go, e2e | 6-10 hrs |
 
@@ -81,58 +90,47 @@ See `.memory/research/testing-gaps.md` for gap analysis.
 - `go build` succeeds
 - `./opennotes --help` works
 - All commands functional with glamour output
-- Core tests passing (`internal/core` tests: 27 cases)
-- Service tests: **MISSING** (0 test files)
+- All Go tests passing
 
 ### Testing Coverage Matrix
 
-| Package           | Files | Test Files | Coverage |
-| ----------------- | ----- | ---------- | -------- |
-| internal/core     | 2     | 2          | Good     |
-| internal/services | 7     | 0          | **None** |
-| cmd               | 12    | 0          | **None** |
+| Package           | Files | Test Files | Test Count | Coverage           |
+| ----------------- | ----- | ---------- | ---------- | ------------------ |
+| internal/core     | 2     | 2          | 27         | Good               |
+| internal/services | 7     | 3          | 52         | Good (P0 complete) |
+| internal/testutil | 2     | 0          | (helpers)  | N/A                |
+| cmd               | 12    | 0          | 0          | **None**           |
 
 ### Uncommitted Work
 
-Files modified but not committed:
+Files modified:
 
-- `cmd/notebook_create.go` - Updated display integration
-- `cmd/notebook_list.go` - Updated display integration
-- `cmd/notes_list.go` - Updated display integration
-- `go.mod` / `go.sum` - Dependency updates
-- `internal/services/note.go` - Minor fixes
+- `internal/services/config.go` - Added `NewConfigServiceWithPath()` for testability
 
 New files (untracked):
 
-- `.mise/tasks/go-build` - Build Go binary task
-- `.mise/tasks/go-lint` - Lint Go code task
-- `.mise/tasks/go-test` - Run Go tests task
-- `cmd/notes_add.go` - Add notes with template support
-- `cmd/notes_remove.go` - Remove notes with --force flag
-- `internal/core/` - Validation and string utilities
-- `internal/services/display.go` - Display service with glamour
-- `internal/services/templates.go` - TUI templates (separated from display)
+- `internal/services/config_test.go` - ConfigService tests (10 tests)
+- `internal/services/db_test.go` - DbService tests (14 tests)
+- `internal/services/notebook_test.go` - NotebookService tests (28 tests)
+- `internal/testutil/config.go` - Test helper utilities
+- `internal/testutil/notebook.go` - Test helper utilities
 
 ### Remaining Work
 
-**Immediate (This Sprint):**
+**Immediate:**
 
-1. Commit uncommitted Go work
-2. Task 5.1: ConfigService tests (P0)
-3. Task 5.2: DbService tests (P0)
-4. Task 5.3: NotebookService tests (P0)
+1. Commit P0 testing work (52 tests, testutil helpers)
+2. Task 5.4: NoteService tests (P1)
 
 **Next Sprint:**
 
-1. Task 5.4: NoteService tests (P1)
-2. Task 4.4: Help text improvements
-3. Task 4.8: Config compatibility verification
+1. Tasks 5.5-5.7: Display/Templates/Logger tests (P2)
+2. Task 5.8: E2E tests (P2)
 
 **Future:**
 
-1. Tasks 5.5-5.7: Display/Templates/Logger tests
-2. Task 5.8: E2E tests
-3. Task 4.9: Feature parity checklist
+1. Performance optimization
+2. Documentation updates
 
 ### Key Files
 
@@ -158,13 +156,20 @@ internal/core/
   strings_test.go           # String utility tests (NEW) - 13 cases
 
 internal/services/
-  config.go                 # ConfigService with koanf - NEEDS TESTS
-  db.go                     # DbService with DuckDB - NEEDS TESTS
-  display.go                # Display service with glamour (NEW) - NEEDS TESTS
+  config.go                 # ConfigService with koanf
+  config_test.go            # ConfigService tests (10 tests) ✅
+  db.go                     # DbService with DuckDB
+  db_test.go                # DbService tests (14 tests) ✅
+  display.go                # Display service with glamour - NEEDS TESTS
   logger.go                 # zerolog logging - NEEDS TESTS
-  notebook.go               # NotebookService (complete) - NEEDS TESTS
+  notebook.go               # NotebookService (complete)
+  notebook_test.go          # NotebookService tests (28 tests) ✅
   note.go                   # NoteService (complete) - NEEDS TESTS
-  templates.go              # TUI templates (NEW) - NEEDS TESTS
+  templates.go              # TUI templates - NEEDS TESTS
+
+internal/testutil/
+  config.go                 # Test helper utilities (NEW)
+  notebook.go               # Test helper utilities (NEW)
 
 .mise/tasks/
   go-build                  # Build Go binary (NEW)
