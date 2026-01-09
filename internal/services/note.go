@@ -57,7 +57,11 @@ func (s *NoteService) SearchNotes(ctx context.Context, query string) ([]Note, er
 	if err != nil {
 		return nil, fmt.Errorf("query failed: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			s.log.Warn().Err(err).Msg("failed to close rows")
+		}
+	}()
 
 	var notes []Note
 	columns, err := rows.Columns()

@@ -77,7 +77,11 @@ func (d *DbService) Query(ctx context.Context, query string, args ...interface{}
 	if err != nil {
 		return nil, fmt.Errorf("query failed: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			d.log.Warn().Err(err).Msg("failed to close rows")
+		}
+	}()
 
 	return rowsToMaps(rows)
 }

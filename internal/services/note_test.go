@@ -14,7 +14,11 @@ import (
 func TestNoteService_SearchNotes_NoNotebookSelected(t *testing.T) {
 	ctx := context.Background()
 	db := services.NewDbService()
-	defer db.Close()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 
 	cfg, _ := services.NewConfigServiceWithPath(t.TempDir() + "/config.json")
 	svc := services.NewNoteService(cfg, db, "")
@@ -28,7 +32,11 @@ func TestNoteService_SearchNotes_NoNotebookSelected(t *testing.T) {
 func TestNoteService_SearchNotes_FindsAllNotes(t *testing.T) {
 	ctx := context.Background()
 	db := services.NewDbService()
-	defer db.Close()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 
 	tmpDir := t.TempDir()
 	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
@@ -50,7 +58,11 @@ func TestNoteService_SearchNotes_FindsAllNotes(t *testing.T) {
 func TestNoteService_SearchNotes_FiltersByQuery(t *testing.T) {
 	ctx := context.Background()
 	db := services.NewDbService()
-	defer db.Close()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 
 	tmpDir := t.TempDir()
 	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
@@ -74,7 +86,11 @@ func TestNoteService_SearchNotes_FiltersByQuery(t *testing.T) {
 func TestNoteService_SearchNotes_FiltersByQueryCaseInsensitive(t *testing.T) {
 	ctx := context.Background()
 	db := services.NewDbService()
-	defer db.Close()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 
 	tmpDir := t.TempDir()
 	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
@@ -94,7 +110,11 @@ func TestNoteService_SearchNotes_FiltersByQueryCaseInsensitive(t *testing.T) {
 func TestNoteService_SearchNotes_FiltersByFilepath(t *testing.T) {
 	ctx := context.Background()
 	db := services.NewDbService()
-	defer db.Close()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 
 	tmpDir := t.TempDir()
 	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
@@ -116,7 +136,11 @@ func TestNoteService_SearchNotes_FiltersByFilepath(t *testing.T) {
 func TestNoteService_SearchNotes_EmptyNotebook(t *testing.T) {
 	ctx := context.Background()
 	db := services.NewDbService()
-	defer db.Close()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 
 	tmpDir := t.TempDir()
 	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
@@ -137,7 +161,11 @@ func TestNoteService_SearchNotes_EmptyNotebook(t *testing.T) {
 func TestNoteService_SearchNotes_ExtractsMetadata(t *testing.T) {
 	ctx := context.Background()
 	db := services.NewDbService()
-	defer db.Close()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 
 	tmpDir := t.TempDir()
 	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
@@ -166,7 +194,11 @@ func TestNoteService_SearchNotes_ExtractsMetadata(t *testing.T) {
 func TestNoteService_SearchNotes_SetsRelativePath(t *testing.T) {
 	ctx := context.Background()
 	db := services.NewDbService()
-	defer db.Close()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 
 	tmpDir := t.TempDir()
 	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
@@ -186,7 +218,11 @@ func TestNoteService_SearchNotes_SetsRelativePath(t *testing.T) {
 func TestNoteService_Count_NoNotebookSelected(t *testing.T) {
 	ctx := context.Background()
 	db := services.NewDbService()
-	defer db.Close()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 
 	cfg, _ := services.NewConfigServiceWithPath(t.TempDir() + "/config.json")
 	svc := services.NewNoteService(cfg, db, "")
@@ -200,7 +236,11 @@ func TestNoteService_Count_NoNotebookSelected(t *testing.T) {
 func TestNoteService_Count_ReturnsCorrectCount(t *testing.T) {
 	ctx := context.Background()
 	db := services.NewDbService()
-	defer db.Close()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 
 	tmpDir := t.TempDir()
 	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
@@ -222,7 +262,11 @@ func TestNoteService_Count_ReturnsCorrectCount(t *testing.T) {
 func TestNoteService_Count_EmptyNotebook(t *testing.T) {
 	ctx := context.Background()
 	db := services.NewDbService()
-	defer db.Close()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 
 	tmpDir := t.TempDir()
 	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
@@ -242,7 +286,11 @@ func TestNoteService_Count_EmptyNotebook(t *testing.T) {
 func TestNoteService_Query_ExecutesSQL(t *testing.T) {
 	ctx := context.Background()
 	db := services.NewDbService()
-	defer db.Close()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 
 	cfg, _ := services.NewConfigServiceWithPath(t.TempDir() + "/config.json")
 	svc := services.NewNoteService(cfg, db, "")
@@ -258,7 +306,11 @@ func TestNoteService_Query_ExecutesSQL(t *testing.T) {
 func TestNoteService_Query_ReturnsResults(t *testing.T) {
 	ctx := context.Background()
 	db := services.NewDbService()
-	defer db.Close()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 
 	tmpDir := t.TempDir()
 	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
@@ -281,7 +333,11 @@ func TestNoteService_Query_ReturnsResults(t *testing.T) {
 func TestNoteService_SearchNotes_MultipleQueryMatches(t *testing.T) {
 	ctx := context.Background()
 	db := services.NewDbService()
-	defer db.Close()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 
 	tmpDir := t.TempDir()
 	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
@@ -302,7 +358,11 @@ func TestNoteService_SearchNotes_MultipleQueryMatches(t *testing.T) {
 func TestNoteService_SearchNotes_ContentHasText(t *testing.T) {
 	ctx := context.Background()
 	db := services.NewDbService()
-	defer db.Close()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 
 	tmpDir := t.TempDir()
 	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
@@ -323,7 +383,11 @@ func TestNoteService_SearchNotes_ContentHasText(t *testing.T) {
 
 func TestNewNoteService(t *testing.T) {
 	db := services.NewDbService()
-	defer db.Close()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 
 	cfg, _ := services.NewConfigServiceWithPath(t.TempDir() + "/config.json")
 

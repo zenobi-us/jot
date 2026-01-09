@@ -38,7 +38,7 @@ func newTestEnv(t *testing.T) *testEnv {
 
 	// Register cleanup
 	t.Cleanup(func() {
-		os.RemoveAll(tmpDir)
+		_ = os.RemoveAll(tmpDir)
 	})
 
 	return &testEnv{
@@ -296,7 +296,7 @@ func TestCLI_NotebookAddContext_AddsContext(t *testing.T) {
 	// Create a notebook
 	notebookDir := env.createNotebook("context-test")
 	contextPath := filepath.Join(env.tmpDir, "my-project")
-	os.MkdirAll(contextPath, 0755)
+	_ = os.MkdirAll(contextPath, 0755)
 
 	// Add context - path is positional arg, not --path flag
 	stdout, stderr, exitCode := env.runInDir(notebookDir, "notebook", "add-context", contextPath)
@@ -608,7 +608,7 @@ func TestCLI_NoNotebookFound(t *testing.T) {
 
 	// Run notes list without a notebook (should error)
 	emptyDir := filepath.Join(env.tmpDir, "empty")
-	os.MkdirAll(emptyDir, 0755)
+	_ = os.MkdirAll(emptyDir, 0755)
 
 	_, stderr, exitCode := env.runInDir(emptyDir, "notes", "list")
 

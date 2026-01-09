@@ -58,7 +58,10 @@ Examples:
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
 		// Cleanup database connection
 		if dbService != nil {
-			dbService.Close()
+			if err := dbService.Close(); err != nil {
+				log := services.Log("cleanup")
+				log.Warn().Err(err).Msg("failed to close database")
+			}
 		}
 	},
 }

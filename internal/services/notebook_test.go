@@ -171,7 +171,11 @@ func TestNotebookService_Open_Success(t *testing.T) {
 
 	configSvc := createTestConfigService(t, tmpDir, nil)
 	dbSvc := NewDbService()
-	defer dbSvc.Close()
+	t.Cleanup(func() {
+		if err := dbSvc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 	svc := NewNotebookService(configSvc, dbSvc)
 
 	notebook, err := svc.Open(notebookDir)
@@ -186,7 +190,11 @@ func TestNotebookService_Open_LoadsNoteService(t *testing.T) {
 
 	configSvc := createTestConfigService(t, tmpDir, nil)
 	dbSvc := NewDbService()
-	defer dbSvc.Close()
+	t.Cleanup(func() {
+		if err := dbSvc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 	svc := NewNotebookService(configSvc, dbSvc)
 
 	notebook, err := svc.Open(notebookDir)
@@ -203,7 +211,11 @@ func TestNotebookService_Create_CreatesDirectories(t *testing.T) {
 
 	configSvc := createTestConfigService(t, tmpDir, nil)
 	dbSvc := NewDbService()
-	defer dbSvc.Close()
+	t.Cleanup(func() {
+		if err := dbSvc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 	svc := NewNotebookService(configSvc, dbSvc)
 
 	notebook, err := svc.Create("new-notebook", notebookDir, false)
@@ -227,7 +239,11 @@ func TestNotebookService_Create_WritesConfig(t *testing.T) {
 
 	configSvc := createTestConfigService(t, tmpDir, nil)
 	dbSvc := NewDbService()
-	defer dbSvc.Close()
+	t.Cleanup(func() {
+		if err := dbSvc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 	svc := NewNotebookService(configSvc, dbSvc)
 
 	_, err := svc.Create("new-notebook", notebookDir, false)
@@ -255,7 +271,11 @@ func TestNotebookService_Create_RegistersGlobally(t *testing.T) {
 
 	configSvc := createTestConfigService(t, tmpDir, nil)
 	dbSvc := NewDbService()
-	defer dbSvc.Close()
+	t.Cleanup(func() {
+		if err := dbSvc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 	svc := NewNotebookService(configSvc, dbSvc)
 
 	_, err := svc.Create("new-notebook", notebookDir, true)
@@ -272,7 +292,11 @@ func TestNotebookService_Create_WithoutRegister(t *testing.T) {
 	initialNotebooks := []string{"/existing/notebook"}
 	configSvc := createTestConfigService(t, tmpDir, initialNotebooks)
 	dbSvc := NewDbService()
-	defer dbSvc.Close()
+	t.Cleanup(func() {
+		if err := dbSvc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 	svc := NewNotebookService(configSvc, dbSvc)
 
 	_, err := svc.Create("new-notebook", notebookDir, false)
@@ -303,7 +327,11 @@ func TestNotebookService_Infer_DeclaredPathPriority(t *testing.T) {
 	configSvc, err := NewConfigServiceWithPath(configPath)
 	require.NoError(t, err)
 	dbSvc := NewDbService()
-	defer dbSvc.Close()
+	t.Cleanup(func() {
+		if err := dbSvc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 	svc := NewNotebookService(configSvc, dbSvc)
 
 	// Infer from ancestor notebook directory should still return declared
@@ -337,7 +365,11 @@ func TestNotebookService_Infer_ContextMatchPriority(t *testing.T) {
 	// Register the notebook
 	configSvc := createTestConfigService(t, tmpDir, []string{notebookDir})
 	dbSvc := NewDbService()
-	defer dbSvc.Close()
+	t.Cleanup(func() {
+		if err := dbSvc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 	svc := NewNotebookService(configSvc, dbSvc)
 
 	// Infer should find via context match
@@ -360,7 +392,11 @@ func TestNotebookService_Infer_AncestorSearchPriority(t *testing.T) {
 
 	configSvc := createTestConfigService(t, tmpDir, nil)
 	dbSvc := NewDbService()
-	defer dbSvc.Close()
+	t.Cleanup(func() {
+		if err := dbSvc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 	svc := NewNotebookService(configSvc, dbSvc)
 
 	// Infer from subdirectory should find ancestor notebook
@@ -378,7 +414,11 @@ func TestNotebookService_Infer_NoneFound(t *testing.T) {
 
 	configSvc := createTestConfigService(t, tmpDir, nil)
 	dbSvc := NewDbService()
-	defer dbSvc.Close()
+	t.Cleanup(func() {
+		if err := dbSvc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 	svc := NewNotebookService(configSvc, dbSvc)
 
 	notebook, err := svc.Infer(workDir)
@@ -396,7 +436,11 @@ func TestNotebookService_List_FromRegistered(t *testing.T) {
 
 	configSvc := createTestConfigService(t, tmpDir, []string{nb1, nb2})
 	dbSvc := NewDbService()
-	defer dbSvc.Close()
+	t.Cleanup(func() {
+		if err := dbSvc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 	svc := NewNotebookService(configSvc, dbSvc)
 
 	workDir := filepath.Join(tmpDir, "work")
@@ -420,7 +464,11 @@ func TestNotebookService_List_FromAncestors(t *testing.T) {
 
 	configSvc := createTestConfigService(t, tmpDir, nil)
 	dbSvc := NewDbService()
-	defer dbSvc.Close()
+	t.Cleanup(func() {
+		if err := dbSvc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 	svc := NewNotebookService(configSvc, dbSvc)
 
 	notebooks, err := svc.List(subDir)
@@ -442,7 +490,11 @@ func TestNotebookService_List_Deduplicated(t *testing.T) {
 
 	configSvc := createTestConfigService(t, tmpDir, []string{nbDir})
 	dbSvc := NewDbService()
-	defer dbSvc.Close()
+	t.Cleanup(func() {
+		if err := dbSvc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 	svc := NewNotebookService(configSvc, dbSvc)
 
 	// List from subdir - should find via registered AND ancestor, but dedup
@@ -459,7 +511,11 @@ func TestNotebookService_List_Empty(t *testing.T) {
 
 	configSvc := createTestConfigService(t, tmpDir, nil)
 	dbSvc := NewDbService()
-	defer dbSvc.Close()
+	t.Cleanup(func() {
+		if err := dbSvc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 	svc := NewNotebookService(configSvc, dbSvc)
 
 	notebooks, err := svc.List(workDir)
@@ -502,7 +558,11 @@ func TestNotebook_AddContext_NewContext(t *testing.T) {
 
 	configSvc := createTestConfigService(t, tmpDir, nil)
 	dbSvc := NewDbService()
-	defer dbSvc.Close()
+	t.Cleanup(func() {
+		if err := dbSvc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 	svc := NewNotebookService(configSvc, dbSvc)
 
 	notebook, err := svc.Open(notebookDir)
@@ -521,7 +581,11 @@ func TestNotebook_AddContext_DuplicateIgnored(t *testing.T) {
 
 	configSvc := createTestConfigService(t, tmpDir, nil)
 	dbSvc := NewDbService()
-	defer dbSvc.Close()
+	t.Cleanup(func() {
+		if err := dbSvc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 	svc := NewNotebookService(configSvc, dbSvc)
 
 	notebook, err := svc.Open(notebookDir)
@@ -544,7 +608,11 @@ func TestNotebook_SaveConfig_LocalOnly(t *testing.T) {
 
 	configSvc := createTestConfigService(t, tmpDir, nil)
 	dbSvc := NewDbService()
-	defer dbSvc.Close()
+	t.Cleanup(func() {
+		if err := dbSvc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 	svc := NewNotebookService(configSvc, dbSvc)
 
 	notebook, err := svc.Open(notebookDir)
@@ -573,7 +641,11 @@ func TestNotebook_SaveConfig_WithRegistration(t *testing.T) {
 
 	configSvc := createTestConfigService(t, tmpDir, nil)
 	dbSvc := NewDbService()
-	defer dbSvc.Close()
+	t.Cleanup(func() {
+		if err := dbSvc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 	svc := NewNotebookService(configSvc, dbSvc)
 
 	notebook, err := svc.Open(notebookDir)
@@ -593,7 +665,11 @@ func TestNotebook_SaveConfig_AvoidsDuplicateRegistration(t *testing.T) {
 	// Already registered
 	configSvc := createTestConfigService(t, tmpDir, []string{notebookDir})
 	dbSvc := NewDbService()
-	defer dbSvc.Close()
+	t.Cleanup(func() {
+		if err := dbSvc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 	svc := NewNotebookService(configSvc, dbSvc)
 
 	notebook, err := svc.Open(notebookDir)

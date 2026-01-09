@@ -14,7 +14,11 @@ import (
 func TestDbService_GetDB_ReturnsConnection(t *testing.T) {
 	ctx := context.Background()
 	svc := NewDbService()
-	defer svc.Close()
+	t.Cleanup(func() {
+		if err := svc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 
 	db, err := svc.GetDB(ctx)
 	require.NoError(t, err)
@@ -24,7 +28,11 @@ func TestDbService_GetDB_ReturnsConnection(t *testing.T) {
 func TestDbService_GetDB_LoadsMarkdownExtension(t *testing.T) {
 	ctx := context.Background()
 	svc := NewDbService()
-	defer svc.Close()
+	t.Cleanup(func() {
+		if err := svc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 
 	db, err := svc.GetDB(ctx)
 	require.NoError(t, err)
@@ -32,7 +40,11 @@ func TestDbService_GetDB_LoadsMarkdownExtension(t *testing.T) {
 	// Verify markdown extension is loaded by checking for the function
 	rows, err := db.QueryContext(ctx, "SELECT extension_name FROM duckdb_extensions() WHERE extension_name = 'markdown' AND loaded = true")
 	require.NoError(t, err)
-	defer rows.Close()
+	t.Cleanup(func() {
+		if err := rows.Close(); err != nil {
+			t.Logf("warning: failed to close rows: %v", err)
+		}
+	})
 
 	// Should find the markdown extension
 	assert.True(t, rows.Next(), "markdown extension should be loaded")
@@ -40,7 +52,11 @@ func TestDbService_GetDB_LoadsMarkdownExtension(t *testing.T) {
 
 func TestDbService_GetDB_LazyInit(t *testing.T) {
 	svc := NewDbService()
-	defer svc.Close()
+	t.Cleanup(func() {
+		if err := svc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 
 	// Before GetDB, db should be nil
 	assert.Nil(t, svc.db)
@@ -55,7 +71,11 @@ func TestDbService_GetDB_LazyInit(t *testing.T) {
 func TestDbService_GetDB_ReturnsSameConnection(t *testing.T) {
 	ctx := context.Background()
 	svc := NewDbService()
-	defer svc.Close()
+	t.Cleanup(func() {
+		if err := svc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 
 	db1, err := svc.GetDB(ctx)
 	require.NoError(t, err)
@@ -70,7 +90,11 @@ func TestDbService_GetDB_ReturnsSameConnection(t *testing.T) {
 func TestDbService_Query_SimpleSQL(t *testing.T) {
 	ctx := context.Background()
 	svc := NewDbService()
-	defer svc.Close()
+	t.Cleanup(func() {
+		if err := svc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 
 	results, err := svc.Query(ctx, "SELECT 1 as value, 'hello' as message")
 	require.NoError(t, err)
@@ -83,7 +107,11 @@ func TestDbService_Query_SimpleSQL(t *testing.T) {
 func TestDbService_Query_ResultMapping(t *testing.T) {
 	ctx := context.Background()
 	svc := NewDbService()
-	defer svc.Close()
+	t.Cleanup(func() {
+		if err := svc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 
 	// Query with multiple rows
 	results, err := svc.Query(ctx, `
@@ -105,7 +133,11 @@ func TestDbService_Query_ResultMapping(t *testing.T) {
 func TestDbService_Query_ReadMarkdown(t *testing.T) {
 	ctx := context.Background()
 	svc := NewDbService()
-	defer svc.Close()
+	t.Cleanup(func() {
+		if err := svc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 
 	// Create a temporary markdown file
 	tmpDir := t.TempDir()
@@ -141,7 +173,11 @@ This is test content.
 func TestDbService_Query_EmptyResult(t *testing.T) {
 	ctx := context.Background()
 	svc := NewDbService()
-	defer svc.Close()
+	t.Cleanup(func() {
+		if err := svc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 
 	results, err := svc.Query(ctx, "SELECT 1 WHERE 1=0")
 	require.NoError(t, err)
@@ -151,7 +187,11 @@ func TestDbService_Query_EmptyResult(t *testing.T) {
 func TestDbService_Query_InvalidSQL(t *testing.T) {
 	ctx := context.Background()
 	svc := NewDbService()
-	defer svc.Close()
+	t.Cleanup(func() {
+		if err := svc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 
 	_, err := svc.Query(ctx, "INVALID SQL SYNTAX")
 	assert.Error(t, err)
@@ -181,7 +221,11 @@ func TestDbService_Close_NilDB(t *testing.T) {
 func TestDbService_ConcurrentAccess(t *testing.T) {
 	ctx := context.Background()
 	svc := NewDbService()
-	defer svc.Close()
+	t.Cleanup(func() {
+		if err := svc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 
 	// Run multiple goroutines calling GetDB concurrently
 	const numGoroutines = 10
@@ -225,7 +269,11 @@ func TestDbService_ConcurrentAccess(t *testing.T) {
 func TestDbService_Query_WithArgs(t *testing.T) {
 	ctx := context.Background()
 	svc := NewDbService()
-	defer svc.Close()
+	t.Cleanup(func() {
+		if err := svc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
 
 	results, err := svc.Query(ctx, "SELECT ? as value, ? as name", 42, "test")
 	require.NoError(t, err)
