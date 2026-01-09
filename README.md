@@ -1,88 +1,93 @@
 # opennotes
 
-A manager for your notes
-
-> An OpenCode plugin created from the [bun-module](https://github.com/zenobi-us/bun-module)
+A CLI tool for managing your markdown-based notes organized in notebooks.
 
 ## Features
 
-- 🏗️ TypeScript-based plugin architecture
-- 🔧 Mise task runner integration
-- 📦 Bun/npm build tooling
-- ✨ ESLint + Prettier formatting
-- 🧪 Vitest testing setup
-- 🚀 GitHub Actions CI/CD
-- 📝 Release automation with release-please
+- 📔 **Notebook-based organization** - Group notes into logical notebooks
+- 🔍 **SQL-powered search** - Query notes using DuckDB with full-text search
+- 📝 **Markdown-native** - Store notes as plain markdown with metadata
+- 🏗️ **Smart discovery** - Auto-detect notebooks from directory context
+- 🎨 **Template support** - Create notes from templates
+- ⚡ **Fast & lightweight** - Single binary, no dependencies at runtime
 
-## Getting Started
+## Installation
 
-1. **Clone this template:**
-
-   ```bash
-   cp -r bun-module your-plugin-name
-   cd your-plugin-name
-   ```
-
-2. **Update package.json:**
-   - Change `name` to your plugin name
-   - Update `description`
-   - Update `repository.url`
-
-3. **Install dependencies:**
-
-   ```bash
-   bun install
-   ```
-
-4. **Implement your plugin in `src/index.ts`:**
-
-   ```typescript
-   import type { Plugin } from '@opencode-ai/plugin';
-
-   export const YourPlugin: Plugin = async (ctx) => {
-     return {
-       tool: {
-         // Your plugin tools here
-       },
-     };
-   };
-   ```
-
-5. **Test your plugin:**
-   ```bash
-   mise run test
-   ```
-
-## Development
-
-- `mise run build` - Build the plugin
-- `mise run test` - Run tests
-- `mise run lint` - Lint code
-- `mise run lint:fix` - Fix linting issues
-- `mise run format` - Format code with Prettier
-
-## Installation in OpenCode
-
-Create or edit `~/.config/opencode/config.json`:
-
-```json
-{
-  "plugins": ["opennotes"]
-}
+```bash
+bun install -g opennotes
 ```
 
-## Author
+## Quick Start
 
-zenobi-us <airtonix@users-no-reply.com>
+1. **Initialize a notebook:**
 
-## Repository
+   ```bash
+   opennotes init
+   ```
 
-https://github.com/zenobi-us/opennotes.git
+2. **Create a note:**
+
+   ```bash
+   opennotes notes add "My First Note"
+   ```
+
+3. **List notes:**
+
+   ```bash
+   opennotes notes list
+   ```
+
+4. **Search notes:**
+   ```bash
+   opennotes notes search "keyword"
+   ```
+
+## Commands
+
+### Notebook Management
+
+- `opennotes notebook` - Display current notebook info
+- `opennotes notebook list` - List all notebooks
+- `opennotes notebook create <name>` - Create a new notebook
+
+### Note Operations
+
+- `opennotes notes list` - List all notes in current notebook
+- `opennotes notes add <title>` - Create a new note
+- `opennotes notes remove <path>` - Delete a note
+- `opennotes notes search <query>` - Search notes
+
+## Configuration
+
+Global configuration is stored in:
+
+- **Linux**: `~/.config/opennotes/config.json`
+- **macOS**: `~/Library/Preferences/opennotes/config.json`
+- **Windows**: `%APPDATA%\opennotes\config.json`
+
+Each notebook has a `.opennotes.json` file with notebook-specific settings.
+
+## Usage Examples
+
+```bash
+# Create a notebook
+opennotes notebook create "Work"
+
+# Add notes to your notebook
+opennotes notes add "Team Meeting Notes"
+opennotes notes add "Project Ideas"
+
+# Search across notes
+opennotes notes search "deadline"
+
+# List all notes
+opennotes notes list
+```
 
 ## Contributing
 
-Contributions are welcome! Please file issues or submit pull requests on the GitHub repository.
+Interested in contributing? See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code style guidelines, and how to submit pull requests.
 
 ## License
 
-MIT License. See the [LICENSE](LICENSE) file for details.
+MIT License. See [LICENSE](LICENSE) for details.

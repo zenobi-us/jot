@@ -4,95 +4,124 @@
 
 Always run commands from the project root using `mise run <command>`.
 
-If you think you need to use `bun <command>`, stop and get help first.
+Do NOT use `bun` directly for tests/build - use `mise run`.
 
-- **Build**: `mise run build` 
-- **Test**: `mise run test`
-- **Single Test**: `mise run test BackgroundTask.test.ts` (use file glob pattern)
-- **Watch Mode**: `mise run test --watch`
-- **Lint**: `mise run lint` (eslint)
-- **Fix Lint**: `mise run lint:fix` (eslint --fix)
-- **Format**: `mise run format` (prettier)
+- **Build**: `mise run build` — Compiles to native binary at `dist/opennotes`
+- **Test**: `mise run test` — Run all tests via vitest
+- **Single Test**: `mise run test -- ConfigService.test.ts` — Run one test file
+- **Watch Mode**: `mise run test -- --watch` — Re-run on changes
+- **Lint**: `mise run lint` — ESLint check
+- **Fix Lint**: `mise run lint:fix` — Auto-fix linting issues
+- **Format**: `mise run format` — Prettier formatting
 
 ## Code Style Guidelines
 
 ### Imports & Module System
 
-- Use ES6 `import`/`export` syntax (module: "ESNext", type: "module")
+- Use ES6 `import`/`export` syntax only (module: "ESNext", type: "module")
 - Group imports: external libraries first, then internal modules
-- Use explicit file extensions (`.ts`) for internal imports
+- Use explicit file extensions (`.ts`) for all internal imports
+- Import only what you need — no barrel exports
 
 ### Formatting (Prettier)
 
-- **Single quotes** (`singleQuote: true`)
+- **Single quotes**: `'import x from 'y''`
 - **Line width**: 100 characters
 - **Tab width**: 2 spaces
-- **Trailing commas**: ES5 (no trailing commas in function parameters)
+- **Trailing commas**: ES5 (no trailing in function parameters)
 - **Semicolons**: enabled
 
-### TypeScript & Naming
+### TypeScript & Naming Conventions
 
-- **NeverNesters**: avoid deeply nested structures. Always exit early.
 - **Strict mode**: enforced (`"strict": true`)
-- **Classes**: PascalCase (e.g., `BackgroundTask`, `BackgroundTaskManager`)
-- **Methods/properties**: camelCase
-- **Status strings**: use union types (e.g., `'pending' | 'running' | 'completed' | 'failed' | 'cancelled'`)
-- **Explicit types**: prefer explicit type annotations over inference
-- **Return types**: optional (not required but recommended for public methods)
+- **Classes**: PascalCase (`ConfigService`, `NotebookService`)
+- **Functions/Methods**: camelCase
+- **Constants**: SCREAMING_SNAKE_CASE (true constants only)
+- **Type unions for status**: `'pending' | 'running' | 'completed'` not strings
+- **Explicit types**: Always annotate parameters and return types
+- **NeverNesters**: Exit early, avoid deeply nested conditionals
 
 ### Error Handling
 
-- Check error type before accessing error properties: `error instanceof Error ? error.toString() : String(error)`
-- Log errors with `[ERROR]` prefix for consistency
-- Always provide error context when recording output
+- Always check error type: `error instanceof Error ? error.message : String(error)`
+- Use Logger service for errors: `Log.error('Context: %s', message)`
+- Never use `console.log` (linting error)
+- Catch and handle all async/await errors
 
-### Linting Rules
+### Linting Rules Enforced
 
-- `@typescript-eslint/no-explicit-any`: warn (avoid `any` type)
-- `no-console`: error (minimize console logs)
-- `prettier/prettier`: error (formatting violations are errors)
+- `no-console`: **Error** (use LoggerService instead)
+- `prettier/prettier`: **Error** (run `mise run format`)
+- `@typescript-eslint/no-explicit-any`: **Warn** (avoid `any`)
+- `@typescript-eslint/no-unused-vars`: **Error**
 
 ## Testing
 
-- Framework: **vitest** with `describe` & `it` blocks
-- Style: Descriptive nested test cases with clear expectations
-- Assertion library: `expect()` (vitest)
+- Framework: **Vitest** (Bun's test runner)
+- Import: `import { describe, it, expect } from 'vitest'`
+- Pattern: Nested `describe()` blocks with clear test names
+- Use `expect()` for assertions
 
 ## Project Context
 
-- **Type**: ES Module package for OpenCode plugin system
-- **Target**: Bun runtime, ES2021+
-- **Purpose**: Background task execution and lifecycle management
+- **Type**: CLI tool for managing markdown-based notes
+- **Target**: Bun runtime, ES2021+, TypeScript strict mode
+- **Framework**: Clerc CLI with plugin architecture
 
-## Architecture
+## Architecture Overview
 
-opennotes is currently a cli tool for managing notes.
+### Service-Oriented Design
+
+Core services initialized in root interceptor (`src/index.ts`):
+
+- **ConfigService**: Global user config (~/.config/opennotes/config.json)
+- **DbService**: DuckDB in-memory instance with markdown extension
+- **NotebookService**: Notebook discovery & operations
+- **NoteService**: Note queries via DuckDB SQL
+
+### Command Structure
+
+Commands follow Clerc pattern:
+
+```typescript
+export const CommandName = defineCommand(
+  {
+    name: 'command-name',
+    description: 'Help text',
+    flags: {
+      /* flags */
+    },
+  },
+  async (ctx) => {
+    // Access services: ctx.store.config, ctx.store.notebooKService
+  }
+);
+```
 
 ### Data Flow
 
-1. Cli instance initialises
-2. Commands are registered
-3. User invokes a command via CLI
-4. Root interceptor initialises context.store with the following services:
-  - ConfigService
-  - DbService
-  - NotebookService
-  - NotesService
-5. Command handler routes to the appropriate command handler.
+1. CLI parsed → Command matched
+2. Root interceptor initializes services into `ctx.store`
+3. `requireNotebookMiddleware()` resolves notebook (flag → config → ancestor search)
+4. Command handler executes with access to services
+5. Results rendered via `TuiRender()` using Binja templates
 
-### Components
+### Key Components
 
-#### ConfigService
+**ConfigService**: Manages user notebooks registry and global settings via Arktype validation.
 
-Manages application configuration settings, including loading, saving, and validating config data.
+**NotebookService**: Abstracts notebook operations — discovery, loading `.opennotes.json`, template management, context matching.
 
-Only user global config settings here. Per-notebook settings go in NotebookService.
+**NoteService**: Provides SQL query interface via DuckDB markdown extension for searching/reading notes.
 
-#### DbService
+**DbService**: Singleton DuckDB connection with pre-loaded markdown extension.
 
-We use this when we have a notebook opened. It gives us SQL query layer on top of a filesystem of markdown files.
 
-#### NotebookService
+## Decisions
 
-Abstracts all the notebook-level operations, including 
+- **DuckDb** Use neo duckdb. We'd like to use the wasm build, but it doesn't load the markdown extension properly yet.
+- **Clerc**: Chosen for its plugin architecture and flexibility for building CLI tools.
+- **Bun**: Fast runtime with built-in TypeScript support and native bundling. For now we build for node only. no compiling to binary untile duckdb wasm.
 
+
+words

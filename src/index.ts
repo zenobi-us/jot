@@ -10,6 +10,8 @@ import { getGitTag } from './macros/GitInfo.ts' with { type: 'macro' };
 import { InitCommand } from './cmds/init/InitCmd.ts';
 import { NotebookCommand } from './cmds/notebook/NotebookCmd.ts';
 import { NotebookListCommand } from './cmds/notebook/NotebookListCmd.ts';
+import { NotebookCreateCommand } from './cmds/notebook/NotebookCreateCmd.ts';
+import { NotebookRegisterCommand } from './cmds/notebook/NotebookRegisterCmd.ts';
 import { NotebookAddContextPathCommand } from './cmds/notebook/NotebookAddContextPathCmd.ts';
 import { NotesCommand } from './cmds/notes/NotesCmd.ts';
 import { NotesAddCommand } from './cmds/notes/NotesAddCmd.ts';
@@ -22,16 +24,17 @@ import { createNotebookService } from './services/NotebookService.ts';
 
 import type { ConfigService } from './services/ConfigService.ts';
 import type { NotebookService } from './services/NotebookService.ts';
-import { NotebookCreateCommand } from './cmds/notebook/NotebookCreateCmd.ts';
-import { createDbService, type DbService } from './services/Db.ts';
+import { createDbService, type IDbService } from './services/Db.ts';
 
 declare module '@clerc/core' {
   export interface ContextStore {
     config: ConfigService;
     notebooKService: NotebookService;
-    dbService: DbService;
+    dbService: IDbService;
   }
 }
+
+const Log = Logger.child({ namespace: 'CLI' });
 
 Cli() // Create a new CLI with help and version plugins
   .name('wiki') // Optional, CLI readable name
@@ -49,25 +52,27 @@ Cli() // Create a new CLI with help and version plugins
     })
   ) // use the update notifier plugin to notify users of updates
   .interceptor(async (ctx, next) => {
-    Logger.debug('Interceptor.before');
+    Log.debug('Interceptor.before');
 
-    const configService = await createConfigService({ directory: process.cwd() });
-    const notebookService = createNotebookService({ config: configService.store });
     const dbService = createDbService();
+    const configService = await createConfigService();
+
+    const notebookService = createNotebookService({ configService, dbService });
 
     ctx.store.config = configService;
     ctx.store.notebooKService = notebookService;
     ctx.store.dbService = dbService;
 
     await next();
-    Logger.debug('Interceptor.after');
+    Log.debug('Interceptor.after');
   })
   .command([
     InitCommand,
     NotebookCommand,
     NotebookListCommand,
-    NotebookAddContextPathCommand,
     NotebookCreateCommand,
+    NotebookRegisterCommand,
+    NotebookAddContextPathCommand,
     NotesCommand,
     NotesAddCommand,
     NotesListCommand,

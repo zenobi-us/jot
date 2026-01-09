@@ -1,3 +1,6 @@
 #!/usr/bin/env bash
-#MISE description="Run ESLint"
-eslint . --ext .ts
+#MISE description="Run go vet and golangci-lint"
+set -euo pipefail
+
+go vet ./...
+golangci-lint run ./...

@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+#MISE description="Run E2E tests"
+set -euo pipefail
+
+# Build binary first so CLI tests can find it
+mise run build
+
+# Get the project root directory
+PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+DIST_DIR="${PROJECT_ROOT}/dist"
+
+# Add dist directory to PATH so CLI tests can find the binary
+export PATH="${DIST_DIR}:${PATH}"
+
+# Run E2E tests
+go test -v -race ./tests/e2e/...

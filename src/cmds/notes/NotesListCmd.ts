@@ -1,7 +1,7 @@
 import { defineCommand } from 'clerc';
 import { Logger } from '../../services/LoggerService';
 import { requireNotebookMiddleware } from '../../middleware/requireNotebookMiddleware';
-import { createNoteService } from '../../services/NoteService';
+import { TuiTemplates as NotesTuiTemplates } from '../../services/NoteService';
 
 export const NotesListCommand = defineCommand(
   {
@@ -12,36 +12,33 @@ export const NotesListCommand = defineCommand(
     parameters: [],
   },
   async (ctx) => {
-    const notebookPath = await requireNotebookMiddleware({
+    const notebook = await requireNotebookMiddleware({
       notebookService: ctx.store.notebooKService,
       path: ctx.flags.notebook,
     });
 
-    if (!notebookPath) {
+    if (!notebook) {
       return;
     }
 
-    Logger.debug('NotesListCmd %s', notebookPath);
+    Logger.debug('NotesListCmd %s', notebook.config.path);
 
-    const notebook = await ctx.store.notebooKService?.getNotebook(notebookPath);
-    const config = ctx.store.config?.store;
+    const configService = ctx.store.config;
     const dbService = ctx.store.dbService;
 
-    if (!notebook || !config || !dbService) {
-      console.error('Failed to load notebook or config or dbService');
+    if (!configService || !dbService) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to load config or dbService');
       return;
     }
 
-    const noteService = createNoteService({
-      notebook,
-      config,
-      dbService,
-    });
+    const results = await notebook.notes.searchNotes();
 
-    const results = await noteService.searchNotes();
-
-    for (const note of results) {
-      console.log(`- ${note.path}`);
-    }
+    // eslint-disable-next-line no-console
+    console.log(
+      await NotesTuiTemplates.NoteList({
+        notes: results,
+      })
+    );
   }
 );

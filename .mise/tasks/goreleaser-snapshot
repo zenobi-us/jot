@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+#MISE description="Build snapshot release (no publish)"
+set -euo pipefail
+
+goreleaser build --snapshot --clean

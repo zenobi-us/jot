@@ -1,21 +1,17 @@
-name: Publish Package
+name: Publish
 
 on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'npm tag (latest or next)'
-        required: true
-        type: choice
-        options:
-          - latest
-          - next
+        description: 'Release tag'
+        required: false
+        default: ''
   repository_dispatch:
     types: [publish-package]
 
 permissions:
-  id-token: write
-  contents: read
+  contents: write
 
 jobs:
   publish:
@@ -29,9 +25,6 @@ jobs:
           cache: true
           experimental: true
 
-      - name: Build
-        run: mise run build
-
       - id: inputs
         uses: simenandre/setup-inputs@v1
 
@@ -41,6 +34,6 @@ jobs:
           if [ -z "$TAG" ]; then
             TAG="latest"
           fi
-
           echo "Publishing with tag: $TAG"
           mise run publish --tag "$TAG"
+

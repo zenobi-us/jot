@@ -19,15 +19,15 @@ export function dedent(text: string): string {
   return lines.map((line) => line.slice(indent)).join('\n');
 }
 
-/**
- * Render a string with template variables
- */
-export function renderTemplateString(
-  template: string,
-  variables: Record<string, string | number | boolean>
+export function objectToFrontmatter(
+  obj: Record<string, string | number | boolean | string[]>
 ): string {
-  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => {
-    const value = variables[key];
-    return value !== undefined ? String(value) : '';
+  const entries = Object.entries(obj).map(([key, value]) => {
+    if (Array.isArray(value)) {
+      return `${key}:\n${value.map((item) => `  - ${item}`).join('\n')}`;
+    } else {
+      return `${key}: ${value}`;
+    }
   });
+  return entries.join('\n');
 }
