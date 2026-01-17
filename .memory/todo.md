@@ -9,11 +9,11 @@
 
 ## Active Tasks
 
-### Story 1: Core Functionality (MVP) - In Planning
-- [ ] [task-4f209693-add-readonly-db.md](.memory/task-4f209693-add-readonly-db.md) - Add DbService.GetReadOnlyDB()
-- [ ] [task-d4548dcd-sql-validation.md](.memory/task-d4548dcd-sql-validation.md) - Add SQL validation
-- [ ] [task-bef53880-execute-sql-safe.md](.memory/task-bef53880-execute-sql-safe.md) - Add ExecuteSQLSafe()
-- [ ] [task-c7fc4f57-render-sql-results.md](.memory/task-c7fc4f57-render-sql-results.md) - Add RenderSQLResults()
+### Story 1: Core Functionality (MVP) - 50% Complete (3/6 Tasks)
+- [x] [task-4f209693-add-readonly-db.md](.memory/task-4f209693-add-readonly-db.md) - Add DbService.GetReadOnlyDB() ✅
+- [x] [task-d4548dcd-sql-validation.md](.memory/task-d4548dcd-sql-validation.md) - Add SQL validation ✅
+- [x] [task-bef53880-execute-sql-safe.md](.memory/task-bef53880-execute-sql-safe.md) - Add ExecuteSQLSafe() ✅
+- [ ] [task-c7fc4f57-render-sql-results.md](.memory/task-c7fc4f57-render-sql-results.md) - Add RenderSQLResults() (IN PROGRESS)
 - [ ] [task-710bd5bd-sql-flag-cli.md](.memory/task-710bd5bd-sql-flag-cli.md) - Add --sql flag
 - [ ] [task-a1e4fa4c-sql-unit-tests.md](.memory/task-a1e4fa4c-sql-unit-tests.md) - Write unit tests
 
