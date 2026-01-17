@@ -735,3 +735,138 @@ func TestCLI_NotesRemoveAlias(t *testing.T) {
 		t.Error("note was not deleted")
 	}
 }
+
+// === SQL Flag Tests ===
+
+func TestCLI_SQLFlag_Help(t *testing.T) {
+	env := newTestEnv(t)
+
+	// Check search help shows --sql flag
+	stdout, _, exitCode := env.run("notes", "search", "--help")
+
+	if exitCode != 0 {
+		t.Errorf("search --help failed with exit code %d", exitCode)
+	}
+
+	if !strings.Contains(stdout, "--sql") {
+		t.Errorf("search help missing --sql flag, got: %s", stdout)
+	}
+
+	if !strings.Contains(stdout, "Execute custom SQL query") {
+		t.Errorf("search help missing SQL description, got: %s", stdout)
+	}
+}
+
+func TestCLI_SQLFlag_SimpleQuery(t *testing.T) {
+	env := newTestEnv(t)
+
+	// Create notebook with test notes
+	notebookDir := env.createNotebook("sql-test")
+	env.createNote(notebookDir, "note1.md", "# First Note\n\nThis is note 1")
+	env.createNote(notebookDir, "note2.md", "# Second Note\n\nThis is note 2")
+
+	// Execute simple SQL query
+	stdout, stderr, exitCode := env.runInDir(notebookDir, "notes", "search", "--sql", "SELECT 1 as value, 'test' as text")
+
+	if exitCode != 0 {
+		t.Errorf("SQL query failed with exit code %d, stderr: %s", exitCode, stderr)
+	}
+
+	// Check for table output
+	if !strings.Contains(stdout, "value") {
+		t.Errorf("expected column 'value' in output, got: %s", stdout)
+	}
+
+	if !strings.Contains(stdout, "1") {
+		t.Errorf("expected value '1' in output, got: %s", stdout)
+	}
+}
+
+func TestCLI_SQLFlag_WithMarkdownQuery(t *testing.T) {
+	env := newTestEnv(t)
+
+	// Create notebook with test notes
+	notebookDir := env.createNotebook("markdown-sql-test")
+	env.createNote(notebookDir, "bug.md", "# Bug Report\n\nFound a critical bug")
+	env.createNote(notebookDir, "feature.md", "# Feature Request\n\nNew feature idea")
+	env.createNote(notebookDir, "other.md", "# Other\n\nSome content")
+
+	// Query markdown files
+	stdout, stderr, exitCode := env.runInDir(notebookDir, "notes", "search", "--sql", "SELECT COUNT(*) as note_count FROM read_markdown('**/*.md')")
+
+	if exitCode != 0 {
+		t.Errorf("markdown query failed with exit code %d, stderr: %s", exitCode, stderr)
+	}
+
+	// Should show note count
+	if !strings.Contains(stdout, "note_count") {
+		t.Errorf("expected 'note_count' column, got: %s", stdout)
+	}
+
+	// Should show number 3 (3 notes created)
+	if !strings.Contains(stdout, "3") {
+		t.Errorf("expected count '3', got: %s", stdout)
+	}
+}
+
+func TestCLI_SQLFlag_InvalidQuery(t *testing.T) {
+	env := newTestEnv(t)
+
+	// Create notebook
+	notebookDir := env.createNotebook("invalid-sql-test")
+
+	// Try to execute DROP query (should be blocked)
+	stdout, stderr, exitCode := env.runInDir(notebookDir, "notes", "search", "--sql", "DROP TABLE markdown")
+
+	// Should fail
+	if exitCode == 0 {
+		t.Error("DROP query should have failed but succeeded")
+	}
+
+	// Error should mention SQL
+	if !strings.Contains(stderr, "SQL") && !strings.Contains(stdout, "SQL") {
+		t.Errorf("error should mention SQL, stderr: %s, stdout: %s", stderr, stdout)
+	}
+}
+
+func TestCLI_SQLFlag_CTEQuery(t *testing.T) {
+	env := newTestEnv(t)
+
+	// Create notebook
+	notebookDir := env.createNotebook("cte-sql-test")
+
+	// Execute CTE query
+	stdout, stderr, exitCode := env.runInDir(notebookDir, "notes", "search", "--sql", "WITH nums AS (SELECT 1 as n UNION ALL SELECT 2 UNION ALL SELECT 3) SELECT n FROM nums WHERE n > 1")
+
+	if exitCode != 0 {
+		t.Errorf("CTE query failed with exit code %d, stderr: %s", exitCode, stderr)
+	}
+
+	// Should show results
+	if !strings.Contains(stdout, "2") {
+		t.Errorf("expected value '2' in output, got: %s", stdout)
+	}
+
+	if !strings.Contains(stdout, "3") {
+		t.Errorf("expected value '3' in output, got: %s", stdout)
+	}
+}
+
+func TestCLI_SQLFlag_EmptyResult(t *testing.T) {
+	env := newTestEnv(t)
+
+	// Create notebook
+	notebookDir := env.createNotebook("empty-sql-test")
+
+	// Execute query with no results
+	stdout, stderr, exitCode := env.runInDir(notebookDir, "notes", "search", "--sql", "SELECT 1 WHERE 1=0")
+
+	if exitCode != 0 {
+		t.Errorf("empty query failed with exit code %d, stderr: %s", exitCode, stderr)
+	}
+
+	// Should show "No results"
+	if !strings.Contains(stdout, "No results") {
+		t.Errorf("expected 'No results' message, got: %s", stdout)
+	}
+}
