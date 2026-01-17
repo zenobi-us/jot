@@ -9,13 +9,15 @@ A CLI tool for managing your markdown-based notes organized in notebooks.
 - 📝 **Markdown-native** - Store notes as plain markdown with metadata
 - 🏗️ **Smart discovery** - Auto-detect notebooks from directory context
 - 🎨 **Template support** - Create notes from templates
-- ⚡ **Fast & lightweight** - Single binary, no dependencies at runtime
+- ⚡ **Fast & lightweight** - Single compiled binary, no runtime dependencies
 
 ## Installation
 
 ```bash
-bun install -g opennotes
+go install github.com/zenobi-us/opennotes@latest
 ```
+
+Requires Go 1.24+. The binary will be placed in `$GOPATH/bin/`.
 
 ## Quick Start
 
