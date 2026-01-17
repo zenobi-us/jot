@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#MISE description="Publish to GitHub Releases"
+#MISE description="Publish to npm registry"
 #MISE depends=["setup"]
 #USAGE flag "-t --tag <tag>" "Tag to publish with" default="latest"
 
@@ -8,21 +8,38 @@ set -e
 echo "Publishing to GitHub Releases"
 echo " > with tag: ${usage_tag}..."
 
-# Get the current git tag (created by release-please or manually)
-CURRENT_TAG=$(git describe --tags --exact-match 2>/dev/null || echo "")
+function pre_release() {
+	# For 'next' tag, bump version to a prerelease to avoid conflicts
+	# Count commits since last tag for a semantic build number
+	LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+	if [ -n "$LAST_TAG" ]; then
+		BUILD_NUMBER=$(git rev-list "${LAST_TAG}..HEAD" --count)
+	else
+		BUILD_NUMBER=$(git rev-list HEAD --count)
+	fi
+	CURRENT_VERSION=$(jq -r '.version' package.json)
+	PRERELEASE_VERSION="$(semver get release "$CURRENT_VERSION")-next.${BUILD_NUMBER}"
+	echo " > bumping version: ${CURRENT_VERSION} -> ${PRERELEASE_VERSION}"
 
-if [ -z "$CURRENT_TAG" ]; then
-	echo " ✗ Error: No git tag found on current commit"
-	echo "   GoReleaser requires a git tag to create a release."
-	echo "   Ensure release-please has created a tag, or create one manually:"
-	echo "   $ git tag <version>"
-	echo "   $ git push origin <version>"
-	exit 1
+	# Create git tag before running GoReleaser
+	git tag "${PRERELEASE_VERSION}"
+	git push origin "${PRERELEASE_VERSION}"
+
+	GORELEASER_CURRENT_TAG="${PRERELEASE_VERSION}" \
+		goreleaser release --clean
+}
+
+# For 'latest' tag, just do a normal release
+function prod_release() {
+	goreleaser release --clean
+}
+
+# Publish release to GitHub with GoReleaser
+
+if [ "${usage_tag}" = "next" ]; then
+	pre_release
+else
+	prod_release
 fi
-
-echo " > using git tag: ${CURRENT_TAG}"
-
-# GoReleaser will use the current tag from git
-goreleaser release --clean
 
 echo "Published successfully!"
