@@ -74,6 +74,49 @@ Successfully completed full migration from TypeScript to Go:
 - Full feature parity with TypeScript version
 - All commands functional with glamour output
 
+## Knowledge Base
+
+### Learning: Architecture Review for SQL Flag
+**File**: `.memory/learning-8f6a2e3c-architecture-review-sql-flag.md`
+
+Comprehensive technical review documenting:
+- Architecture design justifications
+- Component validation for 4 major services
+- Security threat model (defense-in-depth)
+- Performance scalability analysis
+- Integration compatibility assessment
+- Risk matrix and mitigations
+- Detailed recommendations for implementation
+
+**Use When**: Implementing SQL flag feature or understanding design decisions
+
+### Learning: Implementation Planning Guidance  
+**File**: `.memory/learning-7d9c4e1b-implementation-planning-guidance.md`
+
+Implementation planning validation including:
+- Task-by-task clarity analysis (all 12 tasks)
+- Specific code examples and patterns
+- Acceptance criteria validation
+- Sequencing and dependency mapping
+- Pre-start verification steps
+- Risk analysis with mitigations
+
+**Use When**: Starting implementation or onboarding engineers to the work
+
+### Learning: Codebase Architecture
+**File**: `.memory/learning-5e4c3f2a-codebase-architecture.md`
+
+Comprehensive codebase architecture documentation including:
+- Complete package structure and file organization
+- Key types, interfaces, and data structures
+- Service architecture and dependencies
+- Data flow diagrams and state machines
+- User journey documentation
+- Test coverage analysis
+- Statistics: 79 files, 307KB, 123 tests, 95%+ coverage
+
+**Use When**: Understanding codebase structure or building similar features
+
 ## Archive
 
 | Archive                | Description                      | Completed  |
@@ -124,13 +167,19 @@ Comprehensive codebase analysis using CodeMapper skill:
 .memory/
   summary.md                              # This file - project overview
   team.md                                 # Current work tracking
-  todo.md                                 # Active tasks
-  research-b8f3d2a1-duckdb-go-markdown.md # DuckDB research (aligned)
+  todo.md                                 # Active tasks & implementation status
+  research-b8f3d2a1-duckdb-go-markdown.md # DuckDB research
   spec-a1b2c3d4-sql-flag.md              # SQL flag specification with stories
-  analysis-20260117-103843-codebase-exploration.md  # Codebase analysis
-  archived/
-    01-migrate-to-golang/                 # Completed Go migration
-      spec.md                             # Original specification
-      tasks/                              # Phase task files (01-05)
-      research/                           # Testing gap analysis
+  learning-8f6a2e3c-*.md                  # Learning: Architecture review
+  learning-7d9c4e1b-*.md                  # Learning: Implementation planning
+  learning-5e4c3f2a-*.md                  # Learning: Codebase architecture
+  task-*.md                               # 12 individual story tasks
+  audit-20260117-naming-review.md         # Audit report (miniproject compliance)
+  archive/
+    ├── reviews/2026-01-17/
+    │   ├── review-architect-sql-flag-summary.md    # Architecture summary
+    │   ├── review-planning-summary.md              # Planning summary
+    │   ├── REVIEW-INDEX.md                         # Review navigation index
+    │   └── README.md                               # Archive index
+    └── 01-migrate-to-golang/                       # Completed Go migration epic
 ```
