@@ -5,9 +5,8 @@
 
 set -e
 
-echo "Publishing to npm"
+echo "Publishing to GitHub Releases"
 echo " > with tag: ${usage_tag}..."
-echo " > npm version: $(npm --version)"
 
 function pre_release() {
 	# For 'next' tag, bump version to a prerelease to avoid conflicts

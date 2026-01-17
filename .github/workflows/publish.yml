@@ -28,7 +28,9 @@ jobs:
       - id: inputs
         uses: simenandre/setup-inputs@v1
 
-      - name: Publish to npm with OIDC
+      - name: Publish Builds to Github Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ steps.inputs.outputs.tag }}"
           if [ -z "$TAG" ]; then
