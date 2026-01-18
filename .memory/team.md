@@ -56,8 +56,9 @@
 
 **Next Available Work**: SQL Flag Feature
 - **Status**: ⚠️ AWAITING HUMAN REVIEW
-- **Location**: `.memory/epic-2f3c4d5e-sql-flag-feature.md` (moved from archive for review)
-- **Issue**: Epic was previously archived without required human review per miniproject guidelines
+- **Location**: `.memory/epic-2f3c4d5e-sql-flag-feature.md` (all artifacts in .memory/)
+- **Issue**: Epic and tasks were previously archived without required human review per miniproject guidelines
+- **Current State**: Epic + 11 tasks + spec + research all moved to `.memory/`
 - **Required**: Human review and approval before implementation can begin
 - **Estimated Duration**: 3-4 hours for MVP (once approved)
 
@@ -91,9 +92,9 @@
 ## Next Epic Readiness
 
 **Ready for SQL Flag Feature** (Pending Human Review):
-- [ ] ⚠️ **FRAMEWORK COMPLIANCE CORRECTION**: Epic moved from archive back to `.memory/` for required human review
+- [ ] ⚠️ **FRAMEWORK COMPLIANCE CORRECTION**: Epic + all tasks moved from archive back to `.memory/` for required human review
 - [ ] Epic specification reviewed and approved
-- [ ] Development workspace prepared in `.memory/`
+- [ ] Development workspace prepared in `.memory/` ✅ (all artifacts present)
 - [ ] Implementation approach confirmed
 - [ ] Timeline and resource allocation planned
 

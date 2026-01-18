@@ -79,15 +79,15 @@ User-facing documentation:
 ## Key Components
 
 ### Specification
-- **File**: [spec-a1b2c3d4-sql-flag.md](spec-a1b2c3d4-sql-flag.md)
+- **File**: [spec-a1b2c3d4-sql-flag.md](spec-a1b2c3d4-sql-flag.md) ✅
 - **Status**: Complete and approved
 - **Content**: User stories, architecture, security model, testing strategy
 
 ### Research & Learning
-- **Research**: [research-b8f3d2a1-duckdb-go-markdown.md](research-b8f3d2a1-duckdb-go-markdown.md)
-- **Architecture Review**: [learning-8f6a2e3c-architecture-review-sql-flag.md](learning-8f6a2e3c-architecture-review-sql-flag.md)
-- **Implementation Guidance**: [learning-7d9c4e1b-implementation-planning-guidance.md](learning-7d9c4e1b-implementation-planning-guidance.md)
-- **Codebase Architecture**: [learning-5e4c3f2a-codebase-architecture.md](learning-5e4c3f2a-codebase-architecture.md)
+- **Research**: [research-b8f3d2a1-duckdb-go-markdown.md](research-b8f3d2a1-duckdb-go-markdown.md) ✅
+- **Architecture Review**: [learning-8f6a2e3c-architecture-review-sql-flag.md](learning-8f6a2e3c-architecture-review-sql-flag.md) ✅
+- **Implementation Guidance**: [learning-7d9c4e1b-implementation-planning-guidance.md](learning-7d9c4e1b-implementation-planning-guidance.md) ✅
+- **Codebase Architecture**: [learning-5e4c3f2a-codebase-architecture.md](learning-5e4c3f2a-codebase-architecture.md) ✅
 
 ## Implementation Requirements
 

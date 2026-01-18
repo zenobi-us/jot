@@ -96,10 +96,12 @@ Implemented formatted output for `opennotes notes list` command:
 ### SQL Flag Feature (Awaiting Human Review)
 
 **Status**: ⚠️ AWAITING HUMAN REVIEW  
-**Location**: `.memory/epic-2f3c4d5e-sql-flag-feature.md` (moved from archive for review)  
+**Location**: `.memory/epic-2f3c4d5e-sql-flag-feature.md` (all artifacts moved to .memory/)  
 **Estimated Duration**: 3-4 hours (MVP)
 
-**Framework Compliance Issue**: This epic was previously archived without required human review as per miniproject guidelines. It has been moved back to `.memory/` for proper review process.
+**Framework Compliance Issue**: This epic was previously archived without required human review as per miniproject guidelines. Epic and all related tasks have been moved back to `.memory/` for proper review process.
+
+**Current State**: Epic + 11 tasks + spec + research all in `.memory/` - ready for human review and approval
 
 **Required Action**: Human review and approval before implementation can begin or epic can be properly archived.
 
