@@ -43,7 +43,7 @@ func init() {
 }
 
 func displayNotebookList(notebooks []*services.Notebook) error {
-	output, err := services.TuiRender(services.Templates.NotebookList, map[string]any{
+	output, err := services.TuiRender("notebook-list", map[string]any{
 		"Notebooks": notebooks,
 	})
 	if err != nil {

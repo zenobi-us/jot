@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"text/template"
 )
 
 func TestNewDisplay(t *testing.T) {
@@ -97,7 +98,11 @@ func TestDisplay_RenderTemplate_ValidTemplate(t *testing.T) {
 		t.Fatalf("NewDisplay() failed: %v", err)
 	}
 
-	tmpl := "# {{ .Title }}\n\nWelcome, {{ .Name }}!"
+	tmpl, err := template.New("test").Parse("# {{ .Title }}\n\nWelcome, {{ .Name }}!")
+	if err != nil {
+		t.Fatalf("Failed to parse template: %v", err)
+	}
+
 	ctx := map[string]string{
 		"Title": "Greeting",
 		"Name":  "User",
@@ -128,7 +133,11 @@ func TestDisplay_RenderTemplate_WithStruct(t *testing.T) {
 		Count int
 	}
 
-	tmpl := "# {{ .Title }}\n\nItems: {{ .Count }}"
+	tmpl, err := template.New("test").Parse("# {{ .Title }}\n\nItems: {{ .Count }}")
+	if err != nil {
+		t.Fatalf("Failed to parse template: %v", err)
+	}
+
 	ctx := Data{Title: "My List", Count: 42}
 
 	result, err := display.RenderTemplate(tmpl, ctx)
@@ -151,18 +160,21 @@ func TestDisplay_RenderTemplate_InvalidTemplate_Fallback(t *testing.T) {
 		t.Fatalf("NewDisplay() failed: %v", err)
 	}
 
-	// Invalid template syntax (unclosed braces)
-	tmpl := "# {{ .Title"
-	ctx := map[string]string{"Title": "Test"}
-
-	result, err := display.RenderTemplate(tmpl, ctx)
-	if err != nil {
-		t.Fatalf("RenderTemplate() should not fail on invalid template: %v", err)
+	// Try to parse invalid template
+	_, err = template.New("test").Parse("# {{ .Title")
+	if err == nil {
+		t.Skip("Test assumes template parsing fails for invalid syntax")
 	}
 
-	// Should fallback to returning template as-is
-	if result != tmpl {
-		t.Errorf("RenderTemplate() result = %q, want fallback %q", result, tmpl)
+	// With the new API, we should get an error from Execute or from Parse
+	// Let's test that nil template returns error
+	result, err := display.RenderTemplate(nil, map[string]string{"Title": "Test"})
+	if err == nil {
+		t.Fatalf("RenderTemplate() should fail on nil template")
+	}
+
+	if result != "" {
+		t.Errorf("RenderTemplate() result = %q, want empty string on error", result)
 	}
 }
 
@@ -172,35 +184,40 @@ func TestDisplay_RenderTemplate_ExecutionError_Fallback(t *testing.T) {
 		t.Fatalf("NewDisplay() failed: %v", err)
 	}
 
-	// Valid template but missing field will cause execution error
-	tmpl := "# {{ .MissingField }}"
+	// Valid template with map context - missing field won't error
+	tmpl, err := template.New("test").Parse("# {{ .MissingField }}")
+	if err != nil {
+		t.Fatalf("Failed to parse template: %v", err)
+	}
+
 	ctx := map[string]string{"Title": "Test"}
 
 	result, err := display.RenderTemplate(tmpl, ctx)
 	if err != nil {
-		t.Fatalf("RenderTemplate() should not fail on execution error: %v", err)
+		t.Fatalf("RenderTemplate() should not fail on missing map key: %v", err)
 	}
 
-	// The result should be rendered (template execution doesn't fail on missing keys in maps)
-	// But if ctx was a struct, it would fail - let's test with struct
+	// Should render successfully (missing map keys just render as empty)
+	if result == "" {
+		t.Errorf("RenderTemplate() result is empty, should have some output")
+	}
+
+	// Now test with struct - missing field should cause execution error
 	type Data struct {
 		Title string
 	}
 
-	ctx2 := Data{Title: "Test"}
-	tmpl2 := "# {{ .MissingField }}"
-
-	result2, err := display.RenderTemplate(tmpl2, ctx2)
+	tmpl2, err := template.New("test2").Parse("# {{ .MissingField }}")
 	if err != nil {
-		t.Fatalf("RenderTemplate() should not fail on execution error: %v", err)
+		t.Fatalf("Failed to parse template: %v", err)
 	}
 
-	// Should fallback to template as-is
-	if result2 != tmpl2 {
-		t.Errorf("RenderTemplate() with missing struct field result = %q, want fallback %q", result2, tmpl2)
-	}
+	ctx2 := Data{Title: "Test"}
 
-	_ = result // suppress unused warning
+	_, err = display.RenderTemplate(tmpl2, ctx2)
+	if err == nil {
+		t.Errorf("RenderTemplate() should fail on missing struct field")
+	}
 }
 
 func TestDisplay_RenderTemplate_NilContext(t *testing.T) {
@@ -209,7 +226,10 @@ func TestDisplay_RenderTemplate_NilContext(t *testing.T) {
 		t.Fatalf("NewDisplay() failed: %v", err)
 	}
 
-	tmpl := "# Static Heading"
+	tmpl, err := template.New("test").Parse("# Static Heading")
+	if err != nil {
+		t.Fatalf("Failed to parse template: %v", err)
+	}
 
 	result, err := display.RenderTemplate(tmpl, nil)
 	if err != nil {
@@ -227,7 +247,12 @@ func TestDisplay_RenderTemplate_EmptyTemplate(t *testing.T) {
 		t.Fatalf("NewDisplay() failed: %v", err)
 	}
 
-	result, err := display.RenderTemplate("", nil)
+	tmpl, err := template.New("test").Parse("")
+	if err != nil {
+		t.Fatalf("Failed to parse empty template: %v", err)
+	}
+
+	result, err := display.RenderTemplate(tmpl, nil)
 	if err != nil {
 		t.Fatalf("RenderTemplate() failed with empty template: %v", err)
 	}

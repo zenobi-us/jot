@@ -44,7 +44,7 @@ func init() {
 }
 
 func displayNoteList(notes []services.Note) error {
-	output, err := services.TuiRender(services.Templates.NoteList, map[string]any{
+	output, err := services.TuiRender("note-list", map[string]any{
 		"Notes": notes,
 	})
 	if err != nil {

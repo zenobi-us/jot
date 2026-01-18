@@ -58,7 +58,7 @@ func init() {
 }
 
 func displayNotebookInfo(nb *services.Notebook) error {
-	output, err := services.TuiRender(services.Templates.NotebookInfo, nb)
+	output, err := services.TuiRender("notebook-info", nb)
 	if err != nil {
 		// Fallback to simple output
 		fmt.Printf("Notebook: %s\n", nb.Config.Name)

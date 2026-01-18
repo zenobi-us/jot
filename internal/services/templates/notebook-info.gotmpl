@@ -1,0 +1,20 @@
+## {{ .Config.Name }}
+
+| Property | Value |
+|----------|-------|
+| Config | {{ .Config.Path }} |
+| Root | {{ .Config.Root }} |
+
+{{ if .Config.Contexts -}}
+### Contexts
+{{ range .Config.Contexts -}}
+- {{ . }}
+{{ end }}
+{{ end -}}
+
+{{ if .Config.Groups -}}
+### Groups
+{{ range .Config.Groups -}}
+- **{{ .Name }}** ({{ range $i, $g := .Globs }}{{ if $i }}, {{ end }}{{ $g }}{{ end }})
+{{ end }}
+{{ end -}}

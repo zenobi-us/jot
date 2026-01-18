@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/rs/zerolog"
@@ -260,10 +261,8 @@ func (n *Notebook) AddContext(contextPath string, configService *ConfigService) 
 	}
 
 	// Check if already exists
-	for _, ctx := range n.Config.Contexts {
-		if ctx == contextPath {
-			return nil // Already exists
-		}
+	if slices.Contains(n.Config.Contexts, contextPath) {
+		return nil // Already exists
 	}
 
 	n.Config.Contexts = append(n.Config.Contexts, contextPath)
@@ -304,10 +303,8 @@ func (n *Notebook) SaveConfig(register bool, configService *ConfigService) error
 	if register {
 		notebooks := configService.Store.Notebooks
 		notebookDir := filepath.Dir(n.Config.Path)
-		for _, p := range notebooks {
-			if p == notebookDir {
-				return nil // Already registered
-			}
+		if slices.Contains(notebooks, notebookDir) {
+			return nil // Already registered
 		}
 		configService.Store.Notebooks = append(notebooks, notebookDir)
 		return configService.Write(configService.Store)

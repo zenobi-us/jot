@@ -2,100 +2,61 @@ package services
 
 import (
 	"bytes"
-	"strings"
+	"embed"
+	"fmt"
 	"text/template"
 )
 
-// Templates for rendering various outputs.
-var Templates = struct {
-	NoteList     string
-	NoteDetail   string
-	NotebookInfo string
-	NotebookList string
-}{
-	NoteList: strings.TrimSpace(`
-{{- if eq (len .Notes) 0 -}}
-No notes found.
-{{- else -}}
-### Notes ({{ len .Notes }})
+//go:embed templates/*.gotmpl
+var templateFiles embed.FS
 
-{{ range .Notes -}}
-- [{{ .DisplayName }}] {{ .File.Relative }}
-{{ end -}}
-{{- end -}}
-`),
+var loadedTemplates map[string]*template.Template
 
-	NoteDetail: strings.TrimSpace(`
-# {{ .Title }}
+// init loads all templates on package initialization.
+func init() {
+	loadedTemplates = make(map[string]*template.Template)
 
-**File:** {{ .File.Relative }}
-
-{{ if .Metadata -}}
-**Metadata:**
-{{ range $key, $value := .Metadata -}}
-- {{ $key }}: {{ $value }}
-{{ end }}
-{{ end -}}
-
----
-
-{{ .Content }}
-`),
-
-	NotebookInfo: strings.TrimSpace(`
-## {{ .Config.Name }}
-
-| Property | Value |
-|----------|-------|
-| Config | {{ .Config.Path }} |
-| Root | {{ .Config.Root }} |
-
-{{ if .Config.Contexts -}}
-### Contexts
-{{ range .Config.Contexts -}}
-- {{ . }}
-{{ end }}
-{{ end -}}
-
-{{ if .Config.Groups -}}
-### Groups
-{{ range .Config.Groups -}}
-- **{{ .Name }}** ({{ range $i, $g := .Globs }}{{ if $i }}, {{ end }}{{ $g }}{{ end }})
-{{ end }}
-{{ end -}}
-`),
-
-	NotebookList: strings.TrimSpace(`
-{{- if eq (len .Notebooks) 0 -}}
-No notebooks found.
-{{- else -}}
-## Notebooks ({{ len .Notebooks }})
-
-{{ range .Notebooks -}}
-### {{ .Config.Name }}
-- **Path:** {{ .Config.Path }}
-- **Root:** {{ .Config.Root }}
-{{ if .Config.Contexts -}}
-- **Contexts:** {{ range $i, $c := .Config.Contexts }}{{ if $i }}, {{ end }}{{ $c }}{{ end }}
-{{ end }}
-{{ end -}}
-{{- end -}}
-`),
+	templateNames := []string{"note-list", "note-detail", "notebook-info", "notebook-list"}
+	for _, name := range templateNames {
+		tmpl, err := loadTemplate(name)
+		if err != nil {
+			// Log warning but don't fail - templates may be optional
+			fmt.Printf("warning: failed to load template %s: %v\n", name, err)
+			continue
+		}
+		loadedTemplates[name] = tmpl
+	}
 }
 
-// TuiRender is a convenience function to render a template with glamour.
-func TuiRender(tmpl string, ctx any) (string, error) {
+// loadTemplate loads a template by name from the embedded filesystem.
+func loadTemplate(name string) (*template.Template, error) {
+	content, err := templateFiles.ReadFile(fmt.Sprintf("templates/%s.gotmpl", name))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read template file: %w", err)
+	}
+
+	tmpl, err := template.New(name).Parse(string(content))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse template: %w", err)
+	}
+
+	return tmpl, nil
+}
+
+// TuiRender is a convenience function to render a template by name with glamour.
+func TuiRender(name string, ctx any) (string, error) {
+	// Get the pre-loaded template
+	tmpl, ok := loadedTemplates[name]
+	if !ok {
+		return "", fmt.Errorf("template %q not found", name)
+	}
+
 	display, err := NewDisplay()
 	if err != nil {
 		// Fallback without glamour rendering
-		t, err := template.New("tui").Parse(tmpl)
-		if err != nil {
-			return tmpl, nil
-		}
-
 		var buf bytes.Buffer
-		if err := t.Execute(&buf, ctx); err != nil {
-			return tmpl, nil
+		if err := tmpl.Execute(&buf, ctx); err != nil {
+			return "", err
 		}
 
 		return buf.String(), nil

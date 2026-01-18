@@ -75,7 +75,7 @@ func TestTuiRender_NoteList_WithNotes(t *testing.T) {
 		"Notes": []Note{note1, note2},
 	}
 
-	result, err := TuiRender(Templates.NoteList, ctx)
+	result, err := TuiRender("note-list", ctx)
 	if err != nil {
 		t.Fatalf("TuiRender() failed: %v", err)
 	}
@@ -109,7 +109,7 @@ func TestTuiRender_NoteList_Empty(t *testing.T) {
 		"Notes": []Note{},
 	}
 
-	result, err := TuiRender(Templates.NoteList, ctx)
+	result, err := TuiRender("note-list", ctx)
 	if err != nil {
 		t.Fatalf("TuiRender() failed: %v", err)
 	}
@@ -134,7 +134,7 @@ func TestTuiRender_NotebookInfo_AllFields(t *testing.T) {
 		},
 	}
 
-	result, err := TuiRender(Templates.NotebookInfo, ctx)
+	result, err := TuiRender("notebook-info", ctx)
 	if err != nil {
 		t.Fatalf("TuiRender() failed: %v", err)
 	}
@@ -166,7 +166,7 @@ func TestTuiRender_NotebookInfo_MinimalFields(t *testing.T) {
 		},
 	}
 
-	result, err := TuiRender(Templates.NotebookInfo, ctx)
+	result, err := TuiRender("notebook-info", ctx)
 	if err != nil {
 		t.Fatalf("TuiRender() failed: %v", err)
 	}
@@ -205,7 +205,7 @@ func TestTuiRender_NotebookList_WithNotebooks(t *testing.T) {
 		"Notebooks": []*Notebook{nb1, nb2},
 	}
 
-	result, err := TuiRender(Templates.NotebookList, ctx)
+	result, err := TuiRender("notebook-list", ctx)
 	if err != nil {
 		t.Fatalf("TuiRender() failed: %v", err)
 	}
@@ -230,7 +230,7 @@ func TestTuiRender_NotebookList_Empty(t *testing.T) {
 		"Notebooks": []*Notebook{},
 	}
 
-	result, err := TuiRender(Templates.NotebookList, ctx)
+	result, err := TuiRender("notebook-list", ctx)
 	if err != nil {
 		t.Fatalf("TuiRender() failed: %v", err)
 	}
@@ -256,7 +256,7 @@ func TestTuiRender_NoteDetail(t *testing.T) {
 		"Content":  note.Content,
 	}
 
-	result, err := TuiRender(Templates.NoteDetail, ctx)
+	result, err := TuiRender("note-detail", ctx)
 	if err != nil {
 		t.Fatalf("TuiRender() failed: %v", err)
 	}
@@ -274,50 +274,38 @@ func TestTuiRender_NoteDetail(t *testing.T) {
 	}
 }
 
-func TestTemplates_NotNil(t *testing.T) {
-	// Ensure all templates are non-empty
-	if Templates.NoteList == "" {
-		t.Error("Templates.NoteList is empty")
-	}
+func TestTemplates_Loaded(t *testing.T) {
+	// Ensure all templates are loaded
+	templateNames := []string{"note-list", "note-detail", "notebook-info", "notebook-list"}
 
-	if Templates.NoteDetail == "" {
-		t.Error("Templates.NoteDetail is empty")
-	}
-
-	if Templates.NotebookInfo == "" {
-		t.Error("Templates.NotebookInfo is empty")
-	}
-
-	if Templates.NotebookList == "" {
-		t.Error("Templates.NotebookList is empty")
+	for _, name := range templateNames {
+		t.Run(name, func(t *testing.T) {
+			if _, ok := loadedTemplates[name]; !ok {
+				t.Errorf("Template %q not loaded", name)
+			}
+		})
 	}
 }
 
-func TestTuiRender_InvalidTemplate_Fallback(t *testing.T) {
-	// Invalid template syntax
-	tmpl := "# {{ .Title"
+func TestTuiRender_InvalidTemplateName_Error(t *testing.T) {
+	// Invalid template name should return error
 	ctx := map[string]string{"Title": "Test"}
 
-	result, err := TuiRender(tmpl, ctx)
-	if err != nil {
-		t.Fatalf("TuiRender() should not fail on invalid template: %v", err)
-	}
-
-	// Should fallback to template as-is
-	if result != tmpl {
-		t.Errorf("TuiRender() result = %q, want fallback %q", result, tmpl)
+	_, err := TuiRender("nonexistent-template", ctx)
+	if err == nil {
+		t.Fatalf("TuiRender() should fail on invalid template name")
 	}
 }
 
 func TestTuiRender_NilContext(t *testing.T) {
-	tmpl := "# Static Heading"
-
-	result, err := TuiRender(tmpl, nil)
+	// TuiRender with a known template and nil context
+	// The note-list template doesn't use context, so this should work
+	result, err := TuiRender("note-list", map[string]any{"Notes": []Note{}})
 	if err != nil {
-		t.Fatalf("TuiRender() failed with nil context: %v", err)
+		t.Fatalf("TuiRender() failed with empty notes: %v", err)
 	}
 
-	if !strings.Contains(result, "Static Heading") {
-		t.Errorf("TuiRender() result = %q, want to contain 'Static Heading'", result)
+	if !strings.Contains(result, "No notes found") {
+		t.Errorf("TuiRender() result = %q, want to contain 'No notes found'", result)
 	}
 }

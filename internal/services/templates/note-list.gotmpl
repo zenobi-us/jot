@@ -1,0 +1,9 @@
+{{- if eq (len .Notes) 0 -}}
+No notes found.
+{{- else -}}
+### Notes ({{ len .Notes }})
+
+{{ range .Notes -}}
+- [{{ .DisplayName }}] {{ .File.Relative }}
+{{ end -}}
+{{- end -}}

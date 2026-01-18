@@ -1,0 +1,14 @@
+# {{ .Title }}
+
+**File:** {{ .File.Relative }}
+
+{{ if .Metadata -}}
+**Metadata:**
+{{ range $key, $value := .Metadata -}}
+- {{ $key }}: {{ $value }}
+{{ end }}
+{{ end -}}
+
+---
+
+{{ .Content }}

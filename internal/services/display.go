@@ -34,18 +34,14 @@ func (d *Display) Render(markdown string) (string, error) {
 }
 
 // RenderTemplate renders a Go template with context, then renders as markdown.
-func (d *Display) RenderTemplate(tmpl string, ctx any) (string, error) {
-	// Parse and execute Go template
-	t, err := template.New("display").Parse(tmpl)
-	if err != nil {
-		// Fallback: return template as-is if parsing fails
-		return tmpl, nil
+func (d *Display) RenderTemplate(tmpl *template.Template, ctx any) (string, error) {
+	if tmpl == nil {
+		return "", fmt.Errorf("template is nil")
 	}
 
 	var buf bytes.Buffer
-	if err := t.Execute(&buf, ctx); err != nil {
-		// Fallback: return template as-is if execution fails
-		return tmpl, nil
+	if err := tmpl.Execute(&buf, ctx); err != nil {
+		return "", err
 	}
 
 	// Render the result as markdown

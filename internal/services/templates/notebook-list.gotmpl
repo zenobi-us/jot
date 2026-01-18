@@ -1,0 +1,14 @@
+{{- if eq (len .Notebooks) 0 -}}
+No notebooks found.
+{{- else -}}
+## Notebooks ({{ len .Notebooks }})
+
+{{ range .Notebooks -}}
+### {{ .Config.Name }}
+- **Path:** {{ .Config.Path }}
+- **Root:** {{ .Config.Root }}
+{{ if .Config.Contexts -}}
+- **Contexts:** {{ range $i, $c := .Config.Contexts }}{{ if $i }}, {{ end }}{{ $c }}{{ end }}
+{{ end }}
+{{ end -}}
+{{- end -}}
