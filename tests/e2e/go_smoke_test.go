@@ -865,8 +865,8 @@ func TestCLI_SQLFlag_EmptyResult(t *testing.T) {
 		t.Errorf("empty query failed with exit code %d, stderr: %s", exitCode, stderr)
 	}
 
-	// Should show "No results"
-	if !strings.Contains(stdout, "No results") {
-		t.Errorf("expected 'No results' message, got: %s", stdout)
+	// Should show empty JSON array
+	if strings.TrimSpace(stdout) != "[]" {
+		t.Errorf("expected empty JSON array '[]', got: %s", stdout)
 	}
 }
