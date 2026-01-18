@@ -3,7 +3,7 @@ id: a6773284
 title: Integrate JSON Output with CLI Command
 created_at: 2026-01-18T23:30:00+10:30
 updated_at: 2026-01-18T23:30:00+10:30
-status: todo
+status: completed
 epic_id: a2c50b55
 phase_id: e7394efb
 assigned_to: current
@@ -18,34 +18,34 @@ Connect the updated JSON output functionality to the CLI command that handles th
 ## Steps
 
 ### 1. Identify Current CLI Integration
-- [ ] Locate the CLI command that handles `--sql` flag (likely in `cmd/notes_search.go`)
-- [ ] Understand current flow from flag parsing to SQL execution
-- [ ] Document how `RenderSQLResults` is currently called
-- [ ] Review existing error handling in CLI command
+- [x] Locate the CLI command that handles `--sql` flag (likely in `cmd/notes_search.go`)
+- [x] Understand current flow from flag parsing to SQL execution
+- [x] Document how `RenderSQLResults` is currently called
+- [x] Review existing error handling in CLI command
 
 ### 2. Update CLI Command Integration  
-- [ ] Modify CLI command to call updated `RenderSQLResults` function
-- [ ] Ensure proper parameter passing to display service
-- [ ] Update error handling for JSON serialization failures
-- [ ] Verify output goes to correct stream (stdout)
+- [x] ~~Modify CLI command to call updated `RenderSQLResults` function~~ (Already integrated)
+- [x] ~~Ensure proper parameter passing to display service~~ (Already correct)
+- [x] ~~Update error handling for JSON serialization failures~~ (Already handled)
+- [x] ~~Verify output goes to correct stream (stdout)~~ (Already correct)
 
 ### 3. Test CLI Integration
-- [ ] Test basic SQL query execution with JSON output
-- [ ] Verify error scenarios work correctly (invalid SQL, JSON failures)
-- [ ] Check that output formatting is clean and readable
-- [ ] Confirm no regressions in non-SQL command functionality
+- [x] Test basic SQL query execution with JSON output
+- [x] Verify error scenarios work correctly (invalid SQL, JSON failures)
+- [x] Check that output formatting is clean and readable
+- [x] Confirm no regressions in non-SQL command functionality
 
 ### 4. Validate Output Format
-- [ ] Ensure JSON is properly formatted for command line use
-- [ ] Test piping to external tools (jq, file redirection)
-- [ ] Verify UTF-8 handling for markdown content
-- [ ] Check output consistency across different query types
+- [x] Ensure JSON is properly formatted for command line use
+- [x] Test piping to external tools (jq, file redirection)
+- [x] Verify UTF-8 handling for markdown content
+- [x] Check output consistency across different query types
 
 ### 5. Error Message Integration
-- [ ] Ensure JSON serialization errors show helpful messages
-- [ ] Verify CLI error handling remains consistent
-- [ ] Test edge cases (empty results, malformed data)
-- [ ] Confirm error codes are appropriate for scripting
+- [x] Ensure JSON serialization errors show helpful messages
+- [x] Verify CLI error handling remains consistent
+- [x] Test edge cases (empty results, malformed data)
+- [x] Confirm error codes are appropriate for scripting
 
 ## Expected Outcome
 
@@ -69,11 +69,67 @@ Connect the updated JSON output functionality to the CLI command that handles th
 
 ## Actual Outcome
 
-*To be filled upon completion*
+**✅ CLI Integration Complete and Functional**
+
+All testing confirmed that the CLI integration for JSON output is working perfectly:
+
+### Testing Results
+- **Basic JSON Output**: ✅ Simple queries produce valid JSON arrays
+- **Complex Queries**: ✅ WITH statements, complex SELECT queries work correctly  
+- **Data Types**: ✅ Handles strings, numbers, null values, and UTF-8 characters
+- **Error Handling**: ✅ Invalid SQL shows clear error messages with proper exit codes
+- **Tool Integration**: ✅ Piping to `jq` and file redirection work perfectly
+- **No Regressions**: ✅ Non-SQL search functionality remains intact
+- **JSON Validation**: ✅ All output parses correctly with standard JSON parsers
+
+### Key Findings
+1. **No Code Changes Required**: Tasks 1-2 already implemented complete solution
+2. **CLI Command Already Integrated**: `cmd/notes_search.go` properly calls `RenderSQLResults`  
+3. **JSON is Default Format**: `RenderSQLResults()` now outputs JSON by default
+4. **Error Handling Robust**: Both SQL syntax and query validation errors handled correctly
+5. **Performance Good**: No noticeable performance impact vs table format
+
+### Successful Test Cases
+```bash
+# Basic functionality
+opennotes notes search --sql "SELECT 'hello' as greeting"
+# Output: [{"greeting": "hello"}]
+
+# Real data queries  
+opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)"
+# Output: [{"file_path": ".notes/note1.md"}, ...]
+
+# Complex queries with content
+opennotes notes search --sql "SELECT file_path, content FROM read_markdown('**/*.md', include_filepath:=true) WHERE content LIKE '%Python%'"
+# Output: [{"content": "...", "file_path": "..."}]
+
+# Tool integration
+opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)" | jq '.[].file_path'
+# Output: ".notes/note1.md"
+
+# Empty results
+opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md') WHERE content LIKE '%nonexistent%'"  
+# Output: []
+```
 
 ## Lessons Learned
 
-*To be filled upon completion*
+### Integration Architecture Success
+- **Service Layer Design**: The service-oriented architecture made integration seamless
+- **CLI Separation**: Thin command layer meant no changes needed for CLI integration  
+- **Default JSON**: Making JSON the default format for `RenderSQLResults` was correct choice
+
+### Testing Insights
+- **Manual Testing Essential**: Comprehensive CLI testing revealed edge cases not covered by unit tests
+- **Tool Integration Critical**: Testing with `jq` and file redirection validated real-world usage
+- **Error Path Testing**: Invalid SQL and edge cases confirmed robust error handling
+- **UTF-8 Validation**: Testing special characters ensured proper encoding support
+
+### Implementation Quality
+- **No Regressions**: Existing functionality preserved while adding new capabilities
+- **Error Consistency**: Error messages follow OpenNotes patterns and provide actionable feedback
+- **Performance Maintained**: JSON output performs as well as previous table format
+- **Security Preserved**: SQL restrictions (SELECT/WITH only) remain enforced
 
 ## Technical Notes
 
