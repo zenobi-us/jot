@@ -13,6 +13,10 @@ This guide shows you how to use the `--sql` flag to run custom SQL queries again
 7. [Security Model](#security-model)
 8. [Performance Tips](#performance-tips)
 
+## Related Guides
+
+- **[JSON SQL Query Guide](json-sql-guide.md)** - Comprehensive guide for working with JSON output, automation, and external tool integration
+
 ## Getting Started
 
 ### Basic Syntax
@@ -32,15 +36,33 @@ opennotes search --sql "SELECT file_path, content FROM read_markdown('**/*.md', 
 ```
 
 **Output format:**
-```
-filepath                    content
--------------------------   ------------------------------------------
-notes/project-ideas.md      # Project Ideas\n\nSome ideas for new...
-notes/meeting-notes.md      # Meeting Notes\n\nDiscussed the new...
-notes/todo.md              # Todo List\n\n- [ ] Finish report...
 
-3 rows
+OpenNotes returns SQL query results in **JSON format** by default:
+
+```json
+[
+  {
+    "file_path": "/path/to/notebook/notes/project-ideas.md",
+    "content": "# Project Ideas\n\nSome ideas for new..."
+  },
+  {
+    "file_path": "/path/to/notebook/notes/meeting-notes.md", 
+    "content": "# Meeting Notes\n\nDiscussed the new..."
+  },
+  {
+    "file_path": "/path/to/notebook/notes/todo.md",
+    "content": "# Todo List\n\n- [ ] Finish report..."
+  }
+]
 ```
+
+**JSON Benefits:**
+- Perfect for automation and scripting
+- Easy integration with tools like `jq`
+- Structured data for complex processing
+- Standard format across all environments
+
+**📖 For comprehensive examples, automation patterns, and tool integration, see the [JSON SQL Query Guide](json-sql-guide.md).**
 
 ## File Pattern Resolution
 
