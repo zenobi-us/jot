@@ -1,58 +1,124 @@
 # OpenNotes - Active Tasks
 
-**Status**: 🟢 **PRODUCTION READY** - All epics and critical bug fixes completed successfully  
-**Current Work**: No active tasks - ready for new epic planning  
-**Recent Achievement**: SQL Glob Security Issue ✅ **RESOLVED**  
-**Last Epic**: SQL Flag Feature ✅ COMPLETED  
-**Before That**: Test Coverage Improvement ✅ COMPLETED
+**Status**: 🚀 **NEW EPIC ACTIVE** - SQL JSON Output Implementation comprehensive planning complete  
+**Current Work**: Epic ready for implementation with detailed task breakdown  
+**Priority**: High - Improving developer experience and automation capabilities
+**Epic**: SQL JSON Output Implementation - Converting ASCII table output to JSON format
 
 ---
 
-## ✅ ALL WORK COMPLETE - PROJECT STATUS: PRODUCTION READY
+## 🚀 ACTIVE EPIC: SQL JSON Output Implementation
 
-### 🎉 CRITICAL BUG FIX SUCCESSFULLY COMPLETED: SQL Glob Security Issue (2026-01-18)
+### Epic Overview
+**Goal**: Replace ASCII table output with JSON format for SQL queries to improve automation and developer experience  
+**Duration Estimate**: 5.5-7 hours across 3 phases  
+**Epic File**: `epic-a2c50b55-sql-json-output.md`
 
-**Problem**: ✅ **RESOLVED** - SQL queries with `**/*.md` patterns now correctly anchor to notebook root  
-**Security Risk**: ✅ **MITIGATED** - Path traversal protection prevents access outside notebook scope  
-**Implementation**: ✅ **COMPLETE** - Query preprocessing with pattern substitution working perfectly
+### 📋 PHASE 1: Core JSON Output Implementation (2-3 hours)
+**Status**: ⏳ READY TO START  
+**Goal**: Get basic JSON output working for simple SQL queries  
 
-### All Tasks Successfully Completed
+#### Core Implementation Tasks
+- [ ] **[task-5ad10426]** Implement JSON Serialization for SQL Result Sets
+  - **Priority**: 🔴 HIGH - Foundation for entire epic
+  - **Estimate**: 1.5-2 hours
+  - **Scope**: Create core JSON serialization logic for DuckDB results
 
-#### ✅ Core Implementation - COMPLETED  
-- ✅ **[task-847f8a69]** SQL Query Preprocessing Implementation
-  - **Status**: ✅ COMPLETED in 1 hour (under 2-3 hour estimate)
-  - **Outcome**: `preprocessSQL()` function implemented with comprehensive security validation
-  - **Quality**: Manual testing confirms correct behavior, all existing tests passing
+- [ ] **[task-61376c8f]** Update RenderSQLResults Function for JSON Output  
+  - **Priority**: 🔴 HIGH - Critical integration point
+  - **Estimate**: 1-1.5 hours  
+  - **Scope**: Modify display service to output JSON instead of ASCII tables
 
-#### ✅ Comprehensive Testing - COMPLETED  
-- ✅ **[task-1c5a8eca]** Comprehensive Testing for SQL Glob Pattern Preprocessing
-  - **Status**: ✅ COMPLETED in 1.5 hours (as estimated)  
-  - **Coverage**: Unit tests, security tests, integration tests, performance benchmarks
-  - **Result**: 95%+ test coverage maintained, all security validations working
-  - **Archived**: Moved to `.memory/archive/sql-glob-bugfix-2026-01-18/`
+- [ ] **[task-a6773284]** Integrate JSON Output with CLI Command
+  - **Priority**: 🔴 HIGH - User-facing functionality  
+  - **Estimate**: 45 minutes
+  - **Scope**: Connect JSON output to `--sql` flag in CLI command
 
-#### ✅ Documentation Complete - COMPLETED  
-- ✅ **[task-fba56e5b]** Documentation Updates for SQL Glob Pattern Behavior  
-  - **Status**: ✅ COMPLETED in 30 minutes (under 45-60 minute estimate)
-  - **Scope**: CLI help text, user guides, function reference
-  - **Quality**: Clear explanations of new behavior and security protections
-  - **Archived**: Moved to `.memory/archive/sql-glob-bugfix-2026-01-18/`
+- [ ] **[task-3d2efa9e]** Create Comprehensive Unit Tests for JSON Functionality
+  - **Priority**: 🟡 MEDIUM - Quality assurance (can run in parallel)
+  - **Estimate**: 1-1.5 hours
+  - **Scope**: Complete test coverage for JSON serialization
 
-### Final Implementation Quality ⭐⭐⭐⭐⭐ EXCELLENT
+#### Phase 1 Success Criteria
+- [ ] Basic SQL queries output valid JSON (e.g., `SELECT title, path FROM notes LIMIT 5`)
+- [ ] All existing SQL functionality preserved without regressions
+- [ ] JSON output validates with standard JSON parsers
+- [ ] Core error handling implemented for serialization failures
 
-**Security**: ✅ **ROBUST** - Path traversal properly blocked, comprehensive input validation  
-**Functionality**: ✅ **WORKING** - All glob patterns resolve correctly from notebook root
-**Performance**: ✅ **OPTIMAL** - <1ms preprocessing overhead, no measurable impact
-**Regression Risk**: ✅ **ZERO** - All 339+ existing tests continue passing
-**Documentation**: ✅ **COMPLETE** - Clear user guidance and error handling
+### 📋 PHASE 2: Complex Data Type Support (2-2.5 hours)  
+**Status**: ⏸️ WAITING - Depends on Phase 1 completion
 
-### Learning Captured
-- ✅ **[learning-548a8336]** Complete implementation guide with security analysis preserved
-- ✅ **Archive Status**: All task files moved to `.memory/archive/sql-glob-bugfix-2026-01-18/`
+#### Key Tasks Planned
+- [ ] **[task-14c19e94]** Research and Implement DuckDB to JSON Type Mapping
+  - **Priority**: 🔴 HIGH - Solves core motivation (ugly Go map formatting)
+  - **Scope**: Handle DuckDB MAP, ARRAY, and nested types properly
+
+#### Phase 2 Success Criteria  
+- [ ] DuckDB MAP types → Clean JSON objects (not Go map formatting)
+- [ ] DuckDB ARRAY types → Proper JSON arrays
+- [ ] Complex nested structures correctly represented
+- [ ] All data types preserve information through conversion
+
+### 📋 PHASE 3: Polish and Documentation (1-1.5 hours)
+**Status**: ⏸️ WAITING - Depends on Phase 2 completion  
+
+#### Key Tasks Planned
+- [ ] **[task-03c6064b]** Create Comprehensive User Guide for JSON SQL Queries
+  - **Priority**: 🟡 MEDIUM - User experience and adoption
+  - **Scope**: Complete documentation with examples and integration patterns
+
+#### Phase 3 Success Criteria
+- [ ] CLI help text updated with JSON examples
+- [ ] Comprehensive user guide with automation examples  
+- [ ] Performance validated (<5ms overhead)
+- [ ] Integration patterns documented (jq, scripts, automation)
 
 ---
 
-## ✅ Previous Epic Completions
+## 🎯 Epic Success Targets
+
+### Functional Goals
+- [x] **Epic Planning**: Comprehensive task breakdown complete
+- [ ] **Core Functionality**: JSON output working for all SQL queries
+- [ ] **Data Integrity**: Complex types properly represented (maps, arrays, nested)  
+- [ ] **Performance**: <5ms overhead for JSON serialization
+- [ ] **User Experience**: Easy integration with external tools
+
+### Quality Gates
+- [ ] **Zero Regressions**: All existing SQL functionality preserved
+- [ ] **Test Coverage**: ≥90% coverage for new JSON functionality
+- [ ] **Documentation**: Complete CLI help and user guide
+- [ ] **Performance**: JSON serialization meets overhead targets
+
+### User Experience Goals  
+- [ ] **Developer Friendly**: JSON optimized for programmatic consumption
+- [ ] **Script Integration**: Easy piping to jq, file output, automation
+- [ ] **Error Clarity**: Clear error messages for JSON serialization issues
+
+---
+
+## 🔧 Implementation Notes
+
+### Technical Approach
+- **Build on Proven Infrastructure**: Leverages existing SQL flag implementation from previous epic
+- **Service Architecture**: Integrates cleanly with existing display service patterns
+- **Error Handling**: Maintains consistency with established OpenNotes error patterns
+- **Testing Framework**: Uses proven testing patterns from SQL Flag and Test Coverage epics
+
+### Quality Framework
+- **Performance Benchmarking**: <5ms overhead target with validation tests
+- **Regression Prevention**: All existing 339+ tests must continue passing
+- **Type Safety**: Comprehensive type conversion with error handling
+- **Documentation Standards**: Consistent with OpenNotes documentation patterns
+
+### Dependencies
+- ✅ **SQL Flag Epic Knowledge**: Understanding of current RenderSQLResults implementation
+- ✅ **Testing Infrastructure**: Proven test patterns from previous epics available
+- ✅ **Service Architecture**: Clean integration points identified in display service
+
+---
+
+## Previous Epic Completions ✅
 
 ### SQL Flag Feature Epic Completed (2026-01-18)
 

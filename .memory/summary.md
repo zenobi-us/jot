@@ -6,15 +6,57 @@ OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks
 
 ## Current Status
 
-- **Active Work**: 🎉 **ALL TASKS COMPLETED** - All epics and bug fixes completed successfully  
-- **Priority**: No active tasks remaining
-- **Recent Bug Fix**: ✅ SQL Glob Security Issue **RESOLVED** (2026-01-18)
+- **Active Epic**: 🚀 **SQL JSON Output Implementation** - Converting SQL output from ASCII tables to JSON format
+- **Priority**: High - Improving developer experience and automation capabilities  
+- **Epic Status**: ✅ PLANNED - Comprehensive task breakdown completed, ready for implementation
 - **Previous Epic**: [SQL Flag Feature](archive/sql-flag-feature-epic/epic-2f3c4d5e-sql-flag-feature.md) ✅ COMPLETED SUCCESSFULLY
-- **Before That**: [Test Coverage Improvement](archive/test-improvement-epic/epic-7a2b3c4d-test-improvement.md) ✅ COMPLETED SUCCESSFULLY
-- **Last Updated**: 2026-01-18 22:17 GMT+10:30
-- **Status**: 🎉 **PRODUCTION READY** - All work complete, ready for new epic planning
+- **Before That**: [Test Coverage Improvement](archive/test-improvement-epic/epic-7a2b3c4d-test-improvement.md) ✅ COMPLETED SUCCESSFULLY  
+- **Last Updated**: 2026-01-18 23:30 GMT+10:30
+- **Status**: 🎯 **NEW EPIC READY** - JSON output implementation planned and ready for execution
 
-## Recent Critical Bug Fix Completion (2026-01-18)
+## New Epic: SQL JSON Output Implementation (2026-01-18)
+
+### 🚀 SQL JSON Output Epic - COMPREHENSIVE PLANNING COMPLETE
+
+**Epic Goal**: Transform SQL query output from ASCII tables to JSON format for better developer experience and automation integration.
+
+**Problem Being Solved**: 
+- Current ASCII table output creates barriers for automation
+- Complex data structures show as ugly Go map formatting  
+- Column width constraints limit data visibility
+- Poor integration with external tools and scripts
+
+**Solution Approach**: Replace RenderSQLResults with JSON serialization while preserving all existing functionality and security measures.
+
+**Epic Planning Status**: ✅ **COMPLETE AND COMPREHENSIVE**
+- **Epic Definition**: `epic-a2c50b55-sql-json-output.md` - Vision, success criteria, phases, dependencies
+- **Phase Planning**: 3 phases designed with clear deliverables and quality gates
+- **Task Breakdown**: Core implementation tasks created with detailed specifications
+- **Quality Standards**: ≥90% test coverage, <5ms performance overhead, zero regressions
+
+**Implementation Phases**:
+1. **Phase 1**: Core JSON Output Implementation (2-3 hours)
+   - JSON serialization for SQL results
+   - Updated RenderSQLResults function
+   - Basic CLI integration and error handling
+   
+2. **Phase 2**: Complex Data Type Support (2-2.5 hours)
+   - DuckDB MAP/ARRAY type conversion
+   - Nested structure handling
+   - Comprehensive type coverage
+   
+3. **Phase 3**: Polish and Documentation (1-1.5 hours)
+   - CLI help updates and user guide
+   - Performance optimization
+   - Integration examples and troubleshooting
+
+**Quality Framework**:
+- **Test Coverage**: ≥90% for all new JSON functionality
+- **Performance**: <5ms overhead for JSON serialization
+- **Compatibility**: 100% of existing SQL queries produce valid JSON
+- **User Experience**: JSON output optimized for automation and external tool integration
+
+**Ready for Implementation**: Epic planning complete, tasks defined, quality gates established
 
 ### ✅ SQL Glob Security Issue - **SUCCESSFULLY RESOLVED**
 

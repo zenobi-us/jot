@@ -247,23 +247,30 @@ func (s *NoteService) ExecuteSQLSafe(ctx context.Context, query string) ([]map[s
 		return nil, fmt.Errorf("invalid query: %w", err)
 	}
 
-	// 2. Get read-only connection
+	// 2. Preprocess query to resolve glob patterns relative to notebook root
+	processedQuery, err := s.dbService.preprocessSQL(query, s.notebookPath)
+	if err != nil {
+		s.log.Error().Err(err).Str("query", query).Msg("SQL query preprocessing failed")
+		return nil, fmt.Errorf("query preprocessing failed: %w", err)
+	}
+
+	// 3. Get read-only connection
 	db, err := s.dbService.GetReadOnlyDB(ctx)
 	if err != nil {
 		s.log.Error().Err(err).Msg("failed to get read-only database connection")
 		return nil, fmt.Errorf("database error: %w", err)
 	}
 
-	// 3. Create context with 30-second timeout
+	// 4. Create context with 30-second timeout
 	timeoutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	s.log.Debug().Str("query", query).Msg("executing SQL query")
+	s.log.Debug().Str("query", processedQuery).Msg("executing SQL query")
 
-	// 4. Execute query
-	rows, err := db.QueryContext(timeoutCtx, query)
+	// 5. Execute query
+	rows, err := db.QueryContext(timeoutCtx, processedQuery)
 	if err != nil {
-		s.log.Error().Err(err).Str("query", query).Msg("query execution failed")
+		s.log.Error().Err(err).Str("query", processedQuery).Msg("query execution failed")
 		return nil, fmt.Errorf("query execution failed: %w", err)
 	}
 	defer func() {
@@ -272,7 +279,7 @@ func (s *NoteService) ExecuteSQLSafe(ctx context.Context, query string) ([]map[s
 		}
 	}()
 
-	// 5. Convert rows to maps using local implementation
+	// 6. Convert rows to maps using local implementation
 	results, err := s.rowsToMaps(rows)
 	if err != nil {
 		s.log.Error().Err(err).Msg("failed to scan query results")

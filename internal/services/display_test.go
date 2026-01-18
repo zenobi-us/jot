@@ -304,8 +304,10 @@ func TestDisplay_RenderSQLResults_EmptyResults(t *testing.T) {
 		_ = display.RenderSQLResults([]map[string]interface{}{})
 	})
 
-	if !strings.Contains(output, "No results") {
-		t.Errorf("RenderSQLResults() with empty results = %q, want to contain 'No results'", output)
+	// Should output empty JSON array
+	expected := "[]"
+	if !strings.Contains(output, expected) {
+		t.Errorf("RenderSQLResults() with empty results = %q, want to contain %q", output, expected)
 	}
 }
 
@@ -327,28 +329,27 @@ func TestDisplay_RenderSQLResults_SingleRow(t *testing.T) {
 		_ = display.RenderSQLResults(results)
 	})
 
-	// Check headers
-	if !strings.Contains(output, "age") {
-		t.Errorf("RenderSQLResults() output missing column 'age'")
-	}
-	if !strings.Contains(output, "email") {
-		t.Errorf("RenderSQLResults() output missing column 'email'")
-	}
-	if !strings.Contains(output, "name") {
-		t.Errorf("RenderSQLResults() output missing column 'name'")
+	// Should output valid JSON
+	var parsedResults []map[string]interface{}
+	err = json.Unmarshal([]byte(output), &parsedResults)
+	if err != nil {
+		t.Fatalf("RenderSQLResults() output is not valid JSON: %v\nOutput: %s", err, output)
 	}
 
-	// Check data
-	if !strings.Contains(output, "John") {
-		t.Errorf("RenderSQLResults() output missing data 'John'")
-	}
-	if !strings.Contains(output, "30") {
-		t.Errorf("RenderSQLResults() output missing data '30'")
+	if len(parsedResults) != 1 {
+		t.Errorf("RenderSQLResults() returned %d items, want 1", len(parsedResults))
 	}
 
-	// Check row count
-	if !strings.Contains(output, "1 row") {
-		t.Errorf("RenderSQLResults() output missing '1 row' summary")
+	row := parsedResults[0]
+	if row["name"] != "John" {
+		t.Errorf("RenderSQLResults() name = %v, want John", row["name"])
+	}
+	if row["email"] != "john@example.com" {
+		t.Errorf("RenderSQLResults() email = %v, want john@example.com", row["email"])
+	}
+	// JSON numbers come back as float64
+	if row["age"] != float64(30) {
+		t.Errorf("RenderSQLResults() age = %v, want 30", row["age"])
 	}
 }
 
@@ -368,32 +369,30 @@ func TestDisplay_RenderSQLResults_MultipleRows(t *testing.T) {
 		_ = display.RenderSQLResults(results)
 	})
 
-	// Check headers
-	if !strings.Contains(output, "id") {
-		t.Errorf("RenderSQLResults() output missing column 'id'")
-	}
-	if !strings.Contains(output, "name") {
-		t.Errorf("RenderSQLResults() output missing column 'name'")
-	}
-
-	// Check data
-	if !strings.Contains(output, "Alice") {
-		t.Errorf("RenderSQLResults() output missing 'Alice'")
-	}
-	if !strings.Contains(output, "Bob") {
-		t.Errorf("RenderSQLResults() output missing 'Bob'")
-	}
-	if !strings.Contains(output, "Charlie") {
-		t.Errorf("RenderSQLResults() output missing 'Charlie'")
+	// Should output valid JSON
+	var parsedResults []map[string]interface{}
+	err = json.Unmarshal([]byte(output), &parsedResults)
+	if err != nil {
+		t.Fatalf("RenderSQLResults() output is not valid JSON: %v\nOutput: %s", err, output)
 	}
 
-	// Check row count
-	if !strings.Contains(output, "3 rows") {
-		t.Errorf("RenderSQLResults() output missing '3 rows' summary")
+	if len(parsedResults) != 3 {
+		t.Errorf("RenderSQLResults() returned %d items, want 3", len(parsedResults))
+	}
+
+	// Check each row
+	expectedNames := []string{"Alice", "Bob", "Charlie"}
+	for i, row := range parsedResults {
+		if row["id"] != float64(i+1) {
+			t.Errorf("Row %d: id = %v, want %d", i, row["id"], i+1)
+		}
+		if row["name"] != expectedNames[i] {
+			t.Errorf("Row %d: name = %v, want %s", i, row["name"], expectedNames[i])
+		}
 	}
 }
 
-func TestDisplay_RenderSQLResults_ColumnAlignment(t *testing.T) {
+func TestDisplay_RenderSQLResults_JSONFormatStructure(t *testing.T) {
 	display, err := NewDisplay()
 	if err != nil {
 		t.Fatalf("NewDisplay() failed: %v", err)
@@ -408,27 +407,23 @@ func TestDisplay_RenderSQLResults_ColumnAlignment(t *testing.T) {
 		_ = display.RenderSQLResults(results)
 	})
 
-	lines := strings.Split(strings.TrimSpace(output), "\n")
-
-	// Should have header, separator, 2 data rows, blank line, summary = 6 lines
-	if len(lines) < 5 {
-		t.Errorf("RenderSQLResults() output has %d lines, want at least 5", len(lines))
+	// Should output valid JSON array
+	var parsedResults []map[string]interface{}
+	err = json.Unmarshal([]byte(output), &parsedResults)
+	if err != nil {
+		t.Fatalf("RenderSQLResults() output is not valid JSON: %v\nOutput: %s", err, output)
 	}
 
-	// Header and data rows should have consistent structure
-	headerLine := lines[0]
-	separatorLine := lines[1]
-	dataLine1 := lines[2]
+	if len(parsedResults) != 2 {
+		t.Errorf("RenderSQLResults() returned %d items, want 2", len(parsedResults))
+	}
 
-	// All should contain the columns
-	if !strings.Contains(headerLine, "short") {
-		t.Error("Header missing 'short' column")
+	// Verify data structure
+	if parsedResults[0]["short"] != "a" || parsedResults[0]["verylongname"] != "value1" {
+		t.Error("First row data incorrect")
 	}
-	if !strings.Contains(separatorLine, "-") {
-		t.Error("Separator line should contain dashes")
-	}
-	if !strings.Contains(dataLine1, "a") || !strings.Contains(dataLine1, "value1") {
-		t.Error("Data line missing expected values")
+	if parsedResults[1]["short"] != "abcdef" || parsedResults[1]["verylongname"] != "v2" {
+		t.Error("Second row data incorrect")
 	}
 }
 
@@ -451,22 +446,33 @@ func TestDisplay_RenderSQLResults_DifferentTypes(t *testing.T) {
 		_ = display.RenderSQLResults(results)
 	})
 
-	// All values should be present and formatted
-	if !strings.Contains(output, "text") {
+	// Should output valid JSON
+	var parsedResults []map[string]interface{}
+	err = json.Unmarshal([]byte(output), &parsedResults)
+	if err != nil {
+		t.Fatalf("RenderSQLResults() output is not valid JSON: %v\nOutput: %s", err, output)
+	}
+
+	if len(parsedResults) != 1 {
+		t.Errorf("RenderSQLResults() returned %d items, want 1", len(parsedResults))
+	}
+
+	row := parsedResults[0]
+	if row["string_col"] != "text" {
 		t.Error("RenderSQLResults() missing string value")
 	}
-	if !strings.Contains(output, "42") {
+	if row["int_col"] != float64(42) {
 		t.Error("RenderSQLResults() missing int value")
 	}
-	if !strings.Contains(output, "3.14") {
+	if row["float_col"] != 3.14 {
 		t.Error("RenderSQLResults() missing float value")
 	}
-	if !strings.Contains(output, "true") {
+	if row["bool_col"] != true {
 		t.Error("RenderSQLResults() missing bool value")
 	}
 }
 
-func TestDisplay_RenderSQLResults_ColumnSorting(t *testing.T) {
+func TestDisplay_RenderSQLResults_DataPreservation(t *testing.T) {
 	display, err := NewDisplay()
 	if err != nil {
 		t.Fatalf("NewDisplay() failed: %v", err)
@@ -481,22 +487,26 @@ func TestDisplay_RenderSQLResults_ColumnSorting(t *testing.T) {
 		_ = display.RenderSQLResults(results)
 	})
 
-	lines := strings.Split(strings.TrimSpace(output), "\n")
-	headerLine := lines[0]
-
-	// Find positions of columns in header
-	applePos := strings.Index(headerLine, "apple")
-	middlePos := strings.Index(headerLine, "middle")
-	zebraPos := strings.Index(headerLine, "zebra")
-
-	// Columns should be in alphabetical order
-	if applePos == -1 || middlePos == -1 || zebraPos == -1 {
-		t.Fatal("RenderSQLResults() missing expected columns")
+	// Should output valid JSON that preserves all data
+	var parsedResults []map[string]interface{}
+	err = json.Unmarshal([]byte(output), &parsedResults)
+	if err != nil {
+		t.Fatalf("RenderSQLResults() output is not valid JSON: %v\nOutput: %s", err, output)
 	}
 
-	if !(applePos < middlePos && middlePos < zebraPos) {
-		t.Errorf("RenderSQLResults() columns not sorted: apple@%d, middle@%d, zebra@%d",
-			applePos, middlePos, zebraPos)
+	if len(parsedResults) != 1 {
+		t.Errorf("RenderSQLResults() returned %d items, want 1", len(parsedResults))
+	}
+
+	row := parsedResults[0]
+	if row["apple"] != float64(2) {
+		t.Error("RenderSQLResults() missing 'apple' data")
+	}
+	if row["middle"] != float64(3) {
+		t.Error("RenderSQLResults() missing 'middle' data")
+	}
+	if row["zebra"] != float64(1) {
+		t.Error("RenderSQLResults() missing 'zebra' data")
 	}
 }
 
@@ -514,12 +524,23 @@ func TestDisplay_RenderSQLResults_NilValues(t *testing.T) {
 		_ = display.RenderSQLResults(results)
 	})
 
-	// Should handle nil values gracefully
-	if !strings.Contains(output, "col1") {
+	// Should output valid JSON with proper nil handling
+	var parsedResults []map[string]interface{}
+	err = json.Unmarshal([]byte(output), &parsedResults)
+	if err != nil {
+		t.Fatalf("RenderSQLResults() output is not valid JSON: %v\nOutput: %s", err, output)
+	}
+
+	if len(parsedResults) != 1 {
+		t.Errorf("RenderSQLResults() returned %d items, want 1", len(parsedResults))
+	}
+
+	row := parsedResults[0]
+	if row["col1"] != "value" {
 		t.Error("RenderSQLResults() missing column with value")
 	}
-	if !strings.Contains(output, "col2") {
-		t.Error("RenderSQLResults() missing column with nil value")
+	if row["col2"] != nil {
+		t.Error("RenderSQLResults() nil value not preserved")
 	}
 }
 
@@ -538,12 +559,23 @@ func TestDisplay_RenderSQLResults_LargeValues(t *testing.T) {
 		_ = display.RenderSQLResults(results)
 	})
 
-	// Should contain the long string even if column is wide
-	if !strings.Contains(output, "long") {
-		t.Error("RenderSQLResults() missing 'long' column header")
+	// Should output valid JSON that preserves large values
+	var parsedResults []map[string]interface{}
+	err = json.Unmarshal([]byte(output), &parsedResults)
+	if err != nil {
+		t.Fatalf("RenderSQLResults() output is not valid JSON: %v\nOutput: %s", err, output)
 	}
-	if !strings.Contains(output, "x") {
-		t.Error("RenderSQLResults() missing long string data")
+
+	if len(parsedResults) != 1 {
+		t.Errorf("RenderSQLResults() returned %d items, want 1", len(parsedResults))
+	}
+
+	row := parsedResults[0]
+	if row["short"] != "s" {
+		t.Error("RenderSQLResults() missing short value")
+	}
+	if row["long"] != longString {
+		t.Error("RenderSQLResults() long string not preserved")
 	}
 }
 
@@ -873,7 +905,7 @@ func TestDisplay_RenderSQLResultsWithFormat_InvalidFormat(t *testing.T) {
 	}
 }
 
-func TestDisplay_RenderSQLResults_BackwardsCompatibility(t *testing.T) {
+func TestDisplay_RenderSQLResults_JSONCompatibility(t *testing.T) {
 	display, err := NewDisplay()
 	if err != nil {
 		t.Fatalf("NewDisplay() failed: %v", err)
@@ -890,11 +922,22 @@ func TestDisplay_RenderSQLResults_BackwardsCompatibility(t *testing.T) {
 		}
 	})
 
-	// Should still work as table format (backwards compatibility)
-	if !strings.Contains(output, "Alice") {
-		t.Error("RenderSQLResults should still work as table format")
+	// Should now work as JSON format (breaking change from table to JSON)
+	var parsedResults []map[string]interface{}
+	err = json.Unmarshal([]byte(output), &parsedResults)
+	if err != nil {
+		t.Fatalf("RenderSQLResults() output is not valid JSON: %v\nOutput: %s", err, output)
 	}
-	if !strings.Contains(output, "age") {
-		t.Error("RenderSQLResults should still contain column headers")
+
+	if len(parsedResults) != 1 {
+		t.Errorf("RenderSQLResults() returned %d items, want 1", len(parsedResults))
+	}
+
+	row := parsedResults[0]
+	if row["name"] != "Alice" {
+		t.Error("RenderSQLResults should work as JSON format")
+	}
+	if row["age"] != float64(30) {
+		t.Error("RenderSQLResults should preserve numeric values in JSON")
 	}
 }

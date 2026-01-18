@@ -2,11 +2,39 @@
 
 Quick reference for DuckDB markdown extension functions available in OpenNotes.
 
+## File Pattern Resolution
+
+**IMPORTANT**: All file patterns are resolved relative to the notebook root directory, providing consistent behavior regardless of current working directory.
+
+### Pattern Security & Resolution
+- Patterns always resolve from notebook root
+- Path traversal attempts (`../`) are blocked  
+- Security violations are logged
+- Cross-platform compatibility with forward slashes
+
+### Supported Pattern Examples
+```sql
+-- Root-level files only
+read_markdown('*.md')
+
+-- All files recursively  
+read_markdown('**/*.md')
+
+-- Specific subfolder
+read_markdown('projects/*.md')
+
+-- Nested subfolder files
+read_markdown('docs/guides/*.md')
+
+-- Any subfolder with specific name
+read_markdown('**/templates/*.md')
+```
+
 ## Table Functions
 
 ### `read_markdown(glob, ...)`
 
-Reads markdown files matching a glob pattern.
+Reads markdown files matching a glob pattern resolved from notebook root.
 
 **Syntax:**
 ```sql
@@ -14,24 +42,48 @@ read_markdown(glob_pattern, include_filepath := true)
 ```
 
 **Parameters:**
-- `glob_pattern` (string): File pattern (e.g., `**/*.md`, `notes/*.md`)
+- `glob_pattern` (string): File pattern resolved from notebook root (e.g., `**/*.md`, `notes/*.md`)
 - `include_filepath` (boolean, optional): Include filepath column (default: false)
+
+**Pattern Resolution:**
+- All patterns resolve from notebook root directory (not current working directory)
+- Security validation prevents access outside notebook boundaries
+- Path traversal attempts (`../`) are automatically blocked and logged
+- Patterns use forward slashes for cross-platform compatibility
 
 **Returns:**
 - `content` (string): Full markdown content including frontmatter
-- `filepath` (string): Absolute file path (if include_filepath=true)  
+- `file_path` (string): Relative path from notebook root (if include_filepath=true)  
 - `metadata` (map): Frontmatter parsed as key-value pairs
 
 **Examples:**
 ```sql
--- Basic usage
+-- Basic usage - all markdown files in notebook
 SELECT * FROM read_markdown('**/*.md')
 
--- With file paths
+-- With file paths - see which files are included
 SELECT * FROM read_markdown('**/*.md', include_filepath := true)
 
--- Specific directory
+-- Specific directory from notebook root
 SELECT * FROM read_markdown('projects/*.md', include_filepath := true)
+
+-- Root-level files only
+SELECT * FROM read_markdown('*.md', include_filepath := true)
+
+-- Nested subfolder pattern
+SELECT * FROM read_markdown('docs/guides/*.md')
+```
+
+**Security Notes:**
+```sql
+-- ✅ These patterns work correctly
+SELECT * FROM read_markdown('**/*.md')           -- All notebook files
+SELECT * FROM read_markdown('projects/*.md')     -- Subfolder files  
+SELECT * FROM read_markdown('docs/2024/*.md')    -- Nested subfolder
+
+-- ❌ These patterns are blocked for security
+SELECT * FROM read_markdown('../other/*.md')     -- Path traversal blocked
+SELECT * FROM read_markdown('/etc/passwd')       -- Absolute path blocked
 ```
 
 ## Scalar Functions
@@ -95,7 +147,7 @@ FROM read_markdown('**/*.md')
 
 -- Get link text and URLs separately  
 SELECT 
-    filepath,
+    file_path,
     link.text,
     link.url
 FROM read_markdown('**/*.md', include_filepath := true),
@@ -103,7 +155,7 @@ FROM read_markdown('**/*.md', include_filepath := true),
 
 -- Count links per file
 SELECT 
-    filepath,
+    file_path,
     array_length(md_extract_links(content)) as link_count
 FROM read_markdown('**/*.md', include_filepath := true)
 ```
@@ -132,7 +184,7 @@ FROM read_markdown('**/*.md')
 
 -- Get Python code only
 SELECT 
-    filepath,
+    file_path,
     cb.code
 FROM read_markdown('**/*.md', include_filepath := true),
      LATERAL UNNEST(md_extract_code_blocks(content)) AS cb
@@ -172,7 +224,7 @@ FROM read_markdown('**/*.md')
 
 -- Get top-level headers only
 SELECT 
-    filepath,
+    file_path,
     header.text
 FROM read_markdown('**/*.md', include_filepath := true),
      LATERAL UNNEST(md_extract_headers(content)) AS header  
@@ -213,14 +265,14 @@ WHERE LOWER(content) LIKE '%meeting%'
 #### `LENGTH()`
 ```sql
 -- Content length
-SELECT filepath, LENGTH(content) as content_length
+SELECT file_path, LENGTH(content) as content_length
 FROM read_markdown('**/*.md', include_filepath := true)
 ```
 
 #### `SUBSTRING()`
 ```sql
 -- First 100 characters of content
-SELECT filepath, SUBSTRING(content, 1, 100) as preview
+SELECT file_path, SUBSTRING(content, 1, 100) as preview
 FROM read_markdown('**/*.md', include_filepath := true)
 ```
 
@@ -228,7 +280,7 @@ FROM read_markdown('**/*.md', include_filepath := true)
 ```sql
 -- Split metadata tags
 SELECT 
-    filepath,
+    file_path,
     UNNEST(string_split(metadata['tags'], ',')) as tag
 FROM read_markdown('**/*.md', include_filepath := true)
 WHERE metadata['tags'] IS NOT NULL
@@ -240,7 +292,7 @@ WHERE metadata['tags'] IS NOT NULL
 ```sql
 -- Count links per file
 SELECT 
-    filepath,
+    file_path,
     array_length(md_extract_links(content)) as link_count
 FROM read_markdown('**/*.md', include_filepath := true)
 ```
@@ -249,7 +301,7 @@ FROM read_markdown('**/*.md', include_filepath := true)
 ```sql
 -- Expand arrays into rows
 SELECT 
-    filepath,
+    file_path,
     UNNEST(md_extract_links(content)) as link
 FROM read_markdown('**/*.md', include_filepath := true)
 ```
@@ -292,7 +344,7 @@ Frontmatter metadata is accessible as a map. Common patterns:
 ```sql
 -- Access specific metadata fields
 SELECT 
-    filepath,
+    file_path,
     metadata['title'] as title,
     metadata['author'] as author,
     metadata['tags'] as tags,
@@ -315,7 +367,7 @@ WHERE metadata['tags'] IS NOT NULL
 ```sql
 -- Convert metadata to appropriate types
 SELECT 
-    filepath,
+    file_path,
     metadata['date']::DATE as date,
     metadata['word_goal']::INTEGER as word_goal
 FROM read_markdown('**/*.md', include_filepath := true)
@@ -327,15 +379,15 @@ WHERE metadata['date'] IS NOT NULL
 ### Content Search
 ```sql
 -- Case-insensitive content search
-SELECT filepath FROM read_markdown('**/*.md', include_filepath := true)
+SELECT file_path FROM read_markdown('**/*.md', include_filepath := true)
 WHERE LOWER(content) LIKE '%search_term%'
 
 -- Multiple search terms (AND)
-SELECT filepath FROM read_markdown('**/*.md', include_filepath := true)
+SELECT file_path FROM read_markdown('**/*.md', include_filepath := true)
 WHERE content LIKE '%term1%' AND content LIKE '%term2%'
 
 -- Multiple search terms (OR)  
-SELECT filepath FROM read_markdown('**/*.md', include_filepath := true)
+SELECT file_path FROM read_markdown('**/*.md', include_filepath := true)
 WHERE content LIKE '%term1%' OR content LIKE '%term2%'
 ```
 
@@ -358,7 +410,7 @@ GROUP BY length_category
 -- Using Common Table Expressions for complex analysis
 WITH note_stats AS (
     SELECT 
-        filepath,
+        file_path,
         (md_stats(content)).word_count as words,
         array_length(md_extract_links(content)) as links,
         array_length(md_extract_code_blocks(content)) as code_blocks
@@ -372,7 +424,7 @@ WHERE words > 1000 AND (links > 5 OR code_blocks > 2)
 
 | Function | Purpose | Returns |
 |----------|---------|---------|
-| `read_markdown()` | Read markdown files | Table: content, filepath, metadata |
+| `read_markdown()` | Read markdown files | Table: content, file_path, metadata |
 | `md_stats()` | Content statistics | Struct: word_count, character_count, line_count |
 | `md_extract_links()` | Extract links | Array: [{text, url}, ...] |
 | `md_extract_code_blocks()` | Extract code | Array: [{language, code}, ...] |
@@ -382,10 +434,40 @@ WHERE words > 1000 AND (links > 5 OR code_blocks > 2)
 
 | Error | Cause | Solution |
 |-------|-------|----------|
-| "File or directory does not exist" | No files match glob | Check file pattern |
-| "Invalid glob pattern" | Malformed pattern | Use proper glob syntax |
-| "Function does not exist" | Typo in function name | Check function spelling |
-| "Cannot access field" | Invalid metadata field | Check available metadata keys |
+| "File or directory does not exist" | No files match glob pattern | Check file pattern syntax and verify files exist |
+| "Invalid glob pattern" | Malformed pattern syntax | Use proper glob syntax: `*`, `**`, `?` |
+| "path traversal detected" | Pattern contains `../` or absolute paths | Use relative paths from notebook root |
+| "query preprocessing failed" | Pattern processing error | Check quote matching and pattern format |
+| "Function does not exist" | Typo in function name | Check function spelling and availability |
+| "Cannot access field" | Invalid metadata field reference | Check available metadata keys with sample query |
+
+### Security Error Details
+
+**Path Traversal Protection**:
+```sql
+-- ❌ These trigger "path traversal detected" errors
+read_markdown('../secret/*.md')
+read_markdown('../../other-notebook/*.md')  
+read_markdown('/absolute/path/*.md')
+
+-- ✅ These work correctly
+read_markdown('subfolder/*.md')
+read_markdown('**/*.md')
+read_markdown('docs/archive/*.md')
+```
+
+**Pattern Validation**:
+```sql  
+-- ❌ These may trigger "query preprocessing failed"
+read_markdown('*.md")          -- Mismatched quotes
+read_markdown("*.md')          -- Wrong quote type
+read_markdown('unclosed        -- Unclosed quotes
+
+-- ✅ These have correct syntax
+read_markdown('*.md')          -- Single quotes
+read_markdown("*.md")          -- Double quotes
+read_markdown('**/*.md')       -- Complex patterns
+```
 
 ---
 

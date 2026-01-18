@@ -60,11 +60,11 @@ func (d *Display) RenderTemplate(tmpl *template.Template, ctx any) (string, erro
 	return rendered, nil
 }
 
-// RenderSQLResults renders SQL query results as an ASCII table.
+// RenderSQLResults renders SQL query results as JSON format.
 // Results is a slice of maps where each map represents a row.
-// Columns are extracted from the first result map and sorted alphabetically.
+// Returns JSON bytes representing an array of objects.
 func (d *Display) RenderSQLResults(results []map[string]interface{}) error {
-	return d.RenderSQLResultsWithFormat(results, "table")
+	return d.RenderSQLResultsWithFormat(results, "json")
 }
 
 // RenderSQLResultsWithFormat renders SQL query results in the specified format.

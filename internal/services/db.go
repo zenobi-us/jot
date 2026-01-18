@@ -4,6 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"path/filepath"
+	"regexp"
+	"strings"
 	"sync"
 
 	"github.com/rs/zerolog"
@@ -11,6 +14,16 @@ import (
 	// DuckDB driver
 	_ "github.com/duckdb/duckdb-go/v2"
 )
+
+// Compiled regex patterns for glob detection
+var (
+	globPatternRegex *regexp.Regexp
+)
+
+func init() {
+	// Match quoted strings containing glob patterns (* or ?)
+	globPatternRegex = regexp.MustCompile(`(['"])(.*[\*\?].*?)(['"])`)
+}
 
 // DbService manages DuckDB database connections.
 type DbService struct {
@@ -168,6 +181,129 @@ func rowsToMaps(rows *sql.Rows) ([]map[string]interface{}, error) {
 	}
 
 	return results, nil
+}
+
+// preprocessSQL processes SQL query to resolve glob patterns relative to notebook root.
+// This ensures that patterns like "**/*.md" resolve consistently from the notebook root
+// directory instead of the current working directory.
+func (d *DbService) preprocessSQL(query string, notebookRoot string) (string, error) {
+	d.log.Debug().
+		Str("originalQuery", query).
+		Str("notebookRoot", notebookRoot).
+		Msg("preprocessing SQL query")
+
+	// Keep track of any errors during replacement
+	var lastErr error
+
+	// Find all quoted strings containing glob patterns
+	processed := globPatternRegex.ReplaceAllStringFunc(query, func(match string) string {
+		// Extract the pattern from the quoted string
+		// The regex captures: quote + pattern + quote
+		if len(match) < 2 {
+			return match
+		}
+
+		quote := match[0:1]        // First character (quote)
+		pattern := match[1 : len(match)-1] // Everything except first and last char
+		endQuote := match[len(match)-1:]   // Last character (quote)
+
+		// Only process if quotes match
+		if quote != endQuote {
+			return match
+		}
+
+		// Resolve pattern to absolute path
+		resolvedPath, err := d.resolveGlobPattern(pattern, notebookRoot)
+		if err != nil {
+			d.log.Warn().
+				Err(err).
+				Str("pattern", pattern).
+				Msg("failed to resolve glob pattern")
+			lastErr = err
+			return match // Return original on error
+		}
+
+		// Validate path is within notebook directory
+		if err := d.validateNotebookPath(resolvedPath, notebookRoot); err != nil {
+			d.log.Warn().
+				Err(err).
+				Str("resolvedPath", resolvedPath).
+				Str("pattern", pattern).
+				Msg("security validation failed for glob pattern")
+			lastErr = err
+			return match // Return original on security failure, but remember the error
+		}
+
+		result := quote + resolvedPath + endQuote
+		d.log.Debug().
+			Str("pattern", pattern).
+			Str("resolvedPath", resolvedPath).
+			Msg("glob pattern resolved")
+
+		return result
+	})
+
+	// If any security validation failed, return error
+	if lastErr != nil {
+		return "", fmt.Errorf("SQL preprocessing failed: %w", lastErr)
+	}
+
+	if processed != query {
+		d.log.Debug().
+			Str("processedQuery", processed).
+			Msg("query preprocessing completed")
+	}
+
+	return processed, nil
+}
+
+// resolveGlobPattern converts a relative glob pattern to an absolute path
+// anchored at the notebook root directory.
+func (d *DbService) resolveGlobPattern(pattern string, notebookRoot string) (string, error) {
+	// Clean the pattern to handle any path traversal attempts
+	cleanPattern := filepath.Clean(pattern)
+
+	// Check for path traversal attempts
+	if strings.Contains(cleanPattern, "..") {
+		return "", fmt.Errorf("path traversal not allowed in glob pattern: %s", pattern)
+	}
+
+	// If pattern is already absolute, validate it's within notebook
+	if filepath.IsAbs(cleanPattern) {
+		return cleanPattern, nil
+	}
+
+	// Convert relative pattern to absolute path
+	absolutePath := filepath.Join(notebookRoot, cleanPattern)
+
+	return absolutePath, nil
+}
+
+// validateNotebookPath ensures the resolved path stays within the notebook directory.
+// This prevents path traversal attacks that could access files outside the notebook.
+func (d *DbService) validateNotebookPath(resolvedPath, notebookRoot string) error {
+	// Get absolute paths for comparison
+	absResolved, err := filepath.Abs(resolvedPath)
+	if err != nil {
+		return fmt.Errorf("failed to get absolute path for resolved pattern: %w", err)
+	}
+
+	absNotebook, err := filepath.Abs(notebookRoot)
+	if err != nil {
+		return fmt.Errorf("failed to get absolute path for notebook root: %w", err)
+	}
+
+	// Ensure resolved path starts with notebook root
+	// Use filepath.Clean to normalize paths before comparison
+	cleanResolved := filepath.Clean(absResolved)
+	cleanNotebook := filepath.Clean(absNotebook)
+
+	// Check if the resolved path is within the notebook directory
+	if !strings.HasPrefix(cleanResolved, cleanNotebook) {
+		return fmt.Errorf("path traversal detected: resolved path %s is outside notebook directory %s", cleanResolved, cleanNotebook)
+	}
+
+	return nil
 }
 
 // Close closes both database connections.

@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+#MISE description="Run bats e2e smoke tests"
+set -euo pipefail
+
+# Build binary first
+mise run build
+
+echo "🧪 Running OpenNotes E2E Smoke Tests..."
+
+# Run the core smoke test
+echo "📋 Core functionality tests:"
+bats tests/e2e/core-smoke.bats
+
+echo ""
+echo "📝 Detailed functionality tests:"  
+bats tests/e2e/smoke.bats
+
+echo ""
+echo "✅ All E2E smoke tests completed!"
