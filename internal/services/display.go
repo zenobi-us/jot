@@ -120,7 +120,7 @@ func (d *Display) renderSQLResultsAsTable(results []map[string]interface{}) erro
 	// Update widths with data widths
 	for _, row := range results {
 		for _, col := range columns {
-			val := fmt.Sprintf("%v", row[col])
+			val := d.formatValueForTable(row[col])
 			if len(val) > widths[col] {
 				widths[col] = len(val)
 			}
@@ -151,7 +151,7 @@ func (d *Display) renderSQLResultsAsTable(results []map[string]interface{}) erro
 			if i > 0 {
 				fmt.Print("  ")
 			}
-			val := fmt.Sprintf("%v", row[col])
+			val := d.formatValueForTable(row[col])
 			fmt.Printf("%-*s", widths[col], val)
 		}
 		fmt.Println()
@@ -176,12 +176,90 @@ func (d *Display) RenderSQLResultsAsJSON(results []map[string]interface{}) ([]by
 		return json.Marshal([]map[string]interface{}{})
 	}
 
+	// Convert DuckDB types to JSON-serializable format
+	converter := NewDuckDBConverter()
+	convertedResults, err := converter.ConvertResults(results)
+	if err != nil {
+		d.log.Error().Err(err).Msg("DuckDB type conversion failed")
+		return nil, fmt.Errorf("failed to convert DuckDB types: %w", err)
+	}
+
 	// Use json.Marshal with indentation for pretty output
-	jsonBytes, err := json.MarshalIndent(results, "", "  ")
+	jsonBytes, err := json.MarshalIndent(convertedResults, "", "  ")
 	if err != nil {
 		d.log.Error().Err(err).Msg("JSON serialization failed")
 		return nil, fmt.Errorf("failed to serialize results to JSON: %w", err)
 	}
 
 	return jsonBytes, nil
+}
+
+// formatValueForTable formats a value for ASCII table display.
+// Converts complex types to readable string representations.
+func (d *Display) formatValueForTable(value interface{}) string {
+	if value == nil {
+		return "NULL"
+	}
+
+	// Convert DuckDB types to JSON-serializable format first
+	converter := NewDuckDBConverter()
+	convertedValue, err := converter.convertValue(value)
+	if err != nil {
+		// Fallback to string representation on conversion error
+		return fmt.Sprintf("%v", value)
+	}
+
+	// Format converted value for table display
+	return d.formatConvertedValueForTable(convertedValue)
+}
+
+// formatConvertedValueForTable formats a converted value for table display
+func (d *Display) formatConvertedValueForTable(value interface{}) string {
+	if value == nil {
+		return "NULL"
+	}
+
+	switch v := value.(type) {
+	case map[string]interface{}:
+		// For maps, show as compact JSON
+		if len(v) == 0 {
+			return "{}"
+		}
+		// Convert to compact JSON representation
+		jsonBytes, err := json.Marshal(v)
+		if err != nil {
+			return fmt.Sprintf("map[%d items]", len(v))
+		}
+		jsonStr := string(jsonBytes)
+		// Truncate if too long for table display
+		if len(jsonStr) > 50 {
+			return jsonStr[:47] + "..."
+		}
+		return jsonStr
+	case []interface{}:
+		// For arrays, show as compact JSON
+		if len(v) == 0 {
+			return "[]"
+		}
+		// Convert to compact JSON representation
+		jsonBytes, err := json.Marshal(v)
+		if err != nil {
+			return fmt.Sprintf("[%d items]", len(v))
+		}
+		jsonStr := string(jsonBytes)
+		// Truncate if too long for table display
+		if len(jsonStr) > 50 {
+			return jsonStr[:47] + "..."
+		}
+		return jsonStr
+	case string:
+		// Truncate long strings for table display
+		if len(v) > 50 {
+			return v[:47] + "..."
+		}
+		return v
+	default:
+		// For other types, use default string representation
+		return fmt.Sprintf("%v", v)
+	}
 }
