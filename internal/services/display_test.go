@@ -2,6 +2,7 @@ package services
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"os"
 	"strings"
@@ -543,5 +544,357 @@ func TestDisplay_RenderSQLResults_LargeValues(t *testing.T) {
 	}
 	if !strings.Contains(output, "x") {
 		t.Error("RenderSQLResults() missing long string data")
+	}
+}
+
+// Tests for JSON serialization functionality
+
+func TestDisplay_RenderSQLResultsAsJSON_EmptyResults(t *testing.T) {
+	display, err := NewDisplay()
+	if err != nil {
+		t.Fatalf("NewDisplay() failed: %v", err)
+	}
+
+	jsonBytes, err := display.RenderSQLResultsAsJSON([]map[string]interface{}{})
+	if err != nil {
+		t.Fatalf("RenderSQLResultsAsJSON() failed: %v", err)
+	}
+
+	// Should return empty array
+	var results []map[string]interface{}
+	err = json.Unmarshal(jsonBytes, &results)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal JSON: %v", err)
+	}
+
+	if len(results) != 0 {
+		t.Errorf("RenderSQLResultsAsJSON() with empty results = %d items, want 0", len(results))
+	}
+}
+
+func TestDisplay_RenderSQLResultsAsJSON_SingleRow(t *testing.T) {
+	display, err := NewDisplay()
+	if err != nil {
+		t.Fatalf("NewDisplay() failed: %v", err)
+	}
+
+	input := []map[string]interface{}{
+		{
+			"name":  "John",
+			"email": "john@example.com",
+			"age":   30,
+		},
+	}
+
+	jsonBytes, err := display.RenderSQLResultsAsJSON(input)
+	if err != nil {
+		t.Fatalf("RenderSQLResultsAsJSON() failed: %v", err)
+	}
+
+	var results []map[string]interface{}
+	err = json.Unmarshal(jsonBytes, &results)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal JSON: %v", err)
+	}
+
+	if len(results) != 1 {
+		t.Errorf("RenderSQLResultsAsJSON() returned %d items, want 1", len(results))
+	}
+
+	row := results[0]
+	if row["name"] != "John" {
+		t.Errorf("RenderSQLResultsAsJSON() name = %v, want John", row["name"])
+	}
+	if row["email"] != "john@example.com" {
+		t.Errorf("RenderSQLResultsAsJSON() email = %v, want john@example.com", row["email"])
+	}
+	// JSON numbers come back as float64
+	if row["age"] != float64(30) {
+		t.Errorf("RenderSQLResultsAsJSON() age = %v, want 30", row["age"])
+	}
+}
+
+func TestDisplay_RenderSQLResultsAsJSON_MultipleRows(t *testing.T) {
+	display, err := NewDisplay()
+	if err != nil {
+		t.Fatalf("NewDisplay() failed: %v", err)
+	}
+
+	input := []map[string]interface{}{
+		{"id": 1, "name": "Alice"},
+		{"id": 2, "name": "Bob"},
+		{"id": 3, "name": "Charlie"},
+	}
+
+	jsonBytes, err := display.RenderSQLResultsAsJSON(input)
+	if err != nil {
+		t.Fatalf("RenderSQLResultsAsJSON() failed: %v", err)
+	}
+
+	var results []map[string]interface{}
+	err = json.Unmarshal(jsonBytes, &results)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal JSON: %v", err)
+	}
+
+	if len(results) != 3 {
+		t.Errorf("RenderSQLResultsAsJSON() returned %d items, want 3", len(results))
+	}
+
+	// Check each row
+	expectedNames := []string{"Alice", "Bob", "Charlie"}
+	for i, row := range results {
+		if row["id"] != float64(i+1) {
+			t.Errorf("Row %d: id = %v, want %d", i, row["id"], i+1)
+		}
+		if row["name"] != expectedNames[i] {
+			t.Errorf("Row %d: name = %v, want %s", i, row["name"], expectedNames[i])
+		}
+	}
+}
+
+func TestDisplay_RenderSQLResultsAsJSON_DifferentTypes(t *testing.T) {
+	display, err := NewDisplay()
+	if err != nil {
+		t.Fatalf("NewDisplay() failed: %v", err)
+	}
+
+	input := []map[string]interface{}{
+		{
+			"string_col": "text",
+			"int_col":    42,
+			"float_col":  3.14,
+			"bool_col":   true,
+			"null_col":   nil,
+		},
+	}
+
+	jsonBytes, err := display.RenderSQLResultsAsJSON(input)
+	if err != nil {
+		t.Fatalf("RenderSQLResultsAsJSON() failed: %v", err)
+	}
+
+	var results []map[string]interface{}
+	err = json.Unmarshal(jsonBytes, &results)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal JSON: %v", err)
+	}
+
+	if len(results) != 1 {
+		t.Errorf("RenderSQLResultsAsJSON() returned %d items, want 1", len(results))
+	}
+
+	row := results[0]
+	if row["string_col"] != "text" {
+		t.Errorf("string_col = %v, want text", row["string_col"])
+	}
+	if row["int_col"] != float64(42) {
+		t.Errorf("int_col = %v, want 42", row["int_col"])
+	}
+	if row["float_col"] != 3.14 {
+		t.Errorf("float_col = %v, want 3.14", row["float_col"])
+	}
+	if row["bool_col"] != true {
+		t.Errorf("bool_col = %v, want true", row["bool_col"])
+	}
+	if row["null_col"] != nil {
+		t.Errorf("null_col = %v, want nil", row["null_col"])
+	}
+}
+
+func TestDisplay_RenderSQLResultsAsJSON_UTF8Content(t *testing.T) {
+	display, err := NewDisplay()
+	if err != nil {
+		t.Fatalf("NewDisplay() failed: %v", err)
+	}
+
+	input := []map[string]interface{}{
+		{
+			"unicode": "Hello 世界 🌍",
+			"emoji":   "🚀✨💻",
+			"special": "áéíóú ñ ç",
+		},
+	}
+
+	jsonBytes, err := display.RenderSQLResultsAsJSON(input)
+	if err != nil {
+		t.Fatalf("RenderSQLResultsAsJSON() failed: %v", err)
+	}
+
+	var results []map[string]interface{}
+	err = json.Unmarshal(jsonBytes, &results)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal JSON: %v", err)
+	}
+
+	if len(results) != 1 {
+		t.Errorf("RenderSQLResultsAsJSON() returned %d items, want 1", len(results))
+	}
+
+	row := results[0]
+	if row["unicode"] != "Hello 世界 🌍" {
+		t.Errorf("unicode = %v, want Hello 世界 🌍", row["unicode"])
+	}
+	if row["emoji"] != "🚀✨💻" {
+		t.Errorf("emoji = %v, want 🚀✨💻", row["emoji"])
+	}
+	if row["special"] != "áéíóú ñ ç" {
+		t.Errorf("special = %v, want áéíóú ñ ç", row["special"])
+	}
+}
+
+func TestDisplay_RenderSQLResultsAsJSON_ValidJSONOutput(t *testing.T) {
+	display, err := NewDisplay()
+	if err != nil {
+		t.Fatalf("NewDisplay() failed: %v", err)
+	}
+
+	input := []map[string]interface{}{
+		{"title": "Note 1", "path": "/path/note1.md", "tags": "tag1,tag2"},
+		{"title": "Note 2", "path": "/path/note2.md", "tags": "tag3"},
+	}
+
+	jsonBytes, err := display.RenderSQLResultsAsJSON(input)
+	if err != nil {
+		t.Fatalf("RenderSQLResultsAsJSON() failed: %v", err)
+	}
+
+	// Validate JSON structure matches expected format
+	expectedJSON := `[
+  {"path":"/path/note1.md","tags":"tag1,tag2","title":"Note 1"},
+  {"path":"/path/note2.md","tags":"tag3","title":"Note 2"}
+]`
+
+	var expected, actual interface{}
+	err = json.Unmarshal([]byte(expectedJSON), &expected)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal expected JSON: %v", err)
+	}
+
+	err = json.Unmarshal(jsonBytes, &actual)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal actual JSON: %v", err)
+	}
+
+	// Compare data structures (not raw JSON to avoid formatting issues)
+	expectedBytes, _ := json.Marshal(expected)
+	actualBytes, _ := json.Marshal(actual)
+
+	if !bytes.Equal(expectedBytes, actualBytes) {
+		t.Errorf("JSON structure mismatch.\nExpected: %s\nActual: %s", 
+			string(expectedBytes), string(actualBytes))
+	}
+}
+
+// Tests for RenderSQLResultsWithFormat integration
+
+func TestDisplay_RenderSQLResultsWithFormat_TableFormat(t *testing.T) {
+	display, err := NewDisplay()
+	if err != nil {
+		t.Fatalf("NewDisplay() failed: %v", err)
+	}
+
+	results := []map[string]interface{}{
+		{"name": "Alice", "age": 30},
+	}
+
+	output := captureOutput(func() {
+		err = display.RenderSQLResultsWithFormat(results, "table")
+		if err != nil {
+			t.Errorf("RenderSQLResultsWithFormat(table) failed: %v", err)
+		}
+	})
+
+	// Should behave like original table format
+	if !strings.Contains(output, "Alice") {
+		t.Error("Table format should contain data")
+	}
+	if !strings.Contains(output, "age") {
+		t.Error("Table format should contain column headers")
+	}
+}
+
+func TestDisplay_RenderSQLResultsWithFormat_JSONFormat(t *testing.T) {
+	display, err := NewDisplay()
+	if err != nil {
+		t.Fatalf("NewDisplay() failed: %v", err)
+	}
+
+	results := []map[string]interface{}{
+		{"name": "Alice", "age": 30},
+	}
+
+	output := captureOutput(func() {
+		err = display.RenderSQLResultsWithFormat(results, "json")
+		if err != nil {
+			t.Errorf("RenderSQLResultsWithFormat(json) failed: %v", err)
+		}
+	})
+
+	// Should be valid JSON
+	var parsedResults []map[string]interface{}
+	err = json.Unmarshal([]byte(output), &parsedResults)
+	if err != nil {
+		t.Errorf("JSON format output is not valid JSON: %v", err)
+	}
+
+	if len(parsedResults) != 1 {
+		t.Errorf("JSON format returned %d items, want 1", len(parsedResults))
+	}
+
+	if parsedResults[0]["name"] != "Alice" {
+		t.Errorf("JSON format name = %v, want Alice", parsedResults[0]["name"])
+	}
+}
+
+func TestDisplay_RenderSQLResultsWithFormat_InvalidFormat(t *testing.T) {
+	display, err := NewDisplay()
+	if err != nil {
+		t.Fatalf("NewDisplay() failed: %v", err)
+	}
+
+	results := []map[string]interface{}{
+		{"name": "Alice", "age": 30},
+	}
+
+	output := captureOutput(func() {
+		err = display.RenderSQLResultsWithFormat(results, "invalid_format")
+		if err != nil {
+			t.Errorf("RenderSQLResultsWithFormat(invalid_format) failed: %v", err)
+		}
+	})
+
+	// Should fallback to table format
+	if !strings.Contains(output, "Alice") {
+		t.Error("Invalid format should fallback to table and contain data")
+	}
+	if !strings.Contains(output, "age") {
+		t.Error("Invalid format should fallback to table and contain column headers")
+	}
+}
+
+func TestDisplay_RenderSQLResults_BackwardsCompatibility(t *testing.T) {
+	display, err := NewDisplay()
+	if err != nil {
+		t.Fatalf("NewDisplay() failed: %v", err)
+	}
+
+	results := []map[string]interface{}{
+		{"name": "Alice", "age": 30},
+	}
+
+	output := captureOutput(func() {
+		err = display.RenderSQLResults(results)
+		if err != nil {
+			t.Errorf("RenderSQLResults() failed: %v", err)
+		}
+	})
+
+	// Should still work as table format (backwards compatibility)
+	if !strings.Contains(output, "Alice") {
+		t.Error("RenderSQLResults should still work as table format")
+	}
+	if !strings.Contains(output, "age") {
+		t.Error("RenderSQLResults should still contain column headers")
 	}
 }

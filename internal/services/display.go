@@ -2,17 +2,20 @@ package services
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
 	"text/template"
 
 	"github.com/charmbracelet/glamour"
+	"github.com/rs/zerolog"
 )
 
 // Display handles terminal rendering with glamour.
 type Display struct {
 	renderer *glamour.TermRenderer
+	log      zerolog.Logger
 }
 
 // NewDisplay creates a new display service with glamour rendering.
@@ -25,7 +28,10 @@ func NewDisplay() (*Display, error) {
 		return nil, err
 	}
 
-	return &Display{renderer: renderer}, nil
+	return &Display{
+		renderer: renderer,
+		log:      Log("display"),
+	}, nil
 }
 
 // Render renders markdown content to the terminal.
@@ -58,6 +64,31 @@ func (d *Display) RenderTemplate(tmpl *template.Template, ctx any) (string, erro
 // Results is a slice of maps where each map represents a row.
 // Columns are extracted from the first result map and sorted alphabetically.
 func (d *Display) RenderSQLResults(results []map[string]interface{}) error {
+	return d.RenderSQLResultsWithFormat(results, "table")
+}
+
+// RenderSQLResultsWithFormat renders SQL query results in the specified format.
+// Supported formats: "table" (ASCII table), "json" (JSON array of objects).
+func (d *Display) RenderSQLResultsWithFormat(results []map[string]interface{}, format string) error {
+	switch format {
+	case "json":
+		jsonBytes, err := d.RenderSQLResultsAsJSON(results)
+		if err != nil {
+			return fmt.Errorf("failed to render results as JSON: %w", err)
+		}
+		fmt.Print(string(jsonBytes))
+		return nil
+	case "table":
+		return d.renderSQLResultsAsTable(results)
+	default:
+		d.log.Warn().Str("format", format).Msg("Unknown format, falling back to table")
+		return d.renderSQLResultsAsTable(results)
+	}
+}
+
+// renderSQLResultsAsTable renders SQL query results as an ASCII table.
+// This is the original implementation moved from RenderSQLResults.
+func (d *Display) renderSQLResultsAsTable(results []map[string]interface{}) error {
 	// Handle empty results
 	if len(results) == 0 {
 		fmt.Println("No results")
@@ -134,4 +165,23 @@ func (d *Display) RenderSQLResults(results []map[string]interface{}) error {
 	fmt.Println()
 
 	return nil
+}
+
+// RenderSQLResultsAsJSON converts SQL query results to JSON format.
+// Results is a slice of maps where each map represents a row.
+// Returns JSON bytes representing an array of objects format.
+func (d *Display) RenderSQLResultsAsJSON(results []map[string]interface{}) ([]byte, error) {
+	// Handle empty results - return empty array
+	if len(results) == 0 {
+		return json.Marshal([]map[string]interface{}{})
+	}
+
+	// Use json.Marshal with indentation for pretty output
+	jsonBytes, err := json.MarshalIndent(results, "", "  ")
+	if err != nil {
+		d.log.Error().Err(err).Msg("JSON serialization failed")
+		return nil, fmt.Errorf("failed to serialize results to JSON: %w", err)
+	}
+
+	return jsonBytes, nil
 }
