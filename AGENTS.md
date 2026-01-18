@@ -57,6 +57,205 @@ Do NOT use `go` directly for tests/build - use `mise run`.
 - **Assertions**: Use `testify/assert` or manual `if` checks
 - **Setup/Teardown**: Use helper functions like `createTestNotebook()`
 
+### Command Philosophy: Thin Commands, Fat Services
+
+Commands in `cmd/` are **thin orchestration layers only**. All business logic belongs in `internal/services/`.
+
+**Command Responsibilities** (Limit to):
+- Parse CLI flags and arguments
+- Call one or more service methods
+- Format and display output (via services)
+- Handle command-level errors
+- Return early on error (don't accumulate logic)
+
+**NOT Command Responsibilities**:
+- Business logic (queries, validation, transformations)
+- Data persistence or file operations
+- External API calls
+- Complex control flow or conditional logic
+- Type conversions or data manipulation
+
+**Pattern Example**:
+
+```go
+// ❌ BAD: Business logic directly in command
+var searchCmd = &cobra.Command{
+  RunE: func(cmd *cobra.Command, args []string) error {
+    query := args[0]
+    results := []string{}
+    // Direct business logic - belongs in service!
+    for _, note := range allNotes {
+      if strings.Contains(note.Content, query) {
+        results = append(results, note.Title)
+      }
+    }
+    fmt.Printf("Found %d results\n", len(results))
+    return nil
+  },
+}
+
+// ✅ GOOD: Delegated to service, command stays thin
+var searchCmd = &cobra.Command{
+  RunE: func(cmd *cobra.Command, args []string) error {
+    // Step 1: Parse
+    nb, err := requireNotebook(cmd)
+    if err != nil {
+      return err
+    }
+    
+    // Step 2: Call service (all logic there)
+    results, err := nb.Notes.SearchNotes(context.Background(), args[0])
+    if err != nil {
+      return fmt.Errorf("search failed: %w", err)
+    }
+    
+    // Step 3: Display via template
+    return displayNoteList(results)
+  },
+}
+```
+
+**Guideline**: If your command's `RunE` function exceeds 50 lines, extract logic to a service method.
+
+**Current Command Size** (All OK):
+- Smallest: 32 lines (init.go)
+- Average: 76 lines
+- Largest: 125 lines (notes_add.go) - but within reasonable limit
+
+### DRY/WET/AHA Philosophy
+
+We follow **AHA Principles** (Avoid Hasty Abstractions) over strict DRY enforcement.
+
+**When to Extract Duplicated Code**:
+
+| Occurrence | Action | Rationale |
+|-----------|--------|-----------|
+| **1st** | Accept as baseline | Learn the pattern |
+| **2nd** | Document & consider | Is the pattern obvious? Can it evolve differently? |
+| **3rd** | Extract to shared function | Clear pattern, worth the abstraction |
+| **4+** | Mandatory refactoring | Duplication becomes maintenance burden |
+
+**DRY (Don't Repeat Yourself)**: Extract only when:
+1. Code is >80% identical between locations
+2. Changes must be synchronized across multiple places
+3. The abstraction is obvious and naming is clear
+4. You've seen the pattern repeat at least 3 times
+
+**WET (Write Everything Twice)**: Acceptable when:
+1. Abstractions feel forced or require complex parameters
+2. Shared code would obscure each caller's specific intent
+3. The code may evolve differently in each location
+4. Performance is critical and abstraction adds overhead
+
+**AHA (Avoid Hasty Abstractions)**: 
+- Prefer clear, simple code over premature abstraction
+- Allow limited duplication in early stages
+- Extract only when pattern is proven and stable
+
+**Example: Template Display Pattern**
+
+Current code has `displayNoteList()` and `displayNotebookList()` (~60% similar):
+
+```go
+// Both follow same pattern:
+// 1. Call TuiRender with template
+// 2. If error, fallback to manual fmt.Printf
+// 3. Print result
+```
+
+**Why NOT extracted yet:**
+- Only 2 occurrences (waiting for 3rd per AHA)
+- Different data types (Note vs Notebook)
+- Fallback formatting is type-specific
+- Premature abstraction would require generics/interfaces
+- Pattern may diverge (notes might need different fallback soon)
+
+**When to extract**: After a 3rd similar display function is created, extract to `displayViaTemplate()`.
+
+### Duplicate Logic Detection & Refactoring Process
+
+Systematically scan for and refactor duplicated code. This prevents maintenance burden and keeps code DRY.
+
+**Frequency**: Monthly or during refactoring sprints (not continuous refactoring)
+
+**Detection Tools & Techniques**:
+
+1. **CodeMapper (cm) - AST-based analysis**
+   ```bash
+   # Get project overview
+   cm stats .
+   
+   # Find all usages of a pattern
+   cm query "TuiRender" --format ai
+   cm callers "displayNoteList" --format ai
+   ```
+
+2. **Manual Pattern Scan**
+   ```bash
+   # Find all template renders
+   grep -n "TuiRender" cmd/*.go
+   
+   # Find all SQL displays
+   grep -n "RenderSQLResults" cmd/*.go
+   ```
+
+3. **Code Review Process**
+   - During PR review, flag code that "feels familiar"
+   - Ask: "Have I written similar code elsewhere?"
+   - Document potential duplication for monthly audit
+
+**Patterns Currently Being Watched**:
+
+1. **`requireNotebook()` pattern** (8+ occurrences)
+   ```go
+   nb, err := requireNotebook(cmd)
+   if err != nil {
+     return err
+   }
+   ```
+   Status: ✅ Already extracted helper function
+   Future: Consider centralizing to `cmd/root.go`
+
+2. **Display template pattern** (3-4 occurrences)
+   ```go
+   output, err := services.TuiRender(template, data)
+   if err != nil {
+     // fallback to fmt.Printf
+   }
+   fmt.Print(output)
+   ```
+   Status: ⚠️ At extraction threshold - watch for 3rd function
+
+3. **Flag parsing pattern** (3-4 occurrences)
+   ```go
+   notebook, _ := cmd.Flags().GetString("notebook")
+   ```
+   Status: 🔴 Extract to helper: `getNotebookFlag(cmd)`
+
+**Extraction Workflow** (Test-Driven):
+
+1. Write tests for the duplicated behavior
+2. Create shared function with clear, descriptive name
+3. Update all callers to use shared function
+4. Run full test suite (`mise run test`)
+5. Commit with message: `refactor: extract <pattern> to shared function`
+
+**Monthly Audit Checklist**:
+
+- [ ] Run `cm stats . --format ai` to get codebase overview
+- [ ] Review recent commit messages for obvious duplication patterns
+- [ ] Check `cmd/*.go` directory for >2 similar code blocks
+- [ ] Run `grep` for patterns: TuiRender, RenderSQLResults, requireNotebook
+- [ ] Create GitHub issue if 3rd occurrence found
+- [ ] Prioritize extraction in next refactoring sprint
+- [ ] Update this section if new patterns emerge
+
+**Integration with External Skills**:
+
+- **refactoring-specialist**: Use for extraction pattern guidance
+- **codemapper**: Use `cm` tool for AST-based pattern detection
+- **defense-in-depth**: Apply for validation at multiple layers when extracting
+
 ## Project Context
 
 - **Type**: CLI tool for managing markdown-based notes
