@@ -1,0 +1,1542 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>services: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/zenobi-us/opennotes/internal/services/config.go (0.0%)</option>
+				
+				<option value="file1">github.com/zenobi-us/opennotes/internal/services/db.go (0.8%)</option>
+				
+				<option value="file2">github.com/zenobi-us/opennotes/internal/services/display.go (88.7%)</option>
+				
+				<option value="file3">github.com/zenobi-us/opennotes/internal/services/logger.go (11.1%)</option>
+				
+				<option value="file4">github.com/zenobi-us/opennotes/internal/services/note.go (0.0%)</option>
+				
+				<option value="file5">github.com/zenobi-us/opennotes/internal/services/notebook.go (0.0%)</option>
+				
+				<option value="file6">github.com/zenobi-us/opennotes/internal/services/templates.go (44.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">no coverage</span>
+				<span class="cov1">low coverage</span>
+				<span class="cov2">*</span>
+				<span class="cov3">*</span>
+				<span class="cov4">*</span>
+				<span class="cov5">*</span>
+				<span class="cov6">*</span>
+				<span class="cov7">*</span>
+				<span class="cov8">*</span>
+				<span class="cov9">*</span>
+				<span class="cov10">high coverage</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package services
+
+import (
+        "encoding/json"
+        "fmt"
+        "os"
+        "path/filepath"
+        "strings"
+
+        kjson "github.com/knadh/koanf/parsers/json"
+        "github.com/knadh/koanf/providers/confmap"
+        "github.com/knadh/koanf/providers/env"
+        "github.com/knadh/koanf/providers/file"
+        "github.com/knadh/koanf/v2"
+        "github.com/rs/zerolog"
+)
+
+// NotebookConfigFile is the config filename in notebook directories.
+const NotebookConfigFile = ".opennotes.json"
+
+// Config represents the global configuration schema.
+type Config struct {
+        // Notebooks paths are directories containing .opennotes.json
+        Notebooks []string `koanf:"notebooks" json:"notebooks"`
+        // NotebookPath is the current notebook path (from env, flag, or stored)
+        NotebookPath string `koanf:"notebookpath" json:"notebookpath,omitempty"`
+}
+
+// ConfigService manages configuration loading and persistence.
+type ConfigService struct {
+        k     *koanf.Koanf
+        Store Config
+        path  string
+        log   zerolog.Logger
+}
+
+// GlobalConfigFile returns the platform-specific config path.
+func GlobalConfigFile() string <span class="cov0" title="0">{
+        configDir, err := os.UserConfigDir()
+        if err != nil </span><span class="cov0" title="0">{
+                configDir = filepath.Join(os.Getenv("HOME"), ".config")
+        }</span>
+        <span class="cov0" title="0">return filepath.Join(configDir, "opennotes", "config.json")</span>
+}
+
+// NewConfigService creates and initializes the config service.
+func NewConfigService() (*ConfigService, error) <span class="cov0" title="0">{
+        return NewConfigServiceWithPath(GlobalConfigFile())
+}</span>
+
+// NewConfigServiceWithPath creates a config service with a custom config path.
+// Useful for testing with isolated config files.
+func NewConfigServiceWithPath(configPath string) (*ConfigService, error) <span class="cov0" title="0">{
+        log := Log("ConfigService")
+        k := koanf.New(".")
+
+        log.Debug().Str("path", configPath).Msg("loading config")
+
+        // 1. Load defaults
+        defaultNotebooksDir := filepath.Join(filepath.Dir(configPath), "notebooks")
+        defaults := map[string]interface{}{
+                "notebooks":    []string{defaultNotebooksDir},
+                "notebookpath": "",
+        }
+
+        if err := k.Load(confmap.Provider(defaults, "."), nil); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to load defaults: %w", err)
+        }</span>
+
+        // 2. Load from config file (if exists)
+        <span class="cov0" title="0">if _, err := os.Stat(configPath); err == nil </span><span class="cov0" title="0">{
+                if err := k.Load(file.Provider(configPath), kjson.Parser()); err != nil </span><span class="cov0" title="0">{
+                        log.Warn().Err(err).Msg("failed to load config file, using defaults")
+                }</span>
+        }
+
+        // 3. Load environment variables with OPENNOTES_ prefix
+        // Transform: OPENNOTES_NOTEBOOK_PATH -&gt; notebookpath
+        <span class="cov0" title="0">err := k.Load(env.Provider("OPENNOTES_", ".", func(s string) string </span><span class="cov0" title="0">{
+                return strings.ToLower(
+                        strings.ReplaceAll(
+                                strings.TrimPrefix(s, "OPENNOTES_"),
+                                "_",
+                                "",
+                        ),
+                )
+        }</span>), nil)
+        <span class="cov0" title="0">if err != nil </span><span class="cov0" title="0">{
+                log.Warn().Err(err).Msg("failed to load env vars")
+        }</span>
+
+        // 4. Unmarshal to struct
+        <span class="cov0" title="0">var cfg Config
+        if err := k.Unmarshal("", &amp;cfg); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("invalid config: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">log.Debug().Interface("config", cfg).Msg("config loaded")
+
+        return &amp;ConfigService{
+                k:     k,
+                Store: cfg,
+                path:  configPath,
+                log:   log,
+        }, nil</span>
+}
+
+// Write persists the configuration to disk.
+func (c *ConfigService) Write(cfg Config) error <span class="cov0" title="0">{
+        // Ensure directory exists
+        if err := os.MkdirAll(filepath.Dir(c.path), 0755); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to create config directory: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">data, err := json.MarshalIndent(cfg, "", "  ")
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to marshal config: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">if err := os.WriteFile(c.path, data, 0644); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to write config: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">c.Store = cfg
+        c.log.Debug().Str("path", c.path).Msg("config written")
+
+        return nil</span>
+}
+
+// Path returns the config file path.
+func (c *ConfigService) Path() string <span class="cov0" title="0">{
+        return c.path
+}</span>
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package services
+
+import (
+        "context"
+        "database/sql"
+        "fmt"
+        "path/filepath"
+        "regexp"
+        "strings"
+        "sync"
+
+        "github.com/rs/zerolog"
+
+        // DuckDB driver
+        _ "github.com/duckdb/duckdb-go/v2"
+)
+
+// Compiled regex patterns for glob detection
+var (
+        globPatternRegex *regexp.Regexp
+)
+
+func init() <span class="cov8" title="1">{
+        // Match quoted strings containing glob patterns (* or ?)
+        globPatternRegex = regexp.MustCompile(`(['"])(.*[\*\?].*?)(['"])`)
+}</span>
+
+// DbService manages DuckDB database connections.
+type DbService struct {
+        db       *sql.DB
+        readOnly *sql.DB
+        once     sync.Once
+        roOnce   sync.Once
+        mu       sync.Mutex
+        log      zerolog.Logger
+}
+
+// NewDbService creates a new database service.
+func NewDbService() *DbService <span class="cov0" title="0">{
+        return &amp;DbService{
+                log: Log("DbService"),
+        }
+}</span>
+
+// GetDB returns an initialized database connection.
+// The connection is lazily initialized on first call and reused thereafter.
+func (d *DbService) GetDB(ctx context.Context) (*sql.DB, error) <span class="cov0" title="0">{
+        var initErr error
+
+        d.once.Do(func() </span><span class="cov0" title="0">{
+                d.log.Debug().Msg("initializing database")
+
+                // Open in-memory database
+                db, err := sql.Open("duckdb", "")
+                if err != nil </span><span class="cov0" title="0">{
+                        initErr = fmt.Errorf("failed to open database: %w", err)
+                        return
+                }</span>
+                <span class="cov0" title="0">d.db = db
+
+                // Install and load markdown extension
+                d.log.Debug().Msg("installing markdown extension")
+                if _, err := db.ExecContext(ctx, "INSTALL markdown FROM community"); err != nil </span><span class="cov0" title="0">{
+                        initErr = fmt.Errorf("failed to install markdown extension: %w", err)
+                        return
+                }</span>
+
+                <span class="cov0" title="0">d.log.Debug().Msg("loading markdown extension")
+                if _, err := db.ExecContext(ctx, "LOAD markdown"); err != nil </span><span class="cov0" title="0">{
+                        initErr = fmt.Errorf("failed to load markdown extension: %w", err)
+                        return
+                }</span>
+
+                <span class="cov0" title="0">d.log.Debug().Msg("database initialized")</span>
+        })
+
+        <span class="cov0" title="0">if initErr != nil </span><span class="cov0" title="0">{
+                return nil, initErr
+        }</span>
+
+        <span class="cov0" title="0">return d.db, nil</span>
+}
+
+// GetReadOnlyDB returns a separate read-only database connection.
+// This is used for executing user-provided SQL queries safely.
+// The connection is lazily initialized on first call and reused thereafter.
+func (d *DbService) GetReadOnlyDB(ctx context.Context) (*sql.DB, error) <span class="cov0" title="0">{
+        var initErr error
+
+        d.roOnce.Do(func() </span><span class="cov0" title="0">{
+                d.log.Debug().Msg("initializing read-only database connection")
+
+                // Open separate in-memory database
+                db, err := sql.Open("duckdb", "")
+                if err != nil </span><span class="cov0" title="0">{
+                        initErr = fmt.Errorf("failed to open read-only database: %w", err)
+                        return
+                }</span>
+
+                // Install and load markdown extension
+                <span class="cov0" title="0">d.log.Debug().Msg("installing markdown extension on read-only connection")
+                if _, err := db.ExecContext(ctx, "INSTALL markdown FROM community"); err != nil </span><span class="cov0" title="0">{
+                        initErr = fmt.Errorf("failed to install markdown extension on read-only connection: %w", err)
+                        if closeErr := db.Close(); closeErr != nil </span><span class="cov0" title="0">{
+                                d.log.Warn().Err(closeErr).Msg("failed to close db after install error")
+                        }</span>
+                        <span class="cov0" title="0">return</span>
+                }
+
+                <span class="cov0" title="0">d.log.Debug().Msg("loading markdown extension on read-only connection")
+                if _, err := db.ExecContext(ctx, "LOAD markdown"); err != nil </span><span class="cov0" title="0">{
+                        initErr = fmt.Errorf("failed to load markdown extension on read-only connection: %w", err)
+                        if closeErr := db.Close(); closeErr != nil </span><span class="cov0" title="0">{
+                                d.log.Warn().Err(closeErr).Msg("failed to close db after load error")
+                        }</span>
+                        <span class="cov0" title="0">return</span>
+                }
+
+                <span class="cov0" title="0">d.readOnly = db
+                d.log.Debug().Msg("read-only database initialized")</span>
+        })
+
+        <span class="cov0" title="0">if initErr != nil </span><span class="cov0" title="0">{
+                return nil, initErr
+        }</span>
+
+        <span class="cov0" title="0">return d.readOnly, nil</span>
+}
+
+// Query executes a query and returns results as maps.
+func (d *DbService) Query(ctx context.Context, query string, args ...interface{}) ([]map[string]interface{}, error) <span class="cov0" title="0">{
+        db, err := d.GetDB(ctx)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">rows, err := db.QueryContext(ctx, query, args...)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("query failed: %w", err)
+        }</span>
+        <span class="cov0" title="0">defer func() </span><span class="cov0" title="0">{
+                if err := rows.Close(); err != nil </span><span class="cov0" title="0">{
+                        d.log.Warn().Err(err).Msg("failed to close rows")
+                }</span>
+        }()
+
+        <span class="cov0" title="0">return rowsToMaps(rows)</span>
+}
+
+// rowsToMaps converts sql.Rows to a slice of maps.
+func rowsToMaps(rows *sql.Rows) ([]map[string]interface{}, error) <span class="cov0" title="0">{
+        columns, err := rows.Columns()
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">var results []map[string]interface{}
+
+        for rows.Next() </span><span class="cov0" title="0">{
+                // Create slice of interface{} to hold values
+                values := make([]interface{}, len(columns))
+                valuePtrs := make([]interface{}, len(columns))
+                for i := range values </span><span class="cov0" title="0">{
+                        valuePtrs[i] = &amp;values[i]
+                }</span>
+
+                <span class="cov0" title="0">if err := rows.Scan(valuePtrs...); err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+
+                // Create map for this row
+                <span class="cov0" title="0">row := make(map[string]interface{})
+                for i, col := range columns </span><span class="cov0" title="0">{
+                        row[col] = values[i]
+                }</span>
+                <span class="cov0" title="0">results = append(results, row)</span>
+        }
+
+        <span class="cov0" title="0">if err := rows.Err(); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return results, nil</span>
+}
+
+// preprocessSQL processes SQL query to resolve glob patterns relative to notebook root.
+// This ensures that patterns like "**/*.md" resolve consistently from the notebook root
+// directory instead of the current working directory.
+func (d *DbService) preprocessSQL(query string, notebookRoot string) (string, error) <span class="cov0" title="0">{
+        d.log.Debug().
+                Str("originalQuery", query).
+                Str("notebookRoot", notebookRoot).
+                Msg("preprocessing SQL query")
+
+        // Keep track of any errors during replacement
+        var lastErr error
+
+        // Find all quoted strings containing glob patterns
+        processed := globPatternRegex.ReplaceAllStringFunc(query, func(match string) string </span><span class="cov0" title="0">{
+                // Extract the pattern from the quoted string
+                // The regex captures: quote + pattern + quote
+                if len(match) &lt; 2 </span><span class="cov0" title="0">{
+                        return match
+                }</span>
+
+                <span class="cov0" title="0">quote := match[0:1]        // First character (quote)
+                pattern := match[1 : len(match)-1] // Everything except first and last char
+                endQuote := match[len(match)-1:]   // Last character (quote)
+
+                // Only process if quotes match
+                if quote != endQuote </span><span class="cov0" title="0">{
+                        return match
+                }</span>
+
+                // Resolve pattern to absolute path
+                <span class="cov0" title="0">resolvedPath, err := d.resolveGlobPattern(pattern, notebookRoot)
+                if err != nil </span><span class="cov0" title="0">{
+                        d.log.Warn().
+                                Err(err).
+                                Str("pattern", pattern).
+                                Msg("failed to resolve glob pattern")
+                        lastErr = err
+                        return match // Return original on error
+                }</span>
+
+                // Validate path is within notebook directory
+                <span class="cov0" title="0">if err := d.validateNotebookPath(resolvedPath, notebookRoot); err != nil </span><span class="cov0" title="0">{
+                        d.log.Warn().
+                                Err(err).
+                                Str("resolvedPath", resolvedPath).
+                                Str("pattern", pattern).
+                                Msg("security validation failed for glob pattern")
+                        lastErr = err
+                        return match // Return original on security failure, but remember the error
+                }</span>
+
+                <span class="cov0" title="0">result := quote + resolvedPath + endQuote
+                d.log.Debug().
+                        Str("pattern", pattern).
+                        Str("resolvedPath", resolvedPath).
+                        Msg("glob pattern resolved")
+
+                return result</span>
+        })
+
+        // If any security validation failed, return error
+        <span class="cov0" title="0">if lastErr != nil </span><span class="cov0" title="0">{
+                return "", fmt.Errorf("SQL preprocessing failed: %w", lastErr)
+        }</span>
+
+        <span class="cov0" title="0">if processed != query </span><span class="cov0" title="0">{
+                d.log.Debug().
+                        Str("processedQuery", processed).
+                        Msg("query preprocessing completed")
+        }</span>
+
+        <span class="cov0" title="0">return processed, nil</span>
+}
+
+// resolveGlobPattern converts a relative glob pattern to an absolute path
+// anchored at the notebook root directory.
+func (d *DbService) resolveGlobPattern(pattern string, notebookRoot string) (string, error) <span class="cov0" title="0">{
+        // Clean the pattern to handle any path traversal attempts
+        cleanPattern := filepath.Clean(pattern)
+
+        // Check for path traversal attempts
+        if strings.Contains(cleanPattern, "..") </span><span class="cov0" title="0">{
+                return "", fmt.Errorf("path traversal not allowed in glob pattern: %s", pattern)
+        }</span>
+
+        // If pattern is already absolute, validate it's within notebook
+        <span class="cov0" title="0">if filepath.IsAbs(cleanPattern) </span><span class="cov0" title="0">{
+                return cleanPattern, nil
+        }</span>
+
+        // Convert relative pattern to absolute path
+        <span class="cov0" title="0">absolutePath := filepath.Join(notebookRoot, cleanPattern)
+
+        return absolutePath, nil</span>
+}
+
+// validateNotebookPath ensures the resolved path stays within the notebook directory.
+// This prevents path traversal attacks that could access files outside the notebook.
+func (d *DbService) validateNotebookPath(resolvedPath, notebookRoot string) error <span class="cov0" title="0">{
+        // Get absolute paths for comparison
+        absResolved, err := filepath.Abs(resolvedPath)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to get absolute path for resolved pattern: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">absNotebook, err := filepath.Abs(notebookRoot)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to get absolute path for notebook root: %w", err)
+        }</span>
+
+        // Ensure resolved path starts with notebook root
+        // Use filepath.Clean to normalize paths before comparison
+        <span class="cov0" title="0">cleanResolved := filepath.Clean(absResolved)
+        cleanNotebook := filepath.Clean(absNotebook)
+
+        // Check if the resolved path is within the notebook directory
+        if !strings.HasPrefix(cleanResolved, cleanNotebook) </span><span class="cov0" title="0">{
+                return fmt.Errorf("path traversal detected: resolved path %s is outside notebook directory %s", cleanResolved, cleanNotebook)
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+
+// Close closes both database connections.
+func (d *DbService) Close() error <span class="cov0" title="0">{
+        d.mu.Lock()
+        defer d.mu.Unlock()
+
+        var errs []error
+
+        if d.db != nil </span><span class="cov0" title="0">{
+                d.log.Debug().Msg("closing main database")
+                if err := d.db.Close(); err != nil </span><span class="cov0" title="0">{
+                        errs = append(errs, err)
+                }</span>
+        }
+
+        <span class="cov0" title="0">if d.readOnly != nil </span><span class="cov0" title="0">{
+                d.log.Debug().Msg("closing read-only database")
+                if err := d.readOnly.Close(); err != nil </span><span class="cov0" title="0">{
+                        errs = append(errs, err)
+                }</span>
+        }
+
+        <span class="cov0" title="0">if len(errs) &gt; 0 </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to close database(s): %v", errs)
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package services
+
+import (
+        "bytes"
+        "encoding/json"
+        "fmt"
+        "sort"
+        "strings"
+        "text/template"
+
+        "github.com/charmbracelet/glamour"
+        "github.com/rs/zerolog"
+)
+
+// Display handles terminal rendering with glamour.
+type Display struct {
+        renderer *glamour.TermRenderer
+        log      zerolog.Logger
+}
+
+// NewDisplay creates a new display service with glamour rendering.
+func NewDisplay() (*Display, error) <span class="cov10" title="26">{
+        renderer, err := glamour.NewTermRenderer(
+                glamour.WithAutoStyle(),
+                glamour.WithWordWrap(100),
+        )
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov10" title="26">return &amp;Display{
+                renderer: renderer,
+                log:      Log("display"),
+        }, nil</span>
+}
+
+// Render renders markdown content to the terminal.
+func (d *Display) Render(markdown string) (string, error) <span class="cov5" title="5">{
+        return d.renderer.Render(markdown)
+}</span>
+
+// RenderTemplate renders a Go template with context, then renders as markdown.
+func (d *Display) RenderTemplate(tmpl *template.Template, ctx any) (string, error) <span class="cov6" title="7">{
+        if tmpl == nil </span><span class="cov1" title="1">{
+                return "", fmt.Errorf("template is nil")
+        }</span>
+
+        <span class="cov5" title="6">var buf bytes.Buffer
+        if err := tmpl.Execute(&amp;buf, ctx); err != nil </span><span class="cov1" title="1">{
+                return "", err
+        }</span>
+
+        // Render the result as markdown
+        <span class="cov5" title="5">rendered, err := d.renderer.Render(buf.String())
+        if err != nil </span><span class="cov0" title="0">{
+                // Fallback: return unrendered content
+                return buf.String(), nil
+        }</span>
+
+        <span class="cov5" title="5">return rendered, nil</span>
+}
+
+// RenderSQLResults renders SQL query results as JSON format.
+// Results is a slice of maps where each map represents a row.
+// Returns JSON bytes representing an array of objects.
+func (d *Display) RenderSQLResults(results []map[string]interface{}) error <span class="cov7" title="9">{
+        return d.RenderSQLResultsWithFormat(results, "json")
+}</span>
+
+// RenderSQLResultsWithFormat renders SQL query results in the specified format.
+// Supported formats: "table" (ASCII table), "json" (JSON array of objects).
+func (d *Display) RenderSQLResultsWithFormat(results []map[string]interface{}, format string) error <span class="cov7" title="12">{
+        switch format </span>{
+        case "json":<span class="cov7" title="10">
+                jsonBytes, err := d.RenderSQLResultsAsJSON(results)
+                if err != nil </span><span class="cov0" title="0">{
+                        return fmt.Errorf("failed to render results as JSON: %w", err)
+                }</span>
+                <span class="cov7" title="10">fmt.Print(string(jsonBytes))
+                return nil</span>
+        case "table":<span class="cov1" title="1">
+                return d.renderSQLResultsAsTable(results)</span>
+        default:<span class="cov1" title="1">
+                d.log.Warn().Str("format", format).Msg("Unknown format, falling back to table")
+                return d.renderSQLResultsAsTable(results)</span>
+        }
+}
+
+// renderSQLResultsAsTable renders SQL query results as an ASCII table.
+// This is the original implementation moved from RenderSQLResults.
+func (d *Display) renderSQLResultsAsTable(results []map[string]interface{}) error <span class="cov2" title="2">{
+        // Handle empty results
+        if len(results) == 0 </span><span class="cov0" title="0">{
+                fmt.Println("No results")
+                return nil
+        }</span>
+
+        // Extract columns from first result
+        // Use a map to get unique columns, then sort
+        <span class="cov2" title="2">columnSet := make(map[string]bool)
+        for key := range results[0] </span><span class="cov4" title="4">{
+                columnSet[key] = true
+        }</span>
+
+        // Convert to slice and sort
+        <span class="cov2" title="2">columns := make([]string, 0, len(columnSet))
+        for col := range columnSet </span><span class="cov4" title="4">{
+                columns = append(columns, col)
+        }</span>
+        <span class="cov2" title="2">sort.Strings(columns)
+
+        // Calculate column widths
+        widths := make(map[string]int)
+
+        // Initialize with column header widths
+        for _, col := range columns </span><span class="cov4" title="4">{
+                widths[col] = len(col)
+        }</span>
+
+        // Update widths with data widths
+        <span class="cov2" title="2">for _, row := range results </span><span class="cov2" title="2">{
+                for _, col := range columns </span><span class="cov4" title="4">{
+                        val := fmt.Sprintf("%v", row[col])
+                        if len(val) &gt; widths[col] </span><span class="cov2" title="2">{
+                                widths[col] = len(val)
+                        }</span>
+                }
+        }
+
+        // Print header row
+        <span class="cov2" title="2">for i, col := range columns </span><span class="cov4" title="4">{
+                if i &gt; 0 </span><span class="cov2" title="2">{
+                        fmt.Print("  ")
+                }</span>
+                <span class="cov4" title="4">fmt.Printf("%-*s", widths[col], col)</span>
+        }
+        <span class="cov2" title="2">fmt.Println()
+
+        // Print separator row
+        for i, col := range columns </span><span class="cov4" title="4">{
+                if i &gt; 0 </span><span class="cov2" title="2">{
+                        fmt.Print("  ")
+                }</span>
+                <span class="cov4" title="4">fmt.Print(strings.Repeat("-", widths[col]))</span>
+        }
+        <span class="cov2" title="2">fmt.Println()
+
+        // Print data rows
+        for _, row := range results </span><span class="cov2" title="2">{
+                for i, col := range columns </span><span class="cov4" title="4">{
+                        if i &gt; 0 </span><span class="cov2" title="2">{
+                                fmt.Print("  ")
+                        }</span>
+                        <span class="cov4" title="4">val := fmt.Sprintf("%v", row[col])
+                        fmt.Printf("%-*s", widths[col], val)</span>
+                }
+                <span class="cov2" title="2">fmt.Println()</span>
+        }
+
+        // Print summary
+        <span class="cov2" title="2">fmt.Printf("\n%d row", len(results))
+        if len(results) != 1 </span><span class="cov0" title="0">{
+                fmt.Print("s")
+        }</span>
+        <span class="cov2" title="2">fmt.Println()
+
+        return nil</span>
+}
+
+// RenderSQLResultsAsJSON converts SQL query results to JSON format.
+// Results is a slice of maps where each map represents a row.
+// Returns JSON bytes representing an array of objects format.
+func (d *Display) RenderSQLResultsAsJSON(results []map[string]interface{}) ([]byte, error) <span class="cov8" title="16">{
+        // Handle empty results - return empty array
+        if len(results) == 0 </span><span class="cov2" title="2">{
+                return json.Marshal([]map[string]interface{}{})
+        }</span>
+
+        // Use json.Marshal with indentation for pretty output
+        <span class="cov8" title="14">jsonBytes, err := json.MarshalIndent(results, "", "  ")
+        if err != nil </span><span class="cov0" title="0">{
+                d.log.Error().Err(err).Msg("JSON serialization failed")
+                return nil, fmt.Errorf("failed to serialize results to JSON: %w", err)
+        }</span>
+
+        <span class="cov8" title="14">return jsonBytes, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package services
+
+import (
+        "os"
+
+        "github.com/rs/zerolog"
+        "github.com/rs/zerolog/log"
+)
+
+// InitLogger initializes the global logger with environment-based configuration.
+// Supports DEBUG env var for debug level and LOG_LEVEL for custom levels.
+func InitLogger() <span class="cov0" title="0">{
+        // Default to info level
+        level := zerolog.InfoLevel
+
+        // Check DEBUG env var
+        if os.Getenv("DEBUG") != "" </span><span class="cov0" title="0">{
+                level = zerolog.DebugLevel
+        }</span>
+
+        // Check LOG_LEVEL env var (overrides DEBUG)
+        <span class="cov0" title="0">if lvl := os.Getenv("LOG_LEVEL"); lvl != "" </span><span class="cov0" title="0">{
+                if parsed, err := zerolog.ParseLevel(lvl); err == nil </span><span class="cov0" title="0">{
+                        level = parsed
+                }</span>
+        }
+
+        <span class="cov0" title="0">zerolog.SetGlobalLevel(level)
+
+        // Pretty console output to stderr
+        log.Logger = zerolog.New(zerolog.ConsoleWriter{
+                Out: os.Stderr,
+        }).With().Timestamp().Logger()</span>
+}
+
+// Log returns a child logger with namespace.
+func Log(namespace string) zerolog.Logger <span class="cov10" title="26">{
+        return log.With().Str("namespace", namespace).Logger()
+}</span>
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package services
+
+import (
+        "context"
+        "database/sql"
+        "fmt"
+        "path"
+        "path/filepath"
+        "reflect"
+        "strings"
+        "time"
+
+        "github.com/rs/zerolog"
+        "github.com/zenobi-us/opennotes/internal/core"
+)
+
+// Note represents a markdown note.
+type Note struct {
+        File struct {
+                Filepath string `json:"filepath"`
+                Relative string `json:"relative"`
+        } `json:"file"`
+        Content  string         `json:"content"`
+        Metadata map[string]any `json:"metadata"`
+}
+
+// DisplayName returns the display name for the note.
+// Priority:
+// 1. metadata["title"] if available
+// 2. Slugified filename (without extension)
+func (n *Note) DisplayName() string <span class="cov0" title="0">{
+        // Check for title in metadata
+        if title, ok := n.Metadata["title"]; ok </span><span class="cov0" title="0">{
+                if titleStr, ok := title.(string); ok &amp;&amp; titleStr != "" </span><span class="cov0" title="0">{
+                        return titleStr
+                }</span>
+        }
+
+        // Fallback to slugified filename
+        <span class="cov0" title="0">filename := path.Base(n.File.Relative)
+        // Remove .md extension
+        filename = strings.TrimSuffix(filename, ".md")
+        return core.Slugify(filename)</span>
+}
+
+// NoteService provides note query operations.
+type NoteService struct {
+        configService *ConfigService
+        dbService     *DbService
+        notebookPath  string
+        log           zerolog.Logger
+}
+
+// NewNoteService creates a note service for a notebook.
+func NewNoteService(cfg *ConfigService, db *DbService, notebookPath string) *NoteService <span class="cov0" title="0">{
+        return &amp;NoteService{
+                configService: cfg,
+                dbService:     db,
+                notebookPath:  notebookPath,
+                log:           Log("NoteService"),
+        }
+}</span>
+
+// SearchNotes returns all notes in the notebook matching the query.
+func (s *NoteService) SearchNotes(ctx context.Context, query string) ([]Note, error) <span class="cov0" title="0">{
+        if s.notebookPath == "" </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("no notebook selected")
+        }</span>
+
+        <span class="cov0" title="0">db, err := s.dbService.GetDB(ctx)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">glob := filepath.Join(s.notebookPath, "**", "*.md")
+        s.log.Debug().Str("glob", glob).Str("query", query).Msg("searching notes")
+
+        // Use DuckDB's read_markdown function with filepath included
+        sqlQuery := `SELECT * FROM read_markdown(?, include_filepath:=true)`
+        rows, err := db.QueryContext(ctx, sqlQuery, glob)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("query failed: %w", err)
+        }</span>
+        <span class="cov0" title="0">defer func() </span><span class="cov0" title="0">{
+                if err := rows.Close(); err != nil </span><span class="cov0" title="0">{
+                        s.log.Warn().Err(err).Msg("failed to close rows")
+                }</span>
+        }()
+
+        <span class="cov0" title="0">var notes []Note
+        columns, err := rows.Columns()
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">for rows.Next() </span><span class="cov0" title="0">{
+                // Create slice of interface{} to hold values
+                values := make([]interface{}, len(columns))
+                valuePtrs := make([]interface{}, len(columns))
+                for i := range values </span><span class="cov0" title="0">{
+                        valuePtrs[i] = &amp;values[i]
+                }</span>
+
+                <span class="cov0" title="0">if err := rows.Scan(valuePtrs...); err != nil </span><span class="cov0" title="0">{
+                        s.log.Warn().Err(err).Msg("failed to scan row")
+                        continue</span>
+                }
+
+                // Map columns to Note struct
+                <span class="cov0" title="0">note := Note{
+                        Metadata: make(map[string]any),
+                }
+
+                for i, col := range columns </span><span class="cov0" title="0">{
+                        val := values[i]
+                        switch col </span>{
+                        case "filepath", "file_path", "filename":<span class="cov0" title="0">
+                                if v, ok := val.(string); ok </span><span class="cov0" title="0">{
+                                        note.File.Filepath = v
+                                        note.File.Relative = strings.TrimPrefix(v, s.notebookPath+"/")
+                                }</span>
+                        case "content", "body":<span class="cov0" title="0">
+                                if v, ok := val.(string); ok </span><span class="cov0" title="0">{
+                                        note.Content = v
+                                }</span>
+                        case "metadata":<span class="cov0" title="0">
+                                // metadata column contains a DuckDB MAP with frontmatter data
+                                // The type might be duckdb.Map or map[any]any
+                                // Try to handle it as a map type by using reflection if needed
+                                rv := reflect.ValueOf(val)
+                                if rv.Kind() == reflect.Map </span><span class="cov0" title="0">{
+                                        // It's some kind of map - iterate over it
+                                        for _, key := range rv.MapKeys() </span><span class="cov0" title="0">{
+                                                if keyStr, ok := key.Interface().(string); ok </span><span class="cov0" title="0">{
+                                                        note.Metadata[keyStr] = rv.MapIndex(key).Interface()
+                                                }</span>
+                                        }
+                                } else<span class="cov0" title="0"> if v, ok := val.(map[any]any); ok </span><span class="cov0" title="0">{
+                                        for k, val := range v </span><span class="cov0" title="0">{
+                                                if keyStr, ok := k.(string); ok </span><span class="cov0" title="0">{
+                                                        note.Metadata[keyStr] = val
+                                                }</span>
+                                        }
+                                } else<span class="cov0" title="0"> if v, ok := val.(map[string]any); ok </span><span class="cov0" title="0">{
+                                        note.Metadata = v
+                                }</span>
+                        default:<span class="cov0" title="0">
+                                note.Metadata[col] = val</span>
+                        }
+                }
+
+                // Filter by query if provided
+                <span class="cov0" title="0">if query != "" </span><span class="cov0" title="0">{
+                        // Simple contains check on content and filepath
+                        if !strings.Contains(strings.ToLower(note.Content), strings.ToLower(query)) &amp;&amp;
+                                !strings.Contains(strings.ToLower(note.File.Filepath), strings.ToLower(query)) </span><span class="cov0" title="0">{
+                                continue</span>
+                        }
+                }
+
+                <span class="cov0" title="0">notes = append(notes, note)</span>
+        }
+
+        <span class="cov0" title="0">if err := rows.Err(); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">s.log.Debug().Int("count", len(notes)).Msg("notes found")
+        return notes, nil</span>
+}
+
+// Count returns the number of notes in the notebook.
+func (s *NoteService) Count(ctx context.Context) (int, error) <span class="cov0" title="0">{
+        if s.notebookPath == "" </span><span class="cov0" title="0">{
+                return 0, nil
+        }</span>
+
+        <span class="cov0" title="0">db, err := s.dbService.GetDB(ctx)
+        if err != nil </span><span class="cov0" title="0">{
+                return 0, err
+        }</span>
+
+        <span class="cov0" title="0">glob := filepath.Join(s.notebookPath, "**", "*.md")
+
+        var count int
+        row := db.QueryRowContext(ctx, `SELECT COUNT(*) FROM read_markdown(?)`, glob)
+        if err := row.Scan(&amp;count); err != nil </span><span class="cov0" title="0">{
+                return 0, err
+        }</span>
+
+        <span class="cov0" title="0">return count, nil</span>
+}
+
+// ValidateSQL validates a user-provided SQL query for safety.
+// Only SELECT and WITH (CTE) queries are allowed.
+// Dangerous keywords (DROP, DELETE, UPDATE, etc.) are blocked.
+func ValidateSQL(query string) error <span class="cov0" title="0">{
+        // Trim and normalize to uppercase
+        normalized := strings.TrimSpace(strings.ToUpper(query))
+
+        if normalized == "" </span><span class="cov0" title="0">{
+                return fmt.Errorf("query cannot be empty")
+        }</span>
+
+        // Check query type - only SELECT and WITH allowed
+        <span class="cov0" title="0">if !strings.HasPrefix(normalized, "SELECT") &amp;&amp; !strings.HasPrefix(normalized, "WITH") </span><span class="cov0" title="0">{
+                return fmt.Errorf("only SELECT queries are allowed")
+        }</span>
+
+        // Dangerous keywords blocklist - check with word boundaries
+        // Split query by spaces and other delimiters to find keywords
+        <span class="cov0" title="0">tokens := strings.FieldsFunc(normalized, func(r rune) bool </span><span class="cov0" title="0">{
+                return r == ' ' || r == '\t' || r == '\n' || r == '(' || r == ')' ||
+                        r == ',' || r == ';' || r == '=' || r == '&lt;' || r == '&gt;'
+        }</span>)
+
+        <span class="cov0" title="0">dangerous := map[string]bool{
+                "DROP":     true,
+                "DELETE":   true,
+                "UPDATE":   true,
+                "INSERT":   true,
+                "ALTER":    true,
+                "CREATE":   true,
+                "TRUNCATE": true,
+                "REPLACE":  true,
+                "ATTACH":   true,
+                "DETACH":   true,
+                "PRAGMA":   true,
+        }
+
+        for _, token := range tokens </span><span class="cov0" title="0">{
+                if dangerous[token] </span><span class="cov0" title="0">{
+                        return fmt.Errorf("keyword '%s' is not allowed", token)
+                }</span>
+        }
+
+        <span class="cov0" title="0">return nil</span>
+}
+
+// ExecuteSQLSafe executes a user-provided SQL query safely.
+// Validates the query, executes with a 30-second timeout on a read-only connection,
+// and returns results as maps.
+func (s *NoteService) ExecuteSQLSafe(ctx context.Context, query string) ([]map[string]any, error) <span class="cov0" title="0">{
+        // 1. Validate query
+        if err := ValidateSQL(query); err != nil </span><span class="cov0" title="0">{
+                s.log.Warn().Err(err).Msg("SQL query validation failed")
+                return nil, fmt.Errorf("invalid query: %w", err)
+        }</span>
+
+        // 2. Preprocess query to resolve glob patterns relative to notebook root
+        <span class="cov0" title="0">processedQuery, err := s.dbService.preprocessSQL(query, s.notebookPath)
+        if err != nil </span><span class="cov0" title="0">{
+                s.log.Error().Err(err).Str("query", query).Msg("SQL query preprocessing failed")
+                return nil, fmt.Errorf("query preprocessing failed: %w", err)
+        }</span>
+
+        // 3. Get read-only connection
+        <span class="cov0" title="0">db, err := s.dbService.GetReadOnlyDB(ctx)
+        if err != nil </span><span class="cov0" title="0">{
+                s.log.Error().Err(err).Msg("failed to get read-only database connection")
+                return nil, fmt.Errorf("database error: %w", err)
+        }</span>
+
+        // 4. Create context with 30-second timeout
+        <span class="cov0" title="0">timeoutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+        defer cancel()
+
+        s.log.Debug().Str("query", processedQuery).Msg("executing SQL query")
+
+        // 5. Execute query
+        rows, err := db.QueryContext(timeoutCtx, processedQuery)
+        if err != nil </span><span class="cov0" title="0">{
+                s.log.Error().Err(err).Str("query", processedQuery).Msg("query execution failed")
+                return nil, fmt.Errorf("query execution failed: %w", err)
+        }</span>
+        <span class="cov0" title="0">defer func() </span><span class="cov0" title="0">{
+                if err := rows.Close(); err != nil </span><span class="cov0" title="0">{
+                        s.log.Warn().Err(err).Msg("failed to close result rows")
+                }</span>
+        }()
+
+        // 6. Convert rows to maps using local implementation
+        <span class="cov0" title="0">results, err := s.rowsToMaps(rows)
+        if err != nil </span><span class="cov0" title="0">{
+                s.log.Error().Err(err).Msg("failed to scan query results")
+                return nil, fmt.Errorf("failed to read results: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">s.log.Debug().Int("rows", len(results)).Msg("query executed successfully")
+        return results, nil</span>
+}
+
+// Query executes a raw SQL query.
+func (s *NoteService) Query(ctx context.Context, sql string) ([]map[string]any, error) <span class="cov0" title="0">{
+        return s.dbService.Query(ctx, sql)
+}</span>
+
+// rowsToMaps converts sql.Rows to a slice of maps.
+func (s *NoteService) rowsToMaps(rows *sql.Rows) ([]map[string]any, error) <span class="cov0" title="0">{
+        columns, err := rows.Columns()
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">var results []map[string]any
+
+        for rows.Next() </span><span class="cov0" title="0">{
+                // Create slice of interface{} to hold values
+                values := make([]interface{}, len(columns))
+                valuePtrs := make([]interface{}, len(columns))
+                for i := range values </span><span class="cov0" title="0">{
+                        valuePtrs[i] = &amp;values[i]
+                }</span>
+
+                <span class="cov0" title="0">if err := rows.Scan(valuePtrs...); err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+
+                // Create map for this row
+                <span class="cov0" title="0">row := make(map[string]any)
+                for i, col := range columns </span><span class="cov0" title="0">{
+                        row[col] = values[i]
+                }</span>
+                <span class="cov0" title="0">results = append(results, row)</span>
+        }
+
+        <span class="cov0" title="0">if err := rows.Err(); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return results, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package services
+
+import (
+        "encoding/json"
+        "fmt"
+        "os"
+        "path/filepath"
+        "slices"
+        "strings"
+
+        "github.com/rs/zerolog"
+)
+
+// NotebookGroup defines a group of notes with shared properties.
+type NotebookGroup struct {
+        Name     string         `json:"name"`
+        Globs    []string       `json:"globs"`
+        Metadata map[string]any `json:"metadata"`
+        Template string         `json:"template,omitempty"`
+}
+
+// StoredNotebookConfig is what's stored in .opennotes.json.
+type StoredNotebookConfig struct {
+        Root      string            `json:"root"`
+        Name      string            `json:"name"`
+        Contexts  []string          `json:"contexts,omitempty"`
+        Templates map[string]string `json:"templates,omitempty"`
+        Groups    []NotebookGroup   `json:"groups,omitempty"`
+}
+
+// NotebookConfig includes runtime-resolved paths.
+type NotebookConfig struct {
+        StoredNotebookConfig
+        Path string `json:"-"` // Path to the config file (not stored)
+}
+
+// Notebook represents a loaded notebook with its services.
+type Notebook struct {
+        Config NotebookConfig
+        Notes  *NoteService
+}
+
+// NotebookService manages notebook operations.
+type NotebookService struct {
+        configService *ConfigService
+        dbService     *DbService
+        log           zerolog.Logger
+}
+
+// NewNotebookService creates a notebook service.
+func NewNotebookService(cfg *ConfigService, db *DbService) *NotebookService <span class="cov0" title="0">{
+        return &amp;NotebookService{
+                configService: cfg,
+                dbService:     db,
+                log:           Log("NotebookService"),
+        }
+}</span>
+
+// configFilePath returns the config file path for a notebook directory.
+func configFilePath(notebookDir string) string <span class="cov0" title="0">{
+        return filepath.Join(notebookDir, NotebookConfigFile)
+}</span>
+
+// HasNotebook checks if a directory contains a notebook.
+func (s *NotebookService) HasNotebook(path string) bool <span class="cov0" title="0">{
+        if path == "" </span><span class="cov0" title="0">{
+                return false
+        }</span>
+        <span class="cov0" title="0">_, err := os.Stat(configFilePath(path))
+        return err == nil</span>
+}
+
+// LoadConfig loads notebook configuration from a directory.
+func (s *NotebookService) LoadConfig(path string) (*NotebookConfig, error) <span class="cov0" title="0">{
+        configPath := configFilePath(path)
+
+        data, err := os.ReadFile(configPath)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">var stored StoredNotebookConfig
+        if err := json.Unmarshal(data, &amp;stored); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("invalid notebook config: %w", err)
+        }</span>
+
+        // Resolve root path relative to config location
+        <span class="cov0" title="0">rootPath := filepath.Join(path, stored.Root)
+        if _, err := os.Stat(rootPath); err != nil </span><span class="cov0" title="0">{
+                // Create root directory if it doesn't exist
+                if os.IsNotExist(err) </span><span class="cov0" title="0">{
+                        if mkErr := os.MkdirAll(rootPath, 0755); mkErr != nil </span><span class="cov0" title="0">{
+                                return nil, fmt.Errorf("notes path not found and could not create: %s", rootPath)
+                        }</span>
+                } else<span class="cov0" title="0"> {
+                        return nil, fmt.Errorf("notes path error: %w", err)
+                }</span>
+        }
+
+        <span class="cov0" title="0">return &amp;NotebookConfig{
+                StoredNotebookConfig: StoredNotebookConfig{
+                        Root:      rootPath, // Now absolute
+                        Name:      stored.Name,
+                        Contexts:  stored.Contexts,
+                        Templates: stored.Templates,
+                        Groups:    stored.Groups,
+                },
+                Path: configPath,
+        }, nil</span>
+}
+
+// Open loads a notebook from the given path.
+func (s *NotebookService) Open(notebookPath string) (*Notebook, error) <span class="cov0" title="0">{
+        config, err := s.LoadConfig(notebookPath)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">noteService := NewNoteService(s.configService, s.dbService, config.Root)
+
+        return &amp;Notebook{
+                Config: *config,
+                Notes:  noteService,
+        }, nil</span>
+}
+
+// Create creates a new notebook.
+func (s *NotebookService) Create(name, path string, register bool) (*Notebook, error) <span class="cov0" title="0">{
+        if path == "" </span><span class="cov0" title="0">{
+                path, _ = os.Getwd()
+        }</span>
+
+        <span class="cov0" title="0">notesDir := filepath.Join(path, ".notes")
+
+        config := NotebookConfig{
+                StoredNotebookConfig: StoredNotebookConfig{
+                        Root:     notesDir, // Store absolute path; SaveConfig will convert to relative
+                        Name:     name,
+                        Contexts: []string{path},
+                        Groups: []NotebookGroup{
+                                {
+                                        Name:     "Default",
+                                        Globs:    []string{"**/*.md"},
+                                        Metadata: map[string]any{},
+                                },
+                        },
+                        Templates: map[string]string{},
+                },
+                Path: configFilePath(path),
+        }
+
+        // Create notes directory
+        if err := os.MkdirAll(notesDir, 0755); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">noteService := NewNoteService(s.configService, s.dbService, notesDir)
+        notebook := &amp;Notebook{
+                Config: config,
+                Notes:  noteService,
+        }
+
+        // Save config
+        if err := notebook.SaveConfig(register, s.configService); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return notebook, nil</span>
+}
+
+// Infer discovers notebook from current context.
+// Priority: 1. Declared path, 2. Context matching, 3. Ancestor search.
+func (s *NotebookService) Infer(cwd string) (*Notebook, error) <span class="cov0" title="0">{
+        if cwd == "" </span><span class="cov0" title="0">{
+                cwd, _ = os.Getwd()
+        }</span>
+
+        // Step 1: Check declared notebook path
+        <span class="cov0" title="0">if declaredPath := s.configService.Store.NotebookPath; declaredPath != "" </span><span class="cov0" title="0">{
+                if s.HasNotebook(declaredPath) </span><span class="cov0" title="0">{
+                        return s.Open(declaredPath)
+                }</span>
+        }
+
+        // Step 2: Check registered notebooks for context match
+        <span class="cov0" title="0">notebooks, _ := s.List(cwd)
+        for _, nb := range notebooks </span><span class="cov0" title="0">{
+                if nb.MatchContext(cwd) != "" </span><span class="cov0" title="0">{
+                        return nb, nil
+                }</span>
+        }
+
+        // Step 3: Search ancestor directories
+        <span class="cov0" title="0">current := cwd
+        for current != "/" &amp;&amp; current != "" </span><span class="cov0" title="0">{
+                if s.HasNotebook(current) </span><span class="cov0" title="0">{
+                        return s.Open(current)
+                }</span>
+                <span class="cov0" title="0">current = filepath.Dir(current)</span>
+        }
+
+        <span class="cov0" title="0">return nil, nil</span> // No notebook found
+}
+
+// List returns all known notebooks.
+func (s *NotebookService) List(cwd string) ([]*Notebook, error) <span class="cov0" title="0">{
+        var notebooks []*Notebook
+
+        // From registered paths
+        for _, path := range s.configService.Store.Notebooks </span><span class="cov0" title="0">{
+                if s.HasNotebook(path) </span><span class="cov0" title="0">{
+                        if nb, err := s.Open(path); err == nil </span><span class="cov0" title="0">{
+                                notebooks = append(notebooks, nb)
+                        }</span>
+                }
+        }
+
+        // From ancestor directories
+        <span class="cov0" title="0">if cwd == "" </span><span class="cov0" title="0">{
+                cwd, _ = os.Getwd()
+        }</span>
+        <span class="cov0" title="0">current := cwd
+        for current != "/" &amp;&amp; current != "" </span><span class="cov0" title="0">{
+                if s.HasNotebook(current) </span><span class="cov0" title="0">{
+                        if nb, err := s.Open(current); err == nil </span><span class="cov0" title="0">{
+                                // Avoid duplicates
+                                found := false
+                                for _, existing := range notebooks </span><span class="cov0" title="0">{
+                                        if existing.Config.Path == nb.Config.Path </span><span class="cov0" title="0">{
+                                                found = true
+                                                break</span>
+                                        }
+                                }
+                                <span class="cov0" title="0">if !found </span><span class="cov0" title="0">{
+                                        notebooks = append(notebooks, nb)
+                                }</span>
+                        }
+                }
+                <span class="cov0" title="0">current = filepath.Dir(current)</span>
+        }
+
+        <span class="cov0" title="0">return notebooks, nil</span>
+}
+
+// Notebook methods
+
+// MatchContext checks if a path matches any notebook context.
+func (n *Notebook) MatchContext(path string) string <span class="cov0" title="0">{
+        for _, ctx := range n.Config.Contexts </span><span class="cov0" title="0">{
+                if strings.HasPrefix(path, ctx) </span><span class="cov0" title="0">{
+                        return ctx
+                }</span>
+        }
+        <span class="cov0" title="0">return ""</span>
+}
+
+// AddContext adds a context path to the notebook.
+func (n *Notebook) AddContext(contextPath string, configService *ConfigService) error <span class="cov0" title="0">{
+        if contextPath == "" </span><span class="cov0" title="0">{
+                contextPath, _ = os.Getwd()
+        }</span>
+
+        // Check if already exists
+        <span class="cov0" title="0">if slices.Contains(n.Config.Contexts, contextPath) </span><span class="cov0" title="0">{
+                return nil // Already exists
+        }</span>
+
+        <span class="cov0" title="0">n.Config.Contexts = append(n.Config.Contexts, contextPath)
+        return n.SaveConfig(false, configService)</span>
+}
+
+// SaveConfig writes the notebook config to disk.
+func (n *Notebook) SaveConfig(register bool, configService *ConfigService) error <span class="cov0" title="0">{
+        configDir := filepath.Dir(n.Config.Path)
+        if err := os.MkdirAll(configDir, 0755); err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        // Calculate relative root for storage
+        <span class="cov0" title="0">relRoot, _ := filepath.Rel(configDir, n.Config.Root)
+        if relRoot == "" </span><span class="cov0" title="0">{
+                relRoot = "."
+        }</span>
+
+        <span class="cov0" title="0">stored := StoredNotebookConfig{
+                Root:      relRoot,
+                Name:      n.Config.Name,
+                Contexts:  n.Config.Contexts,
+                Templates: n.Config.Templates,
+                Groups:    n.Config.Groups,
+        }
+
+        data, err := json.MarshalIndent(stored, "", "  ")
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov0" title="0">if err := os.WriteFile(n.Config.Path, data, 0644); err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        // Register globally if requested
+        <span class="cov0" title="0">if register </span><span class="cov0" title="0">{
+                notebooks := configService.Store.Notebooks
+                notebookDir := filepath.Dir(n.Config.Path)
+                if slices.Contains(notebooks, notebookDir) </span><span class="cov0" title="0">{
+                        return nil // Already registered
+                }</span>
+                <span class="cov0" title="0">configService.Store.Notebooks = append(notebooks, notebookDir)
+                return configService.Write(configService.Store)</span>
+        }
+
+        <span class="cov0" title="0">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package services
+
+import (
+        "bytes"
+        "embed"
+        "fmt"
+        "text/template"
+)
+
+//go:embed templates/*.gotmpl
+var templateFiles embed.FS
+
+var loadedTemplates map[string]*template.Template
+
+// init loads all templates on package initialization.
+func init() <span class="cov1" title="1">{
+        loadedTemplates = make(map[string]*template.Template)
+
+        templateNames := []string{"note-list", "note-detail", "notebook-info", "notebook-list"}
+        for _, name := range templateNames </span><span class="cov10" title="4">{
+                tmpl, err := loadTemplate(name)
+                if err != nil </span><span class="cov0" title="0">{
+                        // Log warning but don't fail - templates may be optional
+                        fmt.Printf("warning: failed to load template %s: %v\n", name, err)
+                        continue</span>
+                }
+                <span class="cov10" title="4">loadedTemplates[name] = tmpl</span>
+        }
+}
+
+// loadTemplate loads a template by name from the embedded filesystem.
+func loadTemplate(name string) (*template.Template, error) <span class="cov10" title="4">{
+        content, err := templateFiles.ReadFile(fmt.Sprintf("templates/%s.gotmpl", name))
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to read template file: %w", err)
+        }</span>
+
+        <span class="cov10" title="4">tmpl, err := template.New(name).Parse(string(content))
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to parse template: %w", err)
+        }</span>
+
+        <span class="cov10" title="4">return tmpl, nil</span>
+}
+
+// TuiRender is a convenience function to render a template by name with glamour.
+func TuiRender(name string, ctx any) (string, error) <span class="cov0" title="0">{
+        // Get the pre-loaded template
+        tmpl, ok := loadedTemplates[name]
+        if !ok </span><span class="cov0" title="0">{
+                return "", fmt.Errorf("template %q not found", name)
+        }</span>
+
+        <span class="cov0" title="0">display, err := NewDisplay()
+        if err != nil </span><span class="cov0" title="0">{
+                // Fallback without glamour rendering
+                var buf bytes.Buffer
+                if err := tmpl.Execute(&amp;buf, ctx); err != nil </span><span class="cov0" title="0">{
+                        return "", err
+                }</span>
+
+                <span class="cov0" title="0">return buf.String(), nil</span>
+        }
+
+        <span class="cov0" title="0">return display.RenderTemplate(tmpl, ctx)</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
