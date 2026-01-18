@@ -1,3 +1,6 @@
+/**
+ * OpenNotes - A CLI for managing markdown-based notes
+ */
 package cmd
 
 import (

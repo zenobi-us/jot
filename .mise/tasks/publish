@@ -5,33 +5,18 @@
 
 set -e
 
-echo "Publishing to GitHub Releases"
-echo " > with tag: ${usage_tag}..."
-
 function pre_release() {
-	# For 'next' tag, bump version to a prerelease to avoid conflicts
-	# Count commits since last tag for a semantic build number
-	LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-	if [ -n "$LAST_TAG" ]; then
-		BUILD_NUMBER=$(git rev-list "${LAST_TAG}..HEAD" --count)
-	else
-		BUILD_NUMBER=$(git rev-list HEAD --count)
-	fi
-	CURRENT_VERSION=$(grep 'Version = ' main.go | sed 's/.*Version = "\(.*\)"/\1/')
-	PRERELEASE_VERSION="$(semver get release "$CURRENT_VERSION")-next.${BUILD_NUMBER}"
-	echo " > bumping version: ${CURRENT_VERSION} -> ${PRERELEASE_VERSION}"
-
-	# Create git tag before running GoReleaser
-	git tag "${PRERELEASE_VERSION}"
-	git push origin "${PRERELEASE_VERSION}"
-
-	GORELEASER_CURRENT_TAG="${PRERELEASE_VERSION}" \
-		goreleaser release --clean
+	echo "No prereleass builds. Use go install https://this.repo@latest instead."
 }
 
 # For 'latest' tag, just do a normal release
 function prod_release() {
+	echo "Publishing to GitHub Releases"
+	echo " > with tag: ${usage_tag}..."
+
 	goreleaser release --clean
+
+	echo "Published successfully!"
 }
 
 # Publish release to GitHub with GoReleaser
@@ -41,5 +26,3 @@ if [ "${usage_tag}" = "next" ]; then
 else
 	prod_release
 fi
-
-echo "Published successfully!"
