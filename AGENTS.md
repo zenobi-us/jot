@@ -328,6 +328,79 @@ Templates are stored as `.gotmpl` files in `internal/services/templates/` and em
 
 Loaded via `TuiRender(name string, ctx any)` function.
 
+## Recommended Skill Usage
+
+When working on OpenNotes, use AI skills strategically to enhance code quality and consistency. Prioritize skills based on task type:
+
+### Priority Skill Matrix
+
+| Task Type | Primary Skill | When to Use | Purpose |
+|-----------|---------------|------------|---------|
+| **Exploring codebase** | codemapper | Finding symbols, tracing calls, analyzing patterns | AST-based code analysis without databases |
+| **Making commits** | writing-git-commits | Creating commit messages, semantic versioning | Conventional Commits specification |
+| **Project artifacts** | miniproject | Creating/updating research, tasks, specs, phases | Markdown-driven task management |
+| **Code quality** | refactoring-specialist | Finding duplication, extracting patterns | Safe code transformation techniques |
+| **Validation** | defense-in-depth | Adding error handling layers | Multiple validation checkpoints |
+| **Testing** | test-driven-development | Writing tests before implementation | Ensures behavior verification |
+| **Design review** | architecture-reviewer | Validating system design | Scalability and maintainability analysis |
+
+### Skill Usage Guidelines
+
+**When Exploring Code**:
+```bash
+# Use CodeMapper for pattern analysis
+cm stats .                    # Project overview
+cm query "SearchNotes"        # Find symbol definition
+cm callers "TuiRender"        # Find all usages
+cm trace "cmd" "services"     # Trace dependency path
+```
+
+**When Making Commits**:
+- Use `writing-git-commits` skill to create semantic commit messages
+- Follow Conventional Commits specification
+- Include scope, type, description, and body
+- Example: `feat(notes): add display name to list output`
+
+**When Updating Artifacts**:
+- Use `miniproject` skill for `.memory/` files
+- Follow naming convention: `.memory/<type>-<8_char_hash>-<title>.md`
+- Types: `task`, `research`, `spec`, `phase`, `epic`, `learning`
+- Keep `summary.md`, `todo.md`, `team.md` in sync
+
+**For All Other Cases**:
+- Review available skills in context
+- Select most relevant skill not yet used in session
+- Load skill and follow its specific guidance
+- Document skill usage in commit messages when relevant
+
+### Example: Multi-Skill Workflow
+
+```
+1. Explore codebase → use codemapper skill
+   $ cm query "displayNoteList"
+   
+2. Identify duplication → use refactoring-specialist skill
+   → Analyze patterns for extraction
+   
+3. Write extraction tests → use test-driven-development skill
+   → Tests first, then implementation
+   
+4. Implement extraction → follow refactoring guidance
+   
+5. Update task artifact → use miniproject skill
+   → Document in .memory/task-*.md
+   
+6. Commit changes → use writing-git-commits skill
+   → Semantic commit message
+```
+
+### When NOT to Use Skills
+
+- Don't load multiple overlapping skills for one task
+- Don't force skill usage if task is straightforward
+- Don't skip skills when they add clear value
+- Skip skills that aren't applicable to current task type
+
 ## Key Technical Decisions
 
 ### Language: Go
