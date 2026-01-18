@@ -88,14 +88,18 @@ func (d *DbService) GetReadOnlyDB(ctx context.Context) (*sql.DB, error) {
 		d.log.Debug().Msg("installing markdown extension on read-only connection")
 		if _, err := db.ExecContext(ctx, "INSTALL markdown FROM community"); err != nil {
 			initErr = fmt.Errorf("failed to install markdown extension on read-only connection: %w", err)
-			db.Close()
+			if closeErr := db.Close(); closeErr != nil {
+				d.log.Warn().Err(closeErr).Msg("failed to close db after install error")
+			}
 			return
 		}
 
 		d.log.Debug().Msg("loading markdown extension on read-only connection")
 		if _, err := db.ExecContext(ctx, "LOAD markdown"); err != nil {
 			initErr = fmt.Errorf("failed to load markdown extension on read-only connection: %w", err)
-			db.Close()
+			if closeErr := db.Close(); closeErr != nil {
+				d.log.Warn().Err(closeErr).Msg("failed to close db after load error")
+			}
 			return
 		}
 

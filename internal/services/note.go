@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -271,8 +272,8 @@ func (s *NoteService) ExecuteSQLSafe(ctx context.Context, query string) ([]map[s
 		}
 	}()
 
-	// 5. Convert rows to maps
-	results, err := rowsToMaps(rows)
+	// 5. Convert rows to maps using local implementation
+	results, err := s.rowsToMaps(rows)
 	if err != nil {
 		s.log.Error().Err(err).Msg("failed to scan query results")
 		return nil, fmt.Errorf("failed to read results: %w", err)
@@ -285,4 +286,40 @@ func (s *NoteService) ExecuteSQLSafe(ctx context.Context, query string) ([]map[s
 // Query executes a raw SQL query.
 func (s *NoteService) Query(ctx context.Context, sql string) ([]map[string]any, error) {
 	return s.dbService.Query(ctx, sql)
+}
+
+// rowsToMaps converts sql.Rows to a slice of maps.
+func (s *NoteService) rowsToMaps(rows *sql.Rows) ([]map[string]any, error) {
+	columns, err := rows.Columns()
+	if err != nil {
+		return nil, err
+	}
+
+	var results []map[string]any
+
+	for rows.Next() {
+		// Create slice of interface{} to hold values
+		values := make([]interface{}, len(columns))
+		valuePtrs := make([]interface{}, len(columns))
+		for i := range values {
+			valuePtrs[i] = &values[i]
+		}
+
+		if err := rows.Scan(valuePtrs...); err != nil {
+			return nil, err
+		}
+
+		// Create map for this row
+		row := make(map[string]any)
+		for i, col := range columns {
+			row[col] = values[i]
+		}
+		results = append(results, row)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return results, nil
 }

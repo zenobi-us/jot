@@ -22,8 +22,15 @@ Examples:
   # Search with specific notebook
   opennotes notes search "todo" --notebook ~/notes
 
-  # Execute custom SQL query
-  opennotes notes search --sql "SELECT * FROM markdown LIMIT 10"`,
+  # Execute custom SQL query to find all notes
+  opennotes notes search --sql "SELECT filepath, content FROM read_markdown('**/*.md', include_filepath:=true) LIMIT 10"
+
+  # Find notes with Python code blocks
+  opennotes notes search --sql "SELECT filepath FROM read_markdown('**/*.md', include_filepath:=true) WHERE content LIKE '%python%'"
+
+SQL Security:
+  Only SELECT queries allowed. Read-only access enforced.
+  30-second timeout per query. No data modification possible.`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Get --sql flag if provided
@@ -83,6 +90,6 @@ func init() {
 	notesSearchCmd.Flags().String(
 		"sql",
 		"",
-		"Execute custom SQL query against notes (bypasses normal search)",
+		"Execute custom SQL query against notes (read-only, 30s timeout, SELECT/WITH only)",
 	)
 }
