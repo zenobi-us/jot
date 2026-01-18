@@ -6,11 +6,43 @@ OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks
 
 ## Current Status
 
-- **Active Epic**: None - Ready for new work
+- **Active Work**: 🔴 **CRITICAL BUG FIX** - SQL Glob Rooting Issue  
+- **Priority**: HIGH - Security vulnerability requiring immediate resolution
 - **Previous Epic**: [SQL Flag Feature](archive/sql-flag-feature-epic/epic-2f3c4d5e-sql-flag-feature.md) ✅ COMPLETED SUCCESSFULLY
 - **Before That**: [Test Coverage Improvement](archive/test-improvement-epic/epic-7a2b3c4d-test-improvement.md) ✅ COMPLETED SUCCESSFULLY
-- **Last Updated**: 2026-01-18 20:57 GMT+10:30
-- **Status**: 🎯 **READY FOR NEXT EPIC** - SQL Flag Feature fully implemented and production-ready
+- **Last Updated**: 2026-01-18 21:30 GMT+10:30
+- **Status**: 🚨 **CRITICAL BUG FIX IN PROGRESS** - SQL pattern resolution security issue
+
+## Current Critical Bug Fix (2026-01-18)
+
+### 🔴 SQL Glob Rooting Issue - HIGH PRIORITY SECURITY FIX
+
+**Issue Discovered**: Critical vulnerability in SQL query processing where glob patterns resolve from current working directory instead of notebook root directory.
+
+**Security Impact**: 
+- **Risk Level**: 🔴 HIGH - Potential path traversal vulnerability
+- **Data Exposure**: Queries could access files outside notebook boundaries  
+- **Consistency Issue**: Same query returns different results based on execution location
+- **User Confusion**: Behavior inconsistent with user mental model
+
+**Technical Solution**:
+- **Approach**: Query preprocessing with pattern substitution
+- **Implementation**: New `preprocessSQL()` function in DbService
+- **Security**: Path traversal validation and logging
+- **Performance**: <1ms preprocessing overhead target
+
+**Active Tasks** (4-6 hours total effort):
+- 🔴 **HIGH**: [task-847f8a69] Implement SQL Query Preprocessing (2-3 hours)
+- 🔴 **HIGH**: [task-1c5a8eca] Comprehensive Testing (1.5-2 hours)  
+- 🟡 **MEDIUM**: [task-fba56e5b] Documentation Updates (45min-1hr)
+
+**Research Complete**: ✅ [learning-548a8336] Technical analysis and security assessment
+
+**Quality Gates**:
+- All existing SQL tests must pass
+- Security tests must prevent path traversal
+- Performance benchmarks within targets
+- Documentation must explain behavior clearly
 
 ## Recent Epic Completion (2026-01-18)
 

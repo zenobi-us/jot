@@ -1,13 +1,72 @@
 # OpenNotes - Active Tasks
 
-**Status**: 🎉 **SQL FLAG FEATURE COMPLETE** - Production-ready implementation achieved  
+**Status**: 🔴 **CRITICAL BUG FIX IN PROGRESS** - SQL Glob Rooting Issue  
+**Current Work**: High-priority security vulnerability requiring immediate resolution  
 **Last Epic**: SQL Flag Feature ✅ COMPLETED  
-**Before That**: Test Coverage Improvement ✅ COMPLETED  
-**Next Available**: Ready for new epic selection
+**Before That**: Test Coverage Improvement ✅ COMPLETED
 
 ---
 
-## ✅ SQL Flag Feature Epic Completed (2026-01-18)
+## 🔴 CRITICAL BUG FIX: SQL Glob Rooting Issue (2026-01-18)
+
+### 🚨 HIGH PRIORITY SECURITY VULNERABILITY
+
+**Problem**: SQL queries use `**/*.md` patterns that search from current working directory instead of notebook root directory  
+**Impact**: Critical bug causing inconsistent results and potential security issues  
+**Solution**: Query preprocessing with pattern substitution  
+
+**Security Risk**: 🔴 **HIGH** - Potential path traversal allowing access to files outside notebook scope
+
+### Active Tasks - Bug Fix Implementation
+
+#### Core Implementation
+- [ ] **[task-847f8a69]** Implement SQL Query Preprocessing for Glob Pattern Resolution
+  - **Priority**: 🔴 HIGH - Security vulnerability
+  - **Effort**: 2-3 hours  
+  - **Objective**: Create preprocessSQL() function in DbService for pattern resolution
+  - **Status**: TODO - Ready to start
+
+#### Comprehensive Testing  
+- [ ] **[task-1c5a8eca]** Comprehensive Testing for SQL Glob Pattern Preprocessing
+  - **Priority**: 🔴 HIGH - Critical for validating security fix
+  - **Effort**: 1.5-2 hours
+  - **Objective**: Unit tests, security tests, integration tests, performance benchmarks
+  - **Status**: TODO - Depends on implementation
+
+#### Documentation Update
+- [ ] **[task-fba56e5b]** Update Documentation for SQL Glob Pattern Behavior  
+  - **Priority**: 🟡 MEDIUM - Important for user experience
+  - **Effort**: 45 minutes - 1 hour
+  - **Objective**: Update CLI help, function reference, security guidance
+  - **Status**: TODO - Can be done in parallel
+
+### Research and Analysis Complete
+- ✅ **[learning-548a8336]** SQL Glob Rooting Issue Research and Analysis
+  - **Status**: ✅ COMPLETED - Comprehensive technical analysis
+  - **Quality**: ⭐⭐⭐⭐⭐ Complete security and implementation analysis
+  - **Location**: `.memory/learning-548a8336-sql-glob-rooting-research.md`
+
+### Bug Fix Summary
+
+**Technical Approach**:
+- Pattern detection using regex to identify glob patterns in SQL
+- Path resolution converting relative patterns to absolute paths from notebook root
+- Security validation preventing path traversal outside notebook boundaries
+- Performance optimization ensuring <1ms preprocessing overhead
+
+**Quality Gates**:
+- All existing SQL tests must continue passing  
+- Security tests must validate path traversal protection
+- Performance benchmarks must confirm acceptable latency
+- Documentation must clearly explain new behavior
+
+**Total Estimated Effort**: 4-6 hours for complete bug fix implementation
+
+---
+
+## ✅ Previous Epic Completions
+
+### SQL Flag Feature Epic Completed (2026-01-18)
 
 ### 🎉 PRODUCTION IMPLEMENTATION COMPLETE
 
