@@ -8,8 +8,46 @@ OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks
 
 - **Epic**: [SQL Flag Feature](epic-2f3c4d5e-sql-flag-feature.md)
 - **Phase**: ✅ COMPLETE - Phase 1 (Core Functionality MVP) delivered
-- **Last Updated**: 2026-01-17 20:37 GMT+10:30
+- **Last Updated**: 2026-01-17 20:25 GMT+10:30
 - **Status**: 🚀 PRODUCTION READY - Ready for immediate deployment
+
+## Recent Completions
+
+### `opennotes notes list` Format Enhancement ✅
+
+**Status**: COMPLETE - Merged and tested  
+**Commit**: ee370b1  
+**Date**: 2026-01-17 20:25 GMT+10:30
+
+Implemented formatted output for `opennotes notes list` command:
+
+**Format**:
+```md
+### Notes ({count})
+
+- [{title/filename}] relative_path
+```
+
+**Features**:
+- Extracts title from frontmatter or uses slugified filename
+- Displays note count in header
+- Graceful handling of empty notebooks
+- Works with special characters in filenames
+
+**Implementation**:
+- Added DisplayName() method to Note service
+- Updated NoteList template
+- Enhanced DuckDB Map type conversion
+- 7 new comprehensive tests (all passing)
+
+**Files Changed**:
+- `internal/services/note.go` - DisplayName() + metadata extraction
+- `internal/services/templates.go` - Updated template
+- `internal/services/note_test.go` - New tests
+- `internal/services/templates_test.go` - Template tests
+- `cmd/notes_list.go` - Empty notebook handling
+
+**Test Results**: ✅ 7/7 new tests pass, no regressions
 
 ## Active Work
 
