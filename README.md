@@ -1,4 +1,6 @@
-# opennotes
+# OpenNotes
+
+![OpenNotes Banner](./banner.png)
 
 A CLI tool for managing your markdown-based notes organized in notebooks.
 
