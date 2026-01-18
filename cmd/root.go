@@ -5,6 +5,14 @@ import (
 	"github.com/zenobi-us/opennotes/internal/services"
 )
 
+// Version information - these are set from version.go at build time
+var (
+	Version   string
+	BuildDate string
+	GitCommit string
+	GitBranch string
+)
+
 var (
 	// Services initialized in PersistentPreRunE
 	cfgService      *services.ConfigService
@@ -13,8 +21,9 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "opennotes",
-	Short: "A CLI for managing markdown-based notes",
+	Use:     "opennotes",
+	Version: "0.0.2", // This will be updated by the version setting in main()
+	Short:   "A CLI for managing markdown-based notes",
 	Long: `OpenNotes is a CLI tool for managing your markdown-based notes
 organized in notebooks. Notes are stored as markdown files and can be
 queried using DuckDB's powerful SQL capabilities.
@@ -68,6 +77,8 @@ Examples:
 
 // Execute runs the root command.
 func Execute() error {
+	// Update the version on the root command
+	rootCmd.Version = Version
 	return rootCmd.Execute()
 }
 

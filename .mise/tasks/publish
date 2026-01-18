@@ -17,7 +17,7 @@ function pre_release() {
 	else
 		BUILD_NUMBER=$(git rev-list HEAD --count)
 	fi
-	CURRENT_VERSION=$(jq -r '.version' package.json)
+	CURRENT_VERSION=$(grep 'Version = ' main.go | sed 's/.*Version = "\(.*\)"/\1/')
 	PRERELEASE_VERSION="$(semver get release "$CURRENT_VERSION")-next.${BUILD_NUMBER}"
 	echo " > bumping version: ${CURRENT_VERSION} -> ${PRERELEASE_VERSION}"
 

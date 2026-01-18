@@ -25,7 +25,7 @@ While version is `0.x.x`, breaking changes bump **minor** version.
 2. Release Please will:
    - Analyze commits
    - Determine version bump
-   - Update `package.json`
+   - Update `main.go`
    - Update `CHANGELOG.md`
    - Create a release PR
 
@@ -61,7 +61,7 @@ Release Please will open a PR for version `2.0.0` regardless of commit message t
 
 ### Update Extra Files During Release
 
-If you have version numbers in other files beyond `package.json`, configure them in `release-please-config.json`:
+If you have version numbers in other files beyond `main.go`, configure them in `release-please-config.json`:
 
 ```json
 {
