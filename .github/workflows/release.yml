@@ -26,6 +26,11 @@ jobs:
           release-type: go
           skip-github-pull-request: false
 
+      - name: Release Please Summary
+        run: |
+          echo "Release Please Outputs:"
+          echo '${{ toJSON(steps.release-please.outputs) }}'
+
   dispatch-publish:
     needs: process
     runs-on: ubuntu-latest
