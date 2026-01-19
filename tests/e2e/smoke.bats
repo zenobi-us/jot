@@ -195,6 +195,8 @@ create_test_note() {
 
 # Test 10: Error handling
 @test "Proper error handling" {
+    # Ensure clean state - remove any existing config
+    rm -rf "$HOME/.config/opennotes"
     # Test without initialization
     run opennotes notebook list
     [[ "$status" -ne 0 ]]
