@@ -40,3 +40,6 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .DS_Store
 !.memory/
 .ralph/
+coverage_display.out
+coverage.html
+coverage.out
