@@ -26,10 +26,22 @@ var (
 var rootCmd = &cobra.Command{
 	Use:     "opennotes",
 	Version: "0.0.2", // This will be updated by the version setting in main()
-	Short:   "A CLI for managing markdown-based notes",
+	Short:   "A CLI for managing markdown-based notes with SQL querying and automation",
 	Long: `OpenNotes is a CLI tool for managing your markdown-based notes
 organized in notebooks. Notes are stored as markdown files and can be
 queried using DuckDB's powerful SQL capabilities.
+
+QUICK START:
+  1. Import existing markdown: opennotes notebook create "My Notes" --path ~/my-notes
+  2. List notes: opennotes notes list
+  3. Query with SQL: opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md')"
+  4. JSON output ready for jq and automation
+
+DOCUMENTATION:
+  📚 SQL Query Guide: https://github.com/zenobi-us/opennotes/blob/main/docs/sql-guide.md
+  🚀 Automation & JSON: https://github.com/zenobi-us/opennotes/blob/main/docs/json-sql-guide.md
+  📋 Notebook Management: https://github.com/zenobi-us/opennotes/blob/main/docs/notebook-discovery.md
+  🔧 Function Reference: https://github.com/zenobi-us/opennotes/blob/main/docs/sql-functions-reference.md
 
 Environment Variables:
   OPENNOTES_CONFIG    Path to config file (default: ~/.config/opennotes/config.json)
@@ -40,14 +52,14 @@ Examples:
   # Initialize configuration
   opennotes init
 
-  # Create a new notebook
-  opennotes notebook create --name "My Notes"
+  # Create a notebook with existing markdown
+  opennotes notebook create "My Notes" --path ~/my-notes
 
-  # List all notes in the current notebook
+  # List all notes
   opennotes notes list
 
-  # Search for notes containing "todo"
-  opennotes notes search "todo"`,
+  # Search with SQL and automation
+  opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" | jq`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		// Initialize logger first
 		services.InitLogger()

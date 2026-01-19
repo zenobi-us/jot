@@ -10,10 +10,15 @@ import (
 
 var notesSearchCmd = &cobra.Command{
 	Use:   "search [query]",
-	Short: "Search notes",
+	Short: "Search notes (text or SQL)",
 	Long: `Searches notes by content or filename using DuckDB SQL.
 
 The query searches both file names and content of markdown files.
+
+DOCUMENTATION:
+  🔍 Complete SQL Guide: https://github.com/zenobi-us/opennotes/blob/main/docs/sql-guide.md
+  📚 Function Reference: https://github.com/zenobi-us/opennotes/blob/main/docs/sql-functions-reference.md
+  🤖 Automation & JSON: https://github.com/zenobi-us/opennotes/blob/main/docs/json-sql-guide.md
 
 Examples:
   # Search for notes containing "meeting"
