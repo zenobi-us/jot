@@ -6,7 +6,32 @@ OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks
 
 ---
 
-## Current Status - NEW EPIC
+## 🧹 Memory Cleanup (2026-01-19 23:24 GMT+10:30)
+
+### Cleanup Completed Successfully
+- ✅ **Consolidated Research**: 6 research files → 1 canonical file (archived variants)
+- ✅ **Fixed Duplicate Hashes**: learning-548a8336 duplicates resolved (renamed to 5e8a8337)
+- ✅ **Archived Incomplete Epics**: SQL JSON Output epic (planning stage) + 10 orphaned tasks/phases
+- ✅ **Fixed Naming Violations**: .txt → .md conversion, missing hash added to task-phase1-breakdown
+- ✅ **Archived Validation Reports**: Phase1 compliance artifacts moved to archive (obsolete after cleanup)
+
+### Cleanup Impact
+- **Files Archived**: 22 files moved to archive (research variants, incomplete epic, validation reports)
+- **Files Consolidated**: 5 supplementary research files consolidated into 1 primary canonical file
+- **Files Renamed**: 2 files (duplicate hash resolution, compliance naming)
+- **Root Directory Cleaned**: 24 files → 24 files (consolidated structure, zero orphans)
+- **Directory Structure**: 8 archive subdirectories (organized by epic/purpose)
+
+### Current State
+- **Active Epics**: 1 (Getting Started Guide - research complete, implementation ready)
+- **Active Tasks**: 5 (Phase 1 implementation checklist, plan, deliverables, summary, breakdown)
+- **Active Research**: 1 consolidated file (d4f8a2c1 - getting started gaps)
+- **Permanent Knowledge**: 12 learning files (architecture, patterns, completed epics)
+- **Archive Organization**: Clean separation by epic, with historical and completed features
+
+---
+
+## Current Status - ACTIVE EPIC
 
 - **Active Epic**: 🎯 **Getting Started Guide for Power Users** - Research complete, implementation ready
 - **Priority**: High - Addressing capability-documentation paradox for user adoption
@@ -357,52 +382,48 @@ Comprehensive codebase analysis using CodeMapper skill:
 - Test coverage analysis
 - Migration status assessment
 
-## Memory Structure
+## Memory Structure (Post-Cleanup 2026-01-19)
 
 ```
-.memory/ (Main - Clean, Epic Complete, Post-Cleanup)
-├── learning-9z8y7x6w-test-improvement-epic-complete.md  # DISTILLED: Complete epic learnings
-├── learning-5e4c3f2a-codebase-architecture.md         # PERMANENT: Codebase knowledge
-├── learning-7d9c4e1b-implementation-planning-guidance.md  # PERMANENT
-├── learning-8f6a2e3c-architecture-review-sql-flag.md     # PERMANENT
-├── summary.md                          # Project overview (updated)
-├── todo.md                             # Clean state
-└── team.md                             # Clean state
+.memory/ (CLEAN - Active Project Files Only)
+├── epic-b8e5f2d4-getting-started-guide.md              # ACTIVE EPIC
+├── research-d4f8a2c1-getting-started-gaps.md           # ACTIVE RESEARCH (consolidated)
+├── spec-2f858ee8-phase1-index.md                       # ACTIVE NAVIGATION
+├── task-64a30678-phase1-checklist.md                   # ACTIVE TASK
+├── task-9792c8e0-phase1-implementation-plan.md         # ACTIVE TASK
+├── task-b42da891-phase1-deliverables.md                # ACTIVE TASK
+├── task-e6f97708-phase1-summary.md                     # ACTIVE TASK
+├── task-7f8c9d0e-phase1-breakdown.md                   # ACTIVE TASK
+│
+├── knowledge-codemap.md                                # PERMANENT: Codebase structure
+├── knowledge-data-flow.md                              # PERMANENT: Data flow analysis
+│
+├── learning-5e4c3f2a-codebase-architecture.md          # PERMANENT: Architecture reference
+├── learning-7d9c4e1b-implementation-planning-guidance.md # PERMANENT: Planning patterns
+├── learning-8f6a2e3c-architecture-review-sql-flag.md   # PERMANENT: SQL flag design
+├── learning-2f3c4d5e-sql-flag-epic-complete.md         # PERMANENT: SQL flag completion
+├── learning-9z8y7x6w-test-improvement-epic-complete.md # PERMANENT: Test epic completion
+├── learning-548a8336-sql-glob-security-fix.md          # PERMANENT: Security fix details
+├── learning-5e8a8337-sql-glob-rooting-research.md      # PERMANENT: Initial research
+├── learning-8h9i0j1k-test-improvement-index.md         # PERMANENT: Test index
+├── learning-1m2n3o4p-phase2-execution-insights.md      # PERMANENT: Execution insights
+├── learning-9j0k1l2m-phase1-coverage-reality.md        # PERMANENT: Coverage insights
+├── learning-2n3o4p5q-phase3-enterprise-insights.md     # PERMANENT: Enterprise insights
+│
+├── summary.md                                          # Project overview (updated)
+├── todo.md                                             # Active tasks tracking
+├── team.md                                             # Team assignments
 
-archive/ (Completed Epics & Historical - Consolidated)
-├── 01-migrate-to-golang/               # Completed Go migration epic (consolidated)
-├── test-improvement-epic/              # Completed test improvement epic
-│   ├── epic-7a2b3c4d-test-improvement.md
-│   ├── phase-3f5a6b7c-critical-fixes.md
-│   ├── phase-4e5f6a7b-core-improvements.md
-│   ├── phase-5g6h7i8j-future-proofing.md
-│   ├── task-8h9i0j1k-validate-path-tests.md
-│   ├── task-9i0j1k2l-template-error-tests.md
-│   ├── task-0j1k2l3m-db-context-tests.md
-│   ├── task-1k2l3m4n-command-error-tests.md
-│   ├── task-2l3m4n5o-search-edge-cases.md
-│   ├── task-3m4n5o6p-frontmatter-edge-cases.md
-│   ├── task-4n5o6p7q-permission-error-tests.md
-│   ├── task-5o6p7q8r-concurrency-tests.md
-│   └── task-6p7q8r9s-stress-tests.md
-├── 02-sql-flag-feature/                # SQL Flag epic (READY FOR IMPLEMENTATION)
-│   ├── epic-2f3c4d5e-sql-flag-feature.md
-│   ├── spec-a1b2c3d4-sql-flag.md
-│   ├── research-b8f3d2a1-duckdb-go-markdown.md
-│   └── task-*.md (11 SQL Flag tasks)
-├── completed/                          # Completed task features
-│   ├── task-b5c8a9f2-notes-list-format.md
-│   ├── task-c03646d9-clipboard-filename-slugify.md
-│   └── task-90e473c7-table-formatting.md
-├── historical/                         # Non-standard & historical files
-│   ├── completion-notes-list-format.md
-│   ├── completion-summary-story1.md
-│   ├── milestone-typescript-removal.md
-│   ├── PROJECT_CLOSURE.md
-│   ├── refactor-templates-to-gotmpl.md
-│   ├── review-cleanup-report.md
-│   ├── verification-codebase-correlation.md
-│   └── verification-pre-start-checklist.md
-├── audits/2026-01-17/                  # Audit records
-└── reviews/2026-01-17/                 # Review artifacts
+archive/ (Completed Epics, Phases, Tasks, Research)
+├── 01-migrate-to-golang/                               # ✅ Go migration epic
+├── test-improvement-epic/                              # ✅ Test coverage epic
+├── sql-flag-feature-epic/                              # ✅ SQL flag feature
+├── sql-glob-bugfix-2026-01-18/                         # ✅ Security fix (completed)
+├── sql-json-output-epic-2026-01-19/                    # 📦 JSON epic (planning → archived)
+├── research-consolidation-2026-01-19/                  # 📦 Research variants (consolidated)
+├── phase1-validation-2026-01-19/                       # 📦 Validation reports (cleanup)
+├── audits/                                             # Audit records
+├── completed/                                          # Completed features
+├── historical/                                         # Historical artifacts
+└── reviews/                                            # Review records
 ```
