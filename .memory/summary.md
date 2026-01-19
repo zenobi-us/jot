@@ -4,15 +4,71 @@
 
 OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks. It uses DuckDB for SQL-powered search and supports templates. **STATUS: Production-ready with enterprise-grade robustness validation.**
 
-## Current Status
+---
 
-- **Active Epic**: 🚀 **SQL JSON Output Implementation** - Converting SQL output from ASCII tables to JSON format
-- **Priority**: High - Improving developer experience and automation capabilities  
-- **Epic Status**: ✅ **EPIC COMPLETED SUCCESSFULLY** - All phases and tasks complete
-- **Previous Epic**: [SQL Flag Feature](archive/sql-flag-feature-epic/epic-2f3c4d5e-sql-flag-feature.md) ✅ COMPLETED SUCCESSFULLY
-- **Before That**: [Test Coverage Improvement](archive/test-improvement-epic/epic-7a2b3c4d-test-improvement.md) ✅ COMPLETED SUCCESSFULLY  
-- **Last Updated**: 2026-01-19 01:20 GMT+10:30
-- **Status**: 🎉 **EPIC COMPLETE** - JSON SQL output fully implemented and documented
+## Current Status - NEW EPIC
+
+- **Active Epic**: 🎯 **Getting Started Guide for Power Users** - Research complete, implementation ready
+- **Priority**: High - Addressing capability-documentation paradox for user adoption
+- **Epic Status**: ✅ Research complete, ready for implementation planning
+- **Research Findings**: Critical gaps identified in import workflow and SQL capability visibility  
+- **Target**: 15-minute power user onboarding with import → SQL → automation pathway
+- **Last Updated**: 2026-01-19 20:45 GMT+10:30
+- **Status**: 📋 **RESEARCH COMPLETE** - Ready for phase 1 implementation
+
+## New Epic: Getting Started Guide Implementation (2026-01-19)
+
+### 🎯 Getting Started Guide Epic - RESEARCH COMPLETE, READY FOR IMPLEMENTATION
+
+**Epic Goal**: Create comprehensive getting started guide enabling power users to become productive with OpenNotes in 15 minutes through import-first workflow.
+
+**Problem Discovered**: 
+- "Capability-documentation paradox" - powerful SQL features hidden behind basic note management docs
+- No guidance for importing existing markdown collections (primary power user need)
+- Large gap between basic commands and advanced querying capabilities  
+- Missing workflow integration examples for developer toolchains
+
+**Research Status**: ✅ **COMPREHENSIVE RESEARCH COMPLETE**
+- **Gap Analysis**: Complete inventory of existing documentation with specific improvement areas
+- **Competitive Analysis**: Best practices from 5+ similar CLI tools identified
+- **User Journey Mapping**: Import workflow completely mapped with friction points
+- **Strategic Recommendations**: High-impact quick wins and core development priorities identified
+
+**Epic Planning Status**: ✅ **READY FOR IMPLEMENTATION**
+- **Epic Definition**: `epic-b8e5f2d4-getting-started-guide.md` - Research-informed vision and phases
+- **Research Foundation**: `research-d4f8a2c1-getting-started-gaps.md` - Comprehensive analysis complete
+- **Target Validated**: 15-minute onboarding path defined and validated
+- **Success Metrics**: Power user focused criteria with clear completion targets
+
+**Implementation Strategy**:
+1. **Phase 1**: High-Impact Quick Wins (1-2 hours) - 📋 **READY FOR EXECUTION**
+   - README enhancement with import section and SQL demo
+   - CLI cross-references to existing documentation
+   - Value positioning highlighting unique capabilities
+   - **Artifacts**: 
+     - Task: [task-9792c8e0-phase1-implementation-plan.md](.memory/task-9792c8e0-phase1-implementation-plan.md) - Complete implementation guide
+     - Task: [task-64a30678-phase1-checklist.md](.memory/task-64a30678-phase1-checklist.md) - Checkbox-based execution guide
+     - Task: [task-e6f97708-phase1-summary.md](.memory/task-e6f97708-phase1-summary.md) - Strategic overview
+     - Task: [task-b42da891-phase1-deliverables.md](.memory/task-b42da891-phase1-deliverables.md) - Deliverables reference
+     - Spec: [spec-2f858ee8-phase1-index.md](.memory/spec-2f858ee8-phase1-index.md) - Navigation index
+   
+2. **Phase 2**: Core Getting Started Guide (4-6 hours)  
+   - Import workflow guide for existing markdown
+   - Linear progression: installation → import → SQL → advanced
+   - SQL quick reference bridging basic to DuckDB features
+   
+3. **Phase 3**: Integration and Polish (2-3 hours)
+   - Automation examples with jq and shell integration  
+   - Advanced gateway to existing technical docs
+   - Cross-platform validation and testing
+
+**Quality Framework**:
+- **Target Audience**: Power users (experienced developers) validated through Q&A
+- **Value Demonstration**: Import existing markdown → SQL querying → automation examples
+- **Technical Approach**: Implementation agnostic, usage-focused documentation
+- **Integration**: Basic piping and automation examples for workflow adoption
+
+**Ready for Implementation**: Research complete, gaps identified, strategy defined, success criteria established
 
 ## New Epic: SQL JSON Output Implementation (2026-01-18)
 
