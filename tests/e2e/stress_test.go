@@ -439,7 +439,15 @@ func TestNoteService_MemoryUsageScale(t *testing.T) {
 			runtime.GC()
 			runtime.ReadMemStats(&m2)
 
-			memUsed := m2.Alloc - m1.Alloc
+			// Handle potential underflow when GC reduces memory
+			var memUsed uint64
+			if m2.Alloc > m1.Alloc {
+				memUsed = m2.Alloc - m1.Alloc
+			} else {
+				// If memory went down, use current allocation as reasonable proxy
+				memUsed = m2.Alloc
+			}
+			
 			memPerNote := memUsed / uint64(size)
 
 			t.Logf("Size: %d notes, Memory: %s, Per note: %s",

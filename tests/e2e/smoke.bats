@@ -10,13 +10,13 @@ setup() {
     export HOME="$TEST_DIR"
     export OPENNOTES_CONFIG="$TEST_DIR/.config/opennotes/config.json"
     
-    # Ensure we have the built binary
-    if [[ ! -f "dist/opennotes" ]]; then
-        mise run build
+    # Ensure we have the built binary (build from project root)
+    if [[ ! -f "../../dist/opennotes" ]]; then
+        cd ../.. && mise run build && cd tests/e2e
     fi
     
     # Add dist to PATH for this test
-    export PATH="$(pwd)/dist:$PATH"
+    export PATH="$(pwd)/../../dist:$PATH"
 }
 
 teardown() {
