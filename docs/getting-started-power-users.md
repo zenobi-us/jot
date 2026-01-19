@@ -429,8 +429,35 @@ Most note tools give you basic search. OpenNotes gives you a full database query
 
 ---
 
+## Related Learning Resources
+
+### If You're New to Importing:
+- **[Import Workflow Guide](import-workflow-guide.md)** - Comprehensive guide for importing existing markdown collections
+  - Step-by-step import process for all scenarios
+  - Migration from Obsidian, Bear, and generic markdown folders
+  - Troubleshooting common import issues
+
+### If You Want to Learn SQL Progressively:
+- **[SQL Quick Reference](sql-quick-reference.md)** - Progressive learning path with 20+ practical examples
+  - Level 1: Basic queries
+  - Level 2: Content search
+  - Level 3: Metadata analysis
+  - Level 4: Complex queries
+  - Practice exercises for each level
+
+### For Complete Reference Documentation:
+- **[SQL Query Guide](sql-guide.md)** - Detailed query documentation and patterns
+- **[SQL Functions Reference](sql-functions-reference.md)** - Complete SQL function list
+- **[JSON Output Guide](json-sql-guide.md)** - Automation and tool integration
+
+### For Multi-Notebook Management:
+- **[Notebook Discovery](notebook-discovery.md)** - Manage multiple notebooks and contexts
+
+---
+
 ## Questions?
 
-- **[Read the SQL Guide](sql-guide.md)** for detailed query documentation
-- **[Check the Function Reference](sql-functions-reference.md)** for complete SQL function list
+- **[Check the SQL Quick Reference](sql-quick-reference.md)** to start learning SQL progressively
+- **[Read the SQL Guide](sql-guide.md)** for advanced query patterns
+- **[See the Import Guide](import-workflow-guide.md)** if you're having import issues
 - **[Join the Community](https://github.com/zenobi-us/opennotes)** on GitHub
