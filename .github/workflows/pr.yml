@@ -28,6 +28,7 @@ jobs:
           install: true
           cache: true
           experimental: true
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run Checks
         run: |
