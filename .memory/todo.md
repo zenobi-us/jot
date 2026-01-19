@@ -1,161 +1,154 @@
 # OpenNotes - Active Tasks
 
-**Status**: 🎉 **SQL JSON OUTPUT EPIC COMPLETED SUCCESSFULLY** 
-**Current Work**: Epic fully implemented with comprehensive JSON output functionality  
-**Priority**: All objectives achieved - Developer experience and automation capabilities enhanced
-**Epic**: SQL JSON Output Implementation - Converting ASCII table output to JSON format
+**Status**: 🎯 **GETTING STARTED GUIDE EPIC - RESEARCH COMPLETE** 
+**Current Work**: Comprehensive user onboarding documentation for power users
+**Priority**: High - Address capability-documentation paradox for improved adoption
+**Epic**: Getting Started Guide Implementation - Creating 15-minute power user onboarding
 
 ---
 
-## ✅ COMPLETED EPIC: SQL JSON Output Implementation
+## 🎯 ACTIVE EPIC: Getting Started Guide for Power Users
 
-### Epic Overview - ALL OBJECTIVES ACHIEVED
-**Goal**: Replace ASCII table output with JSON format for SQL queries to improve automation and developer experience  
-**Duration**: 6 tasks completed across 3 phases  
-**Epic File**: `epic-a2c50b55-sql-json-output.md`
+### Epic Overview - RESEARCH COMPLETE, READY FOR IMPLEMENTATION  
+**Goal**: Enable power users to import existing markdown and become productive with advanced features in 15 minutes
+**Research Status**: ✅ Complete analysis of documentation gaps and competitive landscape
+**Epic File**: `epic-b8e5f2d4-getting-started-guide.md`  
+**Research File**: `research-d4f8a2c1-getting-started-gaps.md`
 
-### ✅ PHASE 1: Core JSON Output Implementation (COMPLETED)
-**Status**: ✅ ALL TASKS COMPLETE  
-**Goal**: Get basic JSON output working for simple SQL queries  
+### Key Research Discoveries
+- **Capability-Documentation Paradox**: Advanced SQL querying hidden behind basic documentation  
+- **Import Workflow Missing**: No guidance for existing markdown collections (primary need)
+- **Competitive Advantages**: Unique SQL + JSON capabilities not properly showcased
+- **Progressive Disclosure Broken**: Large gap between basic and advanced usage
 
-#### Core Implementation Tasks - ALL COMPLETED
-- ✅ **[task-5ad10426]** Implement JSON Serialization for SQL Result Sets - COMPLETED
-  - **Achievement**: Created core JSON serialization logic for DuckDB results
-  - **Result**: Foundation for entire epic successfully established
+### 📋 PHASE 1: High-Impact Quick Wins (1-2 hours) - READY FOR IMPLEMENTATION
 
-- ✅ **[task-61376c8f]** Update RenderSQLResults Function for JSON Output - COMPLETED
-  - **Achievement**: Modified display service to output JSON instead of ASCII tables by default
-  - **Result**: Breaking change implemented with comprehensive backward compatibility
+**Goal**: Address most critical documentation gaps with minimal effort for maximum impact
 
-- ✅ **[task-a6773284]** Integrate JSON Output with CLI Command - COMPLETED
-  - **Achievement**: Verified CLI integration works correctly with `--sql` flag
-  - **Result**: Users can now execute SQL queries and receive JSON results
+#### Ready for Implementation Tasks
+- **🔥 README Enhancement** - Add import workflow section and SQL demonstration upfront
+  - **Impact**: Immediate improvement to first impression for power users
+  - **Scope**: Import example, SQL query demo, value proposition positioning
+  
+- **🔥 CLI Cross-References** - Connect command help to existing documentation
+  - **Impact**: Bridge discovery gap between commands and advanced docs  
+  - **Scope**: Add --help references to docs/, SQL guide, advanced features
 
-- ✅ **[task-3d2efa9e]** Create Comprehensive Unit Tests for JSON Functionality - COMPLETED
-  - **Achievement**: Added 22 new JSON-specific tests with comprehensive coverage
-  - **Result**: Test coverage exceeds 90% for all new JSON functionality
+- **🔥 Value Positioning** - Lead with SQL capabilities as primary differentiator
+  - **Impact**: Showcase competitive advantages immediately
+  - **Scope**: Reframe opening content to highlight unique capabilities
 
-### ✅ PHASE 2: Complex Data Type Support (COMPLETED)  
-**Status**: ✅ TASK COMPLETE  
+#### Phase 1 Success Criteria
+- ✅ Import workflow visible from first interaction
+- ✅ SQL capabilities prominently featured  
+- ✅ Clear bridges to existing technical documentation
+- ✅ Power user value proposition immediately clear
 
-#### Key Task - COMPLETED
-- ✅ **[task-14c19e94]** Research and Implement DuckDB to JSON Type Mapping - COMPLETED
-  - **Achievement**: Created DuckDBConverter service handling all DuckDB types
-  - **Result**: MAP types → Clean JSON objects, ARRAY types → JSON arrays
-  - **Impact**: Eliminated ugly Go map formatting, handles nested structures perfectly
+### 🚀 NEXT PHASES: Planned Implementation
 
-### ✅ PHASE 3: Polish and Documentation (COMPLETED)
-**Status**: ✅ TASK COMPLETE  
+#### Phase 2: Core Getting Started Guide (4-6 hours)
+- **Import Workflow Guide**: Complete existing markdown integration documentation
+- **Linear Progression**: Installation → import → basic SQL → advanced features  
+- **SQL Quick Reference**: Bridge basic queries to DuckDB markdown functions
+- **Configuration Cookbook**: Power user setup patterns
 
-#### Key Task - COMPLETED
-- ✅ **[task-03c6064b]** Create Comprehensive User Guide for JSON SQL Queries - COMPLETED
-  - **Achievement**: Created 24KB comprehensive user guide with 50+ examples
-  - **Result**: Complete documentation enabling effective user adoption
-  - **Impact**: Users can maximize value of JSON SQL output for automation and analysis
-
----
-
-## 🎯 Epic Success Results
-
-### ✅ All Functional Goals Achieved
-- ✅ **Core Functionality**: JSON output working for all SQL queries
-- ✅ **Data Integrity**: Complex types properly represented (maps, arrays, nested)  
-- ✅ **Performance**: <5ms overhead for JSON serialization achieved
-- ✅ **User Experience**: Easy integration with external tools like jq
-
-### ✅ All Quality Gates Passed
-- ✅ **Zero Regressions**: All existing SQL functionality preserved
-- ✅ **Test Coverage**: >90% coverage for new JSON functionality achieved
-- ✅ **Documentation**: Complete CLI help and comprehensive user guide
-- ✅ **Performance**: JSON serialization exceeds all targets
-
-### ✅ All User Experience Goals Met  
-- ✅ **Developer Friendly**: JSON optimized for programmatic consumption
-- ✅ **Script Integration**: Easy piping to jq, file output, automation
-- ✅ **Error Clarity**: Clear error messages for JSON serialization issues
-
----
-
-## 🚀 Production Implementation Achievements
-
-### Technical Excellence
-- **Build on Proven Infrastructure**: Successfully leveraged existing SQL flag implementation
-- **Service Architecture**: Clean integration with existing display service patterns
-- **Error Handling**: Maintained consistency with established OpenNotes error patterns
-- **Testing Framework**: Used proven testing patterns from previous epics
-
-### Quality Framework Results
-- **Performance**: JSON serialization <5ms overhead target exceeded
-- **Regression Prevention**: All 339+ existing tests continue passing
-- **Type Safety**: Comprehensive type conversion with robust error handling
-- **Documentation Standards**: Consistent with OpenNotes documentation patterns
-
-### User Impact
-- **Before**: Ugly ASCII tables with Go map formatting: `map[key1:value1 key2:value2]`
-- **After**: Clean JSON objects: `{"key1": "value1", "key2": "value2"}`
-- **Integration**: Seamless automation with external tools and scripts
-- **Adoption**: Comprehensive documentation enables immediate user value
+#### Phase 3: Integration and Polish (2-3 hours)
+- **Automation Examples**: jq integration and shell scripting patterns
+- **Advanced Gateway**: Clear paths to existing technical documentation
+- **Testing**: Validate 15-minute onboarding target achieved
+- **Cross-Platform**: Ensure examples work across environments
 
 ---
 
 ## Project Status
 
-**Overall Status**: 🎉 **EPIC COMPLETED - PRODUCTION READY**
+**Overall Status**: 🎯 **ACTIVE DEVELOPMENT - DOCUMENTATION EPIC**
 
-**Recent Epic Completion**:
-- 🎉 **SQL JSON Output Epic**: Completed successfully (all objectives exceeded)
-- ⭐ **SQL Flag Epic**: Previously completed (production SQL querying)
-- ⭐ **Test Coverage Epic**: Previously completed (enterprise-grade testing)
+**Recent Epic Completions**:
+- 🎉 **SQL JSON Output Epic**: Production-ready JSON output with automation capabilities
+- ⭐ **SQL Flag Epic**: Advanced SQL querying with DuckDB integration  
+- ⭐ **Test Coverage Epic**: Enterprise-grade testing infrastructure
 
 **Feature Set**: ⭐⭐⭐⭐⭐ Production Excellence
-- Complete CLI for note management with advanced JSON SQL output
-- SQL-powered search with DuckDB markdown extension
-- Comprehensive test suite (339+ tests with JSON coverage)
-- Cross-platform compatibility with complex type support
-- Production-ready security measures and comprehensive documentation
+- Advanced note management with SQL querying and JSON output
+- Intelligent notebook discovery and context-aware workflows
+- Comprehensive automation integration with external tools
+- Enterprise-grade testing and cross-platform compatibility
 
-**Codebase Health**: ✅ Excellent
-- Clean architecture with proven service patterns
-- Comprehensive error handling and type conversion
-- High test coverage with JSON feature validation
-- Zero technical debt from epic implementation
-- Modern Go practices with performance optimization
+**Current Focus**: 📚 **User Adoption & Documentation**
+- Bridging gap between powerful capabilities and user discoverability
+- Creating clear onboarding path for target power user audience  
+- Showcasing competitive advantages through improved documentation
 
 ---
 
-## Available Work
+## Available Work - IMMEDIATE ACTION
 
-### Next Epic Options - READY FOR SELECTION
+### ⚙️ [NEEDS-HUMAN] PHASE 1 ARTIFACT COMPLIANCE FIX (15-20 minutes)
+**Status**: Validation Complete - Awaiting Human Confirmation
+**Issue**: Phase 1 deliverables created at root level; need to conform to miniproject guidelines
+**Details**: 
+- 4/5 files in wrong location (should be in `.memory/`)
+- 5/6 files use wrong naming convention (missing 8-char hash)
+- Frontmatter incomplete (missing id, epic_id, status, updated_at)
+- 1 file in .txt format (should be .md)
+**Validation Report**: `.memory/validation-phase1-artifacts.md`
+**Compliance Summary**: `.memory/phase1-compliance-summary.txt`
+**Required Action**:
+  - [ ] Move 4 root-level files to `.memory/` directory
+  - [ ] Rename all 6 files to follow convention: `.memory/<type>-<hash>-<title>.md`
+  - [ ] Add complete frontmatter with id, epic_id, status, updated_at
+  - [ ] Convert PHASE1_DELIVERABLES.txt to .md format
+  - [ ] Update .memory/summary.md to reference new locations
+  - [ ] Commit with: `docs(memory): conform phase1 artifacts to miniproject guidelines`
+**Estimated Time**: 15-20 minutes
+**Impact**: Improves compliance from 62% to 95%
 
-**Epic Completion Achievement**:
-The project has achieved **comprehensive production readiness** with three major epics successfully completed:
+### 🔥 PHASE 1 READY FOR IMMEDIATE IMPLEMENTATION
 
-1. ⭐ **Test Coverage Epic**: Enterprise testing infrastructure (84% coverage)
-2. ⭐ **SQL Flag Epic**: Advanced query capabilities with DuckDB integration  
-3. 🎉 **SQL JSON Output Epic**: Modern JSON output with automation integration
+**High-Impact, Low-Effort Tasks Ready Now**:
 
-**Ready for Next Epic Selection**:
-1. **Advanced SQL Features**: Query history, saved queries, custom functions
-2. **Performance Optimization**: Database indexing, query caching, result streaming
-3. **Export/Import**: Bulk operations, format conversion, backup/restore
-4. **API Development**: REST API for external integrations and web interfaces
-5. **Analytics & Reporting**: Advanced data visualization, trend analysis, insights
+1. **📝 [TASK-READY] README Enhancement with Import Section**
+   - **Duration**: 30-45 minutes
+   - **Impact**: Immediate improvement to first user experience
+   - **Action**: Add import workflow and SQL demo to README
 
-**No Active Tasks**: All major development objectives completed successfully.
+2. **🔗 [TASK-READY] CLI Help Cross-References** 
+   - **Duration**: 30 minutes
+   - **Impact**: Bridge command discovery to advanced documentation
+   - **Action**: Update --help text with doc references
+
+3. **💡 [TASK-READY] Value Positioning Enhancement**
+   - **Duration**: 20-30 minutes  
+   - **Impact**: Showcase SQL capabilities prominently
+   - **Action**: Reframe opening content for power users
+
+**Total Phase 1 Effort**: 1-2 hours for significant user experience improvement (after compliance fixes)
+
+**Implementation Strategy**: Fix compliance first (15 min), then address highest-impact gaps
 
 ---
 
 ## Memory Management Status
 
-✅ **Epic Completion Ready for Archival**
-- SQL JSON Output epic completed with all success criteria exceeded
-- All 6 tasks completed successfully with comprehensive implementation
-- Learning documentation preserved for future reference
-- Summary, todo, and team files updated to reflect successful completion
-- Epic ready for proper archival following miniproject guidelines
+✅ **Research Phase Complete**
+- Comprehensive documentation gaps analysis completed
+- Competitive research and best practices identified  
+- User journey mapped with specific friction points
+- Strategic recommendations prioritized by impact/effort
+
+✅ **Epic Planning Complete** 
+- Clear phases with effort estimates and success criteria
+- Research-validated approach targeting power users
+- Linear progression pathway defined and tested conceptually
+
+🎯 **Ready for Implementation**
+- Phase 1 tasks scoped and ready for immediate action
+- Clear success metrics and quality gates defined
+- Foundation established for comprehensive getting started guide
 
 ---
 
-**Last Updated**: 2026-01-19 01:20 GMT+10:30  
-**Status**: 🎉 **EPIC COMPLETED** - JSON SQL output fully implemented, tested, and documented
-**Next Action**: Epic archival and new epic selection
+**Last Updated**: 2026-01-19 20:45 GMT+10:30  
+**Status**: 🎯 **RESEARCH COMPLETE** - Ready for Phase 1 implementation  
+**Next Action**: Begin high-impact quick wins for immediate user experience improvement
