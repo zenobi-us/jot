@@ -7,13 +7,16 @@ mise run build
 
 echo "🧪 Running OpenNotes E2E Smoke Tests..."
 
-# Run the core smoke test
-echo "📋 Core functionality tests:"
-bats tests/e2e/core-smoke.bats
-
-echo ""
-echo "📝 Detailed functionality tests:"  
-bats tests/e2e/smoke.bats
+# Run tests in isolation to avoid parent mise configs
+(
+  cd tests/e2e
+  echo "📋 Core functionality tests:"
+  bats core-smoke.bats
+  
+  echo ""
+  echo "📝 Detailed functionality tests:"  
+  bats smoke.bats
+)
 
 echo ""
 echo "✅ All E2E smoke tests completed!"
