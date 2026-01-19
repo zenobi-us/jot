@@ -148,9 +148,9 @@ opennotes notes list
 
 ## Advanced Usage
 
-### Complete Power User Guide
+### Getting Started Guides
 
-For the most comprehensive walkthrough of OpenNotes capabilities:
+Perfect for new users and power user onboarding:
 
 - **[Getting Started for Power Users](docs/getting-started-power-users.md)** - 15-minute complete onboarding
   - Import existing markdown collections
@@ -158,7 +158,29 @@ For the most comprehensive walkthrough of OpenNotes capabilities:
   - Automate with JSON output and jq integration
   - Build real-world workflows
 
-### SQL Query Reference
+### Import & Migration
+
+For importing existing markdown collections:
+
+- **[Import Workflow Guide](docs/import-workflow-guide.md)** - Step-by-step import process for all scenarios
+  - Prepare and import existing markdown
+  - Verify successful import
+  - Migration from Obsidian, Bear, generic markdown folders
+  - Troubleshooting common import issues
+  - Collection organization patterns (flat, hierarchical, multi-project)
+
+### SQL Learning Path
+
+From beginner to advanced SQL querying:
+
+- **[SQL Quick Reference](docs/sql-quick-reference.md)** - Progressive learning path with 20+ practical examples
+  - Level 1: Basic queries (lists, counting, sorting)
+  - Level 2: Content search (LIKE, ILIKE, patterns)
+  - Level 3: Metadata analysis (word counts, statistics)
+  - Level 4: Complex queries (joins, aggregations)
+  - Practice exercises for each level
+
+### SQL & Automation Reference
 
 For complete documentation on available functions and advanced patterns:
 
