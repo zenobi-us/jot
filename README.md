@@ -72,6 +72,7 @@ opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" | 
 
 ### Learn More
 
+- 🚀 **[Getting Started for Power Users](docs/getting-started-power-users.md)** - Complete 15-minute onboarding with examples
 - 📚 **[SQL Query Guide](docs/sql-guide.md)** - Full DuckDB markdown functions and patterns
 - 🚀 **[Automation & JSON Integration](docs/json-sql-guide.md)** - Advanced piping and external tool examples
 - 📋 **[Notebook Discovery](docs/notebook-discovery.md)** - Multi-notebook setup and context management
@@ -146,6 +147,16 @@ opennotes notes list
 ```
 
 ## Advanced Usage
+
+### Complete Power User Guide
+
+For the most comprehensive walkthrough of OpenNotes capabilities:
+
+- **[Getting Started for Power Users](docs/getting-started-power-users.md)** - 15-minute complete onboarding
+  - Import existing markdown collections
+  - Execute SQL queries with practical examples
+  - Automate with JSON output and jq integration
+  - Build real-world workflows
 
 ### SQL Query Reference
 
