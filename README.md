@@ -2,16 +2,18 @@
 
 ![OpenNotes Banner](./banner.png)
 
-A CLI tool for managing your markdown-based notes organized in notebooks.
+A CLI tool for managing your markdown-based notes organized in notebooks with **powerful SQL querying and automation capabilities**.
 
-## Features
+## Why OpenNotes? (Key Differentiators)
 
-- 📔 **Notebook-based organization** - Group notes into logical notebooks
-- 🔍 **SQL-powered search** - Query notes using DuckDB with full-text search
-- 📝 **Markdown-native** - Store notes as plain markdown with metadata
-- 🏗️ **Smart discovery** - Auto-detect notebooks from directory context
-- 🎨 **Template support** - Create notes from templates
-- ⚡ **Fast & lightweight** - Single compiled binary, no runtime dependencies
+Unlike basic note tools, OpenNotes provides:
+
+- 🔍 **SQL-Powered Search** - Query notes using DuckDB's full SQL capabilities and markdown functions
+- 📋 **Intelligent Markdown Parsing** - Extract structure, statistics, and metadata from markdown content
+- 🤖 **Automation Ready** - JSON output designed for piping to jq, scripts, and external tools
+- 📔 **Multi-Notebook Organization** - Manage multiple notebook contexts with smart auto-discovery
+- 🎯 **Developer-First** - CLI-native, git-friendly, markdown-native, zero external runtime dependencies
+- ⚡ **Fast & Lightweight** - Single compiled binary, in-process database, no setup required
 
 ## Installation
 
@@ -21,7 +23,62 @@ go install github.com/zenobi-us/opennotes@latest
 
 Requires Go 1.24+. The binary will be placed in `$GOPATH/bin/`.
 
-## Quick Start
+## Power User: 5-Minute Quick Start
+
+### Import Your Existing Notes
+
+OpenNotes works best with your existing markdown files. No migration needed—just point it at your notes directory:
+
+```bash
+# Initialize with your existing markdown folder
+opennotes notebook create "My Notes" --path ~/my-notes
+
+# List all notes (instantly discovers your markdown files)
+opennotes notes list
+```
+
+### Unlock SQL Querying Power
+
+Execute sophisticated queries against your entire notebook:
+
+```bash
+# Find all notes mentioning "deadline" (across entire notebook)
+opennotes notes search --sql \
+  "SELECT file_path, content FROM read_markdown('**/*.md', include_filepath:=true) WHERE content ILIKE '%deadline%' LIMIT 5"
+
+# Get word count statistics sorted by complexity
+opennotes notes search --sql \
+  "SELECT file_path, (md_stats(content)).word_count as words FROM read_markdown('**/*.md', include_filepath:=true) ORDER BY words DESC LIMIT 10"
+
+# Find checked-off tasks
+opennotes notes search --sql \
+  "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) WHERE content LIKE '%[x]%' ORDER BY file_path"
+```
+
+### Automation Ready: JSON Output
+
+All SQL queries return clean JSON—perfect for piping to jq, scripts, and external tools:
+
+```bash
+# Export statistics to JSON
+opennotes notes search --sql "SELECT file_path, (md_stats(content)).word_count FROM read_markdown('**/*.md', include_filepath:=true)" | jq 'map({path: .file_path, words: .word_count})'
+
+# Calculate totals across your notebook
+opennotes notes search --sql "SELECT (md_stats(content)).word_count FROM read_markdown('**/*.md')" | jq 'map(.word_count) | {total: add, count: length, average: add/length}'
+
+# Integrate with external tools
+opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" | jq -r '.[].file_path' | xargs wc -l
+```
+
+### Learn More
+
+- 📚 **[SQL Query Guide](docs/sql-guide.md)** - Full DuckDB markdown functions and patterns
+- 🚀 **[Automation & JSON Integration](docs/json-sql-guide.md)** - Advanced piping and external tool examples
+- 📋 **[Notebook Discovery](docs/notebook-discovery.md)** - Multi-notebook setup and context management
+
+## Beginner: Basic Quick Start
+
+If you prefer to start simple:
 
 1. **Initialize a notebook:**
 
@@ -87,6 +144,34 @@ opennotes notes search "deadline"
 # List all notes
 opennotes notes list
 ```
+
+## Advanced Usage
+
+### SQL Query Reference
+
+For complete documentation on available functions and advanced patterns:
+
+- **[SQL Functions Reference](docs/sql-functions-reference.md)** - Complete DuckDB + markdown function reference
+- **[SQL Guide](docs/sql-guide.md)** - Comprehensive query patterns and best practices
+- **[JSON Output Guide](docs/json-sql-guide.md)** - Automation examples and tool integration
+
+### Multi-Notebook Management
+
+Manage multiple note collections with context-aware auto-discovery:
+
+```bash
+# View all registered notebooks
+opennotes notebook list
+
+# Switch context by directory (auto-discovers .opennotes.json)
+cd ~/work/notes
+opennotes notes list  # Automatically uses work notebook
+
+# Use notebook flag to specify a specific notebook
+opennotes notes list --notebook "Personal"
+```
+
+See [Notebook Discovery](docs/notebook-discovery.md) for advanced multi-notebook workflows.
 
 ## Contributing
 
