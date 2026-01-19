@@ -23,7 +23,7 @@ func TestNotebookService_ReadOnlyDirectory(t *testing.T) {
 	tempDir := t.TempDir()
 	defer func() {
 		// Reset permissions before cleanup
-		os.Chmod(tempDir, 0755)
+		_ = os.Chmod(tempDir, 0755)
 	}()
 
 	// Make directory read-only
@@ -53,7 +53,7 @@ func TestConfigService_PermissionDeniedWrite(t *testing.T) {
 	tempDir := t.TempDir()
 	defer func() {
 		// Reset permissions before cleanup
-		os.Chmod(tempDir, 0755)
+		_ = os.Chmod(tempDir, 0755)
 	}()
 
 	configDir := filepath.Join(tempDir, ".config", "opennotes")
@@ -281,7 +281,7 @@ func TestNoteService_DiskSpaceSimulation(t *testing.T) {
 	} else {
 		t.Log("Large file write succeeded - system has sufficient space")
 		// Clean up the large file
-		os.Remove(largeFile)
+		_ = os.Remove(largeFile)
 	}
 }
 
@@ -312,7 +312,7 @@ func TestNoteService_StaleFileHandle(t *testing.T) {
 		// This is expected behavior
 	}
 
-	file.Close()
+	_ = file.Close()
 
 	// Try to open the removed file
 	_, err = os.Open(testFile)
