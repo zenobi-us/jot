@@ -1179,10 +1179,6 @@ type testNotebook struct {
 	}
 }
 
-func (nb *testNotebook) cleanup(t *testing.T) {
-	// Temporary directory cleanup is handled by t.TempDir()
-}
-
 func TestDbService_ExecuteSQLSafe_WithPreprocessing_Integration(t *testing.T) {
 	dbService := NewDbService()
 	t.Cleanup(func() {

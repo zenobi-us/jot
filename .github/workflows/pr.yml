@@ -2,7 +2,6 @@ name: Pr
 
 on:
   pull_request:
-  pull_request_target:
   workflow_dispatch:
 
 concurrency:
@@ -28,10 +27,24 @@ jobs:
           install: true
           cache: true
           experimental: true
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run Checks
         run: |
           mise run setup
+          mise run build
           mise run lint
           mise run test
-          mise run build
+          mise run test-e2e
+          mise run test-bats
+
+      - name: Generate coverage
+        run: go test -v -coverprofile=coverage.out ./...
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage.out
+          flags: unittests
+          name: codecov-umbrella
+

@@ -60,7 +60,7 @@ func TestNotebookService_ConcurrentDiscovery(t *testing.T) {
 // TestDbService_ConnectionPoolStress tests database connection handling under concurrent load
 func TestDbService_ConnectionPoolStress(t *testing.T) {
 	dbService := services.NewDbService()
-	defer dbService.Close()
+	defer func() { _ = dbService.Close() }()
 
 	const numGoroutines = 20
 	const queriesPerGoroutine = 10
@@ -119,7 +119,7 @@ func TestDbService_ConcurrentInitialization(t *testing.T) {
 			defer wg.Done()
 			
 			dbService := services.NewDbService()
-			defer dbService.Close()
+			defer func() { _ = dbService.Close() }()
 			
 			ctx := context.Background()
 			_, err := dbService.GetDB(ctx)
@@ -205,7 +205,7 @@ func TestServices_ContextCancellation(t *testing.T) {
 			defer wg.Done()
 			
 			dbService := services.NewDbService()
-			defer dbService.Close()
+			defer func() { _ = dbService.Close() }()
 			
 			// This should be cancelled by context timeout
 			_, err := dbService.GetDB(ctx)
@@ -253,7 +253,7 @@ func TestServices_MemoryGrowth(t *testing.T) {
 			}
 			
 			dbService := services.NewDbService()
-			defer dbService.Close()
+			defer func() { _ = dbService.Close() }()
 			
 			notebookService := services.NewNotebookService(configService, dbService)
 			_, _ = notebookService.List("") // Trigger some operations
@@ -282,7 +282,7 @@ func TestServices_RaceConditions(t *testing.T) {
 	require.NoError(t, err)
 	
 	dbService := services.NewDbService()
-	defer dbService.Close()
+	defer func() { _ = dbService.Close() }()
 	
 	notebookService := services.NewNotebookService(configService, dbService)
 
@@ -305,7 +305,7 @@ func TestServices_RaceConditions(t *testing.T) {
 				// Database operations
 				ctx := context.Background()
 				if db, err := dbService.GetDB(ctx); err == nil && db != nil {
-					dbService.Query(ctx, "SELECT 1")
+					_, _ = dbService.Query(ctx, "SELECT 1")
 				}
 				
 			case 2:
@@ -317,7 +317,7 @@ func TestServices_RaceConditions(t *testing.T) {
 				// Mixed operations
 				_ = configService.Store.NotebookPath
 				ctx := context.Background()
-				dbService.GetDB(ctx)
+				_, _ = dbService.GetDB(ctx)
 				_, _ = notebookService.List("")
 			}
 			
@@ -356,7 +356,7 @@ func TestServices_HighConcurrency(t *testing.T) {
 			}
 			
 			dbService := services.NewDbService()
-			defer dbService.Close()
+			defer func() { _ = dbService.Close() }()
 			
 			for j := 0; j < operationsPerWorker; j++ {
 				ctx := context.Background()

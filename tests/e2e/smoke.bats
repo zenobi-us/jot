@@ -10,13 +10,13 @@ setup() {
     export HOME="$TEST_DIR"
     export OPENNOTES_CONFIG="$TEST_DIR/.config/opennotes/config.json"
     
-    # Ensure we have the built binary
-    if [[ ! -f "dist/opennotes" ]]; then
-        mise run build
+    # Ensure we have the built binary (build from project root)
+    if [[ ! -f "../../dist/opennotes" ]]; then
+        cd ../.. && mise run build && cd tests/e2e
     fi
     
     # Add dist to PATH for this test
-    export PATH="$(pwd)/dist:$PATH"
+    export PATH="$(pwd)/../../dist:$PATH"
 }
 
 teardown() {
@@ -149,11 +149,11 @@ create_test_note() {
     # These should be blocked by path traversal protection
     run opennotes --notebook "$notebook_dir" notes search --sql "SELECT content FROM read_markdown('../../../etc/passwd')"
     [[ "$status" -ne 0 ]]
-    [[ "$output" =~ "blocked due to path traversal" ]]
+    [[ "$output" =~ "path traversal not allowed" ]]
     
     run opennotes --notebook "$notebook_dir" notes search --sql "SELECT content FROM read_markdown('/etc/passwd')"
     [[ "$status" -ne 0 ]]
-    [[ "$output" =~ "blocked due to path traversal" ]]
+    [[ "$output" =~ "path traversal not allowed" ]]
 }
 
 # Test 8: Note removal
@@ -182,7 +182,7 @@ create_test_note() {
     notebook_dir=$(create_test_notebook "info-test")
     
     # Register notebook
-    run opennotes notebook register "info-test" "$notebook_dir"
+    run opennotes notebook register "$notebook_dir"
     [[ "$status" -eq 0 ]]
     [[ "$output" =~ "Registered notebook" ]]
     
@@ -195,6 +195,8 @@ create_test_note() {
 
 # Test 10: Error handling
 @test "Proper error handling" {
+    # Ensure clean state - remove any existing config
+    rm -rf "$HOME/.config/opennotes"
     # Test without initialization
     run opennotes notebook list
     [[ "$status" -ne 0 ]]
@@ -204,13 +206,13 @@ create_test_note() {
     opennotes init
     run opennotes --notebook "/nonexistent/path" notes list
     [[ "$status" -ne 0 ]]
-    [[ "$output" =~ "notebook not found" || "$output" =~ "error" ]]
+    [[ "$output" =~ "notebook not found" || "$output" =~ "Error" || "$output" =~ "error" ]]
     
     # Test invalid SQL
     notebook_dir=$(create_test_notebook "error-test")
-    run opennotes --notebook "$notebook_dir" notes list --sql "INVALID SQL SYNTAX"
+    run opennotes --notebook "$notebook_dir" notes search --sql "SELECT * FROM table WHERE invalid syntax here"
     [[ "$status" -ne 0 ]]
-    [[ "$output" =~ "error" || "$output" =~ "syntax" ]]
+    [[ "$output" =~ "Error" || "$output" =~ "syntax" ]]
 }
 
 # Test 11: Complex SQL with Common Table Expressions (CTEs)
@@ -242,14 +244,14 @@ tags: [work, archive]
 This project is now completed.
 EOF
 
-    # Test CTE query
-    run opennotes --notebook "$notebook_dir" notes list --sql "
+    # Test CTE query  
+    run opennotes --notebook "$notebook_dir" notes search --sql "
     WITH high_priority AS (
-        SELECT filename, frontmatter
-        FROM notes
-        WHERE frontmatter LIKE '%priority: high%'
+        SELECT file_path, content
+        FROM read_markdown('**/*.md', include_filepath:=true)
+        WHERE content LIKE '%priority: high%'
     )
-    SELECT filename FROM high_priority
+    SELECT file_path FROM high_priority
     "
     [[ "$status" -eq 0 ]]
     [[ "$output" =~ "project1.md" ]]
@@ -263,7 +265,7 @@ EOF
     [[ "$status" -eq 0 ]]
     
     # Create notebook
-    run opennotes notebook create "workflow-test" "$TEST_DIR/workflow-test"
+    run opennotes notebook create "$TEST_DIR/workflow-test" --name "workflow-test"
     [[ "$status" -eq 0 ]]
     
     # Add multiple notes
@@ -280,15 +282,15 @@ EOF
     [[ "$output" =~ "project-plan.md" ]]
     
     # Search notes
-    # Add content to one note first
-    echo "# Meeting Notes\nDiscussed project timeline." > "$notebook_dir/meeting-notes.md"
+    # Add content to one note first  
+    echo -e "# Meeting Notes\nDiscussed project timeline." > "$notebook_dir/.notes/meeting-notes.md"
     
     run opennotes --notebook "$notebook_dir" notes search "timeline"
     [[ "$status" -eq 0 ]]
     [[ "$output" =~ "meeting-notes.md" ]]
     
     # SQL query to count notes
-    run opennotes --notebook "$notebook_dir" notes list --sql "SELECT COUNT(*) as total FROM notes"
+    run opennotes --notebook "$notebook_dir" notes search --sql "SELECT COUNT(*) as total FROM read_markdown('**/*.md')"
     [[ "$status" -eq 0 ]]
     [[ "$output" =~ "2" ]]
     

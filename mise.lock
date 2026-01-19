@@ -1,0 +1,119 @@
+[[tools.bats]]
+version = "1.12.0"
+backend = "aqua:bats-core/bats-core"
+"platforms.linux-arm64" = { url = "https://github.com/bats-core/bats-core/archive/refs/tags/v1.12.0.tar.gz"}
+"platforms.linux-x64" = { url = "https://github.com/bats-core/bats-core/archive/refs/tags/v1.12.0.tar.gz"}
+"platforms.macos-arm64" = { url = "https://github.com/bats-core/bats-core/archive/refs/tags/v1.12.0.tar.gz"}
+"platforms.macos-x64" = { url = "https://github.com/bats-core/bats-core/archive/refs/tags/v1.12.0.tar.gz"}
+
+[[tools.duckdb]]
+version = "1.4.1"
+backend = "aqua:duckdb/duckdb"
+"platforms.linux-arm64" = { checksum = "sha256:646f60c92268c441f0095ce855e16528a8539e466da2788649f359be8cbdc8d1", url = "https://github.com/duckdb/duckdb/releases/download/v1.4.1/duckdb_cli-linux-arm64.zip"}
+"platforms.linux-x64" = { checksum = "sha256:3e29952507ebd202e8d0e2678df4490689bfc9c86534e240b541791b969df0e1", url = "https://github.com/duckdb/duckdb/releases/download/v1.4.1/duckdb_cli-linux-amd64.zip"}
+"platforms.macos-arm64" = { checksum = "sha256:d6ac869dad8b197ce372b20162e2a95d20fc93b6e105505921e143da700bb263", url = "https://github.com/duckdb/duckdb/releases/download/v1.4.1/duckdb_cli-osx-universal.zip"}
+"platforms.macos-x64" = { checksum = "sha256:d6ac869dad8b197ce372b20162e2a95d20fc93b6e105505921e143da700bb263", url = "https://github.com/duckdb/duckdb/releases/download/v1.4.1/duckdb_cli-osx-universal.zip"}
+"platforms.windows-x64" = { checksum = "sha256:3fab5174658bf16189c80eaa047b3e7737847491c9e4433a985adf014618cbd9", url = "https://github.com/duckdb/duckdb/releases/download/v1.4.1/duckdb_cli-windows-amd64.zip"}
+
+[[tools.gitleaks]]
+version = "8.30.0"
+backend = "aqua:gitleaks/gitleaks"
+"platforms.linux-arm64" = { checksum = "sha256:b4cbbb6ddf7d1b2a603088cd03a4e3f7ce48ee7fd449b51f7de6ee2906f5fa2f", url = "https://github.com/gitleaks/gitleaks/releases/download/v8.30.0/gitleaks_8.30.0_linux_arm64.tar.gz"}
+"platforms.linux-x64" = { checksum = "sha256:79a3ab579b53f71efd634f3aaf7e04a0fa0cf206b7ed434638d1547a2470a66e", url = "https://github.com/gitleaks/gitleaks/releases/download/v8.30.0/gitleaks_8.30.0_linux_x64.tar.gz"}
+"platforms.macos-arm64" = { checksum = "sha256:b251ab2bcd4cd8ba9e56ff37698c033ebf38582b477d21ebd86586d927cf87e7", url = "https://github.com/gitleaks/gitleaks/releases/download/v8.30.0/gitleaks_8.30.0_darwin_arm64.tar.gz"}
+"platforms.macos-x64" = { checksum = "sha256:ca221d012d247080c2f6f61f4b7a83bffa2453806b0c195c795bbe9a8c775ed5", url = "https://github.com/gitleaks/gitleaks/releases/download/v8.30.0/gitleaks_8.30.0_darwin_x64.tar.gz"}
+"platforms.windows-x64" = { checksum = "sha256:54fe94f644b832dd08e8c3a5915efb3bfa862386d59fb27ca0792cb687a83573", url = "https://github.com/gitleaks/gitleaks/releases/download/v8.30.0/gitleaks_8.30.0_windows_x64.zip"}
+
+[[tools.go]]
+version = "1.25.3"
+backend = "core:go"
+"platforms.linux-arm64" = { checksum = "sha256:1d42ebc84999b5e2069f5e31b67d6fc5d67308adad3e178d5a2ee2c9ff2001f5", url = "https://dl.google.com/go/go1.25.3.linux-arm64.tar.gz"}
+"platforms.linux-x64" = { checksum = "sha256:0335f314b6e7bfe08c3d0cfaa7c19db961b7b99fb20be62b0a826c992ad14e0f", url = "https://dl.google.com/go/go1.25.3.linux-amd64.tar.gz"}
+"platforms.macos-arm64" = { checksum = "sha256:7c083e3d2c00debfeb2f77d9a4c00a1aac97113b89b9ccc42a90487af3437382", url = "https://dl.google.com/go/go1.25.3.darwin-arm64.tar.gz"}
+"platforms.macos-x64" = { checksum = "sha256:1641050b422b80dfd6299f8aa7eb8798d1cd23eac7e79f445728926e881b7bcd", url = "https://dl.google.com/go/go1.25.3.darwin-amd64.tar.gz"}
+"platforms.windows-x64" = { checksum = "sha256:bc249a599c6fe9d0d4093c363856f6c6320dbbe05e5d5d8818b711fb4a14fc23", url = "https://dl.google.com/go/go1.25.3.windows-amd64.zip"}
+
+[[tools."go:github.com/go-delve/delve/cmd/dlv"]]
+version = "1.25.2"
+backend = "go:github.com/go-delve/delve/cmd/dlv"
+
+[[tools."go:github.com/golangci/golangci-lint/cmd/golangci-lint"]]
+version = "1.64.8"
+backend = "go:github.com/golangci/golangci-lint/cmd/golangci-lint"
+
+[[tools."go:golang.org/x/tools/gopls"]]
+version = "0.20.0"
+backend = "go:golang.org/x/tools/gopls"
+
+[[tools."go:golang.org/x/vuln/cmd/govulncheck"]]
+version = "1.1.4"
+backend = "go:golang.org/x/vuln/cmd/govulncheck"
+
+[[tools."go:honnef.co/go/tools/cmd/staticcheck"]]
+version = "0.7.0-0.dev"
+backend = "go:honnef.co/go/tools/cmd/staticcheck"
+
+[[tools.golangci-lint]]
+version = "2.6.2"
+backend = "aqua:golangci/golangci-lint"
+"platforms.linux-arm64" = { checksum = "sha256:a2f9c6fe1800d0a6ba2a94ada95debe2c498a636ffc12308ee03022f97be1f33", url = "https://github.com/golangci/golangci-lint/releases/download/v2.6.2/golangci-lint-2.6.2-linux-arm64.tar.gz"}
+"platforms.linux-x64" = { checksum = "sha256:499c864b5fd9841c4fa8e80b5e2be30f73f085cf186f1b111ff81a2783b7de12", url = "https://github.com/golangci/golangci-lint/releases/download/v2.6.2/golangci-lint-2.6.2-linux-amd64.tar.gz"}
+"platforms.macos-arm64" = { checksum = "sha256:6164de2b9a9e6b4b8deea57c5072ada5d6d41bf5cca0b2f744e7b3d6e818fe0d", url = "https://github.com/golangci/golangci-lint/releases/download/v2.6.2/golangci-lint-2.6.2-darwin-arm64.tar.gz"}
+"platforms.macos-x64" = { checksum = "sha256:ad9ad19db485d224441a77453d2a18c009184408eea92ab479d3ee5c975889f8", url = "https://github.com/golangci/golangci-lint/releases/download/v2.6.2/golangci-lint-2.6.2-darwin-amd64.tar.gz"}
+"platforms.windows-x64" = { checksum = "sha256:c7f1d036892411148397fe5dae0cefb8736160b5269c4d5b081232d7b83aefcb", url = "https://github.com/golangci/golangci-lint/releases/download/v2.6.2/golangci-lint-2.6.2-windows-amd64.zip"}
+
+[[tools.goreleaser]]
+version = "2.12.7"
+backend = "aqua:goreleaser/goreleaser"
+"platforms.linux-arm64" = { checksum = "sha256:7948d8ce09cce3d3a2fff9202eae47d2223958e508f849b340345583bb2c0e1f", url = "https://github.com/goreleaser/goreleaser/releases/download/v2.12.7/goreleaser_Linux_arm64.tar.gz"}
+"platforms.linux-x64" = { checksum = "sha256:de95c5d1e728e18753c3ddcf02974d63d6432f0a7355a5afa6813971a95a01b8", url = "https://github.com/goreleaser/goreleaser/releases/download/v2.12.7/goreleaser_Linux_x86_64.tar.gz"}
+"platforms.macos-arm64" = { checksum = "sha256:9ebf84c40c8d69c85567283ce371e1bbce4ec6fc87105d323476354afccc0d1d", url = "https://github.com/goreleaser/goreleaser/releases/download/v2.12.7/goreleaser_Darwin_all.tar.gz"}
+"platforms.macos-x64" = { checksum = "sha256:9ebf84c40c8d69c85567283ce371e1bbce4ec6fc87105d323476354afccc0d1d", url = "https://github.com/goreleaser/goreleaser/releases/download/v2.12.7/goreleaser_Darwin_all.tar.gz"}
+"platforms.windows-x64" = { checksum = "sha256:d8bfa5643ce29645d0bb11bc2aac8061579d14f720ed278e3d75ead8f3f5b0d4", url = "https://github.com/goreleaser/goreleaser/releases/download/v2.12.7/goreleaser_Windows_x86_64.zip"}
+
+[[tools.hk]]
+version = "1.26.0"
+backend = "aqua:jdx/hk"
+"platforms.linux-arm64" = { checksum = "sha256:7e235dabf4fe5a6445a89dff8f7cdb0fe7543ec6cef3201a9d3a5338d4d8066b", url = "https://github.com/jdx/hk/releases/download/v1.26.0/hk-aarch64-unknown-linux-gnu.tar.gz"}
+"platforms.linux-x64" = { checksum = "sha256:65c5508b13b6e3c2b3401e0e07205e413d35b5432aec4854e66fed500c635226", url = "https://github.com/jdx/hk/releases/download/v1.26.0/hk-x86_64-unknown-linux-gnu.tar.gz"}
+"platforms.macos-arm64" = { checksum = "sha256:923763567753e9dc26ea13a052bf8252664539c8a19521b09482c404e4f187e8", url = "https://github.com/jdx/hk/releases/download/v1.26.0/hk-aarch64-apple-darwin.tar.gz"}
+"platforms.windows-x64" = { checksum = "sha256:4aa59cd5746b9dc82762ed8fdb0ae24d4d15bf09f634af590a2f39de2a157d9f", url = "https://github.com/jdx/hk/releases/download/v1.26.0/hk-x86_64-pc-windows-msvc.zip"}
+
+[[tools."npm:release-please"]]
+version = "17.1.3"
+backend = "npm:release-please"
+
+[[tools."npm:semver"]]
+version = "7.7.3"
+backend = "npm:semver"
+
+[[tools.pkl]]
+version = "0.30.2"
+backend = "aqua:apple/pkl"
+"platforms.linux-arm64" = { checksum = "sha256:8da3ae65104eb7058e35dc4a9fe46bd8ece2b6faf4b65d0b1054cadb2ede0246", url = "https://github.com/apple/pkl/releases/download/0.30.2/pkl-linux-aarch64"}
+"platforms.linux-x64" = { checksum = "sha256:474e5137d60a9e2320fde19a526f42c36d8e9d3b245139d59a9b8dff85283c76", url = "https://github.com/apple/pkl/releases/download/0.30.2/pkl-linux-amd64"}
+"platforms.macos-arm64" = { checksum = "sha256:f1db44c0f6f859aee88c9d7d272f2371ae40ac95ec9957ae78eff51665158e04", url = "https://github.com/apple/pkl/releases/download/0.30.2/pkl-macos-aarch64"}
+"platforms.macos-x64" = { checksum = "sha256:5f62ae7a7a34c15b3a83af17bda8e6b98516953f383a492340d4aa090caaa6d9", url = "https://github.com/apple/pkl/releases/download/0.30.2/pkl-macos-amd64"}
+"platforms.windows-x64" = { checksum = "sha256:19e92aa59bcf4e54963b6e3b419af7e1b939f5793b44f4a08d60bab1217106f4", url = "https://github.com/apple/pkl/releases/download/0.30.2/pkl-windows-amd64.exe"}
+
+[[tools.shellcheck]]
+version = "0.11.0"
+backend = "aqua:koalaman/shellcheck"
+"platforms.linux-arm64" = { checksum = "sha256:12b331c1d2db6b9eb13cfca64306b1b157a86eb69db83023e261eaa7e7c14588", url = "https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.linux.aarch64.tar.xz"}
+"platforms.linux-x64" = { checksum = "sha256:8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198", url = "https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.linux.x86_64.tar.xz"}
+"platforms.macos-arm64" = { checksum = "sha256:56affdd8de5527894dca6dc3d7e0a99a873b0f004d7aabc30ae407d3f48b0a79", url = "https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.darwin.aarch64.tar.xz"}
+"platforms.macos-x64" = { checksum = "sha256:3c89db4edcab7cf1c27bff178882e0f6f27f7afdf54e859fa041fca10febe4c6", url = "https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.darwin.x86_64.tar.xz"}
+"platforms.windows-x64" = { checksum = "sha256:8a4e35ab0b331c85d73567b12f2a444df187f483e5079ceffa6bda1faa2e740e", url = "https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.zip"}
+
+[[tools.trufflehog]]
+version = "3.91.2"
+backend = "aqua:trufflesecurity/trufflehog"
+"platforms.linux-arm64" = { checksum = "sha256:21cb7dcd23df56b30b985d97ed9816c2393118a2b9e7df842cb5e61c46b7dec0", url = "https://github.com/trufflesecurity/trufflehog/releases/download/v3.91.2/trufflehog_3.91.2_linux_arm64.tar.gz"}
+"platforms.linux-x64" = { checksum = "sha256:72c1d5b465878887178c33063ef2893b9f1529e79af7f24169fed52868b2c056", url = "https://github.com/trufflesecurity/trufflehog/releases/download/v3.91.2/trufflehog_3.91.2_linux_amd64.tar.gz"}
+"platforms.macos-arm64" = { checksum = "sha256:c86f385bdcc933272609462ba13c972b56f497351b93b21306ae461c961d6976", url = "https://github.com/trufflesecurity/trufflehog/releases/download/v3.91.2/trufflehog_3.91.2_darwin_arm64.tar.gz"}
+"platforms.macos-x64" = { checksum = "sha256:229ac6d818106c8d25e2f55636d78fb8f17790fd4b2ca32e0244229e447086d0", url = "https://github.com/trufflesecurity/trufflehog/releases/download/v3.91.2/trufflehog_3.91.2_darwin_amd64.tar.gz"}
+"platforms.windows-x64" = { checksum = "sha256:a6f88baf9c18e61f81a75b44a1b56f067d4fd469d21c944f82177ca54cada6e4", url = "https://github.com/trufflesecurity/trufflehog/releases/download/v3.91.2/trufflehog_3.91.2_windows_amd64.tar.gz"}
+
+[[tools.usage]]
+version = "2.8.0"
+backend = "ubi:jdx/usage"

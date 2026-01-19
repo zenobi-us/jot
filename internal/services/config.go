@@ -131,3 +131,9 @@ func (c *ConfigService) Write(cfg Config) error {
 func (c *ConfigService) Path() string {
 	return c.path
 }
+
+// Exists checks if the config file exists.
+func (c *ConfigService) Exists() bool {
+	_, err := os.Stat(c.path)
+	return err == nil
+}

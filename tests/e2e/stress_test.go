@@ -134,7 +134,7 @@ func generateStressNotebook(t *testing.T, numNotes int, depth int) (string, *ser
 	require.NoError(t, err)
 	
 	dbService := services.NewDbService()
-	t.Cleanup(func() { dbService.Close() })
+	t.Cleanup(func() { _ = dbService.Close() })
 	
 	notebookService := services.NewNotebookService(configService, dbService)
 	notebook, err := notebookService.Open(tempDir)
@@ -224,7 +224,7 @@ This note is at directory depth %d for testing deep structure handling.
 	require.NoError(t, err)
 	
 	dbService := services.NewDbService()
-	defer dbService.Close()
+	defer func() { _ = dbService.Close() }()
 	
 	notebookService := services.NewNotebookService(configService, dbService)
 	
@@ -305,7 +305,7 @@ This file contains a large amount of content to test handling of substantial mar
 	require.NoError(t, err)
 	
 	dbService := services.NewDbService()
-	defer dbService.Close()
+	defer func() { _ = dbService.Close() }()
 	
 	notebookService := services.NewNotebookService(configService, dbService)
 	
@@ -388,7 +388,7 @@ Search terms: unicode%d, test%d, %s
 	require.NoError(t, err)
 	
 	dbService := services.NewDbService()
-	defer dbService.Close()
+	defer func() { _ = dbService.Close() }()
 	
 	notebookService := services.NewNotebookService(configService, dbService)
 	notebook, err := notebookService.Open(tempDir)
@@ -439,7 +439,15 @@ func TestNoteService_MemoryUsageScale(t *testing.T) {
 			runtime.GC()
 			runtime.ReadMemStats(&m2)
 
-			memUsed := m2.Alloc - m1.Alloc
+			// Handle potential underflow when GC reduces memory
+			var memUsed uint64
+			if m2.Alloc > m1.Alloc {
+				memUsed = m2.Alloc - m1.Alloc
+			} else {
+				// If memory went down, use current allocation as reasonable proxy
+				memUsed = m2.Alloc
+			}
+			
 			memPerNote := memUsed / uint64(size)
 
 			t.Logf("Size: %d notes, Memory: %s, Per note: %s",

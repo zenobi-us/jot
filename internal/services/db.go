@@ -17,12 +17,16 @@ import (
 
 // Compiled regex patterns for glob detection
 var (
-	globPatternRegex *regexp.Regexp
+	globPatternRegex   *regexp.Regexp
+	readMarkdownRegex  *regexp.Regexp
 )
 
 func init() {
 	// Match quoted strings containing glob patterns (* or ?)
 	globPatternRegex = regexp.MustCompile(`(['"])(.*[\*\?].*?)(['"])`)
+	
+	// Match read_markdown function calls with file paths
+	readMarkdownRegex = regexp.MustCompile(`read_markdown\s*\(\s*(['"])(.*?)(['"])`)
 }
 
 // DbService manages DuckDB database connections.
@@ -195,7 +199,35 @@ func (d *DbService) preprocessSQL(query string, notebookRoot string) (string, er
 	// Keep track of any errors during replacement
 	var lastErr error
 
-	// Find all quoted strings containing glob patterns
+	// First, validate all read_markdown file paths for security
+	readMarkdownRegex.ReplaceAllStringFunc(query, func(match string) string {
+		// Extract file path from read_markdown('path')
+		submatches := readMarkdownRegex.FindStringSubmatch(match)
+		if len(submatches) >= 3 {
+			filePath := submatches[2]
+			cleanPath := filepath.Clean(filePath)
+			
+			// Check for path traversal patterns
+			if strings.Contains(cleanPath, "..") {
+				lastErr = fmt.Errorf("path traversal not allowed in file path: %s", filePath)
+				return match
+			}
+			
+			// Check for absolute paths (should be relative to notebook)
+			if filepath.IsAbs(cleanPath) {
+				lastErr = fmt.Errorf("path traversal not allowed in file path: %s", filePath)
+				return match
+			}
+		}
+		return match
+	})
+
+	// Return early if path traversal detected
+	if lastErr != nil {
+		return "", fmt.Errorf("SQL preprocessing failed: %w", lastErr)
+	}
+
+	// Then process glob patterns normally
 	processed := globPatternRegex.ReplaceAllStringFunc(query, func(match string) string {
 		// Extract the pattern from the quoted string
 		// The regex captures: quote + pattern + quote

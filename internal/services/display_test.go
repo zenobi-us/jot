@@ -289,10 +289,10 @@ func captureOutput(f func()) string {
 
 	f()
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = oldStdout
 	var buf bytes.Buffer
-	io.Copy(&buf, r)
+	_, _ = io.Copy(&buf, r)
 	return buf.String()
 }
 

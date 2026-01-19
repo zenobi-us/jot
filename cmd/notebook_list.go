@@ -21,6 +21,11 @@ Examples:
   # List all known notebooks
   opennotes notebook list`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// Check if opennotes has been initialized
+		if !cfgService.Exists() {
+			return fmt.Errorf("opennotes not initialized. Run 'opennotes init' to create config file")
+		}
+
 		notebooks, err := notebookService.List("")
 		if err != nil {
 			return err

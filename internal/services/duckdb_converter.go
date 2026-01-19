@@ -156,13 +156,3 @@ func (c *DuckDBConverter) convertArrayValue(rv reflect.Value) (interface{}, erro
 
 	return result, nil
 }
-
-// getTypeName returns a human-readable type name for logging
-func (c *DuckDBConverter) getTypeName(value interface{}) string {
-	if value == nil {
-		return "nil"
-	}
-	
-	rv := reflect.ValueOf(value)
-	return rv.Type().String()
-}
