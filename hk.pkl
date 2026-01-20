@@ -5,8 +5,17 @@ local linters = new Mapping<String, Step> {
     // Go linters
     ["go_fmt"] = Builtins.go_fmt
     ["go_imports"] = Builtins.go_imports
-    ["go_vet"] = Builtins.go_vet
-    ["golangci_lint"] = Builtins.golangci_lint
+    ["go_vet"] {
+        glob = "**/*.go"
+        exclude = List("**/*_test.go")  // Skip test files (go test will vet them)
+        check = "go vet {{files}}"
+    }
+    ["golangci_lint"] {
+        glob = "**/*.go"
+        exclude = List("**/*_test.go")  // Tests checked by go test
+        check = "golangci-lint run --fix=false {{files}}"
+        fix = "golangci-lint run --fix {{files}}"
+    }
     ["gomod_tidy"] = Builtins.gomod_tidy
 
     // Markdown/config linters (only for generated docs, not source)
@@ -19,6 +28,18 @@ local linters = new Mapping<String, Step> {
     ["pkl"] {
         glob = "*.pkl"
         check = "pkl eval {{files}} >/dev/null"
+    }
+}
+
+local testSteps = new Mapping<String, Step> {
+    ["go_test"] {
+        glob = "**/*.go"
+        exclude = List("**/*_test.go", "dist/**", "vendor/**")
+        check = "go test ./..."
+    }
+    ["md_process_blocks_test"] {
+        glob = "pkgs/md-process-blocks-cli/**/*.go"
+        check = "cd pkgs/md-process-blocks-cli && go test -v"
     }
 }
 
@@ -38,11 +59,15 @@ hooks {
         steps {
             ...docSteps  // build docs if source changed
             ...linters   // run all linters
+            ...testSteps // run tests
         }
     }
     // instead of pre-commit, you can instead define pre-push hooks
     ["pre-push"] {
-        steps = linters
+        steps {
+            ...linters
+            ...testSteps
+        }
     }
     // "fix" and "check" are special steps for `hk fix` and `hk check` commands
     ["fix"] {
@@ -50,6 +75,9 @@ hooks {
         steps = linters
     }
     ["check"] {
-        steps = linters
+        steps {
+            ...linters
+            ...testSteps
+        }
     }
 }

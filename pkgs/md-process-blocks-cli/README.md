@@ -102,3 +102,26 @@ Used by opennotes documentation build system:
 ```bash
 go build -o ../../dist/md-process-blocks
 ```
+
+## Testing
+
+```bash
+# Run all tests (unit + e2e)
+go test -v
+
+# Run only unit tests
+go test -v -run '^Test[^E]'
+
+# Run only e2e tests
+go test -v -run '^TestE2E'
+```
+
+Test coverage:
+- ✅ Code block extraction and parsing
+- ✅ Quoted value handling (`exec="command with spaces"`)
+- ✅ Multiple attribute parsing
+- ✅ Execution modes (exec=true, exec="command", replace=true/false)
+- ✅ Error handling (failed commands, missing commands)
+- ✅ File I/O operations
+- ✅ Multiple blocks in one document
+- ✅ Real-world D2 integration (when d2 available)
