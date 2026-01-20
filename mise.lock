@@ -88,6 +88,10 @@ backend = "aqua:jdx/hk"
 "platforms.macos-arm64" = { checksum = "sha256:923763567753e9dc26ea13a052bf8252664539c8a19521b09482c404e4f187e8", url = "https://github.com/jdx/hk/releases/download/v1.26.0/hk-aarch64-apple-darwin.tar.gz"}
 "platforms.windows-x64" = { checksum = "sha256:4aa59cd5746b9dc82762ed8fdb0ae24d4d15bf09f634af590a2f39de2a157d9f", url = "https://github.com/jdx/hk/releases/download/v1.26.0/hk-x86_64-pc-windows-msvc.zip"}
 
+[[tools."npm:prettier"]]
+version = "3.8.0"
+backend = "npm:prettier"
+
 [[tools."npm:release-please"]]
 version = "17.1.3"
 backend = "npm:release-please"

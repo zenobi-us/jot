@@ -27,6 +27,7 @@ shellcheck = "latest"
 bats = "latest"
 "github:terrastruct/d2" = "latest"
 "cargo:zimbatm/mdsh" = "tag:v0.9.2"
+"npm:prettier" = "latest"
 
 # Tasks are defined as file tasks in .mise/tasks/
 # Run `mise tasks` to see available tasks

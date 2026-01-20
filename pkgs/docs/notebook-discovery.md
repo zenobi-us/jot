@@ -238,15 +238,20 @@ LoadRegistered -> Success
 LoadAncestor -> Success
 ```
 
+<!-- BEGIN mdsh -->
+<!-- END mdsh -->
+
 ## Detailed Process
 
 ### 1. Declared Path (Tier 1 - Highest Priority)
 
 The system first checks if a notebook path has been explicitly declared via:
+
 - CLI flag: `opennotes --notebook /path/to/notebook`
 - Environment variable: `OPENNOTES_NOTEBOOK=/path/to/notebook`
 
 If a declared path exists:
+
 1. Check if `.opennotes.json` exists in that path
 2. If yes: Load and open the notebook → **SUCCESS**
 3. If no: Continue to Tier 2
@@ -275,6 +280,7 @@ for _, context := range notebook.Contexts {
 ```
 
 **Example:**
+
 ```
 Notebook contexts: ["/home/user/project", "/tmp/work"]
 Current directory: "/home/user/project/src"
@@ -297,6 +303,7 @@ If no declared or registered notebooks match, the system performs an ancestor di
 ## File Locations & Formats
 
 ### Global Configuration
+
 **Location:** `~/.config/opennotes/config.json`
 
 ```json
@@ -310,16 +317,14 @@ If no declared or registered notebooks match, the system performs an ancestor di
 ```
 
 ### Notebook Configuration
+
 **Location:** `<notebook_directory>/.opennotes.json`
 
 ```json
 {
   "root": "./notes",
   "name": "Project Notebook",
-  "contexts": [
-    "/home/user/project",
-    "/home/user/project-related"
-  ],
+  "contexts": ["/home/user/project", "/home/user/project-related"],
   "templates": {
     "default": "# {{.Title}}\n\nDate: {{.Date}}\n\n"
   },
@@ -336,21 +341,25 @@ If no declared or registered notebooks match, the system performs an ancestor di
 ## Key Features
 
 ### Deterministic Behavior
+
 - **Clear Priority**: Declared > Registered > Ancestor
 - **First Match Wins**: Stops at first successful discovery
 - **No Ambiguity**: Priority order prevents conflicts
 
 ### Graceful Fallback
+
 - If higher priority method fails, try next tier
 - Comprehensive search ensures maximum discovery success
 - Returns `nil` only when all methods exhausted
 
 ### Context-Aware
+
 - Registered notebooks define active contexts
 - Automatically selects appropriate notebook for current work environment
 - Supports multiple context paths per notebook
 
 ### Efficient Discovery
+
 - Stops immediately upon successful match
 - Minimal filesystem operations
 - Fast context matching using string prefix comparison

@@ -20,7 +20,7 @@ local linters = new Mapping<String, Step> {
 local docSteps = new Mapping<String, Step> {
     ["docs_build"] {
         glob = "pkgs/docs/*.md"
-        fix = "mise run docs:build"
+        fix = "mise run docs-build"
         // Auto-stage generated docs after building
         stage = List("docs/**/*.md")
     }
