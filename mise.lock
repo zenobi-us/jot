@@ -6,6 +6,10 @@ backend = "aqua:bats-core/bats-core"
 "platforms.macos-arm64" = { url = "https://github.com/bats-core/bats-core/archive/refs/tags/v1.12.0.tar.gz"}
 "platforms.macos-x64" = { url = "https://github.com/bats-core/bats-core/archive/refs/tags/v1.12.0.tar.gz"}
 
+[[tools."cargo:zimbatm/mdsh"]]
+version = "HEAD"
+backend = "cargo:zimbatm/mdsh"
+
 [[tools.duckdb]]
 version = "1.4.1"
 backend = "aqua:duckdb/duckdb"

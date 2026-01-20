@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Build documentation from pkgs/docs to docs/
+set -euo pipefail
+
+echo "Building documentation..."
+
+# Create docs directory if it doesn't exist
+mkdir -p docs
+
+# Process each markdown file in pkgs/docs
+for src in pkgs/docs/*.md; do
+  filename=$(basename "$src")
+  dst="docs/$filename"
+  
+  echo "Processing: $src -> $dst"
+  mdsh -i "$src" -o "$dst"
+done
+
+echo "✓ Documentation built successfully"
