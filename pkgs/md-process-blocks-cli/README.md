@@ -27,32 +27,31 @@ md-process-blocks -i input.md --replace=false
 
 ### mdsh-style commands
 
+Code blocks with commands in the opening fence are processed:
+
 ```markdown
 ˙˙˙d2 > $ d2 - -
 x -> y: Hello
 ˙˙˙
 ```
 
-Output:
+Output (code block replaced with command output):
 ```markdown
-˙˙˙d2 > $ d2 - -
-x -> y: Hello
-˙˙˙
-
-<!-- BEGIN md-process-blocks -->
-<svg...>
-<!-- END md-process-blocks -->
+<svg xmlns="http://www.w3.org/2000/svg"...>
+</svg>
 ```
 
-### Auto-processing for known languages
+### No auto-processing
 
-D2 blocks without explicit commands are auto-processed:
+Code blocks without explicit commands are left unchanged:
 
 ```markdown
 ˙˙˙d2
 x -> y
 ˙˙˙
 ```
+
+This is returned as-is (no processing).
 
 ## Integration
 

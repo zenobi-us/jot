@@ -163,47 +163,37 @@ func extractCodeBlock(lines []string, start int) (*CodeBlock, int) {
 }
 
 func shouldProcess(block *CodeBlock) bool {
-	// Check if block has processor metadata
-	_, hasProcessor := block.Metadata["processor"]
+	// Only process blocks that have an explicit command
 	_, hasCmd := block.Metadata["cmd"]
-
-	// Or check if it's a known language we auto-process
-	knownProcessors := map[string]bool{
-		"d2": true,
-	}
-
-	return hasProcessor || hasCmd || knownProcessors[block.Language]
+	return hasCmd
 }
 
 func processBlock(block *CodeBlock) (string, error) {
-	var result strings.Builder
-
-	// Write original block
-	result.WriteString(fmt.Sprintf("```%s", block.Language))
-	if cmdStr, ok := block.Metadata["cmd"]; ok {
-		result.WriteString(" ")
-		result.WriteString(cmdStr)
-	}
-	result.WriteString("\n")
-	result.WriteString(block.Content)
-	result.WriteString("\n```\n")
-
-	if !replaceMode {
-		return result.String(), nil
-	}
-
 	// Parse and execute mdsh-style command
 	// Format: ```lang > $ command args
 	// Parse: > (output type), $ (execute), command args
 	cmdStr, hasCmd := block.Metadata["cmd"]
 	if !hasCmd {
-		// No command, check if it's a known language
-		switch block.Language {
-		case "d2":
-			cmdStr = "> $ d2 - -"
-		default:
-			return result.String(), nil
+		// No command specified, return original block unchanged
+		var result strings.Builder
+		result.WriteString(fmt.Sprintf("```%s\n", block.Language))
+		result.WriteString(block.Content)
+		result.WriteString("\n```\n")
+		return result.String(), nil
+	}
+
+	// If not in replace mode, just return original block
+	if !replaceMode {
+		var result strings.Builder
+		result.WriteString(fmt.Sprintf("```%s", block.Language))
+		if hasCmd {
+			result.WriteString(" ")
+			result.WriteString(cmdStr)
 		}
+		result.WriteString("\n")
+		result.WriteString(block.Content)
+		result.WriteString("\n```\n")
+		return result.String(), nil
 	}
 
 	// Parse mdsh command format
@@ -217,6 +207,10 @@ func processBlock(block *CodeBlock) (string, error) {
 	}
 
 	if len(actualCmd) == 0 {
+		var result strings.Builder
+		result.WriteString(fmt.Sprintf("```%s\n", block.Language))
+		result.WriteString(block.Content)
+		result.WriteString("\n```\n")
 		return result.String(), nil
 	}
 
@@ -231,10 +225,6 @@ func processBlock(block *CodeBlock) (string, error) {
 		return "", fmt.Errorf("command failed: %w\nStderr: %s", err, stderr.String())
 	}
 
-	// Write output between markers
-	result.WriteString("\n<!-- BEGIN md-process-blocks -->\n")
-	result.WriteString(stdout.String())
-	result.WriteString("\n<!-- END md-process-blocks -->\n")
-
-	return result.String(), nil
+	// Return just the output (SVG or whatever the command produced)
+	return stdout.String(), nil
 }
