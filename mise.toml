@@ -25,6 +25,7 @@ shellcheck = "latest"
 "go:honnef.co/go/tools/cmd/staticcheck" = "latest"
 "npm:semver" = "7.7.3"
 bats = "latest"
+"github:terrastruct/d2" = "latest"
 
 # Tasks are defined as file tasks in .mise/tasks/
 # Run `mise tasks` to see available tasks

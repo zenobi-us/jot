@@ -15,6 +15,11 @@ backend = "aqua:duckdb/duckdb"
 "platforms.macos-x64" = { checksum = "sha256:d6ac869dad8b197ce372b20162e2a95d20fc93b6e105505921e143da700bb263", url = "https://github.com/duckdb/duckdb/releases/download/v1.4.1/duckdb_cli-osx-universal.zip"}
 "platforms.windows-x64" = { checksum = "sha256:3fab5174658bf16189c80eaa047b3e7737847491c9e4433a985adf014618cbd9", url = "https://github.com/duckdb/duckdb/releases/download/v1.4.1/duckdb_cli-windows-amd64.zip"}
 
+[[tools."github:terrastruct/d2"]]
+version = "0.7.1"
+backend = "github:terrastruct/d2"
+"platforms.linux-x64" = { checksum = "sha256:eb172adf59f38d1e5a70ab177591356754ffaf9bebb84e0ca8b767dfb421dad7", url = "https://github.com/terrastruct/d2/releases/download/v0.7.1/d2-v0.7.1-linux-amd64.tar.gz", url_api = "https://api.github.com/repos/terrastruct/d2/releases/assets/284023615"}
+
 [[tools.gitleaks]]
 version = "8.30.0"
 backend = "aqua:gitleaks/gitleaks"
