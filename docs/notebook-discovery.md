@@ -12,55 +12,10 @@ The notebook discovery follows a **3-tier priority system**:
 
 ## Discovery Flowchart
 
-```mermaid
-flowchart TD
-    Start([Start: Current Working Directory]) --> CheckDeclared{Check Declared<br/>Notebook Path<br/>--notebook flag or<br/>OPENNOTES_NOTEBOOK env}
-    
-    CheckDeclared -->|Path provided| HasDeclaredConfig{Has .opennotes.json<br/>in declared path?}
-    CheckDeclared -->|No path| CheckRegistered{Check Registered<br/>Notebooks from<br/>global config}
-    
-    HasDeclaredConfig -->|Yes| LoadDeclared[Load & Open<br/>Declared Notebook]
-    HasDeclaredConfig -->|No| CheckRegistered
-    
-    CheckRegistered --> ForEachRegistered[For each registered<br/>notebook path]
-    ForEachRegistered --> HasRegisteredConfig{Has .opennotes.json<br/>in registered path?}
-    
-    HasRegisteredConfig -->|No| NextRegistered[Try next<br/>registered notebook]
-    HasRegisteredConfig -->|Yes| LoadRegisteredConfig[Load notebook config]
-    
-    LoadRegisteredConfig --> CheckContext{Current directory<br/>matches any context<br/>in notebook?}
-    CheckContext -->|Yes| LoadRegistered[Load & Open<br/>Matched Notebook]
-    CheckContext -->|No| NextRegistered
-    
-    NextRegistered -->|More notebooks| HasRegisteredConfig
-    NextRegistered -->|No more notebooks| StartAncestorSearch[Start Ancestor Search<br/>current = cwd]
-    
-    StartAncestorSearch --> IsRoot{current == "/" or<br/>empty string?}
-    IsRoot -->|Yes| NotFound([Not Found<br/>Return nil])
-    IsRoot -->|No| HasAncestorConfig{Has .opennotes.json<br/>in current directory?}
-    
-    HasAncestorConfig -->|Yes| LoadAncestor[Load & Open<br/>Ancestor Notebook]
-    HasAncestorConfig -->|No| GoToParent[current = parent<br/>directory]
-    
-    GoToParent --> IsRoot
-    
-    LoadDeclared --> Success([Success<br/>Return Notebook Instance])
-    LoadRegistered --> Success
-    LoadAncestor --> Success
-    
-    %% Styling
-    classDef startEnd fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    classDef decision fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
-    classDef process fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    classDef success fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
-    classDef notFound fill:#ffebee,stroke:#c62828,stroke-width:2px
-    
-    class Start,Success,NotFound startEnd
-    class CheckDeclared,HasDeclaredConfig,CheckRegistered,HasRegisteredConfig,CheckContext,IsRoot,HasAncestorConfig decision
-    class ForEachRegistered,LoadDeclaredConfig,LoadRegisteredConfig,NextRegistered,StartAncestorSearch,GoToParent,LoadDeclared,LoadRegistered,LoadAncestor process
-    class Success success
-    class NotFound notFound
-```
+![Notebook Discovery Flowchart](notebook-discovery.svg)
+
+> **Note**: This diagram is generated from [notebook-discovery.d2](notebook-discovery.d2) using [D2](https://d2lang.com/).  
+> To regenerate: `d2 docs/notebook-discovery.d2 docs/notebook-discovery.svg`
 
 ## Detailed Process
 
