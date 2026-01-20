@@ -7,14 +7,14 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"unicode"
 
 	"github.com/spf13/cobra"
 )
 
 var (
-	inputFile   string
-	outputFile  string
-	replaceMode bool
+	inputFile  string
+	outputFile string
 )
 
 type CodeBlock struct {
@@ -42,7 +42,6 @@ Examples:
 func init() {
 	rootCmd.Flags().StringVarP(&inputFile, "input", "i", "", "Input markdown file (stdin if empty)")
 	rootCmd.Flags().StringVarP(&outputFile, "output", "o", "", "Output file (stdout if empty)")
-	rootCmd.Flags().BoolVarP(&replaceMode, "replace", "r", true, "Replace code blocks with output")
 }
 
 func main() {
@@ -123,108 +122,161 @@ func processMarkdown(content string) (string, error) {
 func extractCodeBlock(lines []string, start int) (*CodeBlock, int) {
 	firstLine := lines[start]
 
-	// Parse the first line: ```lang command args
-	// Example: ```d2 > $ d2 - -
-	parts := strings.Fields(firstLine[3:]) // Remove ```
-	if len(parts) == 0 {
+	// Parse the first line: ```lang key=value key=value
+	// Example: ```d2 exec=true replace=true
+	// Example: ```bash exec="d2 - -" replace=true
+	attrs := firstLine[3:] // Remove ```
+	if len(attrs) == 0 {
 		return nil, start
 	}
 
 	block := &CodeBlock{
-		Language: parts[0],
 		Metadata: make(map[string]string),
 		Start:    start,
 	}
 
-	// If there are more parts, treat them as the command
-	// mdsh format: ```lang out_cmd in_cmd [data_line]
-	// We simplify: everything after lang is the command
-	if len(parts) > 1 {
-		block.Metadata["cmd"] = strings.Join(parts[1:], " ")
+	// Parse manually to handle quoted values properly
+	i := 0
+	for i < len(attrs) && !unicode.IsSpace(rune(attrs[i])) {
+		i++
+	}
+	block.Language = attrs[0:i]
+
+	// Skip whitespace
+	for i < len(attrs) && unicode.IsSpace(rune(attrs[i])) {
+		i++
+	}
+
+	// Parse key=value pairs
+	for i < len(attrs) {
+		// Find key
+		keyStart := i
+		for i < len(attrs) && attrs[i] != '=' {
+			i++
+		}
+		if i >= len(attrs) {
+			break
+		}
+		key := attrs[keyStart:i]
+		i++ // skip '='
+
+		// Find value
+		var value string
+		if i < len(attrs) && attrs[i] == '"' {
+			// Quoted value
+			i++ // skip opening quote
+			valueStart := i
+			for i < len(attrs) && attrs[i] != '"' {
+				i++
+			}
+			value = attrs[valueStart:i]
+			if i < len(attrs) {
+				i++ // skip closing quote
+			}
+		} else {
+			// Unquoted value
+			valueStart := i
+			for i < len(attrs) && !unicode.IsSpace(rune(attrs[i])) {
+				i++
+			}
+			value = attrs[valueStart:i]
+		}
+
+		block.Metadata[key] = value
+
+		// Skip whitespace
+		for i < len(attrs) && unicode.IsSpace(rune(attrs[i])) {
+			i++
+		}
 	}
 
 	// Extract content
 	var content strings.Builder
-	i := start + 1
-	for i < len(lines) {
-		if strings.HasPrefix(lines[i], "```") {
-			block.End = i
+	j := start + 1
+	for j < len(lines) {
+		if strings.HasPrefix(lines[j], "```") {
+			block.End = j
 			block.Content = content.String()
-			return block, i
+			return block, j
 		}
-		if i > start+1 {
+		if j > start+1 {
 			content.WriteString("\n")
 		}
-		content.WriteString(lines[i])
-		i++
+		content.WriteString(lines[j])
+		j++
 	}
 
 	return nil, start
 }
 
 func shouldProcess(block *CodeBlock) bool {
-	// Only process blocks that have an explicit command
-	_, hasCmd := block.Metadata["cmd"]
-	return hasCmd
+	// Only process blocks that have exec=true or exec="command"
+	execVal, hasExec := block.Metadata["exec"]
+	return hasExec && execVal != ""
 }
 
 func processBlock(block *CodeBlock) (string, error) {
-	// Parse and execute mdsh-style command
-	// Format: ```lang > $ command args
-	// Parse: > (output type), $ (execute), command args
-	cmdStr, hasCmd := block.Metadata["cmd"]
-	if !hasCmd {
-		// No command specified, return original block unchanged
-		var result strings.Builder
+	var result strings.Builder
+
+	// Check if exec is enabled
+	execVal, hasExec := block.Metadata["exec"]
+	if !hasExec || execVal == "" {
+		// Not executable, return original block
 		result.WriteString(fmt.Sprintf("```%s\n", block.Language))
 		result.WriteString(block.Content)
 		result.WriteString("\n```\n")
 		return result.String(), nil
 	}
 
-	// If not in replace mode, just return original block
-	if !replaceMode {
-		var result strings.Builder
-		result.WriteString(fmt.Sprintf("```%s", block.Language))
-		if hasCmd {
-			result.WriteString(" ")
-			result.WriteString(cmdStr)
-		}
-		result.WriteString("\n")
-		result.WriteString(block.Content)
-		result.WriteString("\n```\n")
-		return result.String(), nil
+	// Determine what to execute
+	var cmdStr string
+	var cmdParts []string
+	var useStdin bool
+
+	// Check if exec has a command value (exec="d2 - -")
+	if execVal != "true" {
+		// exec="command args" - use block content as stdin
+		cmdStr = execVal
+		useStdin = true
+	} else {
+		// exec=true - execute block content as command
+		cmdStr = block.Content
+		useStdin = false
 	}
 
-	// Parse mdsh command format
-	// Skip > (output marker) and $ (execute marker)
-	cmdParts := strings.Fields(cmdStr)
-	var actualCmd []string
-	for _, part := range cmdParts {
-		if part != ">" && part != "$" {
-			actualCmd = append(actualCmd, part)
-		}
+	// Parse command
+	cmdParts = strings.Fields(cmdStr)
+	if len(cmdParts) == 0 {
+		return "", fmt.Errorf("empty command")
 	}
 
-	if len(actualCmd) == 0 {
-		var result strings.Builder
-		result.WriteString(fmt.Sprintf("```%s\n", block.Language))
-		result.WriteString(block.Content)
-		result.WriteString("\n```\n")
-		return result.String(), nil
+	// Execute command
+	command := exec.Command(cmdParts[0], cmdParts[1:]...)
+	if useStdin {
+		command.Stdin = strings.NewReader(block.Content)
 	}
-
-	// Execute command with block content as stdin
-	cmd := exec.Command(actualCmd[0], actualCmd[1:]...)
-	cmd.Stdin = strings.NewReader(block.Content)
 	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
+	command.Stdout = &stdout
+	command.Stderr = &stderr
 
-	if err := cmd.Run(); err != nil {
+	if err := command.Run(); err != nil {
 		return "", fmt.Errorf("command failed: %w\nStderr: %s", err, stderr.String())
 	}
 
-	// Return just the output (SVG or whatever the command produced)
-	return stdout.String(), nil
+	// Check if we should replace the block
+	replaceVal := block.Metadata["replace"]
+	if replaceVal == "true" {
+		// Replace block with output
+		return stdout.String(), nil
+	}
+
+	// Append output as code block below original
+	result.WriteString(fmt.Sprintf("```%s\n", block.Language))
+	result.WriteString(block.Content)
+	result.WriteString("\n```\n\n")
+	result.WriteString("```\n")
+	result.WriteString(stdout.String())
+	result.WriteString("\n```\n")
+
+	return result.String(), nil
 }

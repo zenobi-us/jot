@@ -4,54 +4,91 @@ A Go CLI tool for processing markdown code blocks with custom processors.
 
 ## Features
 
-- **mdsh-compatible syntax**: `˙˙˙lang > $ command args`
+- **Simple key=value syntax**: `exec=true`, `exec="command"`, `replace=true`
 - **Stdin/stdout support**: Process from pipes or files
-- **Automatic D2 diagram generation**: Built-in support for D2
-- **Extensible**: Add custom processors via command metadata
-- **Simple**: No Haskell dependencies, pure Go
+- **Flexible execution modes**: Run block content OR use block as stdin
+- **Pure Go**: No external dependencies except your tools (like d2)
 
 ## Usage
 
 ```bash
-# Process file, replace code blocks with output
+# Process file
 md-process-blocks -i input.md -o output.md
 
 # Process from stdin
 cat input.md | md-process-blocks > output.md
-
-# Don't replace blocks (extract mode)
-md-process-blocks -i input.md --replace=false
 ```
 
 ## Syntax
 
-### mdsh-style commands
-
-Code blocks with commands in the opening fence are processed:
+### Mode 1: Execute block content as command, append output
 
 ```markdown
-˙˙˙d2 > $ d2 - -
+˙˙˙bash exec=true
+echo "Hello World"
+˙˙˙
+```
+
+Output:
+```markdown
+˙˙˙bash
+echo "Hello World"
+˙˙˙
+
+˙˙˙
+Hello World
+˙˙˙
+```
+
+### Mode 2: Execute block content as command, replace block
+
+```markdown
+˙˙˙bash exec=true replace=true
+echo "Hello World"
+˙˙˙
+```
+
+Output:
+```markdown
+Hello World
+```
+
+### Mode 3: Execute command with block as stdin, replace block
+
+```markdown
+˙˙˙d2 exec="d2 - -" replace=true
 x -> y: Hello
 ˙˙˙
 ```
 
-Output (code block replaced with command output):
+Output:
 ```markdown
 <svg xmlns="http://www.w3.org/2000/svg"...>
 </svg>
 ```
 
-### No auto-processing
-
-Code blocks without explicit commands are left unchanged:
+### Mode 4: No exec attribute (unchanged)
 
 ```markdown
-˙˙˙d2
-x -> y
+˙˙˙python
+print("unchanged")
 ˙˙˙
 ```
 
-This is returned as-is (no processing).
+Output (unchanged):
+```markdown
+˙˙˙python
+print("unchanged")
+˙˙˙
+```
+
+## Attributes
+
+| Attribute | Values | Description |
+|-----------|--------|-------------|
+| `exec` | `true` | Execute block content as shell command |
+| `exec` | `"command args"` | Execute command with block content as stdin |
+| `replace` | `true` | Replace block with output (default: append below) |
 
 ## Integration
 

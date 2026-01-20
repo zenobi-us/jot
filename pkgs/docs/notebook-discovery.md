@@ -12,7 +12,7 @@ The notebook discovery follows a **3-tier priority system**:
 
 ## Discovery Flowchart
 
-```d2 > $ d2 - -
+```d2 exec="d2 - -" replace=true
 direction: down
 
 # Start node
