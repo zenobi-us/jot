@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.0.3](https://github.com/zenobi-us/opennotes/compare/0.1.0-next.1...v0.0.3) (2026-01-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* Remove Node.js dependencies and package.json
+
+### Bug Fixes
+
+* adjust for prerelease tag offset in version computation ([14aa55a](https://github.com/zenobi-us/opennotes/commit/14aa55af7b1e394c7985461a05ba3d1217bf4f60))
+* **ci:** correct release-please outputs printing in workflow ([35b45a6](https://github.com/zenobi-us/opennotes/commit/35b45a68533bc9326ad7e82ae6d694b83d604676))
+* force tag creation for release workflow ([933add0](https://github.com/zenobi-us/opennotes/commit/933add04b2300e1c1315dc3b6a6fd8ec474112e8))
+* ignore coverage files ([5a9a27e](https://github.com/zenobi-us/opennotes/commit/5a9a27e91246d8bbe5f03d000e8d1159b809c0a8))
+* resolve all bats test failures and security issues ([#6](https://github.com/zenobi-us/opennotes/issues/6)) ([9353f1c](https://github.com/zenobi-us/opennotes/commit/9353f1c70fe38cd8cb9759dc0b0f53be76c448f4))
+
+
+### Code Refactoring
+
+* migrate from Node.js to Go-native version management ([51846b0](https://github.com/zenobi-us/opennotes/commit/51846b0b167a00295605761b880f2f3c694b9873))
+
 ## [0.0.2](https://github.com/zenobi-us/opennotes/compare/v0.0.1...v0.0.2) (2026-01-17)
 
 
