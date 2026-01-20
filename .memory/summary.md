@@ -31,14 +31,79 @@ OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks
 
 ---
 
-## Current Status - NO ACTIVE EPICS
+## Current Status - SPECIFICATION PHASE
 
-- **Status**: ✅ **ALL EPICS COMPLETE** - Ready for new work
-- **Last Epic**: Getting Started Guide for Power Users (archived 2026-01-20)
-- **Recent Achievement**: Comprehensive documentation ecosystem created (7h 45min)
-- **Project State**: Production-ready with complete documentation
-- **Last Updated**: 2026-01-20 20:04 GMT+10:30
-- **Next Steps**: Define new epic or maintenance work
+- **Status**: 📋 **SPECIFICATIONS COMPLETE** - Note Creation, Search Enhancement, and Views System specs ready
+- **Active Epic**: Advanced Note Creation and Search Capabilities (epic-3e01c563)
+- **Current Phase**: Research & Design → Specification
+- **Recent Achievement**: Three detailed specification documents created
+  - ✅ Note Creation Enhancement (spec-ca68615f)
+  - ✅ Note Search Enhancement (spec-5f8a9b2c)
+  - ✅ Views System (spec-d4fca870) - **REQUIRES Q&A DISCUSSION**
+- **Project State**: Production-ready, extending with intermediate features
+- **Last Updated**: 2026-01-20 23:47 GMT+10:30
+- **Next Steps**: Human review of specs, Q&A discussion for Views System, implementation planning
+
+## Current Epic (2026-01-20)
+
+### 🔬 Advanced Note Creation and Search Capabilities Epic - RESEARCH PHASE
+
+**Epic ID**: epic-3e01c563  
+**Epic File**: `.memory/epic-3e01c563-advanced-note-operations.md`  
+**Status**: 🔬 **RESEARCH IN PROGRESS**  
+**Started**: 2026-01-20 20:40 GMT+10:30
+
+**Epic Goal**: Bridge the gap between simple operations and power-user SQL queries with intermediate note creation and search capabilities.
+
+**Problem Being Solved**:
+- Users need SQL expertise to use advanced features
+- Creating notes with metadata requires manual YAML editing
+- No fuzzy search for quick note navigation
+- Common query patterns require writing custom SQL
+
+**Solution Approach**: Provide intuitive CLI flags for:
+1. **Advanced Creation**: `--data.*` flags for frontmatter on note creation
+2. **Boolean Search**: `--and`, `--or`, `--not` flags for complex queries
+3. **Fuzzy Finding**: `--fzf` integration for VSCode-like navigation
+4. **Search Views**: Named presets for common patterns (today, kanban, linking)
+
+**Research Phase** (Completed - 2 hours):
+1. ✅ **Phase 1**: Advanced Creation Design - Flag parsing, path resolution, frontmatter generation
+2. ✅ **Phase 2**: Boolean Search Design - Query construction, field filtering, security
+3. ✅ **Phase 3**: FZF & Views Design - FZF integration, view system architecture
+4. ⏸️ **Phase 4**: Implementation Planning - Awaiting human review
+
+**Research Deliverables** (All Complete):
+- ✅ Main Research Document (56KB) - Complete findings with code examples
+- ✅ Executive Summary (3.5KB) - Quick-reference recommendations
+- ✅ Implementation Quick-Start (7KB) - Task breakdown and estimates
+- ✅ Updated Epic Document (9.2KB) - Research integrated
+- ✅ **Note Creation Enhancement Spec** (32KB) - Detailed specification document (spec-ca68615f)
+- ✅ **Note Search Enhancement Spec** (32KB) - Detailed specification document (spec-5f8a9b2c)
+  - **Updated 2026-01-20 23:19**: Replaced `--fzf` with `--fuzzy` for non-interactive fuzzy matching
+
+**Key Findings** (High Confidence):
+- **Flag Parsing**: `StringArray` with `field=value` parsing (proven pattern)
+- **FZF Integration**: `go-fuzzyfinder` library (pure Go, cross-platform)
+- **Boolean Queries**: Parameterized queries + whitelist validation (security-first)
+- **View System**: YAML config with 3-tier hierarchy (built-in → global → notebook)
+
+**Implementation Estimate**: 12-16 hours for Phase 1 MVP
+
+**Next Milestones**:
+- 📋 **[NEEDS-HUMAN]** Review Note Creation Enhancement specification (`.memory/spec-ca68615f-note-creation-enhancement.md`)
+- 📋 **[NEEDS-HUMAN]** Review Note Search Enhancement specification (`.memory/spec-5f8a9b2c-note-search-enhancement.md`)
+- 📋 **[NEEDS-HUMAN]** Review research findings (`.memory/research-3e01c563-summary.md`)
+- 📋 **[NEEDS-HUMAN]** Approve implementation recommendations
+- ⏸️ Create Phase 4 implementation tasks after approval
+
+**Quality Framework**:
+- **Test Coverage**: ≥85% for all new functionality
+- **Performance**: <100ms for complex queries on 10k+ notes
+- **Security**: Defense-in-depth validation (same as --sql flag)
+- **UX**: Progressive disclosure from simple to advanced
+
+**Ready for Implementation**: Waiting for research completion
 
 ## Recent Epic Completion (2026-01-20)
 
