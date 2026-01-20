@@ -249,6 +249,21 @@ End
 			wantErr: false,
 		},
 		{
+			name: "replace with template using {output}",
+			input: `# Test
+
+` + "```bash exec=\"echo hello\" replace=\"Result: {output}\"\nignored\n```" + `
+
+End`,
+			want: `# Test
+
+Result: hello
+
+End
+`,
+			wantErr: false,
+		},
+		{
 			name: "multiple blocks mixed",
 			input: `# Test
 

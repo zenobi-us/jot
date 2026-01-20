@@ -67,7 +67,27 @@ Output:
 </svg>
 ```
 
-### Mode 4: No exec attribute (unchanged)
+### Mode 4: Execute command, replace with template
+
+Use `{output}` placeholder in replace value for custom formatting:
+
+```markdown
+˙˙˙d2 exec="d2 - docs/diagram.svg" replace="![Diagram](diagram.svg)"
+x -> y: Hello
+˙˙˙
+```
+
+Output:
+```markdown
+![Diagram](diagram.svg)
+```
+
+This is useful for:
+- GitHub-compatible image references (doesn't render inline SVG)
+- Custom markdown formatting around output
+- Adding context or labels to results
+
+### Mode 5: No exec attribute (unchanged)
 
 ```markdown
 ˙˙˙python
@@ -88,7 +108,8 @@ print("unchanged")
 |-----------|--------|-------------|
 | `exec` | `true` | Execute block content as shell command |
 | `exec` | `"command args"` | Execute command with block content as stdin |
-| `replace` | `true` | Replace block with output (default: append below) |
+| `replace` | `true` | Replace block with raw output (default: append below) |
+| `replace` | `"template"` | Replace with template; `{output}` is replaced with command output |
 
 ## Integration
 

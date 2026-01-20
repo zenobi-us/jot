@@ -264,10 +264,16 @@ func processBlock(block *CodeBlock) (string, error) {
 	}
 
 	// Check if we should replace the block
-	replaceVal := block.Metadata["replace"]
-	if replaceVal == "true" {
-		// Replace block with output
-		return stdout.String(), nil
+	replaceVal, hasReplace := block.Metadata["replace"]
+	if hasReplace && replaceVal != "" {
+		if replaceVal == "true" {
+			// Replace block with raw output
+			return stdout.String(), nil
+		} else {
+			// Replace with template, substituting {output} with command output
+			replaced := strings.ReplaceAll(replaceVal, "{output}", strings.TrimSpace(stdout.String()))
+			return replaced + "\n", nil
+		}
 	}
 
 	// Append output as code block below original
