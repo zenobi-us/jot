@@ -9,8 +9,13 @@ local linters = new Mapping<String, Step> {
     ["golangci_lint"] = Builtins.golangci_lint
     ["gomod_tidy"] = Builtins.gomod_tidy
 
-    // Markdown/config linters
-    ["prettier"] = Builtins.prettier
+    // Markdown/config linters (only for generated docs, not source)
+    ["prettier"] {
+        glob = List("docs/**/*.md", "*.json", "*.yaml", "*.yml")
+        exclude = List("pkgs/docs/**")  // Don't format source docs
+        fix = "prettier --write {{files}}"
+        check = "prettier --check {{files}}"
+    }
     ["pkl"] {
         glob = "*.pkl"
         check = "pkl eval {{files}} >/dev/null"
