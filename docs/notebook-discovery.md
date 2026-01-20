@@ -238,7 +238,7 @@ LoadRegistered -> Success
 LoadAncestor -> Success
 ```
 
-<!-- BEGIN mdsh -->
+<!-- BEGIN md-process-blocks -->
 <?xml version="1.0" encoding="utf-8"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" data-d2-version="v0.7.1" preserveAspectRatio="xMinYMin meet" viewBox="0 0 1320 3300"><svg class="d2-3094856511 d2-svg" width="1320" height="3300" viewBox="-101 -101 1320 3300"><rect x="-101.000000" y="-101.000000" width="1320.000000" height="3300.000000" rx="0.000000" fill="#FFFFFF" class=" fill-N7" stroke-width="0" /><style type="text/css"><![CDATA[
 .d2-3094856511 .text-bold {
 	font-family: "d2-3094856511-font-bold";
@@ -354,9 +354,8 @@ LoadAncestor -> Success
 <rect x="727.000000" y="2724.000000" width="26" height="21" fill="black"></rect>
 <rect x="919.000000" y="2729.000000" width="22" height="21" fill="black"></rect>
 </mask></svg></svg>
-<!-- END mdsh -->
 
-## Detailed Process
+<!-- END md-process-blocks -->
 
 ### 1. Declared Path (Tier 1 - Highest Priority)
 
@@ -483,3 +482,4 @@ If no declared or registered notebooks match, the system performs an ancestor di
 5. **NOT FOUND** → Return nil
 
 This discovery system ensures OpenNotes works seamlessly across different project environments while maintaining predictable, efficient behavior.
+

@@ -4,6 +4,12 @@ set -euo pipefail
 
 echo "Building documentation..."
 
+# Build the processor if needed
+if [ ! -f "dist/md-process-blocks" ] || [ "pkgs/md-process-blocks-cli/main.go" -nt "dist/md-process-blocks" ]; then
+  echo "Building md-process-blocks..."
+  (cd pkgs/md-process-blocks-cli && go build -o ../../dist/md-process-blocks)
+fi
+
 # Create docs directory if it doesn't exist
 mkdir -p docs
 
@@ -13,7 +19,7 @@ for src in pkgs/docs/*.md; do
   dst="docs/$filename"
   
   echo "Processing: $src -> $dst"
-  mdsh -i "$src" -o "$dst"
+  dist/md-process-blocks -i "$src" -o "$dst"
 done
 
 echo "✓ Documentation built successfully"

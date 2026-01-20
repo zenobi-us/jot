@@ -461,3 +461,4 @@ Most note tools give you basic search. OpenNotes gives you a full database query
 - **[Read the SQL Guide](sql-guide.md)** for advanced query patterns
 - **[See the Import Guide](import-workflow-guide.md)** if you're having import issues
 - **[Join the Community](https://github.com/zenobi-us/opennotes)** on GitHub
+
