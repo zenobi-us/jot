@@ -13,6 +13,8 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      LOG_LEVEL: error  # Reduce log noise in CI
     steps:
       - uses: actions/checkout@v4
 
@@ -40,6 +42,8 @@ jobs:
 
   coverage:
     runs-on: ubuntu-latest
+    env:
+      LOG_LEVEL: error  # Reduce log noise in CI
     steps:
       - uses: actions/checkout@v4
 
