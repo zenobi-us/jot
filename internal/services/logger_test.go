@@ -1,12 +1,40 @@
 package services
 
 import (
+	"os"
 	"testing"
 
 	"github.com/rs/zerolog"
 )
 
+// saveAndRestoreLogger is a test helper that saves the current logger state
+// and restores it after the test completes. This prevents logger tests from
+// affecting subsequent tests when running with coverage.
+func saveAndRestoreLogger(t *testing.T) {
+	t.Helper()
+	originalLevel := os.Getenv("LOG_LEVEL")
+	originalFormat := os.Getenv("LOG_FORMAT")
+	originalDebug := os.Getenv("DEBUG")
+	
+	t.Cleanup(func() {
+		// Restore original environment (t.Setenv already does this)
+		// But we need to re-initialize the logger with the original settings
+		if originalLevel != "" {
+			os.Setenv("LOG_LEVEL", originalLevel)
+		}
+		if originalFormat != "" {
+			os.Setenv("LOG_FORMAT", originalFormat)
+		}
+		if originalDebug != "" {
+			os.Setenv("DEBUG", originalDebug)
+		}
+		InitLogger()
+	})
+}
+
 func TestInitLogger_DefaultLevel(t *testing.T) {
+	saveAndRestoreLogger(t)
+	
 	// Save original env vars
 	t.Setenv("DEBUG", "")
 	t.Setenv("LOG_LEVEL", "")
@@ -20,6 +48,7 @@ func TestInitLogger_DefaultLevel(t *testing.T) {
 }
 
 func TestInitLogger_DEBUG_EnvVar(t *testing.T) {
+	saveAndRestoreLogger(t)
 	t.Setenv("DEBUG", "1")
 	t.Setenv("LOG_LEVEL", "")
 
@@ -31,6 +60,7 @@ func TestInitLogger_DEBUG_EnvVar(t *testing.T) {
 }
 
 func TestInitLogger_DEBUG_AnyValue(t *testing.T) {
+	saveAndRestoreLogger(t)
 	// Any non-empty value should enable debug
 	t.Setenv("DEBUG", "true")
 	t.Setenv("LOG_LEVEL", "")
@@ -43,6 +73,7 @@ func TestInitLogger_DEBUG_AnyValue(t *testing.T) {
 }
 
 func TestInitLogger_LOG_LEVEL_EnvVar(t *testing.T) {
+	saveAndRestoreLogger(t)
 	t.Setenv("DEBUG", "")
 	t.Setenv("LOG_LEVEL", "warn")
 
@@ -54,6 +85,7 @@ func TestInitLogger_LOG_LEVEL_EnvVar(t *testing.T) {
 }
 
 func TestInitLogger_LOG_LEVEL_Precedence(t *testing.T) {
+	saveAndRestoreLogger(t)
 	// LOG_LEVEL should override DEBUG
 	t.Setenv("DEBUG", "1")
 	t.Setenv("LOG_LEVEL", "error")
@@ -66,6 +98,7 @@ func TestInitLogger_LOG_LEVEL_Precedence(t *testing.T) {
 }
 
 func TestInitLogger_LOG_LEVEL_InvalidValue(t *testing.T) {
+	saveAndRestoreLogger(t)
 	// Invalid LOG_LEVEL should fall back to default (info) or DEBUG setting
 	t.Setenv("DEBUG", "")
 	t.Setenv("LOG_LEVEL", "invalid_level")
@@ -79,6 +112,7 @@ func TestInitLogger_LOG_LEVEL_InvalidValue(t *testing.T) {
 }
 
 func TestInitLogger_LOG_LEVEL_InvalidWithDebug(t *testing.T) {
+	saveAndRestoreLogger(t)
 	// Invalid LOG_LEVEL should not override DEBUG
 	t.Setenv("DEBUG", "1")
 	t.Setenv("LOG_LEVEL", "invalid_level")
@@ -92,6 +126,7 @@ func TestInitLogger_LOG_LEVEL_InvalidWithDebug(t *testing.T) {
 }
 
 func TestInitLogger_AllLevels(t *testing.T) {
+	saveAndRestoreLogger(t)
 	levels := []struct {
 		name     string
 		expected zerolog.Level
@@ -120,6 +155,7 @@ func TestInitLogger_AllLevels(t *testing.T) {
 }
 
 func TestLog_ReturnsNamespacedLogger(t *testing.T) {
+	saveAndRestoreLogger(t)
 	t.Setenv("DEBUG", "")
 	t.Setenv("LOG_LEVEL", "")
 	InitLogger()
@@ -133,6 +169,7 @@ func TestLog_ReturnsNamespacedLogger(t *testing.T) {
 }
 
 func TestLog_DifferentNamespaces(t *testing.T) {
+	saveAndRestoreLogger(t)
 	InitLogger()
 
 	logger1 := Log("Namespace1")
@@ -150,6 +187,7 @@ func TestLog_DifferentNamespaces(t *testing.T) {
 }
 
 func TestInitLogger_LOG_FORMAT_Compact(t *testing.T) {
+	saveAndRestoreLogger(t)
 	t.Setenv("LOG_FORMAT", "compact")
 	t.Setenv("DEBUG", "")
 	t.Setenv("LOG_LEVEL", "")
@@ -164,6 +202,7 @@ func TestInitLogger_LOG_FORMAT_Compact(t *testing.T) {
 }
 
 func TestInitLogger_LOG_FORMAT_JSON(t *testing.T) {
+	saveAndRestoreLogger(t)
 	t.Setenv("LOG_FORMAT", "json")
 	t.Setenv("DEBUG", "")
 	t.Setenv("LOG_LEVEL", "")
@@ -177,6 +216,7 @@ func TestInitLogger_LOG_FORMAT_JSON(t *testing.T) {
 }
 
 func TestInitLogger_LOG_FORMAT_Console(t *testing.T) {
+	saveAndRestoreLogger(t)
 	t.Setenv("LOG_FORMAT", "console")
 	t.Setenv("DEBUG", "")
 	t.Setenv("LOG_LEVEL", "")
@@ -190,6 +230,7 @@ func TestInitLogger_LOG_FORMAT_Console(t *testing.T) {
 }
 
 func TestInitLogger_LOG_FORMAT_CI(t *testing.T) {
+	saveAndRestoreLogger(t)
 	t.Setenv("LOG_FORMAT", "ci")
 	t.Setenv("DEBUG", "")
 	t.Setenv("LOG_LEVEL", "")
@@ -203,6 +244,7 @@ func TestInitLogger_LOG_FORMAT_CI(t *testing.T) {
 }
 
 func TestInitLogger_LOG_FORMAT_Invalid(t *testing.T) {
+	saveAndRestoreLogger(t)
 	t.Setenv("LOG_FORMAT", "invalid_format")
 	t.Setenv("DEBUG", "")
 	t.Setenv("LOG_LEVEL", "")
@@ -216,6 +258,7 @@ func TestInitLogger_LOG_FORMAT_Invalid(t *testing.T) {
 }
 
 func TestInitLogger_LOG_FORMAT_Empty(t *testing.T) {
+	saveAndRestoreLogger(t)
 	t.Setenv("LOG_FORMAT", "")
 	t.Setenv("DEBUG", "")
 	t.Setenv("LOG_LEVEL", "")
@@ -229,6 +272,7 @@ func TestInitLogger_LOG_FORMAT_Empty(t *testing.T) {
 }
 
 func TestInitLogger_CombinedSettings(t *testing.T) {
+	saveAndRestoreLogger(t)
 	// Test that LOG_FORMAT and LOG_LEVEL work together
 	t.Setenv("LOG_FORMAT", "json")
 	t.Setenv("LOG_LEVEL", "debug")
