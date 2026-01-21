@@ -47,6 +47,7 @@ Environment Variables:
   OPENNOTES_CONFIG    Path to config file (default: ~/.config/opennotes/config.json)
   DEBUG               Enable debug logging (set to any value)
   LOG_LEVEL           Set log level (debug, info, warn, error)
+  LOG_FORMAT          Set log format (compact, console, json, ci) [default: compact]
 
 Examples:
   # Initialize configuration

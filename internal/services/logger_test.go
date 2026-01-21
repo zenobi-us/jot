@@ -148,3 +148,95 @@ func TestLog_DifferentNamespaces(t *testing.T) {
 		t.Error("Log('Namespace2') returned invalid logger")
 	}
 }
+
+func TestInitLogger_LOG_FORMAT_Compact(t *testing.T) {
+	t.Setenv("LOG_FORMAT", "compact")
+	t.Setenv("DEBUG", "")
+	t.Setenv("LOG_LEVEL", "")
+
+	InitLogger()
+
+	// Should initialize without error
+	// We can't easily inspect the writer configuration, but we can verify the logger works
+	if zerolog.GlobalLevel() != zerolog.InfoLevel {
+		t.Errorf("InitLogger() with LOG_FORMAT=compact should have info level, got %v", zerolog.GlobalLevel())
+	}
+}
+
+func TestInitLogger_LOG_FORMAT_JSON(t *testing.T) {
+	t.Setenv("LOG_FORMAT", "json")
+	t.Setenv("DEBUG", "")
+	t.Setenv("LOG_LEVEL", "")
+
+	InitLogger()
+
+	// JSON format should still respect log level
+	if zerolog.GlobalLevel() != zerolog.InfoLevel {
+		t.Errorf("InitLogger() with LOG_FORMAT=json should have info level, got %v", zerolog.GlobalLevel())
+	}
+}
+
+func TestInitLogger_LOG_FORMAT_Console(t *testing.T) {
+	t.Setenv("LOG_FORMAT", "console")
+	t.Setenv("DEBUG", "")
+	t.Setenv("LOG_LEVEL", "")
+
+	InitLogger()
+
+	// Console format should still respect log level
+	if zerolog.GlobalLevel() != zerolog.InfoLevel {
+		t.Errorf("InitLogger() with LOG_FORMAT=console should have info level, got %v", zerolog.GlobalLevel())
+	}
+}
+
+func TestInitLogger_LOG_FORMAT_CI(t *testing.T) {
+	t.Setenv("LOG_FORMAT", "ci")
+	t.Setenv("DEBUG", "")
+	t.Setenv("LOG_LEVEL", "")
+
+	InitLogger()
+
+	// CI format should still respect log level
+	if zerolog.GlobalLevel() != zerolog.InfoLevel {
+		t.Errorf("InitLogger() with LOG_FORMAT=ci should have info level, got %v", zerolog.GlobalLevel())
+	}
+}
+
+func TestInitLogger_LOG_FORMAT_Invalid(t *testing.T) {
+	t.Setenv("LOG_FORMAT", "invalid_format")
+	t.Setenv("DEBUG", "")
+	t.Setenv("LOG_LEVEL", "")
+
+	InitLogger()
+
+	// Invalid format should fall back to compact (default behavior)
+	if zerolog.GlobalLevel() != zerolog.InfoLevel {
+		t.Errorf("InitLogger() with invalid LOG_FORMAT should have info level, got %v", zerolog.GlobalLevel())
+	}
+}
+
+func TestInitLogger_LOG_FORMAT_Empty(t *testing.T) {
+	t.Setenv("LOG_FORMAT", "")
+	t.Setenv("DEBUG", "")
+	t.Setenv("LOG_LEVEL", "")
+
+	InitLogger()
+
+	// Empty format should use compact (default)
+	if zerolog.GlobalLevel() != zerolog.InfoLevel {
+		t.Errorf("InitLogger() with empty LOG_FORMAT should have info level, got %v", zerolog.GlobalLevel())
+	}
+}
+
+func TestInitLogger_CombinedSettings(t *testing.T) {
+	// Test that LOG_FORMAT and LOG_LEVEL work together
+	t.Setenv("LOG_FORMAT", "json")
+	t.Setenv("LOG_LEVEL", "debug")
+	t.Setenv("DEBUG", "")
+
+	InitLogger()
+
+	if zerolog.GlobalLevel() != zerolog.DebugLevel {
+		t.Errorf("InitLogger() with LOG_FORMAT=json and LOG_LEVEL=debug should have debug level, got %v", zerolog.GlobalLevel())
+	}
+}

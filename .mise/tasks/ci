@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+#MISE description="Run all tests"
+#MISE env={ LOG_LEVEL = "error" }
+
+set -e
+
+echo "Starting CI Tests..."
+
+mise setup
+mise lint
+mise test
+mise test-e2e
+mise test-bats
+mise build
+
+echo "CI Tests completed successfully."
+
