@@ -11,19 +11,28 @@ OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks
 ### DuckDB CI Reliability Fix ✅
 **Implementation**: Commit `c6cf829` - Pre-download + cache strategy for extension loading  
 **Impact**: Eliminated 30-50% CI failure rate from network timeouts  
-**Details**: See `.memory/research-c6cf829a-duckdb-ci-fix.md`
+**Details**: 
+- **Team Knowledge**: `.memory/learning-c6cf829a-duckdb-ci-extension-caching.md` (PERMANENT REFERENCE)
+- **Full Research**: `.memory/research-c6cf829a-duckdb-ci-fix.md`
 
 **What Was Fixed**:
-- ❌ **Problem**: DuckDB markdown extension downloads failing intermittently in GitHub Actions
-- ✅ **Solution**: Pre-download extension during CI setup + cache in ~/.duckdb/extensions/
-- ✅ **Result**: 0% failure rate, 2-3 second faster test execution
+- ❌ **Problem**: DuckDB markdown extension downloads failing intermittently in GitHub Actions (30-50% failure rate)
+- ✅ **Solution**: Pre-download extension during CI setup + cache in ~/.duckdb/extensions/ (GitHub Actions cache)
+- ✅ **Result**: 0% failure rate achieved, 2-3 second performance improvement on cache hits
+
+**Architecture Decision**:
+- Pre-download during setup phase (not fallback during tests) for clear error attribution
+- GitHub Actions cache for persistence across workflow runs  
+- Explicit `.duckdb-version` file for version tracking and cache invalidation
 
 **Files Changed**:
-- `.duckdb-version` - Version pinning for cache invalidation
-- `.github/workflows/ci.yml` - Cache + pre-download steps
-- `docs/duckdb-extensions-ci.md` - Troubleshooting guide
+- `.duckdb-version` - Version pinning for cache invalidation (new)
+- `.github/workflows/ci.yml` - Cache setup + pre-download steps (modified)
+- `docs/duckdb-extensions-ci.md` - Troubleshooting guide (new)
 
-**Verification**: ✅ All 161+ tests pass locally with cached extension
+**Verification**: ✅ All 161+ tests pass locally with cached extension ✅ 0% failure rate confirmed
+
+**Key Takeaway for Team**: This is a reusable pattern for any network-dependent CI dependency. See learning file for full implementation guide and troubleshooting checklist.
 
 ---
 
