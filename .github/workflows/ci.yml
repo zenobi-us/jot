@@ -13,6 +13,8 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      LOG_LEVEL: error # Reduce log noise in CI
     steps:
       - uses: actions/checkout@v4
 
@@ -22,6 +24,27 @@ jobs:
           install: true
           cache: true
           experimental: true
+
+      - name: Cache DuckDB extensions
+        uses: actions/cache@v3
+        with:
+          path: ~/.duckdb/extensions
+          key: duckdb-extensions-${{ hashFiles('.duckdb-version') }}
+          restore-keys: |
+            duckdb-extensions-
+
+      - name: Download DuckDB markdown extension
+        run: |
+          mkdir -p ~/.duckdb/extensions/v1.4.3/linux_amd64
+          cd ~/.duckdb/extensions/v1.4.3/linux_amd64
+          if [ ! -f markdown.duckdb_extension ]; then
+            echo "Downloading markdown extension from community repository..."
+            wget -q http://community-extensions.duckdb.org/v1.4.3/linux_amd64/markdown.duckdb_extension.gz
+            gunzip markdown.duckdb_extension.gz
+            echo "✓ Extension downloaded and ready ($(du -h markdown.duckdb_extension | cut -f1))"
+          else
+            echo "✓ Using cached extension ($(du -h markdown.duckdb_extension | cut -f1))"
+          fi
 
       - name: Lint
         run: mise run lint
@@ -40,9 +63,10 @@ jobs:
 
   coverage:
     runs-on: ubuntu-latest
+    env:
+      LOG_LEVEL: error # Reduce log noise in CI
     steps:
       - uses: actions/checkout@v4
-
 
       - name: Setup Tooling
         uses: jdx/mise-action@d6e32c1796099e0f1f3ac741c220a8b7eae9e5dd
@@ -51,6 +75,26 @@ jobs:
           cache: true
           experimental: true
 
+      - name: Cache DuckDB extensions
+        uses: actions/cache@v3
+        with:
+          path: ~/.duckdb/extensions
+          key: duckdb-extensions-${{ hashFiles('.duckdb-version') }}
+          restore-keys: |
+            duckdb-extensions-
+
+      - name: Download DuckDB markdown extension
+        run: |
+          mkdir -p ~/.duckdb/extensions/v1.4.3/linux_amd64
+          cd ~/.duckdb/extensions/v1.4.3/linux_amd64
+          if [ ! -f markdown.duckdb_extension ]; then
+            echo "Downloading markdown extension from community repository..."
+            wget -q http://community-extensions.duckdb.org/v1.4.3/linux_amd64/markdown.duckdb_extension.gz
+            gunzip markdown.duckdb_extension.gz
+            echo "✓ Extension downloaded and ready ($(du -h markdown.duckdb_extension | cut -f1))"
+          else
+            echo "✓ Using cached extension ($(du -h markdown.duckdb_extension | cut -f1))"
+          fi
 
       - name: Generate coverage
         run: go test -v -coverprofile=coverage.out ./...

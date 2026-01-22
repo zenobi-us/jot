@@ -889,4 +889,3 @@ Once you've mastered these recipes:
 4. **Build dashboards** - Combine multiple reports into living documentation
 
 See [SQL Quick Reference](sql-quick-reference.md) for query examples and [JSON-SQL Guide](json-sql-guide.md) for advanced data transformation patterns.
-

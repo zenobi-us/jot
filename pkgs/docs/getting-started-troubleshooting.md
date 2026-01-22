@@ -1132,4 +1132,3 @@ Next steps:
 - Explore [Advanced Workflows](automation-recipes.md) for automation
 - Master [SQL Queries](sql-quick-reference.md) for custom analysis
 - Build a [Personal Knowledge Base](getting-started-power-users.md) with OpenNotes
-

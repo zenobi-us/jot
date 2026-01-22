@@ -1,0 +1,6 @@
+go 1.25.5
+
+use (
+	.
+	./pkgs/md-process-blocks-cli
+)

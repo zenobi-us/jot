@@ -129,6 +129,29 @@ Global configuration is stored in:
 
 Each notebook has a `.opennotes.json` file with notebook-specific settings.
 
+### Environment Variables
+
+Control logging behavior via environment variables:
+
+- **`LOG_LEVEL`** - Set log verbosity: `debug`, `info`, `warn`, `error` (default: `info`)
+- **`LOG_FORMAT`** - Set output format: `compact`, `console`, `json`, `ci` (default: `compact`)
+- **`OPENNOTES_CONFIG`** - Override config file path
+- **`DEBUG`** - Legacy flag, equivalent to `LOG_LEVEL=debug`
+
+**Examples:**
+```bash
+# Quiet mode for scripts
+LOG_LEVEL=error opennotes notes list
+
+# JSON logging for parsing
+LOG_FORMAT=json opennotes notes search "query" 2>&1 | jq 'select(.level=="error")'
+
+# CI-friendly output
+LOG_FORMAT=ci LOG_LEVEL=info mise run ci
+```
+
+See [Logging Configuration](docs/logging-configuration.md) for detailed examples and presets.
+
 ## Usage Examples
 
 ```bash

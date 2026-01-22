@@ -763,4 +763,3 @@ opennotes notes search --sql "SELECT file_path, (md_stats(content)).word_count F
 5. **Check [SQL Query Guide](sql-guide.md)** for advanced patterns
 
 Happy querying! 🎯
-

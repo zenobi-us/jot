@@ -1,19 +1,21 @@
 [[tools.bats]]
-version = "1.12.0"
+version = "1.13.0"
 backend = "aqua:bats-core/bats-core"
-"platforms.linux-arm64" = { url = "https://github.com/bats-core/bats-core/archive/refs/tags/v1.12.0.tar.gz"}
-"platforms.linux-x64" = { url = "https://github.com/bats-core/bats-core/archive/refs/tags/v1.12.0.tar.gz"}
-"platforms.macos-arm64" = { url = "https://github.com/bats-core/bats-core/archive/refs/tags/v1.12.0.tar.gz"}
-"platforms.macos-x64" = { url = "https://github.com/bats-core/bats-core/archive/refs/tags/v1.12.0.tar.gz"}
+"platforms.linux-x64" = { checksum = "blake3:d34af9fd0f9101d5309b2de31f3d1699e56a574d7d4b5e6380580a9e758a9744", url = "https://github.com/bats-core/bats-core/archive/refs/tags/v1.13.0.tar.gz"}
+
+[[tools."cargo:zimbatm/mdsh"]]
+version = "HEAD"
+backend = "cargo:zimbatm/mdsh"
 
 [[tools.duckdb]]
-version = "1.4.1"
+version = "1.4.3"
 backend = "aqua:duckdb/duckdb"
-"platforms.linux-arm64" = { checksum = "sha256:646f60c92268c441f0095ce855e16528a8539e466da2788649f359be8cbdc8d1", url = "https://github.com/duckdb/duckdb/releases/download/v1.4.1/duckdb_cli-linux-arm64.zip"}
-"platforms.linux-x64" = { checksum = "sha256:3e29952507ebd202e8d0e2678df4490689bfc9c86534e240b541791b969df0e1", url = "https://github.com/duckdb/duckdb/releases/download/v1.4.1/duckdb_cli-linux-amd64.zip"}
-"platforms.macos-arm64" = { checksum = "sha256:d6ac869dad8b197ce372b20162e2a95d20fc93b6e105505921e143da700bb263", url = "https://github.com/duckdb/duckdb/releases/download/v1.4.1/duckdb_cli-osx-universal.zip"}
-"platforms.macos-x64" = { checksum = "sha256:d6ac869dad8b197ce372b20162e2a95d20fc93b6e105505921e143da700bb263", url = "https://github.com/duckdb/duckdb/releases/download/v1.4.1/duckdb_cli-osx-universal.zip"}
-"platforms.windows-x64" = { checksum = "sha256:3fab5174658bf16189c80eaa047b3e7737847491c9e4433a985adf014618cbd9", url = "https://github.com/duckdb/duckdb/releases/download/v1.4.1/duckdb_cli-windows-amd64.zip"}
+"platforms.linux-x64" = { checksum = "sha256:7a9e36141a71a353f54dfbeed607a5218c3425ce2d417610da08443259a12f7c", url = "https://github.com/duckdb/duckdb/releases/download/v1.4.3/duckdb_cli-linux-amd64.zip"}
+
+[[tools."github:terrastruct/d2"]]
+version = "0.7.1"
+backend = "github:terrastruct/d2"
+"platforms.linux-x64" = { checksum = "sha256:eb172adf59f38d1e5a70ab177591356754ffaf9bebb84e0ca8b767dfb421dad7", url = "https://github.com/terrastruct/d2/releases/download/v0.7.1/d2-v0.7.1-linux-amd64.tar.gz", url_api = "https://api.github.com/repos/terrastruct/d2/releases/assets/284023615"}
 
 [[tools.gitleaks]]
 version = "8.30.0"
@@ -79,6 +81,10 @@ backend = "aqua:jdx/hk"
 "platforms.macos-arm64" = { checksum = "sha256:923763567753e9dc26ea13a052bf8252664539c8a19521b09482c404e4f187e8", url = "https://github.com/jdx/hk/releases/download/v1.26.0/hk-aarch64-apple-darwin.tar.gz"}
 "platforms.windows-x64" = { checksum = "sha256:4aa59cd5746b9dc82762ed8fdb0ae24d4d15bf09f634af590a2f39de2a157d9f", url = "https://github.com/jdx/hk/releases/download/v1.26.0/hk-x86_64-pc-windows-msvc.zip"}
 
+[[tools."npm:prettier"]]
+version = "3.8.0"
+backend = "npm:prettier"
+
 [[tools."npm:release-please"]]
 version = "17.1.3"
 backend = "npm:release-please"
@@ -86,6 +92,11 @@ backend = "npm:release-please"
 [[tools."npm:semver"]]
 version = "7.7.3"
 backend = "npm:semver"
+
+[[tools.pandoc]]
+version = "3.8.3"
+backend = "github:jgm/pandoc"
+"platforms.linux-x64" = { checksum = "sha256:c224fab89f827d3623380ecb7c1078c163c769c849a14ac27e8d3bfbb914c9b4", url = "https://github.com/jgm/pandoc/releases/download/3.8.3/pandoc-3.8.3-linux-amd64.tar.gz", url_api = "https://api.github.com/repos/jgm/pandoc/releases/assets/322857855"}
 
 [[tools.pkl]]
 version = "0.30.2"
@@ -106,13 +117,9 @@ backend = "aqua:koalaman/shellcheck"
 "platforms.windows-x64" = { checksum = "sha256:8a4e35ab0b331c85d73567b12f2a444df187f483e5079ceffa6bda1faa2e740e", url = "https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.zip"}
 
 [[tools.trufflehog]]
-version = "3.91.2"
+version = "3.92.5"
 backend = "aqua:trufflesecurity/trufflehog"
-"platforms.linux-arm64" = { checksum = "sha256:21cb7dcd23df56b30b985d97ed9816c2393118a2b9e7df842cb5e61c46b7dec0", url = "https://github.com/trufflesecurity/trufflehog/releases/download/v3.91.2/trufflehog_3.91.2_linux_arm64.tar.gz"}
-"platforms.linux-x64" = { checksum = "sha256:72c1d5b465878887178c33063ef2893b9f1529e79af7f24169fed52868b2c056", url = "https://github.com/trufflesecurity/trufflehog/releases/download/v3.91.2/trufflehog_3.91.2_linux_amd64.tar.gz"}
-"platforms.macos-arm64" = { checksum = "sha256:c86f385bdcc933272609462ba13c972b56f497351b93b21306ae461c961d6976", url = "https://github.com/trufflesecurity/trufflehog/releases/download/v3.91.2/trufflehog_3.91.2_darwin_arm64.tar.gz"}
-"platforms.macos-x64" = { checksum = "sha256:229ac6d818106c8d25e2f55636d78fb8f17790fd4b2ca32e0244229e447086d0", url = "https://github.com/trufflesecurity/trufflehog/releases/download/v3.91.2/trufflehog_3.91.2_darwin_amd64.tar.gz"}
-"platforms.windows-x64" = { checksum = "sha256:a6f88baf9c18e61f81a75b44a1b56f067d4fd469d21c944f82177ca54cada6e4", url = "https://github.com/trufflesecurity/trufflehog/releases/download/v3.91.2/trufflehog_3.91.2_windows_amd64.tar.gz"}
+"platforms.linux-x64" = { checksum = "sha256:3ab99cd9cc07a1b684a6a71e9b4af24aba1a21a2b92474ef0d23cd2d33f4f664", url = "https://github.com/trufflesecurity/trufflehog/releases/download/v3.92.5/trufflehog_3.92.5_linux_amd64.tar.gz"}
 
 [[tools.usage]]
 version = "2.8.0"

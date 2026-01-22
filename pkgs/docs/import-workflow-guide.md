@@ -884,4 +884,3 @@ After successfully importing your notes:
 - 📋 **[SQL Quick Reference](sql-quick-reference.md)** - Practical query patterns
 - 🔍 **[Notebook Discovery](notebook-discovery.md)** - Multi-notebook management
 - 🤖 **[Automation & JSON Integration](json-sql-guide.md)** - Advanced automation patterns
-

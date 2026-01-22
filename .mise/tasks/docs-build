@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Build documentation from pkgs/docs to docs/
+set -euo pipefail
+
+echo "Building documentation..."
+
+# Build the processor if needed
+if [ ! -f "dist/md-process-blocks" ] || [ "pkgs/md-process-blocks-cli/main.go" -nt "dist/md-process-blocks" ]; then
+  echo "Building md-process-blocks..."
+  (cd pkgs/md-process-blocks-cli && go build -o ../../dist/md-process-blocks)
+fi
+
+# Create docs directory if it doesn't exist
+mkdir -p docs
+
+# Process each markdown file in pkgs/docs
+for src in pkgs/docs/*.md; do
+  filename=$(basename "$src")
+  dst="docs/$filename"
+  
+  echo "Processing: $src -> $dst"
+  dist/md-process-blocks -i "$src" -o "$dst"
+done
+
+echo "✓ Documentation built successfully"
