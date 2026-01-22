@@ -544,14 +544,14 @@ func TestSearchService_ParseConditions_InvalidField(t *testing.T) {
 	svc := services.NewSearchService()
 
 	invalidFields := []string{
-		"content",           // not allowed - could be SQL injection vector
-		"data.password",     // not allowed - not in whitelist
-		"file_path",         // not allowed - use "path" instead
-		"metadata",          // not allowed - too broad
-		"SELECT",            // SQL keyword
-		"DROP",              // SQL keyword
-		"; DROP TABLE",      // SQL injection attempt
-		"data.tag; DELETE",  // SQL injection attempt
+		"content",          // not allowed - could be SQL injection vector
+		"data.password",    // not allowed - not in whitelist
+		"file_path",        // not allowed - use "path" instead
+		"metadata",         // not allowed - too broad
+		"SELECT",           // SQL keyword
+		"DROP",             // SQL keyword
+		"; DROP TABLE",     // SQL injection attempt
+		"data.tag; DELETE", // SQL injection attempt
 	}
 
 	for _, field := range invalidFields {
@@ -940,4 +940,483 @@ func TestSearchService_ParseConditions_AllEmpty(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Len(t, conditions, 0)
+}
+
+// ============================================================================
+// Glob Pattern Unit Tests - globToLike function
+// ============================================================================
+
+func TestGlobToLike_SingleStar(t *testing.T) {
+	tests := []struct {
+		name     string
+		glob     string
+		expected string
+	}{
+		{"simple star extension", "*.md", "%.md"},
+		{"star at end", "dir/*", "dir/%"},
+		{"star prefix", "prefix-*", "prefix-%"},
+		{"star in middle", "dir/*/file.md", "dir/%/file.md"},
+		{"multiple stars", "*/*/file.md", "%/%/file.md"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := services.GlobToLike(tt.glob)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestGlobToLike_DoubleStar(t *testing.T) {
+	tests := []struct {
+		name     string
+		glob     string
+		expected string
+	}{
+		{"double star slash", "**/*.md", "%/%.md"},
+		{"double star at end", "epics/**", "epics/%"},
+		{"double star in path", "**/tasks/*.md", "%/tasks/%.md"},
+		{"multiple double stars", "**/**/file.md", "%/%/file.md"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := services.GlobToLike(tt.glob)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestGlobToLike_QuestionMark(t *testing.T) {
+	tests := []struct {
+		name     string
+		glob     string
+		expected string
+	}{
+		{"single question mark", "file?.md", "file_.md"},
+		{"multiple question marks", "task-??.md", "task-__.md"},
+		{"question mark in path", "dir?/file.md", "dir_/file.md"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := services.GlobToLike(tt.glob)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestGlobToLike_EscapeSQLChars(t *testing.T) {
+	tests := []struct {
+		name     string
+		glob     string
+		expected string
+	}{
+		{"percent in pattern", "100%", "100\\%"},
+		{"underscore in pattern", "file_name", "file\\_name"},
+		{"both special chars", "100%_test", "100\\%\\_test"},
+		{"percent and glob star", "100%*.md", "100\\%%.md"},
+		{"underscore and glob question", "file_?.md", "file\\__.md"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := services.GlobToLike(tt.glob)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestGlobToLike_CombinedPatterns(t *testing.T) {
+	tests := []struct {
+		name     string
+		glob     string
+		expected string
+	}{
+		{"star and question", "*?.md", "%_.md"},
+		{"double star and question", "**/?est.md", "%/_est.md"},
+		{"complex pattern", "dir/**/*-?.md", "dir/%/%-_.md"},
+		{"all patterns", "**/*_test?/*.md", "%/%\\_test_/%.md"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := services.GlobToLike(tt.glob)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestGlobToLike_NoGlobChars(t *testing.T) {
+	tests := []struct {
+		name     string
+		glob     string
+		expected string
+	}{
+		{"exact path", "docs/architecture.md", "docs/architecture.md"},
+		{"simple filename", "readme.md", "readme.md"},
+		{"path with numbers", "task-001.md", "task-001.md"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := services.GlobToLike(tt.glob)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+// ============================================================================
+// Link Query Tests - links-to
+// ============================================================================
+
+func TestSearchService_BuildWhereClause_LinksTo_ExactPath(t *testing.T) {
+	svc := services.NewSearchService()
+
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "links-to", Operator: "=", Value: "epics/architecture.md"},
+	}
+
+	whereClause, params, err := svc.BuildWhereClause(conditions)
+
+	assert.NoError(t, err)
+	assert.Contains(t, whereClause, "EXISTS")
+	assert.Contains(t, whereClause, "unnest")
+	assert.Contains(t, whereClause, "LIKE")
+	assert.Contains(t, params, "epics/architecture.md")
+}
+
+func TestSearchService_BuildWhereClause_LinksTo_GlobPattern(t *testing.T) {
+	svc := services.NewSearchService()
+
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "links-to", Operator: "=", Value: "epics/**/*.md"},
+	}
+
+	whereClause, params, err := svc.BuildWhereClause(conditions)
+
+	assert.NoError(t, err)
+	assert.Contains(t, whereClause, "EXISTS")
+	// Glob pattern should be converted
+	assert.Contains(t, params, "epics/%/%.md")
+}
+
+func TestSearchService_BuildWhereClause_LinksTo_WithStar(t *testing.T) {
+	svc := services.NewSearchService()
+
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "links-to", Operator: "=", Value: "tasks/*.md"},
+	}
+
+	whereClause, params, err := svc.BuildWhereClause(conditions)
+
+	assert.NoError(t, err)
+	assert.Contains(t, whereClause, "EXISTS")
+	assert.Contains(t, params, "tasks/%.md")
+}
+
+func TestSearchService_BuildWhereClause_LinksTo_WithQuestionMark(t *testing.T) {
+	svc := services.NewSearchService()
+
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "links-to", Operator: "=", Value: "task-?.md"},
+	}
+
+	_, params, err := svc.BuildWhereClause(conditions)
+
+	assert.NoError(t, err)
+	assert.Contains(t, params, "task-_.md")
+}
+
+func TestSearchService_BuildWhereClause_LinksTo_NotCondition(t *testing.T) {
+	svc := services.NewSearchService()
+
+	conditions := []services.QueryCondition{
+		{Type: "not", Field: "links-to", Operator: "=", Value: "archived/**/*.md"},
+	}
+
+	whereClause, _, err := svc.BuildWhereClause(conditions)
+
+	assert.NoError(t, err)
+	assert.Contains(t, whereClause, "NOT")
+	assert.Contains(t, whereClause, "EXISTS")
+}
+
+func TestSearchService_BuildWhereClause_LinksTo_OrCondition(t *testing.T) {
+	svc := services.NewSearchService()
+
+	conditions := []services.QueryCondition{
+		{Type: "or", Field: "links-to", Operator: "=", Value: "epics/*.md"},
+		{Type: "or", Field: "links-to", Operator: "=", Value: "tasks/*.md"},
+	}
+
+	whereClause, params, err := svc.BuildWhereClause(conditions)
+
+	assert.NoError(t, err)
+	assert.Contains(t, whereClause, "OR")
+	assert.Contains(t, params, "epics/%.md")
+	assert.Contains(t, params, "tasks/%.md")
+}
+
+// ============================================================================
+// Link Query Tests - linked-by
+// ============================================================================
+
+func TestSearchService_BuildWhereClause_LinkedBy_ExactPath(t *testing.T) {
+	svc := services.NewSearchService()
+
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "linked-by", Operator: "=", Value: "planning/q1.md"},
+	}
+
+	// linked-by requires notebook glob
+	whereClause, params, err := svc.BuildWhereClauseWithGlob(conditions, "/notebook/**/*.md")
+
+	assert.NoError(t, err)
+	assert.Contains(t, whereClause, "EXISTS")
+	assert.Contains(t, whereClause, "unnest")
+	// Should contain notebook glob as first param
+	assert.Contains(t, params, "/notebook/**/*.md")
+}
+
+func TestSearchService_BuildWhereClause_LinkedBy_RequiresNotebookGlob(t *testing.T) {
+	svc := services.NewSearchService()
+
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "linked-by", Operator: "=", Value: "planning/q1.md"},
+	}
+
+	// Without notebook glob should error
+	_, _, err := svc.BuildWhereClause(conditions)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "linked-by queries require notebook context")
+}
+
+func TestSearchService_BuildWhereClause_LinkedBy_GlobPattern(t *testing.T) {
+	svc := services.NewSearchService()
+
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "linked-by", Operator: "=", Value: "epics/*.md"},
+	}
+
+	whereClause, params, err := svc.BuildWhereClauseWithGlob(conditions, "/notebook/**/*.md")
+
+	assert.NoError(t, err)
+	assert.Contains(t, whereClause, "EXISTS")
+	// Should convert glob to like pattern
+	assert.Contains(t, params, "%epics/%.md")
+}
+
+func TestSearchService_BuildWhereClause_LinkedBy_NotCondition(t *testing.T) {
+	svc := services.NewSearchService()
+
+	conditions := []services.QueryCondition{
+		{Type: "not", Field: "linked-by", Operator: "=", Value: "archived/old.md"},
+	}
+
+	whereClause, _, err := svc.BuildWhereClauseWithGlob(conditions, "/notebook/**/*.md")
+
+	assert.NoError(t, err)
+	assert.Contains(t, whereClause, "NOT")
+	assert.Contains(t, whereClause, "EXISTS")
+}
+
+// ============================================================================
+// Link Query Tests - Combined with Other Conditions
+// ============================================================================
+
+func TestSearchService_BuildWhereClause_LinksTo_CombinedWithDataField(t *testing.T) {
+	svc := services.NewSearchService()
+
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "data.tag", Operator: "=", Value: "epic"},
+		{Type: "and", Field: "links-to", Operator: "=", Value: "tasks/**/*.md"},
+	}
+
+	whereClause, params, err := svc.BuildWhereClause(conditions)
+
+	assert.NoError(t, err)
+	assert.Contains(t, whereClause, "AND")
+	assert.Contains(t, whereClause, "metadata")
+	assert.Contains(t, whereClause, "EXISTS")
+	assert.Contains(t, params, "tag")
+	assert.Contains(t, params, "epic")
+	assert.Contains(t, params, "tasks/%/%.md")
+}
+
+func TestSearchService_BuildWhereClause_LinksTo_CombinedWithPath(t *testing.T) {
+	svc := services.NewSearchService()
+
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "path", Operator: "=", Value: "epics/*"},
+		{Type: "and", Field: "links-to", Operator: "=", Value: "tasks/*.md"},
+	}
+
+	whereClause, params, err := svc.BuildWhereClause(conditions)
+
+	assert.NoError(t, err)
+	assert.Contains(t, whereClause, "AND")
+	assert.Contains(t, whereClause, "file_path")
+	assert.Contains(t, whereClause, "EXISTS")
+	assert.Contains(t, params, "epics/%")
+	assert.Contains(t, params, "tasks/%.md")
+}
+
+func TestSearchService_BuildWhereClause_LinksTo_CombinedWithNot(t *testing.T) {
+	svc := services.NewSearchService()
+
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "links-to", Operator: "=", Value: "epics/*.md"},
+		{Type: "not", Field: "data.status", Operator: "=", Value: "archived"},
+	}
+
+	whereClause, params, err := svc.BuildWhereClause(conditions)
+
+	assert.NoError(t, err)
+	assert.Contains(t, whereClause, "AND")
+	assert.Contains(t, whereClause, "EXISTS")
+	assert.Contains(t, whereClause, "NOT")
+	assert.Contains(t, params, "epics/%.md")
+	assert.Contains(t, params, "archived")
+}
+
+func TestSearchService_BuildWhereClause_LinkedBy_CombinedWithLinksTo(t *testing.T) {
+	svc := services.NewSearchService()
+
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "links-to", Operator: "=", Value: "upstream/*.md"},
+		{Type: "and", Field: "linked-by", Operator: "=", Value: "downstream/source.md"},
+	}
+
+	whereClause, params, err := svc.BuildWhereClauseWithGlob(conditions, "/notebook/**/*.md")
+
+	assert.NoError(t, err)
+	// Should have two EXISTS clauses connected by AND
+	assert.Contains(t, whereClause, "AND")
+	// Both link operators should generate EXISTS
+	existsCount := strings.Count(whereClause, "EXISTS")
+	assert.Equal(t, 2, existsCount)
+	assert.Contains(t, params, "upstream/%.md")
+}
+
+func TestSearchService_BuildWhereClause_MultipleLinksTo(t *testing.T) {
+	svc := services.NewSearchService()
+
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "links-to", Operator: "=", Value: "epics/*.md"},
+		{Type: "and", Field: "links-to", Operator: "=", Value: "specs/*.md"},
+	}
+
+	whereClause, params, err := svc.BuildWhereClause(conditions)
+
+	assert.NoError(t, err)
+	// Should have two EXISTS clauses
+	existsCount := strings.Count(whereClause, "EXISTS")
+	assert.Equal(t, 2, existsCount)
+	assert.Contains(t, params, "epics/%.md")
+	assert.Contains(t, params, "specs/%.md")
+}
+
+// ============================================================================
+// Link Query Tests - Edge Cases
+// ============================================================================
+
+func TestSearchService_BuildWhereClause_LinksTo_EmptyLinksArrayHandling(t *testing.T) {
+	svc := services.NewSearchService()
+
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "links-to", Operator: "=", Value: "target.md"},
+	}
+
+	whereClause, _, err := svc.BuildWhereClause(conditions)
+
+	assert.NoError(t, err)
+	// Should use COALESCE to handle empty/null links arrays
+	assert.Contains(t, whereClause, "COALESCE")
+	// Should use TRY_CAST for safe type conversion
+	assert.Contains(t, whereClause, "TRY_CAST")
+}
+
+func TestSearchService_BuildWhereClause_LinksTo_SQLEscaping(t *testing.T) {
+	svc := services.NewSearchService()
+
+	// Pattern with SQL special characters that should be escaped
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "links-to", Operator: "=", Value: "100%_test/*.md"},
+	}
+
+	_, params, err := svc.BuildWhereClause(conditions)
+
+	assert.NoError(t, err)
+	// Should escape % and _ before converting glob
+	assert.Contains(t, params, "100\\%\\_test/%.md")
+}
+
+func TestSearchService_BuildWhereClause_LinksTo_DeepNesting(t *testing.T) {
+	svc := services.NewSearchService()
+
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "links-to", Operator: "=", Value: "a/b/c/d/e/**/*.md"},
+	}
+
+	_, params, err := svc.BuildWhereClause(conditions)
+
+	assert.NoError(t, err)
+	assert.Contains(t, params, "a/b/c/d/e/%/%.md")
+}
+
+func TestSearchService_ParseConditions_LinksToField(t *testing.T) {
+	svc := services.NewSearchService()
+
+	conditions, err := svc.ParseConditions(
+		[]string{"links-to=epics/*.md"},
+		[]string{},
+		[]string{},
+	)
+
+	assert.NoError(t, err)
+	assert.Len(t, conditions, 1)
+	assert.Equal(t, "links-to", conditions[0].Field)
+	assert.Equal(t, "epics/*.md", conditions[0].Value)
+}
+
+func TestSearchService_ParseConditions_LinkedByField(t *testing.T) {
+	svc := services.NewSearchService()
+
+	conditions, err := svc.ParseConditions(
+		[]string{"linked-by=planning/q1.md"},
+		[]string{},
+		[]string{},
+	)
+
+	assert.NoError(t, err)
+	assert.Len(t, conditions, 1)
+	assert.Equal(t, "linked-by", conditions[0].Field)
+	assert.Equal(t, "planning/q1.md", conditions[0].Value)
+}
+
+func TestSearchService_BuildWhereClause_ComplexLinkQuery(t *testing.T) {
+	svc := services.NewSearchService()
+
+	// Complex query: epics that link to tasks but not to archived
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "path", Operator: "=", Value: "epics/*"},
+		{Type: "and", Field: "links-to", Operator: "=", Value: "tasks/**/*.md"},
+		{Type: "not", Field: "links-to", Operator: "=", Value: "archived/**/*.md"},
+		{Type: "and", Field: "data.status", Operator: "=", Value: "active"},
+	}
+
+	whereClause, params, err := svc.BuildWhereClause(conditions)
+
+	assert.NoError(t, err)
+	// Verify all parts are present
+	assert.Contains(t, whereClause, "file_path")  // path condition
+	assert.Contains(t, whereClause, "EXISTS")     // link conditions
+	assert.Contains(t, whereClause, "NOT")        // not condition
+	assert.Contains(t, whereClause, "metadata")   // data.status
+	assert.Contains(t, params, "epics/%")         // path pattern
+	assert.Contains(t, params, "tasks/%/%.md")    // links-to pattern
+	assert.Contains(t, params, "archived/%/%.md") // not links-to pattern
+	assert.Contains(t, params, "active")          // status value
 }

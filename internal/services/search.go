@@ -233,7 +233,16 @@ func (s *SearchService) parseCondition(condType, flag string) (QueryCondition, e
 // BuildWhereClause constructs a parameterized SQL WHERE clause from conditions.
 // Returns the WHERE clause (without "WHERE"), the parameters, and any error.
 // SECURITY: Always use parameterized queries - never concatenate values into SQL.
+// Deprecated: Use BuildWhereClauseWithGlob for queries that may include linked-by conditions.
 func (s *SearchService) BuildWhereClause(conditions []QueryCondition) (string, []interface{}, error) {
+	return s.BuildWhereClauseWithGlob(conditions, "")
+}
+
+// BuildWhereClauseWithGlob constructs a parameterized SQL WHERE clause from conditions.
+// The notebookGlob parameter is required for linked-by queries to access the source document.
+// Returns the WHERE clause (without "WHERE"), the parameters, and any error.
+// SECURITY: Always use parameterized queries - never concatenate values into SQL.
+func (s *SearchService) BuildWhereClauseWithGlob(conditions []QueryCondition, notebookGlob string) (string, []interface{}, error) {
 	if len(conditions) == 0 {
 		return "", nil, nil
 	}
@@ -244,7 +253,7 @@ func (s *SearchService) BuildWhereClause(conditions []QueryCondition) (string, [
 	var params []interface{}
 
 	for _, cond := range conditions {
-		sqlPart, condParams, err := s.buildConditionSQL(cond)
+		sqlPart, condParams, err := s.buildConditionSQL(cond, notebookGlob)
 		if err != nil {
 			return "", nil, err
 		}
@@ -290,7 +299,8 @@ func (s *SearchService) BuildWhereClause(conditions []QueryCondition) (string, [
 
 // buildConditionSQL builds the SQL fragment for a single condition.
 // Returns the SQL fragment (with ? placeholders) and the parameter values.
-func (s *SearchService) buildConditionSQL(cond QueryCondition) (string, []interface{}, error) {
+// The notebookGlob is used for linked-by queries that need to access source documents.
+func (s *SearchService) buildConditionSQL(cond QueryCondition, notebookGlob string) (string, []interface{}, error) {
 	switch {
 	case strings.HasPrefix(cond.Field, "data."):
 		// Frontmatter field - use metadata map access
@@ -305,7 +315,7 @@ func (s *SearchService) buildConditionSQL(cond QueryCondition) (string, []interf
 		// Path field - use filepath
 		sqlPart := "file_path LIKE ?"
 		// Convert glob-like patterns to LIKE patterns
-		likePattern := globToLike(cond.Value)
+		likePattern := GlobToLike(cond.Value)
 		return sqlPart, []interface{}{likePattern}, nil
 
 	case cond.Field == "title":
@@ -316,7 +326,7 @@ func (s *SearchService) buildConditionSQL(cond QueryCondition) (string, []interf
 	case cond.Field == "links-to":
 		// Links-to: find documents whose links array contains the target
 		// This uses DuckDB's UNNEST and LIKE for glob support
-		likePattern := globToLike(cond.Value)
+		likePattern := GlobToLike(cond.Value)
 		sqlPart := `EXISTS (
 			SELECT 1 FROM (
 				SELECT unnest(COALESCE(TRY_CAST(metadata['links'] AS VARCHAR[]), ARRAY[]::VARCHAR[])) AS link
@@ -326,28 +336,54 @@ func (s *SearchService) buildConditionSQL(cond QueryCondition) (string, []interf
 		return sqlPart, []interface{}{likePattern}, nil
 
 	case cond.Field == "linked-by":
-		// Linked-by: find documents that are linked FROM the specified source
-		// This is a more complex query that would need a subquery or join
-		// For now, we implement a simpler version that checks if the path matches
-		likePattern := globToLike(cond.Value)
-		sqlPart := "file_path LIKE ?"
-		return sqlPart, []interface{}{likePattern}, nil
+		// Linked-by: find documents that the specified source links TO
+		// Returns documents that appear in the source's links array
+		// Graph: if source --links--> target, linked-by=source returns target
+		//
+		// We use a subquery that reads the source document and extracts its links,
+		// then check if the current file_path matches any of those links.
+		if notebookGlob == "" {
+			return "", nil, fmt.Errorf("linked-by queries require notebook context")
+		}
+		likePattern := GlobToLike(cond.Value)
+		// Use LIKE with the link to allow for relative path matching
+		// The file_path might be absolute while links might be relative
+		sqlPart := `EXISTS (
+			SELECT 1 FROM (
+				SELECT unnest(COALESCE(TRY_CAST(src.metadata['links'] AS VARCHAR[]), ARRAY[]::VARCHAR[])) AS link
+				FROM read_markdown(?, include_filepath:=true) AS src
+				WHERE src.file_path LIKE ?
+			) AS source_links
+			WHERE file_path LIKE '%' || source_links.link OR file_path LIKE '%/' || source_links.link
+		)`
+		return sqlPart, []interface{}{notebookGlob, "%" + likePattern}, nil
 
 	default:
 		return "", nil, fmt.Errorf("unsupported field: %s", cond.Field)
 	}
 }
 
-// globToLike converts glob patterns to SQL LIKE patterns.
+// GlobToLike converts glob patterns to SQL LIKE patterns.
 // ** -> %
 // * -> %
 // ? -> _
-func globToLike(pattern string) string {
-	// First handle ** (matches any path including subdirectories)
-	result := strings.ReplaceAll(pattern, "**", "%")
-	// Then handle * (matches any characters in a single path segment)
+// Also escapes SQL special characters (%, _) before conversion.
+func GlobToLike(pattern string) string {
+	// First escape SQL special characters that are NOT glob characters
+	// We need to be careful here - if user has literal % or _ in their pattern,
+	// we need to escape them first before converting glob chars
+	result := strings.ReplaceAll(pattern, "%", "\\%")
+	result = strings.ReplaceAll(result, "_", "\\_")
+
+	// Now convert glob patterns to SQL LIKE patterns
+	// Handle ** first (matches any path including subdirectories)
+	result = strings.ReplaceAll(result, "**", "{{DOUBLESTAR}}")
+	// Then handle * (matches any characters)
 	result = strings.ReplaceAll(result, "*", "%")
+	// Replace the placeholder back
+	result = strings.ReplaceAll(result, "{{DOUBLESTAR}}", "%")
 	// Handle ? (matches single character)
 	result = strings.ReplaceAll(result, "?", "_")
+
 	return result
 }

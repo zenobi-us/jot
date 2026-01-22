@@ -348,18 +348,18 @@ func (s *NoteService) SearchWithConditions(ctx context.Context, conditions []Que
 		return nil, fmt.Errorf("no notebook selected")
 	}
 
-	// Build WHERE clause from conditions
-	whereClause, params, err := s.searchService.BuildWhereClause(conditions)
-	if err != nil {
-		return nil, fmt.Errorf("failed to build query: %w", err)
-	}
-
 	db, err := s.dbService.GetDB(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	glob := filepath.Join(s.notebookPath, "**", "*.md")
+
+	// Build WHERE clause from conditions, passing glob for linked-by queries
+	whereClause, params, err := s.searchService.BuildWhereClauseWithGlob(conditions, glob)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build query: %w", err)
+	}
 
 	// Build the SQL query with parameterized WHERE clause
 	// Start with base query including glob pattern
