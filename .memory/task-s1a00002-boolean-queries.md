@@ -2,8 +2,8 @@
 id: s1a00002
 title: Boolean Query Subcommand Implementation
 created_at: 2026-01-22T12:55:00+10:30
-updated_at: 2026-01-22T12:55:00+10:30
-status: todo
+updated_at: 2026-01-23T07:15:00+10:30
+status: done
 epic_id: 3e01c563
 phase_id: 4a8b9c0d
 assigned_to: unassigned
@@ -260,11 +260,35 @@ func TestNotesSearchQuery_EmptyResult(t *testing.T)
 
 ## Acceptance Criteria
 
-- [ ] `search query` subcommand created
-- [ ] `--and`, `--or`, `--not` flags work correctly
-- [ ] Boolean logic combines correctly
-- [ ] Field whitelist enforced (security)
-- [ ] Value length validated (security)
-- [ ] Parameterized queries only (security)
-- [ ] 15+ tests including security tests
-- [ ] Clear error messages for invalid input
+- [x] `search query` subcommand created
+- [x] `--and`, `--or`, `--not` flags work correctly
+- [x] Boolean logic combines correctly
+- [x] Field whitelist enforced (security)
+- [x] Value length validated (security)
+- [x] Parameterized queries only (security)
+- [x] 15+ tests including security tests (30 tests added)
+- [x] Clear error messages for invalid input
+
+## Implementation Notes
+
+### Files Created/Modified
+
+1. **cmd/notes_search_query.go** (new) - The subcommand implementation with:
+   - `--and`, `--or`, `--not` StringArray flags
+   - Input validation and error handling
+   - Comprehensive help text with examples
+
+2. **internal/services/search.go** (extended) - Already contained `QueryCondition`, `ParseConditions()`, `BuildWhereClause()` from Task 1. Minor lint fix applied.
+
+3. **internal/services/search_test.go** (extended) - Added 30 new tests covering:
+   - ParseConditions validation (13 tests)
+   - BuildWhereClause generation (8 tests)
+   - SQL injection prevention (5 tests)
+   - Glob pattern conversion (3 tests)
+   - Edge cases (1 test)
+
+### Test Coverage
+
+- 30 new tests added for boolean query functionality
+- All existing tests continue to pass (161+ total tests)
+- Security tests verify parameterized SQL and field whitelist
