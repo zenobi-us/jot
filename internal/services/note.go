@@ -47,6 +47,7 @@ func (n *Note) DisplayName() string {
 type NoteService struct {
 	configService *ConfigService
 	dbService     *DbService
+	searchService *SearchService
 	notebookPath  string
 	log           zerolog.Logger
 }
@@ -56,24 +57,42 @@ func NewNoteService(cfg *ConfigService, db *DbService, notebookPath string) *Not
 	return &NoteService{
 		configService: cfg,
 		dbService:     db,
+		searchService: NewSearchService(),
 		notebookPath:  notebookPath,
 		log:           Log("NoteService"),
 	}
 }
 
 // SearchNotes returns all notes in the notebook matching the query.
-func (s *NoteService) SearchNotes(ctx context.Context, query string) ([]Note, error) {
+// If fuzzy is true, uses fuzzy matching; otherwise uses exact text search.
+func (s *NoteService) SearchNotes(ctx context.Context, query string, fuzzy bool) ([]Note, error) {
 	if s.notebookPath == "" {
 		return nil, fmt.Errorf("no notebook selected")
 	}
 
+	// Get all notes first
+	notes, err := s.getAllNotes(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Apply search filtering
+	if fuzzy {
+		return s.searchService.FuzzySearch(query, notes), nil
+	}
+
+	return s.searchService.TextSearch(query, notes), nil
+}
+
+// getAllNotes retrieves all notes from the notebook without filtering.
+func (s *NoteService) getAllNotes(ctx context.Context) ([]Note, error) {
 	db, err := s.dbService.GetDB(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	glob := filepath.Join(s.notebookPath, "**", "*.md")
-	s.log.Debug().Str("glob", glob).Str("query", query).Msg("searching notes")
+	s.log.Debug().Str("glob", glob).Msg("loading notes")
 
 	// Use DuckDB's read_markdown function with filepath included
 	sqlQuery := `SELECT * FROM read_markdown(?, include_filepath:=true)`
@@ -149,15 +168,6 @@ func (s *NoteService) SearchNotes(ctx context.Context, query string) ([]Note, er
 			}
 		}
 
-		// Filter by query if provided
-		if query != "" {
-			// Simple contains check on content and filepath
-			if !strings.Contains(strings.ToLower(note.Content), strings.ToLower(query)) &&
-				!strings.Contains(strings.ToLower(note.File.Filepath), strings.ToLower(query)) {
-				continue
-			}
-		}
-
 		notes = append(notes, note)
 	}
 
@@ -165,7 +175,7 @@ func (s *NoteService) SearchNotes(ctx context.Context, query string) ([]Note, er
 		return nil, err
 	}
 
-	s.log.Debug().Int("count", len(notes)).Msg("notes found")
+	s.log.Debug().Int("count", len(notes)).Msg("notes loaded")
 	return notes, nil
 }
 

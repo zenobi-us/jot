@@ -2,19 +2,20 @@
 id: d4fca870
 title: Views System - Named Reusable Query Presets
 created_at: 2026-01-20T23:47:00+10:30
-updated_at: 2026-01-20T23:47:00+10:30
-status: draft
+updated_at: 2026-01-22T12:45:00+10:30
+status: approved
 epic_id: 3e01c563
-requires_qa: true
+requires_qa: false
+qa_completed: 2026-01-22
 ---
 
 # Views System Specification
 
-⚠️ **DRAFT SPECIFICATION - REQUIRES Q&A DISCUSSION**
+✅ **APPROVED SPECIFICATION - Q&A DISCUSSION COMPLETED 2026-01-22**
 
 **Feature**: Views System for OpenNotes - Named, reusable query presets with parameterization
 
-**Status**: ⚠️ **DRAFT - REQUIRES Q&A DISCUSSION BEFORE IMPLEMENTATION**
+**Status**: ✅ **APPROVED - READY FOR IMPLEMENTATION**
 
 **Related Epic**: Advanced Note Creation and Search Capabilities (epic-3e01c563)
 
@@ -22,20 +23,22 @@ requires_qa: true
 
 ---
 
-## ⚠️ IMPORTANT - READ BEFORE PROCEEDING
+## ✅ Q&A DISCUSSION COMPLETED
 
-This specification contains **6 critical unresolved design questions** marked with ❓. 
+All 6 design questions have been resolved via Q&A discussion on 2026-01-22.
 
-**BEFORE IMPLEMENTING THIS FEATURE**, you MUST:
+**Decisions Made**:
 
-1. ✅ Read this entire specification
-2. ✅ Load the `qa-discussion` skill
-3. ✅ Conduct a Q&A discussion session to resolve all Open Questions
-4. ✅ Update this specification with the decisions made
-5. ✅ Get human approval of the updated specification
-6. ✅ ONLY THEN proceed to implementation
+| # | Question | Decision |
+|---|----------|----------|
+| 1 | Command Structure | **A**: `opennotes notes view <name> [--param key=value]` |
+| 2 | Output Formatting | **Flag-based**: `--format list|table|json`, views are query-only |
+| 3 | View Definition Scope | **A**: Query-only (conditions, order, limit, group by) |
+| 4 | Broken Links Detection | **C**: Both frontmatter AND markdown body links |
+| 5 | Kanban Parameter Handling | **Hybrid**: param → notebook config → built-in default |
+| 6 | Orphans Definition | **Hybrid**: param → config → default (isolated node) |
 
-**DO NOT BEGIN IMPLEMENTATION** until all questions are resolved and documented.
+**This specification is now APPROVED for implementation.**
 
 ---
 
@@ -106,48 +109,50 @@ The **Views System** provides named, reusable search queries with parameterizati
 
 ---
 
-## What's Out of Scope (Pending Q&A)
+## Design Decisions (Resolved via Q&A)
 
-❓ **Command structure** - Separate `view` command vs `list --view` vs `search --view`  
-❓ **Output formatting** - Standard list vs view-specific formatting (e.g., kanban board layout)  
-❓ **View definition scope** - Query-only vs query+display vs full UI components  
-❓ **Interactive features** - Actions, keybindings, custom behaviors  
-❓ **Broken links detection** - Frontmatter only, body only, or both?  
-❓ **Kanban parameter handling** - Required param, optional with default, or notebook config?  
-❓ **Orphans definition** - No incoming links, no links at all, or isolated nodes?
+✅ **Command structure** - Dedicated command: `opennotes notes view <name> [--param key=value]`  
+✅ **Output formatting** - Flag-based: `--format list|table|json` (views are query-only, formatting is orthogonal)  
+✅ **View definition scope** - Query-only (conditions, order, limit, group by)  
+✅ **Interactive features** - OUT OF SCOPE (views are query presets, not UI components)  
+✅ **Broken links detection** - Both frontmatter AND markdown body links (comprehensive)  
+✅ **Kanban parameter handling** - Hybrid fallback: param → notebook config → built-in default  
+✅ **Orphans definition** - Hybrid fallback: param → config → default (isolated node: no links AND not tagged)
 
-**Note**: These questions MUST be resolved via Q&A discussion before implementation.
+**All questions resolved via Q&A discussion on 2026-01-22.**
 
 ---
 
-## Current Working Design (Subject to Change)
+## Command Structure (Confirmed)
 
-### Placeholder Command Structure
+### Command Syntax
 
-**⚠️ WARNING**: This is a **PLACEHOLDER DESIGN**. Actual command structure will be determined via Q&A discussion.
-
-**User Preference Indicated**: Views should be its own command (separate from `list` and `search`).
-
-**Hypothetical Example 1** (Dedicated command):
 ```bash
+opennotes notes view <name> [--param key=value] [--format list|table|json]
+```
+
+**Examples**:
+```bash
+# Built-in views
 opennotes notes view today
-opennotes notes view kanban --param status=todo,done
 opennotes notes view recent
+opennotes notes view kanban
+opennotes notes view kanban --param status=todo,in-progress,done
+opennotes notes view untagged
+opennotes notes view orphans
+opennotes notes view broken-links
+
+# Output format options
+opennotes notes view today --format json
+opennotes notes view kanban --format table
+opennotes notes view recent --format list
+
+# Custom views (defined in config)
+opennotes notes view my-workflow
+opennotes notes view sprint-planning --param sprint=2026-Q1-S3
 ```
 
-**Hypothetical Example 2** (Subcommand of notes):
-```bash
-opennotes view today
-opennotes view kanban --param status=todo,done
-```
-
-**Hypothetical Example 3** (Integrated with list):
-```bash
-opennotes notes list --view today
-opennotes notes list --view kanban --param status=todo,done
-```
-
-**Decision Needed**: See Open Questions section.
+**Decision**: Dedicated command under `notes` subcommand, consistent with `notes list` and `notes search`.
 
 ---
 
@@ -313,10 +318,10 @@ ORDER BY created DESC
 
 **Template Variables**: None
 
-**Alternative Definition** (TBD via Q&A):
-- **Option A**: No incoming links (current design)
-- **Option B**: No links at all (no incoming OR outgoing)
-- **Option C**: Isolated nodes (no links AND not in any view/tag)
+**Definition** (Confirmed via Q&A):
+- **Default**: Isolated nodes (no links AND not tagged/categorized)
+- **Configurable**: Hybrid fallback (param → notebook config → default)
+- Users can override via `--param definition=no-incoming|no-links|isolated`
 
 **Example Output**:
 ```
@@ -337,10 +342,10 @@ ORDER BY created DESC
 
 **Use Case**: Identify and fix broken references in knowledge graph
 
-**Detection Scope** (TBD via Q&A):
-- **Option A**: Frontmatter links only (`data.links` array)
-- **Option B**: Markdown body links only (parse `[text](path)` syntax)
-- **Option C**: Both frontmatter AND body links (comprehensive)
+**Detection Scope** (Confirmed via Q&A):
+- ✅ **Both frontmatter AND body links** (comprehensive coverage)
+- Frontmatter: `data.links` array
+- Body: Parse `[text](path)` and `[[wikilink]]` syntax
 
 **Query Logic** (assuming frontmatter + body links):
 ```sql
@@ -1361,165 +1366,85 @@ func BenchmarkViewService_ExecuteComplexView(b *testing.B) {
 
 ---
 
-## Open Questions (REQUIRES Q&A DISCUSSION)
+## Design Decisions (Q&A Completed 2026-01-22)
 
-⚠️ **CRITICAL**: These questions MUST be resolved via Q&A discussion before implementation begins.
-
----
-
-### Question 1: Command Structure
-
-**Context**: User indicated views should be its own command separate from `list` and `search`.
-
-**Options**:
-
-**A. Dedicated command: `opennotes notes view <name> [--param key=value]`**
-- **Pros**: Clear separation, dedicated help text, extensible
-- **Cons**: More commands to maintain
-
-**B. Subcommand of notes: `opennotes view <name> [--param key=value]`**
-- **Pros**: Shorter syntax, less nesting
-- **Cons**: Inconsistent with `opennotes notes list/search`
-
-**C. Integrated with list: `opennotes notes list --view <name> [--param key=value]`**
-- **Pros**: Reuses existing command, consistent flag pattern
-- **Cons**: Mixes two different mental models (list vs view)
-
-**D. Available in both list AND search: `opennotes notes {list|search} --view <name>`**
-- **Pros**: Maximum flexibility, works with both commands
-- **Cons**: Redundant, confusing which to use when
-
-**Recommendation**: ❓ **PENDING Q&A DISCUSSION**
-
-**Decision**: ❓ **PENDING**
+All 6 design questions have been resolved. See summary at top of document.
 
 ---
 
-### Question 2: Output Formatting
+### Decision 1: Command Structure ✅
 
-**Context**: Different views may benefit from different output formats (e.g., kanban board vs list).
+**Selected**: Option A - Dedicated command under notes
 
-**Options**:
+**Command**: `opennotes notes view <name> [--param key=value] [--format list|table|json]`
 
-**A. Always use standard list format**
-- **Pros**: Consistent, simple to implement
-- **Cons**: Missed opportunity for specialized formatting (kanban columns, link counts)
-
-**B. View-specific formatting (kanban shows columns, orphans shows link counts, etc.)**
-- **Pros**: Better UX for specialized views
-- **Cons**: More complex implementation, harder to predict output format
-
-**C. Configurable per view (view definition includes display format)**
-- **Pros**: Maximum flexibility, user-controlled
-- **Cons**: Complex schema, testing overhead
-
-**D. Flag-based override (`--format list|board|table|json`)**
-- **Pros**: User choice at invocation time
-- **Cons**: More flags to maintain, inconsistent defaults
-
-**Recommendation**: ❓ **PENDING Q&A DISCUSSION**
-
-**Decision**: ❓ **PENDING**
+**Rationale**: Clear separation, dedicated help text, consistent with `notes list` and `notes search`.
 
 ---
 
-### Question 3: View Definition Scope
+### Decision 2: Output Formatting ✅
 
-**Context**: Should views only define queries, or also include display/interaction logic?
+**Selected**: Flag-based output format (variant of Option D)
 
-**Options**:
+**Implementation**: 
+- Views are query-only (no display logic)
+- `--format` flag controls output: `list` (default), `table`, `json`
+- Kanban "view" is a grouped query; grouping/swimlanes are formatting concerns
 
-**A. Query-only (views are just saved queries)**
-- **Pros**: Simple, focused, easy to implement
-- **Cons**: Limited flexibility for specialized UX
-
-**B. Query + Display (views include formatting preferences)**
-- **Pros**: Better UX, supports specialized views like kanban
-- **Cons**: More complex schema and implementation
-
-**C. Query + Display + Actions (views can define keybindings, actions, interactive features)**
-- **Pros**: Maximum flexibility, powerful UX
-- **Cons**: Very complex, high maintenance burden
-
-**Recommendation**: ❓ **PENDING Q&A DISCUSSION**
-
-**Decision**: ❓ **PENDING**
+**Rationale**: Views are precomposed queries, not UI components. Formatting is orthogonal.
 
 ---
 
-### Question 4: Broken Links Detection
+### Decision 3: View Definition Scope ✅
 
-**Context**: Links can exist in frontmatter (`data.links`) and/or markdown body.
+**Selected**: Option A - Query-only
 
-**Options**:
+**Implementation**: Views define only:
+- Conditions (WHERE clauses)
+- Order (ORDER BY)
+- Limit
+- Group by
 
-**A. Frontmatter links only (`data.links` array)**
-- **Pros**: Simple, fast, well-defined
-- **Cons**: Misses markdown body links
-
-**B. Markdown body links only (parse `[text](path)` syntax)**
-- **Pros**: Catches most user-created links
-- **Cons**: Slower, requires markdown parsing
-
-**C. Both frontmatter AND body links**
-- **Pros**: Comprehensive, catches all links
-- **Cons**: More complex, slower performance
-
-**Recommendation**: ❓ **PENDING Q&A DISCUSSION**
-
-**Decision**: ❓ **PENDING**
+**Rationale**: Simple, focused, easy to implement. Display logic handled separately.
 
 ---
 
-### Question 5: Kanban Parameter Handling
+### Decision 4: Broken Links Detection ✅
 
-**Context**: Kanban view needs status column values.
+**Selected**: Option C - Both frontmatter AND body links
 
-**Options**:
+**Implementation**:
+- Check `data.links` array (frontmatter)
+- Parse `[text](path)` syntax (markdown links)
+- Parse `[[wikilink]]` syntax (wiki-style links)
 
-**A. Required parameter (error if not provided)**
-- **Pros**: Explicit, forces user to think about status values
-- **Cons**: Annoying for quick checks, requires typing status list every time
-
-**B. Optional with sensible default (backlog,todo,in-progress,done)**
-- **Pros**: Quick to invoke, works out of box
-- **Cons**: Default may not match user's workflow
-
-**C. Read from notebook config (`.opennotes.json` defines status values)**
-- **Pros**: Team-shared, consistent per project
-- **Cons**: Requires setup, not discoverable
-
-**D. Hybrid (use param if provided, else notebook config, else default)**
-- **Pros**: Maximum flexibility, progressive disclosure
-- **Cons**: Complex precedence logic
-
-**Recommendation**: ❓ **PENDING Q&A DISCUSSION**
-
-**Decision**: ❓ **PENDING**
+**Rationale**: Comprehensive coverage catches all broken references.
 
 ---
 
-### Question 6: Orphans Definition
+### Decision 5: Kanban Parameter Handling ✅
 
-**Context**: "Orphan" can mean different things in graph theory.
+**Selected**: Option D - Hybrid fallback chain
 
-**Options**:
+**Precedence**:
+1. `--param status=...` (if provided)
+2. Notebook config `.opennotes.json` `kanban.status` (if defined)
+3. Built-in default: `backlog,todo,in-progress,done`
 
-**A. No incoming links (no other notes link to it)**
-- **Pros**: Standard definition, useful for finding isolated content
-- **Cons**: Doesn't catch notes with outgoing but no incoming links
+**Rationale**: Maximum flexibility with progressive disclosure.
 
-**B. No links at all (no incoming OR outgoing links)**
-- **Pros**: Strict definition, truly isolated
-- **Cons**: Misses notes that link to others but aren't linked
+---
 
-**C. Isolated node (no links and not in any other view/tag)**
-- **Pros**: Catches truly forgotten content
-- **Cons**: Very complex to define and implement
+### Decision 6: Orphans Definition ✅
 
-**Recommendation**: ❓ **PENDING Q&A DISCUSSION**
+**Selected**: Hybrid fallback with Option C default
 
-**Decision**: ❓ **PENDING**
+**Precedence**:
+1. `--param definition=...` (if provided: `no-incoming`, `no-links`, `isolated`)
+2. Notebook config `.opennotes.json` `orphans.definition` (if defined)
+3. Built-in default: `isolated` (no links AND not tagged/categorized)
+
+**Rationale**: Catches truly forgotten content by default, configurable for other use cases.
 
 ---
 
@@ -1559,13 +1484,13 @@ func BenchmarkViewService_ExecuteComplexView(b *testing.B) {
 
 ### Blocked By
 
-⚠️ **BLOCKED**: Open questions must be resolved via Q&A discussion using `qa-discussion` skill.
+✅ **UNBLOCKED**: All open questions resolved via Q&A discussion on 2026-01-22.
 
 ---
 
 ## Next Steps
 
-### Step 1: Conduct Q&A Discussion ⚠️ REQUIRED
+### Step 1: Conduct Q&A Discussion ✅ COMPLETE
 
 1. ✅ Load the `qa-discussion` skill
 2. ✅ Prepare questions from Open Questions section
@@ -1574,7 +1499,7 @@ func BenchmarkViewService_ExecuteComplexView(b *testing.B) {
 
 ---
 
-### Step 2: Update Specification
+### Step 2: Update Specification ✅ COMPLETE
 
 1. ✅ Update this specification with Q&A decisions
 2. ✅ Remove ❓ markers and replace with ✅ confirmed decisions
@@ -1583,7 +1508,7 @@ func BenchmarkViewService_ExecuteComplexView(b *testing.B) {
 
 ---
 
-### Step 3: Review Updated Specification
+### Step 3: Review Updated Specification ✅ COMPLETE
 
 1. ✅ Review updated specification with stakeholders
 2. ✅ Validate all decisions align with project goals
@@ -1591,37 +1516,32 @@ func BenchmarkViewService_ExecuteComplexView(b *testing.B) {
 
 ---
 
-### Step 4: Approve for Implementation
+### Step 4: Approve for Implementation ✅ COMPLETE
 
 1. ✅ Get human approval of final specification
 2. ✅ Mark status as `approved` (change from `draft`)
-3. ✅ Create implementation task breakdown
+3. ⏳ Create implementation task breakdown (NEXT)
 
 ---
 
-### Step 5: Implementation
+### Step 5: Implementation ⏳ READY TO BEGIN
 
-1. ✅ Create detailed implementation tasks
-2. ✅ Assign tasks to implementation phase
-3. ✅ Begin implementation work
-
----
-
-## ⚠️ FINAL WARNING
-
-**DO NOT BEGIN IMPLEMENTATION** until:
-
-1. ✅ Q&A discussion is complete
-2. ✅ Specification is updated with decisions
-3. ✅ Human approval is obtained
-
-Implementing before Q&A discussion will result in wasted effort and rework.
+1. ⏳ Create detailed implementation tasks
+2. ⏳ Assign tasks to implementation phase
+3. ⏳ Begin implementation work
 
 ---
 
-**Specification Status**: 🟡 **DRAFT - AWAITING Q&A DISCUSSION**
+## ✅ SPECIFICATION APPROVED
+
+**Ready for implementation.** All questions resolved via Q&A discussion on 2026-01-22.
+
+---
+
+**Specification Status**: 🟢 **APPROVED - READY FOR IMPLEMENTATION**
 
 **Created**: 2026-01-20T23:47:00+10:30  
-**Last Updated**: 2026-01-20T23:47:00+10:30  
+**Last Updated**: 2026-01-22T12:45:00+10:30  
 **Author**: Claude (AI Assistant)  
-**Reviewer**: ❓ **PENDING HUMAN REVIEW**
+**Q&A Completed**: 2026-01-22  
+**Reviewer**: ✅ Human approved via Q&A discussion

@@ -10,8 +10,8 @@ import (
 
 var notesSearchCmd = &cobra.Command{
 	Use:   "search [query]",
-	Short: "Search notes (text or SQL)",
-	Long: `Searches notes by content or filename using DuckDB SQL.
+	Short: "Search notes (text, fuzzy, or SQL)",
+	Long: `Searches notes by content or filename using text search, fuzzy matching, or DuckDB SQL.
 
 The query searches both file names and content of markdown files.
 
@@ -23,6 +23,12 @@ DOCUMENTATION:
 Examples:
   # Search for notes containing "meeting"
   opennotes notes search "meeting"
+
+  # Fuzzy search (ranked results)
+  opennotes notes search "mtng" --fuzzy
+
+  # List all notes with fuzzy search
+  opennotes notes search --fuzzy
 
   # Search with specific notebook
   opennotes notes search "todo" --notebook ~/notes
@@ -85,9 +91,13 @@ SQL Security:
 			return display.RenderSQLResults(results)
 		}
 
-		// Normal search mode - require a query argument
-		if len(args) == 0 {
-			return fmt.Errorf("query argument required (or use --sql flag)")
+		// Get --fuzzy flag
+		fuzzyFlag, _ := cmd.Flags().GetBool("fuzzy")
+
+		// Get search term (optional for fuzzy mode)
+		var searchTerm string
+		if len(args) > 0 {
+			searchTerm = args[0]
 		}
 
 		nb, err := requireNotebook(cmd)
@@ -95,17 +105,30 @@ SQL Security:
 			return err
 		}
 
-		notes, err := nb.Notes.SearchNotes(context.Background(), args[0])
+		notes, err := nb.Notes.SearchNotes(context.Background(), searchTerm, fuzzyFlag)
 		if err != nil {
 			return fmt.Errorf("failed to search notes: %w", err)
 		}
 
 		if len(notes) == 0 {
-			fmt.Printf("No notes found matching '%s'\n", args[0])
+			if searchTerm != "" {
+				fmt.Printf("No notes found matching '%s'\n", searchTerm)
+			} else {
+				fmt.Println("No notes found")
+			}
 			return nil
 		}
 
-		fmt.Printf("Found %d note(s) matching '%s':\n\n", len(notes), args[0])
+		if searchTerm != "" {
+			searchMode := "matching"
+			if fuzzyFlag {
+				searchMode = "fuzzy matching"
+			}
+			fmt.Printf("Found %d note(s) %s '%s':\n\n", len(notes), searchMode, searchTerm)
+		} else {
+			fmt.Printf("Found %d note(s):\n\n", len(notes))
+		}
+
 		return displayNoteList(notes)
 	},
 }
@@ -118,5 +141,12 @@ func init() {
 		"sql",
 		"",
 		"Execute custom SQL query against notes (read-only, 30s timeout, SELECT/WITH only). File patterns (*.md, **/*.md) are resolved relative to notebook root directory for consistent behavior. Path traversal (../) is blocked for security. Examples: --sql \"SELECT * FROM read_markdown('**/*.md') LIMIT 5\"",
+	)
+
+	// Add --fuzzy flag for fuzzy matching
+	notesSearchCmd.Flags().Bool(
+		"fuzzy",
+		false,
+		"Enable fuzzy matching for ranked results. Matches notes by similarity instead of exact text. Title matches weighted higher than body matches.",
 	)
 }

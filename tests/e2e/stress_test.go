@@ -50,12 +50,12 @@ Here's some Unicode content for testing: 🚀 📊 ⭐ 🎯 💡
 Chinese: 测试内容 Japanese: テスト内容 Arabic: محتوى الاختبار
 
 ### Code Block
-` + "```go\n" +
-`func ExampleFunction() {
+`+"```go\n"+
+		`func ExampleFunction() {
     fmt.Printf("Note %d generated at %s", %d, "%s")
 }
-` + "```\n" +
-`
+`+"```\n"+
+		`
 ### Links and References
 - [External Link](https://example.com/note/%d)
 - Internal reference: [[Note %06d]]
@@ -97,14 +97,14 @@ func generateStressNotebook(t *testing.T, numNotes int, depth int) (string, *ser
 	t.Helper()
 
 	tempDir := t.TempDir()
-	
+
 	// Create notebook config
 	configContent := fmt.Sprintf(`{
 		"name": "Stress Test Notebook (%d notes)",
 		"root": ".",
 		"contexts": ["%s"]
 	}`, numNotes, tempDir)
-	
+
 	configPath := filepath.Join(tempDir, ".opennotes.json")
 	err := os.WriteFile(configPath, []byte(configContent), 0644)
 	require.NoError(t, err)
@@ -112,7 +112,7 @@ func generateStressNotebook(t *testing.T, numNotes int, depth int) (string, *ser
 	// Create notes in various directory structures
 	for i := 0; i < numNotes; i++ {
 		var notePath string
-		
+
 		if depth > 1 && i%10 == 0 {
 			// Create some nested structure
 			subdir := fmt.Sprintf("category_%d/subcategory_%d", i%5, i%25)
@@ -123,7 +123,7 @@ func generateStressNotebook(t *testing.T, numNotes int, depth int) (string, *ser
 		} else {
 			notePath = filepath.Join(tempDir, fmt.Sprintf("note_%06d.md", i))
 		}
-		
+
 		content := generateRandomNote(i)
 		err := os.WriteFile(notePath, []byte(content), 0644)
 		require.NoError(t, err)
@@ -132,10 +132,10 @@ func generateStressNotebook(t *testing.T, numNotes int, depth int) (string, *ser
 	// Create notebook service and open the notebook
 	configService, err := services.NewConfigService()
 	require.NoError(t, err)
-	
+
 	dbService := services.NewDbService()
 	t.Cleanup(func() { _ = dbService.Close() })
-	
+
 	notebookService := services.NewNotebookService(configService, dbService)
 	notebook, err := notebookService.Open(tempDir)
 	require.NoError(t, err)
@@ -150,7 +150,7 @@ func TestNoteService_LargeNotebook(t *testing.T) {
 	}
 
 	const numNotes = 1000 // Start with 1K for reasonable test time
-	
+
 	t.Logf("Generating %d notes for stress test...", numNotes)
 	start := time.Now()
 	_, notebook := generateStressNotebook(t, numNotes, 2)
@@ -159,12 +159,12 @@ func TestNoteService_LargeNotebook(t *testing.T) {
 
 	// Test search performance
 	searchStart := time.Now()
-	results, err := notebook.Notes.SearchNotes(context.Background(), "test")
+	results, err := notebook.Notes.SearchNotes(context.Background(), "test", false)
 	searchTime := time.Since(searchStart)
 	require.NoError(t, err)
-	
+
 	t.Logf("Search completed in %v, found %d results", searchTime, len(results))
-	
+
 	// Performance targets
 	assert.Less(t, searchTime.Seconds(), 2.0, "Search should complete in < 2 seconds")
 	assert.Greater(t, len(results), numNotes/2, "Search should find substantial results")
@@ -174,7 +174,7 @@ func TestNoteService_LargeNotebook(t *testing.T) {
 	count, err := notebook.Notes.Count(context.Background())
 	countTime := time.Since(countStart)
 	require.NoError(t, err)
-	
+
 	t.Logf("Count operation completed in %v, counted %d notes", countTime, count)
 	assert.Equal(t, numNotes, count, "Count should match generated notes")
 	assert.Less(t, countTime, 500*time.Millisecond, "Count should complete in < 500ms")
@@ -183,16 +183,16 @@ func TestNoteService_LargeNotebook(t *testing.T) {
 // TestNoteService_DeepNesting tests performance with deep directory structures
 func TestNoteService_DeepNesting(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	// Create deep directory structure
 	deepPath := tempDir
 	const maxDepth = 20 // Reasonable depth for testing
-	
+
 	for i := 0; i < maxDepth; i++ {
 		deepPath = filepath.Join(deepPath, fmt.Sprintf("level_%02d", i))
 		err := os.MkdirAll(deepPath, 0755)
 		require.NoError(t, err)
-		
+
 		// Add a note at this level
 		noteContent := fmt.Sprintf(`---
 title: "Deep Note Level %d"
@@ -203,12 +203,12 @@ depth: %d
 
 This note is at directory depth %d for testing deep structure handling.
 `, i, i, i, i)
-		
+
 		notePath := filepath.Join(deepPath, fmt.Sprintf("note_depth_%02d.md", i))
 		err = os.WriteFile(notePath, []byte(noteContent), 0644)
 		require.NoError(t, err)
 	}
-	
+
 	// Create notebook config at root
 	configContent := `{
 		"name": "Deep Nesting Test",
@@ -222,30 +222,30 @@ This note is at directory depth %d for testing deep structure handling.
 	// Test notebook discovery and operations
 	configService, err := services.NewConfigService()
 	require.NoError(t, err)
-	
+
 	dbService := services.NewDbService()
 	defer func() { _ = dbService.Close() }()
-	
+
 	notebookService := services.NewNotebookService(configService, dbService)
-	
+
 	// Test discovery performance
 	discoveryStart := time.Now()
 	hasNotebook := notebookService.HasNotebook(tempDir)
 	discoveryTime := time.Since(discoveryStart)
-	
+
 	assert.True(t, hasNotebook, "Should discover notebook with deep structure")
 	assert.Less(t, discoveryTime, 100*time.Millisecond, "Discovery should complete in < 100ms")
 	t.Logf("Deep structure discovery completed in %v", discoveryTime)
-	
+
 	// Test opening and searching deep structure
 	notebook, err := notebookService.Open(tempDir)
 	require.NoError(t, err)
-	
+
 	searchStart := time.Now()
-	results, err := notebook.Notes.SearchNotes(context.Background(), "depth")
+	results, err := notebook.Notes.SearchNotes(context.Background(), "depth", false)
 	searchTime := time.Since(searchStart)
 	require.NoError(t, err)
-	
+
 	t.Logf("Deep structure search completed in %v, found %d results", searchTime, len(results))
 	assert.Equal(t, maxDepth, len(results), "Should find notes at all depths")
 	assert.Less(t, searchTime.Seconds(), 1.0, "Deep search should complete in < 1 second")
@@ -258,7 +258,7 @@ func TestNoteService_LargeFiles(t *testing.T) {
 	}
 
 	tempDir := t.TempDir()
-	
+
 	// Create notebook config
 	configContent := `{
 		"name": "Large File Test",
@@ -280,48 +280,48 @@ size: "large"
 This file contains a large amount of content to test handling of substantial markdown files.
 
 `
-	
+
 	// Add 10MB of content
 	const targetSizeMB = 10
 	baseSizeKB := len(largeContent)
 	additionalBytes := (targetSizeMB * 1024 * 1024) - baseSizeKB
-	
+
 	padding := strings.Repeat("A", additionalBytes/100) // Reduce memory usage
 	for i := 0; i < 100; i++ {
 		largeContent += fmt.Sprintf("\n## Section %d\n%s\n", i, padding)
 	}
-	
+
 	largeFilePath := filepath.Join(tempDir, "large_note.md")
-	
+
 	writeStart := time.Now()
 	err = os.WriteFile(largeFilePath, []byte(largeContent), 0644)
 	writeTime := time.Since(writeStart)
 	require.NoError(t, err)
-	
+
 	t.Logf("Large file written in %v", writeTime)
 
 	// Test opening notebook with large file
 	configService, err := services.NewConfigService()
 	require.NoError(t, err)
-	
+
 	dbService := services.NewDbService()
 	defer func() { _ = dbService.Close() }()
-	
+
 	notebookService := services.NewNotebookService(configService, dbService)
-	
+
 	openStart := time.Now()
 	notebook, err := notebookService.Open(tempDir)
 	openTime := time.Since(openStart)
 	require.NoError(t, err)
-	
+
 	t.Logf("Notebook with large file opened in %v", openTime)
 
 	// Test search performance with large file
 	searchStart := time.Now()
-	results, err := notebook.Notes.SearchNotes(context.Background(), "Large")
+	results, err := notebook.Notes.SearchNotes(context.Background(), "Large", false)
 	searchTime := time.Since(searchStart)
 	require.NoError(t, err)
-	
+
 	t.Logf("Large file search completed in %v, found %d results", searchTime, len(results))
 	assert.Greater(t, len(results), 0, "Should find the large file")
 	assert.Less(t, searchTime.Seconds(), 5.0, "Large file search should complete in < 5 seconds")
@@ -335,7 +335,7 @@ func TestNoteService_UnicodeAtScale(t *testing.T) {
 
 	const numNotes = 500
 	tempDir := t.TempDir()
-	
+
 	// Create notebook config
 	configContent := `{
 		"name": "Unicode Scale Test",
@@ -372,11 +372,11 @@ Mixed content: Test%d with %s and 🚀 emoji.
 
 Search terms: unicode%d, test%d, %s
 
-`, unicodeSample, i, i, unicodeSample, 
-   unicodeContent[i%len(unicodeContent)], 
-   unicodeContent[(i+1)%len(unicodeContent)], 
-   unicodeContent[(i+2)%len(unicodeContent)],
-   i, unicodeSample, i, i, unicodeSample)
+`, unicodeSample, i, i, unicodeSample,
+			unicodeContent[i%len(unicodeContent)],
+			unicodeContent[(i+1)%len(unicodeContent)],
+			unicodeContent[(i+2)%len(unicodeContent)],
+			i, unicodeSample, i, i, unicodeSample)
 
 		notePath := filepath.Join(tempDir, fmt.Sprintf("unicode_note_%03d.md", i))
 		err := os.WriteFile(notePath, []byte(content), 0644)
@@ -386,10 +386,10 @@ Search terms: unicode%d, test%d, %s
 	// Test Unicode search performance
 	configService, err := services.NewConfigService()
 	require.NoError(t, err)
-	
+
 	dbService := services.NewDbService()
 	defer func() { _ = dbService.Close() }()
-	
+
 	notebookService := services.NewNotebookService(configService, dbService)
 	notebook, err := notebookService.Open(tempDir)
 	require.NoError(t, err)
@@ -397,13 +397,13 @@ Search terms: unicode%d, test%d, %s
 	// Test Unicode search
 	for _, searchTerm := range []string{"测试", "🚀", "test", "unicode"} {
 		searchStart := time.Now()
-		results, err := notebook.Notes.SearchNotes(context.Background(), searchTerm)
+		results, err := notebook.Notes.SearchNotes(context.Background(), searchTerm, false)
 		searchTime := time.Since(searchStart)
 		require.NoError(t, err)
-		
-		t.Logf("Unicode search for '%s' completed in %v, found %d results", 
+
+		t.Logf("Unicode search for '%s' completed in %v, found %d results",
 			searchTerm, searchTime, len(results))
-		
+
 		if searchTerm == "test" || searchTerm == "unicode" {
 			assert.Greater(t, len(results), numNotes/2, "Common terms should find many results")
 		}
@@ -418,20 +418,20 @@ func TestNoteService_MemoryUsageScale(t *testing.T) {
 	}
 
 	sizes := []int{100, 250, 500}
-	
+
 	for _, size := range sizes {
 		t.Run(fmt.Sprintf("%d_notes", size), func(t *testing.T) {
 			var m1, m2 runtime.MemStats
-			
+
 			runtime.GC()
 			runtime.ReadMemStats(&m1)
 
 			_, notebook := generateStressNotebook(t, size, 1)
-			
+
 			// Perform operations that load data into memory
-			_, err := notebook.Notes.SearchNotes(context.Background(), "test")
+			_, err := notebook.Notes.SearchNotes(context.Background(), "test", false)
 			require.NoError(t, err)
-			
+
 			count, err := notebook.Notes.Count(context.Background())
 			require.NoError(t, err)
 			assert.Equal(t, size, count)
@@ -447,7 +447,7 @@ func TestNoteService_MemoryUsageScale(t *testing.T) {
 				// If memory went down, use current allocation as reasonable proxy
 				memUsed = m2.Alloc
 			}
-			
+
 			memPerNote := memUsed / uint64(size)
 
 			t.Logf("Size: %d notes, Memory: %s, Per note: %s",
@@ -456,7 +456,7 @@ func TestNoteService_MemoryUsageScale(t *testing.T) {
 			// Memory per note should be reasonable (< 50KB per note including metadata)
 			assert.Less(t, memPerNote, uint64(50*1024),
 				"Memory per note should be < 50KB")
-				
+
 			// Total memory should be reasonable (< 50MB for 500 notes)
 			if size >= 500 {
 				assert.Less(t, memUsed, uint64(50*1024*1024),
@@ -473,11 +473,11 @@ func TestNoteService_SearchPerformanceScale(t *testing.T) {
 	}
 
 	sizes := []int{100, 500, 1000}
-	
+
 	for _, size := range sizes {
 		t.Run(fmt.Sprintf("%d_notes", size), func(t *testing.T) {
 			_, notebook := generateStressNotebook(t, size, 1)
-			
+
 			// Test different search scenarios
 			searchTests := []struct {
 				term     string
@@ -488,19 +488,19 @@ func TestNoteService_SearchPerformanceScale(t *testing.T) {
 				{"note_000001", "exact match"},
 				{"nonexistent", "no results"},
 			}
-			
+
 			for _, test := range searchTests {
 				start := time.Now()
-				results, err := notebook.Notes.SearchNotes(context.Background(), test.term)
+				results, err := notebook.Notes.SearchNotes(context.Background(), test.term, false)
 				searchTime := time.Since(start)
 				require.NoError(t, err)
-				
-				t.Logf("Search '%s' (%s) in %d notes: %v, found %d results", 
+
+				t.Logf("Search '%s' (%s) in %d notes: %v, found %d results",
 					test.term, test.expected, size, searchTime, len(results))
-				
+
 				// Performance targets scale with dataset size
 				maxTime := time.Duration(size/100+1) * time.Second
-				assert.Less(t, searchTime, maxTime, 
+				assert.Less(t, searchTime, maxTime,
 					"Search time should scale reasonably with dataset size")
 			}
 		})

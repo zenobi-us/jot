@@ -25,7 +25,7 @@ func TestNoteService_SearchNotes_NoNotebookSelected(t *testing.T) {
 	cfg, _ := services.NewConfigServiceWithPath(t.TempDir() + "/config.json")
 	svc := services.NewNoteService(cfg, db, "")
 
-	notes, err := svc.SearchNotes(ctx, "")
+	notes, err := svc.SearchNotes(ctx, "", false)
 	assert.Error(t, err)
 	assert.Nil(t, notes)
 	assert.Contains(t, err.Error(), "no notebook selected")
@@ -51,7 +51,7 @@ func TestNoteService_SearchNotes_FindsAllNotes(t *testing.T) {
 
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
-	notes, err := svc.SearchNotes(ctx, "")
+	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
 
 	assert.Len(t, notes, 3)
@@ -78,7 +78,7 @@ func TestNoteService_SearchNotes_FiltersByQuery(t *testing.T) {
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
 	// Search for "apple"
-	notes, err := svc.SearchNotes(ctx, "apple")
+	notes, err := svc.SearchNotes(ctx, "apple", false)
 	require.NoError(t, err)
 
 	assert.Len(t, notes, 1)
@@ -103,7 +103,7 @@ func TestNoteService_SearchNotes_FiltersByQueryCaseInsensitive(t *testing.T) {
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
 	// Search with lowercase should match uppercase content
-	notes, err := svc.SearchNotes(ctx, "uppercase")
+	notes, err := svc.SearchNotes(ctx, "uppercase", false)
 	require.NoError(t, err)
 
 	assert.Len(t, notes, 1)
@@ -128,7 +128,7 @@ func TestNoteService_SearchNotes_FiltersByFilepath(t *testing.T) {
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
 	// Search by filename pattern
-	notes, err := svc.SearchNotes(ctx, "project")
+	notes, err := svc.SearchNotes(ctx, "project", false)
 	require.NoError(t, err)
 
 	assert.Len(t, notes, 1)
@@ -154,7 +154,7 @@ func TestNoteService_SearchNotes_EmptyNotebook(t *testing.T) {
 
 	// Note: DuckDB's read_markdown errors when no files match the glob.
 	// This tests the current behavior - the service returns an error for empty notebooks.
-	notes, err := svc.SearchNotes(ctx, "")
+	notes, err := svc.SearchNotes(ctx, "", false)
 	assert.Error(t, err)
 	assert.Nil(t, notes)
 	assert.Contains(t, err.Error(), "File or directory does not exist")
@@ -185,7 +185,7 @@ func TestNoteService_SearchNotes_ExtractsMetadata(t *testing.T) {
 
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
-	notes, err := svc.SearchNotes(ctx, "")
+	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
 
 	require.Len(t, notes, 1)
@@ -210,7 +210,7 @@ func TestNoteService_SearchNotes_SetsRelativePath(t *testing.T) {
 
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
-	notes, err := svc.SearchNotes(ctx, "")
+	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
 
 	require.Len(t, notes, 1)
@@ -351,7 +351,7 @@ func TestNoteService_SearchNotes_MultipleQueryMatches(t *testing.T) {
 
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
-	notes, err := svc.SearchNotes(ctx, "golang")
+	notes, err := svc.SearchNotes(ctx, "golang", false)
 	require.NoError(t, err)
 
 	assert.Len(t, notes, 2)
@@ -375,7 +375,7 @@ func TestNoteService_SearchNotes_ContentHasText(t *testing.T) {
 
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
-	notes, err := svc.SearchNotes(ctx, "")
+	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
 
 	require.Len(t, notes, 1)
@@ -877,11 +877,11 @@ func TestNoteService_ExecuteSQLSafe_ComplexQuery(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, results, 2)
-	
+
 	// First result (n=3)
 	assert.Equal(t, int32(3), results[0]["n"])
 	assert.Equal(t, "c", results[0]["letter"])
-	
+
 	// Second result (n=2)
 	assert.Equal(t, int32(2), results[1]["n"])
 	assert.Equal(t, "b", results[1]["letter"])
@@ -907,7 +907,7 @@ func TestNoteService_ExecuteSQLSafe_ReadOnlyEnforcement(t *testing.T) {
 	// This is caught by ValidateSQL, but the read-only connection is a defense-in-depth layer
 	_, err := svc.ExecuteSQLSafe(ctx, "SELECT 1")
 	require.NoError(t, err)
-	
+
 	// DELETE would be caught by validation before reaching the DB
 	_, err = svc.ExecuteSQLSafe(ctx, "DELETE FROM markdown")
 	assert.Error(t, err)
@@ -938,7 +938,7 @@ func TestNoteService_SearchNotes_DisplayNameWithTitle(t *testing.T) {
 
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
-	notes, err := svc.SearchNotes(ctx, "")
+	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
 
 	require.Len(t, notes, 1)
@@ -964,7 +964,7 @@ func TestNoteService_SearchNotes_DisplayNameSlugifyFilename(t *testing.T) {
 
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
-	notes, err := svc.SearchNotes(ctx, "")
+	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
 
 	require.Len(t, notes, 1)
@@ -998,7 +998,7 @@ func TestNoteService_SearchNotes_DisplayNameMultipleNotes(t *testing.T) {
 
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
-	notes, err := svc.SearchNotes(ctx, "")
+	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
 
 	require.Len(t, notes, 3)
@@ -1031,7 +1031,7 @@ func TestNoteService_SearchNotes_ComplexQueries(t *testing.T) {
 
 	// Create test notebook with diverse content
 	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "complex-search-test")
-	
+
 	// Create notes with varied content for complex searching
 	testutil.CreateTestNote(t, notebookDir, "golang-tips.md", "# Golang Tips\n\nUseful golang programming patterns.")
 	testutil.CreateTestNote(t, notebookDir, "javascript-tricks.md", "# JavaScript Tricks\n\nSome javascript and golang comparisons.")
@@ -1055,7 +1055,7 @@ func TestNoteService_SearchNotes_ComplexQueries(t *testing.T) {
 		{
 			"partial_word_match",
 			"java",
-			2, // javascript-tricks.md, mixed-content.md  
+			2, // javascript-tricks.md, mixed-content.md
 			"Should find partial word matches",
 		},
 		{
@@ -1086,10 +1086,10 @@ func TestNoteService_SearchNotes_ComplexQueries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			notes, err := svc.SearchNotes(ctx, tt.query)
+			notes, err := svc.SearchNotes(ctx, tt.query, false)
 			require.NoError(t, err, tt.description)
-			assert.Len(t, notes, tt.expectedCount, 
-				"Expected %d notes for query '%s', got %d", 
+			assert.Len(t, notes, tt.expectedCount,
+				"Expected %d notes for query '%s', got %d",
 				tt.expectedCount, tt.query, len(notes))
 		})
 	}
@@ -1108,7 +1108,7 @@ func TestNoteService_SearchNotes_SpecialCharacters(t *testing.T) {
 	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
 
 	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "special-chars-test")
-	
+
 	// Create notes with special characters
 	testutil.CreateTestNote(t, notebookDir, "unicode-test.md", "# Unicode Test\n\nCafé, naïve, résumé")
 	testutil.CreateTestNote(t, notebookDir, "symbols.md", "# Symbols\n\nC++ programming, @mentions, #hashtags")
@@ -1118,8 +1118,8 @@ func TestNoteService_SearchNotes_SpecialCharacters(t *testing.T) {
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
 	tests := []struct {
-		name  string
-		query string
+		name          string
+		query         string
 		expectedCount int
 	}{
 		{
@@ -1166,7 +1166,7 @@ func TestNoteService_SearchNotes_SpecialCharacters(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			notes, err := svc.SearchNotes(ctx, tt.query)
+			notes, err := svc.SearchNotes(ctx, tt.query, false)
 			require.NoError(t, err)
 			assert.Len(t, notes, tt.expectedCount,
 				"Expected %d notes for query '%s'", tt.expectedCount, tt.query)
@@ -1191,7 +1191,7 @@ func TestNoteService_SearchNotes_LargeResultSets(t *testing.T) {
 	// Create many notes with shared content
 	commonWord := "shared"
 	for i := 1; i <= 25; i++ {
-		content := fmt.Sprintf("# Note %d\n\nThis note contains the %s keyword and unique content %d.", 
+		content := fmt.Sprintf("# Note %d\n\nThis note contains the %s keyword and unique content %d.",
 			i, commonWord, i)
 		testutil.CreateTestNote(t, notebookDir, fmt.Sprintf("note%03d.md", i), content)
 	}
@@ -1205,12 +1205,12 @@ func TestNoteService_SearchNotes_LargeResultSets(t *testing.T) {
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
 	// Test large result set
-	notes, err := svc.SearchNotes(ctx, commonWord)
+	notes, err := svc.SearchNotes(ctx, commonWord, false)
 	require.NoError(t, err)
 	assert.Len(t, notes, 25, "Should find all notes with shared keyword")
 
 	// Test all notes (empty query)
-	allNotes, err := svc.SearchNotes(ctx, "")
+	allNotes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
 	assert.Len(t, allNotes, 30, "Should find all 30 notes")
 
@@ -1282,19 +1282,19 @@ Content despite frontmatter issues.`
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
 	// Test that all notes are found regardless of frontmatter quality
-	allNotes, err := svc.SearchNotes(ctx, "")
+	allNotes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
 	assert.Len(t, allNotes, 4, "Should find all notes regardless of frontmatter")
 
 	// Test searching content works even with frontmatter issues
-	contentSearch, err := svc.SearchNotes(ctx, "Content")
+	contentSearch, err := svc.SearchNotes(ctx, "Content", false)
 	require.NoError(t, err)
 	assert.Len(t, contentSearch, 4, "Content search should work despite frontmatter variations")
 
 	// Verify metadata is populated where possible
 	for _, note := range allNotes {
 		assert.NotNil(t, note.Metadata, "Metadata map should exist even if empty")
-		
+
 		// Check specific notes
 		switch {
 		case strings.Contains(note.File.Relative, "complex-frontmatter"):
@@ -1322,7 +1322,7 @@ func TestNoteService_SearchNotes_ErrorConditions(t *testing.T) {
 	// Test with empty/non-existent notebook
 	svc := services.NewNoteService(cfg, db, "")
 
-	notes, err := svc.SearchNotes(ctx, "test")
+	notes, err := svc.SearchNotes(ctx, "test", false)
 	assert.Error(t, err, "Should error when no notebook selected")
 	assert.Nil(t, notes, "Notes should be nil on error")
 	assert.Contains(t, err.Error(), "no notebook selected", "Error should mention no notebook")
@@ -1332,7 +1332,7 @@ func TestNoteService_SearchNotes_ErrorConditions(t *testing.T) {
 	svc2 := services.NewNoteService(cfg, db, nonExistentPath)
 
 	// This might not error immediately since DuckDB might handle empty globs gracefully
-	notes2, err := svc2.SearchNotes(ctx, "test")
+	notes2, err := svc2.SearchNotes(ctx, "test", false)
 	if err != nil {
 		// If it errors, that's fine - means validation exists
 		assert.Nil(t, notes2)

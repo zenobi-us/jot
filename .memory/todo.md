@@ -92,25 +92,74 @@
   - Performance targets (<100ms for complex queries)
   - Comprehensive testing requirements (≥85% coverage)
 
-- ✅ **Views System Spec** (43KB) - `.memory/spec-d4fca870-views-system.md` ⚠️ **DRAFT - REQUIRES Q&A**
+- ✅ **Views System Spec** (43KB) - `.memory/spec-d4fca870-views-system.md` ✅ **APPROVED**
   - Named reusable query presets with parameterization
   - 6 built-in views (today, recent, kanban, untagged, orphans, broken-links)
   - Custom views in global config and per-notebook
   - Template variable system ({{today}}, {{yesterday}}, etc.)
   - 3-tier precedence hierarchy (notebook > global > built-in)
-  - **6 critical unresolved design questions** - See Open Questions section
-  - **BLOCKED**: Implementation blocked until Q&A discussion complete
+  - ✅ **Q&A COMPLETE 2026-01-22** - All 6 design questions resolved
+
+**Q&A Decisions Made (2026-01-22)**:
+| # | Question | Decision |
+|---|----------|----------|
+| 1 | Command Structure | `opennotes notes view <name> [--param key=value]` |
+| 2 | Output Formatting | Flag-based `--format list|table|json` (views are query-only) |
+| 3 | View Definition Scope | Query-only (conditions, order, limit, group by) |
+| 4 | Broken Links Detection | Both frontmatter AND markdown body links |
+| 5 | Kanban Parameter Handling | Hybrid: param → notebook config → built-in default |
+| 6 | Orphans Definition | Hybrid: param → config → default (isolated node) |
 
 **Next Steps**:
-- 📋 **[NEEDS-HUMAN]** Review Note Creation Enhancement specification (`.memory/spec-ca68615f-note-creation-enhancement.md`)
-- 📋 **[NEEDS-HUMAN]** Review Note Search Enhancement specification (`.memory/spec-5f8a9b2c-note-search-enhancement.md`)
-- 📋 **[NEEDS-HUMAN]** Review Views System specification (`.memory/spec-d4fca870-views-system.md`)
-- 🔴 **[NEEDS-HUMAN]** Conduct Q&A discussion for Views System spec using `qa-discussion` skill
-  - **6 questions to resolve**: Command structure, output formatting, view definition scope, broken links detection, kanban parameters, orphans definition
-  - **After Q&A**: Update spec with decisions, mark as approved
-- 📋 **[NEEDS-HUMAN]** Review research findings and validate recommendations
-- 📋 **[NEEDS-HUMAN]** Approve implementation approach before task breakdown
-- ⏸️ After approval: Create Phase 4 implementation planning tasks
+- ✅ Note Creation Enhancement specification - **APPROVED 2026-01-22**
+- ✅ Note Search Enhancement specification - **APPROVED 2026-01-22**
+- ✅ Views System specification - **APPROVED 2026-01-22** (Q&A complete)
+- ✅ Implementation approach approved
+- ✅ Phase 4 tasks created - **READY TO EXECUTE**
+
+---
+
+## 🚀 Active Tasks - Note Search Enhancement (Phase 4)
+
+**Phase**: `phase-4a8b9c0d-search-implementation.md`
+**Estimated Total**: 7.5 hours
+**Priority Order**: Foundation First (per human decision)
+
+| # | Task | File | Est. | Status | Depends On |
+|---|------|------|------|--------|------------|
+| 1 | Text Search + Fuzzy Matching | `task-s1a00001-text-search-fuzzy.md` | 2h | ⏳ TODO | - |
+| 2 | Boolean Query Subcommand | `task-s1a00002-boolean-queries.md` | 2.5h | ⏳ TODO | Task 1 |
+| 3 | Link Queries + Glob Patterns | `task-s1a00003-link-queries.md` | 1.5h | ⏳ TODO | Task 2 |
+| 4 | Testing + Documentation | `task-s1a00004-testing-docs.md` | 1.5h | ⏳ TODO | Task 3 |
+
+### Task 1: Text Search + Fuzzy Matching (2h)
+- [ ] Add `github.com/sahilm/fuzzy` dependency
+- [ ] Add `--fuzzy` flag to `notes search` command
+- [ ] Create `internal/services/search.go` with FuzzySearch
+- [ ] Update NoteService.SearchNotes to support fuzzy mode
+- [ ] Write 10+ tests for fuzzy matching
+- [ ] Verify < 50ms for 10k notes
+
+### Task 2: Boolean Query Subcommand (2.5h)
+- [ ] Create `cmd/notes_search_query.go`
+- [ ] Add `--and`, `--or`, `--not` flags
+- [ ] Implement field whitelist validation (security)
+- [ ] Implement parameterized query building
+- [ ] Write 15+ tests including security tests
+
+### Task 3: Link Queries + Glob Patterns (1.5h)
+- [ ] Implement `links-to` condition (incoming edges)
+- [ ] Implement `linked-by` condition (outgoing edges)
+- [ ] Implement `globToLike()` pattern conversion
+- [ ] Handle empty `data.links` with COALESCE
+- [ ] Write 12+ tests for link queries and globs
+
+### Task 4: Testing + Documentation (1.5h)
+- [ ] Create performance benchmarks
+- [ ] Create E2E integration tests
+- [ ] Update `docs/commands/notes-search.md`
+- [ ] Update CLI help text
+- [ ] Verify ≥85% coverage
 
 ---
 
