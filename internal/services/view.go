@@ -592,8 +592,9 @@ func (vs *ViewService) GenerateSQL(view *core.ViewDefinition, params map[string]
 		conditions = append(conditions, condSQL)
 	}
 
-	// Build query
-	query := "SELECT * FROM notes"
+	// Build query using read_markdown for notebook-relative file access
+	// Note: The glob pattern (first parameter) is added by the caller
+	query := "SELECT * FROM read_markdown(?, include_filepath:=true)"
 
 	if len(conditions) > 0 {
 		query += " WHERE " + strings.Join(conditions, " AND ")

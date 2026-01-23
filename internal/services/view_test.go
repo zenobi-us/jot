@@ -674,7 +674,9 @@ func TestViewService_GenerateSQL_SimpleCondition(t *testing.T) {
 
 	sql, args, err := vs.GenerateSQL(view, nil)
 	assert.NoError(t, err)
+	assert.Contains(t, sql, "read_markdown(?, include_filepath:=true)")
 	assert.Contains(t, sql, "WHERE created = ?")
+	// Only the condition value, glob is added by caller
 	assert.Equal(t, []interface{}{"2026-01-20"}, args)
 }
 
