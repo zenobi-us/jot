@@ -312,10 +312,16 @@ func (s *SearchService) buildConditionSQL(cond QueryCondition, notebookGlob stri
 		return sqlPart, []interface{}{fieldName, cond.Value}, nil
 
 	case cond.Field == "path":
-		// Path field - use filepath
+		// Path field - use filepath with wildcard prefix to match anywhere in path
+		// This allows users to specify relative paths like "epics/*" that match
+		// the full absolute paths like "/home/user/notebook/epics/epic1.md"
 		sqlPart := "file_path LIKE ?"
 		// Convert glob-like patterns to LIKE patterns
 		likePattern := GlobToLike(cond.Value)
+		// Add % prefix to match from any point in the path
+		if !strings.HasPrefix(likePattern, "%") {
+			likePattern = "%" + likePattern
+		}
 		return sqlPart, []interface{}{likePattern}, nil
 
 	case cond.Field == "title":

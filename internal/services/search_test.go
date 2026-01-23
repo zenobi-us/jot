@@ -757,8 +757,8 @@ func TestSearchService_BuildWhereClause_PathField(t *testing.T) {
 	// Should use LIKE for path with glob pattern converted
 	assert.Contains(t, whereClause, "LIKE")
 	assert.Contains(t, whereClause, "file_path")
-	// Glob * should be converted to %
-	assert.Contains(t, params, "projects/%")
+	// Glob * should be converted to % and prefixed with % to match anywhere in path
+	assert.Contains(t, params, "%projects/%")
 }
 
 func TestSearchService_BuildWhereClause_TitleField(t *testing.T) {
@@ -921,8 +921,8 @@ func TestSearchService_BuildWhereClause_GlobConversion_QuestionMark(t *testing.T
 	_, params, err := svc.BuildWhereClause(conditions)
 
 	assert.NoError(t, err)
-	// ? should convert to _
-	assert.Contains(t, params, "note_.md")
+	// ? should convert to _ and prefixed with % to match anywhere in path
+	assert.Contains(t, params, "%note_.md")
 }
 
 // ============================================================================
@@ -1259,7 +1259,8 @@ func TestSearchService_BuildWhereClause_LinksTo_CombinedWithPath(t *testing.T) {
 	assert.Contains(t, whereClause, "AND")
 	assert.Contains(t, whereClause, "file_path")
 	assert.Contains(t, whereClause, "EXISTS")
-	assert.Contains(t, params, "epics/%")
+	// Path field now adds % prefix to match anywhere in path
+	assert.Contains(t, params, "%epics/%")
 	assert.Contains(t, params, "tasks/%.md")
 }
 
@@ -1415,7 +1416,7 @@ func TestSearchService_BuildWhereClause_ComplexLinkQuery(t *testing.T) {
 	assert.Contains(t, whereClause, "EXISTS")     // link conditions
 	assert.Contains(t, whereClause, "NOT")        // not condition
 	assert.Contains(t, whereClause, "metadata")   // data.status
-	assert.Contains(t, params, "epics/%")         // path pattern
+	assert.Contains(t, params, "%epics/%")        // path pattern (with % prefix)
 	assert.Contains(t, params, "tasks/%/%.md")    // links-to pattern
 	assert.Contains(t, params, "archived/%/%.md") // not links-to pattern
 	assert.Contains(t, params, "active")          // status value

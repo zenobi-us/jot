@@ -10,51 +10,82 @@ import (
 
 var notesSearchQueryCmd = &cobra.Command{
 	Use:   "query",
-	Short: "Search notes with boolean operators",
-	Long: `Search notes using AND/OR/NOT boolean operators for complex filtering.
+	Short: "Search notes with boolean AND/OR/NOT operators",
+	Long: `Search notes using structured boolean queries with AND/OR/NOT operators.
 
-Conditions are specified as field=value pairs. Supported fields:
-  - data.tag, data.tags   - Note tags
-  - data.status           - Note status (e.g., active, archived)
-  - data.priority         - Priority level (e.g., high, low, critical)
-  - data.assignee         - Assigned person
-  - data.author           - Note author
-  - data.type             - Note type
-  - data.category         - Category classification
-  - data.project          - Project name
-  - data.sprint           - Sprint identifier
-  - path                  - File path (supports globs)
-  - title                 - Note title
-  - links-to              - Documents this note links to
-  - linked-by             - Documents that link to this note
+BOOLEAN OPERATORS:
+  --and field=value    All AND conditions must match (intersection)
+  --or field=value     Any OR condition can match (union)  
+  --not field=value    Excludes notes matching this condition
 
-Boolean Operators:
-  --and     All AND conditions must match (intersection)
-  --or      Any OR condition must match (union)
-  --not     Excludes notes matching this condition
+OPERATOR PRECEDENCE:
+  1. AND conditions evaluated first
+  2. OR conditions combined
+  3. NOT conditions applied as exclusions
 
-Operator precedence: AND conditions are evaluated first, then combined
-with OR conditions, then NOT conditions are applied as exclusions.
+SUPPORTED FIELDS:
 
-Examples:
-  # Single condition - find notes tagged with "workflow"
-  opennotes notes search query --and data.tag=workflow
+  Metadata fields (data.*):
+    data.tag        - Note tags           --and data.tag=workflow
+    data.tags       - Note tags (alias)   --and data.tags=meeting
+    data.status     - Note status         --and data.status=active
+    data.priority   - Priority level      --and data.priority=high
+    data.assignee   - Assigned person     --and data.assignee=alice
+    data.author     - Note author         --and data.author=bob
+    data.type       - Note type           --and data.type=epic
+    data.category   - Category            --and data.category=docs
+    data.project    - Project name        --and data.project=alpha
+    data.sprint     - Sprint identifier   --and data.sprint=s23
 
-  # Multiple AND conditions - find active workflow notes
-  opennotes notes search query --and data.tag=workflow --and data.status=active
+  Path and title:
+    path            - File path (globs)   --and path=projects/*.md
+    title           - Note title          --and title=Meeting
 
-  # OR conditions - find high or critical priority notes
-  opennotes notes search query --or data.priority=high --or data.priority=critical
+  Link queries (DAG):
+    links-to        - Notes linking TO target    --and links-to=epics/*.md
+    linked-by       - Notes linked FROM source   --and linked-by=plan.md
 
-  # Combined - find epic notes that are not archived
-  opennotes notes search query --and data.tag=epic --not data.status=archived
+GLOB PATTERNS:
+  *      Any characters (single level)   docs/*.md
+  **     Any path depth                  **/*.md
+  ?      Single character                task?.md
 
-  # Path filtering with glob patterns
-  opennotes notes search query --and path=projects/*
+EXAMPLES:
 
-Security:
-  All queries use parameterized SQL to prevent injection attacks.
-  Only whitelisted fields can be queried. Values are length-limited.`,
+  Basic filtering:
+    opennotes notes search query --and data.tag=workflow
+    opennotes notes search query --and data.tag=workflow --and data.status=active
+    opennotes notes search query --or data.priority=high --or data.priority=critical
+    opennotes notes search query --and data.tag=epic --not data.status=archived
+
+  Path filtering:
+    opennotes notes search query --and path=projects/*
+    opennotes notes search query --and path=**/*.md --not path=archive/*
+
+  Link queries:
+    # Find notes that link TO architecture.md
+    opennotes notes search query --and links-to=docs/architecture.md
+
+    # Find notes that planning.md links TO
+    opennotes notes search query --and linked-by=planning/q1.md
+
+    # Find epics linking to any task
+    opennotes notes search query --and data.tag=epic --and links-to=tasks/**/*.md
+
+  Complex queries:
+    opennotes notes search query \
+      --and data.tag=workflow \
+      --and data.status=active \
+      --or data.priority=high \
+      --not data.assignee=bob
+
+SECURITY:
+  - All queries use parameterized SQL (injection-safe)
+  - Only whitelisted fields can be queried
+  - Values limited to 1000 characters
+
+DOCUMENTATION:
+  📖 Full reference: docs/commands/notes-search.md`,
 	RunE: notesSearchQueryRunE,
 }
 

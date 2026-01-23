@@ -1341,3 +1341,394 @@ func TestNoteService_SearchNotes_ErrorConditions(t *testing.T) {
 		assert.Empty(t, notes2, "Non-existent notebook should return empty results")
 	}
 }
+
+// ============================================================================
+// SearchWithConditions Tests
+// ============================================================================
+
+func TestNoteService_SearchWithConditions_SimpleAnd(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+
+	// Create test notebook with notes
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+	testutil.CreateTestNote(t, notebookDir, "workflow1.md", `---
+tag: workflow
+status: active
+---
+# Workflow 1
+Active workflow note.
+`)
+	testutil.CreateTestNote(t, notebookDir, "workflow2.md", `---
+tag: workflow
+status: done
+---
+# Workflow 2
+Completed workflow.
+`)
+	testutil.CreateTestNote(t, notebookDir, "meeting.md", `---
+tag: meeting
+status: active
+---
+# Meeting Notes
+Team meeting.
+`)
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	// Single AND condition
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "data.tag", Operator: "=", Value: "workflow"},
+	}
+
+	results, err := svc.SearchWithConditions(ctx, conditions)
+
+	assert.NoError(t, err)
+	assert.GreaterOrEqual(t, len(results), 2, "Should find at least 2 workflow notes")
+
+	// Verify all results have workflow tag
+	for _, note := range results {
+		tag, ok := note.Metadata["tag"]
+		if ok {
+			assert.Equal(t, "workflow", tag, "All results should have workflow tag")
+		}
+	}
+}
+
+func TestNoteService_SearchWithConditions_MultipleAnd(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+	testutil.CreateTestNote(t, notebookDir, "active-workflow.md", `---
+tag: workflow
+status: active
+---
+# Active Workflow
+`)
+	testutil.CreateTestNote(t, notebookDir, "done-workflow.md", `---
+tag: workflow
+status: done
+---
+# Done Workflow
+`)
+	testutil.CreateTestNote(t, notebookDir, "active-meeting.md", `---
+tag: meeting
+status: active
+---
+# Active Meeting
+`)
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	// Multiple AND conditions - both must match
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "data.tag", Operator: "=", Value: "workflow"},
+		{Type: "and", Field: "data.status", Operator: "=", Value: "active"},
+	}
+
+	results, err := svc.SearchWithConditions(ctx, conditions)
+
+	assert.NoError(t, err)
+	assert.GreaterOrEqual(t, len(results), 1, "Should find active workflow")
+
+	// Verify all results match both conditions
+	for _, note := range results {
+		tag, _ := note.Metadata["tag"]
+		status, _ := note.Metadata["status"]
+		assert.Equal(t, "workflow", tag)
+		assert.Equal(t, "active", status)
+	}
+}
+
+func TestNoteService_SearchWithConditions_OrConditions(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+	testutil.CreateTestNote(t, notebookDir, "high-priority.md", `---
+priority: high
+---
+# High Priority
+`)
+	testutil.CreateTestNote(t, notebookDir, "critical-priority.md", `---
+priority: critical
+---
+# Critical Priority
+`)
+	testutil.CreateTestNote(t, notebookDir, "low-priority.md", `---
+priority: low
+---
+# Low Priority
+`)
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	// OR conditions - any can match
+	conditions := []services.QueryCondition{
+		{Type: "or", Field: "data.priority", Operator: "=", Value: "high"},
+		{Type: "or", Field: "data.priority", Operator: "=", Value: "critical"},
+	}
+
+	results, err := svc.SearchWithConditions(ctx, conditions)
+
+	assert.NoError(t, err)
+	assert.GreaterOrEqual(t, len(results), 2, "Should find high OR critical priority")
+
+	// Verify no low priority notes
+	for _, note := range results {
+		priority, _ := note.Metadata["priority"]
+		assert.NotEqual(t, "low", priority, "Should not include low priority")
+	}
+}
+
+func TestNoteService_SearchWithConditions_NotCondition(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+	testutil.CreateTestNote(t, notebookDir, "epic1.md", `---
+tag: epic
+status: active
+---
+# Epic 1
+`)
+	testutil.CreateTestNote(t, notebookDir, "epic2.md", `---
+tag: epic
+status: archived
+---
+# Epic 2
+`)
+	testutil.CreateTestNote(t, notebookDir, "epic3.md", `---
+tag: epic
+status: done
+---
+# Epic 3
+`)
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	// NOT condition - exclude archived
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "data.tag", Operator: "=", Value: "epic"},
+		{Type: "not", Field: "data.status", Operator: "=", Value: "archived"},
+	}
+
+	results, err := svc.SearchWithConditions(ctx, conditions)
+
+	assert.NoError(t, err)
+	assert.GreaterOrEqual(t, len(results), 2, "Should find non-archived epics")
+
+	// Verify no archived notes
+	for _, note := range results {
+		status, _ := note.Metadata["status"]
+		assert.NotEqual(t, "archived", status, "Should not include archived notes")
+	}
+}
+
+func TestNoteService_SearchWithConditions_PathGlob(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+
+	// Create flat structure (all notes in notes/ directory)
+	testutil.CreateTestNote(t, notebookDir, "epic1.md", `---
+title: Epic 1
+---
+# Epic 1
+`)
+	testutil.CreateTestNote(t, notebookDir, "epic2.md", `---
+title: Epic 2
+---
+# Epic 2
+`)
+	testutil.CreateTestNote(t, notebookDir, "task1.md", `---
+title: Task 1
+---
+# Task 1
+`)
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	// Path glob pattern matching "epic*.md" files
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "path", Operator: "=", Value: "epic*.md"},
+	}
+
+	results, err := svc.SearchWithConditions(ctx, conditions)
+
+	assert.NoError(t, err)
+	assert.GreaterOrEqual(t, len(results), 2, "Should find epic notes")
+
+	// Verify all results match the pattern
+	for _, note := range results {
+		assert.Contains(t, note.File.Relative, "epic", "All results should contain 'epic'")
+	}
+}
+
+func TestNoteService_SearchWithConditions_NoResults(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+	testutil.CreateTestNote(t, notebookDir, "meeting.md", `---
+tag: meeting
+---
+# Meeting
+`)
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	// Search for non-existent tag
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "data.tag", Operator: "=", Value: "nonexistent"},
+	}
+
+	results, err := svc.SearchWithConditions(ctx, conditions)
+
+	assert.NoError(t, err, "Should not error on no results")
+	assert.Empty(t, results, "Should return empty results")
+}
+
+func TestNoteService_SearchWithConditions_NoNotebook(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+
+	// Create service without notebook path
+	svc := services.NewNoteService(cfg, db, "")
+
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "data.tag", Operator: "=", Value: "test"},
+	}
+
+	results, err := svc.SearchWithConditions(ctx, conditions)
+
+	assert.Error(t, err, "Should error when no notebook selected")
+	assert.Nil(t, results, "Results should be nil on error")
+	assert.Contains(t, err.Error(), "no notebook selected", "Error should mention no notebook")
+}
+
+func TestNoteService_SearchWithConditions_ComplexQuery(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+	testutil.CreateTestNote(t, notebookDir, "match.md", `---
+tag: workflow
+status: active
+priority: high
+---
+# Should Match
+`)
+	testutil.CreateTestNote(t, notebookDir, "wrong-status.md", `---
+tag: workflow
+status: archived
+priority: high
+---
+# Wrong Status
+`)
+	testutil.CreateTestNote(t, notebookDir, "wrong-priority.md", `---
+tag: workflow
+status: active
+priority: low
+---
+# Wrong Priority
+`)
+	testutil.CreateTestNote(t, notebookDir, "wrong-tag.md", `---
+tag: meeting
+status: active
+priority: high
+---
+# Wrong Tag
+`)
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	// Complex query: AND + OR
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "data.tag", Operator: "=", Value: "workflow"},
+		{Type: "and", Field: "data.status", Operator: "=", Value: "active"},
+		{Type: "or", Field: "data.priority", Operator: "=", Value: "high"},
+		{Type: "or", Field: "data.priority", Operator: "=", Value: "critical"},
+	}
+
+	results, err := svc.SearchWithConditions(ctx, conditions)
+
+	assert.NoError(t, err)
+	assert.GreaterOrEqual(t, len(results), 1, "Should find matching note")
+
+	// Verify the match
+	for _, note := range results {
+		tag, _ := note.Metadata["tag"]
+		status, _ := note.Metadata["status"]
+		priority, _ := note.Metadata["priority"]
+		assert.Equal(t, "workflow", tag)
+		assert.Equal(t, "active", status)
+		assert.True(t, priority == "high" || priority == "critical", "Priority should be high or critical")
+	}
+}
