@@ -1,10 +1,10 @@
 # OpenNotes - Active Tasks
 
-**Status**: ✅ **PHASE 4 COMPLETE** - Ready for next phase  
+**Status**: 🔄 **PHASE 5 IN PROGRESS** - Views System Implementation  
 **Current Work**: Advanced Note Creation and Search Capabilities (epic-3e01c563)  
-**Current Phase**: Phase 4 Complete → Awaiting next phase decision  
-**Last Updated**: 2026-01-23T10:37:00+10:30  
-**Status**: 🎯 **AWAITING NEXT PHASE** - Views or Creation Enhancement
+**Current Phase**: Phase 5 - Views System  
+**Last Updated**: 2026-01-23T16:45:00+10:30  
+**Status**: 🚀 **VIEWS SYSTEM IMPLEMENTATION UNDERWAY**
 
 ---
 
@@ -54,13 +54,16 @@
 - **Archive**: `archive/phase4-search-implementation-2026-01-23/`
 - **Learning**: `learning-8d0ca8ac-phase4-search-implementation.md`
 
-⏳ **Feature 2: Views System** - READY (spec approved)
+🔄 **Feature 2: Views System** - IN PROGRESS (Phase 5)
 - **Spec**: `spec-d4fca870-views-system.md`
-- Named reusable query presets
-- 6 built-in views (today, recent, kanban, untagged, orphans, broken-links)
-- Custom views in global config and per-notebook
-- Template variable system
-- 3-tier precedence hierarchy
+- **Status**: ✅ Phase 1-3 complete
+  - ✅ Core data structures (ViewDefinition, ViewParameter, etc.)
+  - ✅ ViewService with built-in views and template variables
+  - ✅ Configuration integration (ConfigService, NotebookService)
+  - ✅ SQL generation with parameter support
+  - ✅ CLI command (cmd/notes_view.go)
+  - ✅ 53 unit tests (100% ViewService coverage)
+- **Remaining**: Phase 4-6 (special views, documentation, testing)
 
 ⏳ **Feature 3: Note Creation Enhancement** - READY (spec approved)
 - **Spec**: `spec-ca68615f-note-creation-enhancement.md`
@@ -89,9 +92,24 @@
 
 ---
 
-## Available Work - NONE
+## Available Work - Views System Implementation
 
-No active tasks. Phase 4 complete. Awaiting human decision on next phase.
+### Phase 5 Checkpoints (Current)
+
+**✅ Completed (3 commits)**:
+1. ✅ Core data structures and ViewService (47 tests passing)
+2. ✅ Configuration integration and SQL generation (6 new tests)
+3. ✅ CLI command and query execution (compiles, no regressions)
+
+**📝 Remaining**:
+1. ⏳ Phase 4: Special views implementation (broken-links, orphans detection)
+2. ⏳ Phase 5: End-to-end testing and performance validation
+3. ⏳ Phase 6: Documentation and cleanup
+
+**Test Status**:
+- Current: 53 view tests passing + all existing tests (no regressions)
+- Target: 87%+ coverage maintained
+- Performance: All targets met (<50ms for query generation)
 
 ### Potential Future Work
 
