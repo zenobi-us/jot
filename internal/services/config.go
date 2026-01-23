@@ -137,3 +137,39 @@ func (c *ConfigService) Exists() bool {
 	_, err := os.Stat(c.path)
 	return err == nil
 }
+
+// GetViews returns all views from the config file
+// Returns an empty map if no views are defined or config doesn't exist
+func (c *ConfigService) GetViews() (map[string]json.RawMessage, error) {
+	if !c.Exists() {
+		return map[string]json.RawMessage{}, nil
+	}
+
+	data, err := os.ReadFile(c.path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read config: %w", err)
+	}
+
+	var configData map[string]interface{}
+	if err := json.Unmarshal(data, &configData); err != nil {
+		return nil, fmt.Errorf("failed to parse config: %w", err)
+	}
+
+	views, ok := configData["views"].(map[string]interface{})
+	if !ok {
+		return map[string]json.RawMessage{}, nil
+	}
+
+	// Convert to json.RawMessage for consistency
+	result := make(map[string]json.RawMessage)
+	for name, viewData := range views {
+		rawData, err := json.Marshal(viewData)
+		if err != nil {
+			c.log.Warn().Str("view", name).Err(err).Msg("failed to marshal view definition")
+			continue
+		}
+		result[name] = rawData
+	}
+
+	return result, nil
+}

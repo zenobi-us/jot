@@ -312,3 +312,43 @@ func (n *Notebook) SaveConfig(register bool, configService *ConfigService) error
 
 	return nil
 }
+
+// GetViews returns all views defined in a notebook's .opennotes.json
+// Returns an empty map if no views are defined
+func (s *NotebookService) GetViews(notebookPath string) (map[string]json.RawMessage, error) {
+	if notebookPath == "" {
+		return map[string]json.RawMessage{}, nil
+	}
+
+	configPath := configFilePath(notebookPath)
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return map[string]json.RawMessage{}, nil
+		}
+		return nil, fmt.Errorf("failed to read notebook config: %w", err)
+	}
+
+	var configData map[string]interface{}
+	if err := json.Unmarshal(data, &configData); err != nil {
+		return nil, fmt.Errorf("failed to parse notebook config: %w", err)
+	}
+
+	views, ok := configData["views"].(map[string]interface{})
+	if !ok {
+		return map[string]json.RawMessage{}, nil
+	}
+
+	// Convert to json.RawMessage for consistency
+	result := make(map[string]json.RawMessage)
+	for name, viewData := range views {
+		rawData, err := json.Marshal(viewData)
+		if err != nil {
+			s.log.Warn().Str("view", name).Err(err).Msg("failed to marshal view definition")
+			continue
+		}
+		result[name] = rawData
+	}
+
+	return result, nil
+}

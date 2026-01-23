@@ -653,3 +653,178 @@ func TestViewService_Precedence_GlobalOverBuiltin(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "Global override of built-in", view.Description)
 }
+
+func TestViewService_GenerateSQL_SimpleCondition(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "test",
+		Query: core.ViewQuery{
+			Conditions: []core.ViewCondition{
+				{
+					Field:    "created",
+					Operator: "=",
+					Value:    "2026-01-20",
+				},
+			},
+		},
+	}
+
+	sql, args, err := vs.GenerateSQL(view, nil)
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "WHERE created = ?")
+	assert.Equal(t, []interface{}{"2026-01-20"}, args)
+}
+
+func TestViewService_GenerateSQL_WithTemplateVariables(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "today-test",
+		Query: core.ViewQuery{
+			Conditions: []core.ViewCondition{
+				{
+					Field:    "created",
+					Operator: ">=",
+					Value:    "{{today}}",
+				},
+			},
+		},
+	}
+
+	sql, args, err := vs.GenerateSQL(view, nil)
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "WHERE created >= ?")
+	
+	// Today should be resolved to a date string
+	assert.Len(t, args, 1)
+	today := time.Now().Format("2006-01-02")
+	assert.Equal(t, today, args[0])
+}
+
+func TestViewService_GenerateSQL_INOperator(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "kanban",
+		Query: core.ViewQuery{
+			Conditions: []core.ViewCondition{
+				{
+					Field:    "data.status",
+					Operator: "IN",
+					Value:    "{{status}}",
+				},
+			},
+		},
+		Parameters: []core.ViewParameter{
+			{
+				Name:    "status",
+				Type:    "list",
+				Default: "todo,in-progress,done",
+			},
+		},
+	}
+
+	sql, args, err := vs.GenerateSQL(view, nil)
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "WHERE data.status IN (?,?,?)")
+	assert.Equal(t, 3, len(args))
+	assert.Equal(t, "todo", args[0])
+	assert.Equal(t, "in-progress", args[1])
+	assert.Equal(t, "done", args[2])
+}
+
+func TestViewService_GenerateSQL_ISNULLOperator(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "untagged",
+		Query: core.ViewQuery{
+			Conditions: []core.ViewCondition{
+				{
+					Field:    "data.tags",
+					Operator: "IS NULL",
+					Value:    "",
+				},
+			},
+		},
+	}
+
+	sql, args, err := vs.GenerateSQL(view, nil)
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "WHERE data.tags IS NULL")
+	assert.Empty(t, args)
+}
+
+func TestViewService_GenerateSQL_MultipleConditions(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "test",
+		Query: core.ViewQuery{
+			Conditions: []core.ViewCondition{
+				{
+					Field:    "data.status",
+					Operator: "!=",
+					Value:    "archived",
+				},
+				{
+					Field:    "data.tag",
+					Operator: "=",
+					Value:    "workflow",
+				},
+			},
+			OrderBy: "updated DESC",
+			Limit:   50,
+		},
+	}
+
+	sql, args, err := vs.GenerateSQL(view, nil)
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "WHERE data.status != ? AND data.tag = ?")
+	assert.Contains(t, sql, "ORDER BY updated DESC")
+	assert.Contains(t, sql, "LIMIT 50")
+	assert.Equal(t, []interface{}{"archived", "workflow"}, args)
+}
+
+func TestViewService_GenerateSQL_WithUserParameters(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "kanban",
+		Query: core.ViewQuery{
+			Conditions: []core.ViewCondition{
+				{
+					Field:    "data.status",
+					Operator: "IN",
+					Value:    "{{status}}",
+				},
+			},
+		},
+		Parameters: []core.ViewParameter{
+			{
+				Name:    "status",
+				Type:    "list",
+				Default: "todo,done",
+			},
+		},
+	}
+
+	// User provides custom parameter
+	sql, args, err := vs.GenerateSQL(view, map[string]string{"status": "backlog,in-progress"})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "WHERE data.status IN (?,?)")
+	assert.Equal(t, []interface{}{"backlog", "in-progress"}, args)
+}

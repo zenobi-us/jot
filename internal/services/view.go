@@ -533,3 +533,79 @@ func (vs *ViewService) FormatQueryValue(operator string, value string) string {
 func escapeSQL(s string) string {
 	return strings.ReplaceAll(s, "'", "''")
 }
+
+// GenerateSQL generates SQL from a view definition with parameters
+func (vs *ViewService) GenerateSQL(view *core.ViewDefinition, params map[string]string) (string, []interface{}, error) {
+	// Validate parameters
+	if err := vs.ValidateParameters(view, params); err != nil {
+		return "", nil, err
+	}
+
+	// Apply parameter defaults
+	resolvedParams := vs.ApplyParameterDefaults(view, params)
+
+	// Resolve template variables
+	for key, value := range resolvedParams {
+		resolvedParams[key] = vs.ResolveTemplateVariables(value)
+	}
+
+	// Build WHERE clause
+	var conditions []string
+	var args []interface{}
+
+	for _, cond := range view.Query.Conditions {
+		// Resolve parameter placeholders in value
+		value := cond.Value
+		if strings.HasPrefix(value, "{{") && strings.HasSuffix(value, "}}") {
+			paramName := strings.Trim(value, "{}")
+			if paramValue, ok := resolvedParams[paramName]; ok {
+				value = paramValue
+			}
+		}
+
+		// Resolve template variables
+		value = vs.ResolveTemplateVariables(value)
+
+		// Build condition SQL based on operator
+		var condSQL string
+		switch cond.Operator {
+		case "IS NULL":
+			condSQL = fmt.Sprintf("%s IS NULL", cond.Field)
+		case "IN":
+			// Parse comma-separated values
+			items := strings.Split(value, ",")
+			placeholders := make([]string, len(items))
+			for i, item := range items {
+				placeholders[i] = "?"
+				args = append(args, strings.TrimSpace(item))
+			}
+			condSQL = fmt.Sprintf("%s IN (%s)", cond.Field, strings.Join(placeholders, ","))
+		case "LIKE":
+			condSQL = fmt.Sprintf("%s LIKE ?", cond.Field)
+			args = append(args, value)
+		default:
+			// Standard operators: =, !=, <, >, <=, >=
+			condSQL = fmt.Sprintf("%s %s ?", cond.Field, cond.Operator)
+			args = append(args, value)
+		}
+
+		conditions = append(conditions, condSQL)
+	}
+
+	// Build query
+	query := "SELECT * FROM notes"
+
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	if view.Query.OrderBy != "" {
+		query += " ORDER BY " + view.Query.OrderBy
+	}
+
+	if view.Query.Limit > 0 {
+		query += fmt.Sprintf(" LIMIT %d", view.Query.Limit)
+	}
+
+	return query, args, nil
+}
