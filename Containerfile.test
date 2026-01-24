@@ -1,0 +1,27 @@
+# Lightweight test container for OpenNotes
+# Pre-installs Go to avoid mise runtime overhead
+
+FROM golang:1.23-bookworm AS test
+
+# Install build dependencies for DuckDB
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create test user
+RUN useradd -m -d /home/testuser -s /bin/bash testuser
+
+# Create directories
+RUN mkdir -p /home/testuser/.config/opennotes \
+    && mkdir -p /app \
+    && chown -R testuser:testuser /home/testuser /app
+
+USER testuser
+WORKDIR /app
+
+ENV HOME=/home/testuser
+ENV CGO_ENABLED=1
+
+CMD ["/bin/bash"]
