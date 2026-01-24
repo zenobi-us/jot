@@ -8,7 +8,7 @@ local linters = new Mapping<String, Step> {
     ["go_vet"] {
         glob = "**/*.go"
         exclude = List("**/*_test.go")  // Skip test files (go test will vet them)
-        check = "go vet {{files}}"
+        check = "go vet ./..."
     }
     ["golangci_lint"] {
         glob = "**/*.go"
