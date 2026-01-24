@@ -701,7 +701,7 @@ func TestViewService_GenerateSQL_WithTemplateVariables(t *testing.T) {
 	sql, args, err := vs.GenerateSQL(view, nil)
 	assert.NoError(t, err)
 	assert.Contains(t, sql, "WHERE created >= ?")
-	
+
 	// Today should be resolved to a date string
 	assert.Len(t, args, 1)
 	today := time.Now().Format("2006-01-02")

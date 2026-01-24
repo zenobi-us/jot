@@ -188,9 +188,9 @@ func TestDuckDBConverter_ConvertValue_NestedStructures(t *testing.T) {
 	// Test deeply nested map and array structures
 	input := map[string]interface{}{
 		"document": map[string]interface{}{
-			"title":   "Complex Doc",
-			"author":  "John Doe",
-			"tags":    []interface{}{"work", "important"},
+			"title":  "Complex Doc",
+			"author": "John Doe",
+			"tags":   []interface{}{"work", "important"},
 			"metadata": map[string]interface{}{
 				"created": "2024-01-15",
 				"version": 1,
@@ -664,7 +664,7 @@ func BenchmarkDuckDBConverter_ConvertValue_SimpleArray(b *testing.B) {
 
 func BenchmarkDuckDBConverter_ConvertResults_MediumDataset(b *testing.B) {
 	converter := NewDuckDBConverter()
-	
+
 	// Medium dataset: 100 rows
 	input := make([]map[string]interface{}, 100)
 	for i := 0; i < 100; i++ {

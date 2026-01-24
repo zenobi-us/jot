@@ -17,14 +17,14 @@ import (
 
 // Compiled regex patterns for glob detection
 var (
-	globPatternRegex   *regexp.Regexp
-	readMarkdownRegex  *regexp.Regexp
+	globPatternRegex  *regexp.Regexp
+	readMarkdownRegex *regexp.Regexp
 )
 
 func init() {
 	// Match quoted strings containing glob patterns (* or ?)
 	globPatternRegex = regexp.MustCompile(`(['"])(.*[\*\?].*?)(['"])`)
-	
+
 	// Match read_markdown function calls with file paths
 	readMarkdownRegex = regexp.MustCompile(`read_markdown\s*\(\s*(['"])(.*?)(['"])`)
 }
@@ -206,13 +206,13 @@ func (d *DbService) preprocessSQL(query string, notebookRoot string) (string, er
 		if len(submatches) >= 3 {
 			filePath := submatches[2]
 			cleanPath := filepath.Clean(filePath)
-			
+
 			// Check for path traversal patterns
 			if strings.Contains(cleanPath, "..") {
 				lastErr = fmt.Errorf("path traversal not allowed in file path: %s", filePath)
 				return match
 			}
-			
+
 			// Check for absolute paths (should be relative to notebook)
 			if filepath.IsAbs(cleanPath) {
 				lastErr = fmt.Errorf("path traversal not allowed in file path: %s", filePath)
@@ -235,7 +235,7 @@ func (d *DbService) preprocessSQL(query string, notebookRoot string) (string, er
 			return match
 		}
 
-		quote := match[0:1]        // First character (quote)
+		quote := match[0:1]                // First character (quote)
 		pattern := match[1 : len(match)-1] // Everything except first and last char
 		endQuote := match[len(match)-1:]   // Last character (quote)
 

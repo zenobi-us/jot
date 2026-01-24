@@ -60,7 +60,7 @@ func TestCLI_NotesAdd_DirectoryAsFilename(t *testing.T) {
 	// Check for meaningful error message about directory conflict
 	errOutput := stderr + stdout
 	if !strings.Contains(errOutput, "directory") && !strings.Contains(errOutput, "exists") &&
-	   !strings.Contains(errOutput, "conflict") {
+		!strings.Contains(errOutput, "conflict") {
 		t.Errorf("expected error about directory conflict, got stderr: %s, stdout: %s", stderr, stdout)
 	}
 }
@@ -86,7 +86,7 @@ func TestCLI_NotesAdd_VeryLongFilename(t *testing.T) {
 	// Check for error about filename length
 	errOutput := stderr + stdout
 	if !strings.Contains(errOutput, "long") && !strings.Contains(errOutput, "length") &&
-	   !strings.Contains(errOutput, "filename") && !strings.Contains(errOutput, "name") {
+		!strings.Contains(errOutput, "filename") && !strings.Contains(errOutput, "name") {
 		t.Errorf("expected error about filename length, got stderr: %s, stdout: %s", stderr, stdout)
 	}
 }
@@ -107,7 +107,7 @@ func TestCLI_NotesRemove_FileNotFound(t *testing.T) {
 	// Check for meaningful error message
 	errOutput := stderr + stdout
 	if !strings.Contains(errOutput, "not found") && !strings.Contains(errOutput, "does not exist") &&
-	   !strings.Contains(errOutput, "no such file") {
+		!strings.Contains(errOutput, "no such file") {
 		t.Errorf("expected error about file not found, got stderr: %s, stdout: %s", stderr, stdout)
 	}
 }
@@ -140,7 +140,7 @@ func TestCLI_Commands_PermissionDenied(t *testing.T) {
 	// Check for permission-related error
 	errOutput := stderr + stdout
 	if !strings.Contains(errOutput, "permission") && !strings.Contains(errOutput, "denied") &&
-	   !strings.Contains(errOutput, "read-only") && !strings.Contains(errOutput, "cannot") {
+		!strings.Contains(errOutput, "read-only") && !strings.Contains(errOutput, "cannot") {
 		t.Errorf("expected permission error, got stderr: %s, stdout: %s", stderr, stdout)
 	}
 }
@@ -158,7 +158,7 @@ func TestCLI_NotebookFlag_InvalidPath(t *testing.T) {
 	// Check for meaningful error message
 	errOutput := stderr + stdout
 	if !strings.Contains(errOutput, "not found") && !strings.Contains(errOutput, "does not exist") &&
-	   !strings.Contains(errOutput, "invalid") && !strings.Contains(errOutput, "notebook") {
+		!strings.Contains(errOutput, "invalid") && !strings.Contains(errOutput, "notebook") {
 		t.Errorf("expected error about invalid notebook, got stderr: %s, stdout: %s", stderr, stdout)
 	}
 }
@@ -183,7 +183,7 @@ func TestCLI_NotesSearch_WithoutNotebook(t *testing.T) {
 	// Check for error about not being in notebook
 	errOutput := stderr + stdout
 	if !strings.Contains(errOutput, "notebook") && !strings.Contains(errOutput, "not found") &&
-	   !strings.Contains(errOutput, "config") {
+		!strings.Contains(errOutput, "config") {
 		t.Errorf("expected error about notebook not found, got stderr: %s, stdout: %s", stderr, stdout)
 	}
 }
@@ -210,7 +210,7 @@ func TestCLI_NotesAdd_EmptyTitle(t *testing.T) {
 	// If it failed, check for meaningful error
 	errOutput := stderr + stdout
 	if !strings.Contains(errOutput, "title") && !strings.Contains(errOutput, "empty") &&
-	   !strings.Contains(errOutput, "required") {
+		!strings.Contains(errOutput, "required") {
 		t.Errorf("expected error about empty title, got stderr: %s, stdout: %s", stderr, stdout)
 	}
 }

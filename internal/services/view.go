@@ -31,16 +31,16 @@ func NewViewService(cfg *ConfigService, notebookPath string) *ViewService {
 // NewViewServiceWithConfigPath creates a new ViewService with a custom config path (for testing)
 func NewViewServiceWithConfigPath(cfg *ConfigService, notebookPath string, globalConfigPath string) *ViewService {
 	vs := &ViewService{
-		configService:   cfg,
-		notebookPath:    notebookPath,
+		configService:    cfg,
+		notebookPath:     notebookPath,
 		globalConfigPath: globalConfigPath,
-		builtinViews:    make(map[string]*core.ViewDefinition),
-		log:             Log("ViewService"),
+		builtinViews:     make(map[string]*core.ViewDefinition),
+		log:              Log("ViewService"),
 	}
-	
+
 	// Initialize built-in views
 	vs.initializeBuiltinViews()
-	
+
 	return vs
 }
 
@@ -609,4 +609,164 @@ func (vs *ViewService) GenerateSQL(view *core.ViewDefinition, params map[string]
 	}
 
 	return query, args, nil
+}
+
+// ListAllViews returns all available views across all sources (built-in, global, notebook)
+// sorted by origin: built-in first, then global, then notebook
+func (vs *ViewService) ListAllViews() ([]core.ViewInfo, error) {
+	var allViews []core.ViewInfo
+	seenViews := make(map[string]bool) // Track seen view names to avoid duplicates
+
+	// 1. Add built-in views
+	builtinViews := vs.ListBuiltinViews()
+	for _, view := range builtinViews {
+		allViews = append(allViews, view)
+		seenViews[view.Name] = true
+	}
+
+	// 2. Add global views (if not already in built-in)
+	globalViews, err := vs.LoadAllGlobalViews()
+	if err != nil {
+		vs.log.Warn().Err(err).Msg("Failed to load global views")
+		// Don't fail - continue with what we have
+	} else {
+		for _, view := range globalViews {
+			if !seenViews[view.Name] {
+				allViews = append(allViews, view)
+				seenViews[view.Name] = true
+			}
+		}
+	}
+
+	// 3. Add notebook-specific views (if not already in built-in or global)
+	if vs.notebookPath != "" {
+		notebookViews, err := vs.LoadAllNotebookViews()
+		if err != nil {
+			vs.log.Warn().Err(err).Msg("Failed to load notebook views")
+			// Don't fail - continue with what we have
+		} else {
+			for _, view := range notebookViews {
+				if !seenViews[view.Name] {
+					allViews = append(allViews, view)
+					seenViews[view.Name] = true
+				}
+			}
+		}
+	}
+
+	return allViews, nil
+}
+
+// ListBuiltinViews returns all built-in views as ViewInfo structs
+func (vs *ViewService) ListBuiltinViews() []core.ViewInfo {
+	var views []core.ViewInfo
+
+	for _, view := range vs.builtinViews {
+		views = append(views, core.ViewInfo{
+			Name:        view.Name,
+			Origin:      "built-in",
+			Description: view.Description,
+			Parameters:  view.Parameters,
+		})
+	}
+
+	return views
+}
+
+// LoadAllGlobalViews loads all views from global config as ViewInfo structs
+func (vs *ViewService) LoadAllGlobalViews() ([]core.ViewInfo, error) {
+	var views []core.ViewInfo
+
+	configPath := vs.globalConfigPath
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return views, nil
+		}
+		return nil, fmt.Errorf("failed to read global config: %w", err)
+	}
+
+	var config map[string]interface{}
+	if err := json.Unmarshal(data, &config); err != nil {
+		return nil, fmt.Errorf("failed to parse global config: %w", err)
+	}
+
+	viewsData, ok := config["views"].(map[string]interface{})
+	if !ok {
+		return views, nil
+	}
+
+	for name, viewData := range viewsData {
+		rawData, err := json.Marshal(viewData)
+		if err != nil {
+			vs.log.Warn().Str("name", name).Err(err).Msg("Failed to marshal global view")
+			continue
+		}
+
+		view, err := core.ParseViewDefinition(rawData)
+		if err != nil {
+			vs.log.Warn().Str("name", name).Err(err).Msg("Failed to parse global view")
+			continue
+		}
+
+		views = append(views, core.ViewInfo{
+			Name:        view.Name,
+			Origin:      "global",
+			Description: view.Description,
+			Parameters:  view.Parameters,
+		})
+	}
+
+	return views, nil
+}
+
+// LoadAllNotebookViews loads all views from notebook config as ViewInfo structs
+func (vs *ViewService) LoadAllNotebookViews() ([]core.ViewInfo, error) {
+	var views []core.ViewInfo
+
+	if vs.notebookPath == "" {
+		return views, nil
+	}
+
+	configPath := filepath.Join(vs.notebookPath, NotebookConfigFile)
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return views, nil
+		}
+		return nil, fmt.Errorf("failed to read notebook config: %w", err)
+	}
+
+	var config map[string]interface{}
+	if err := json.Unmarshal(data, &config); err != nil {
+		return nil, fmt.Errorf("failed to parse notebook config: %w", err)
+	}
+
+	viewsData, ok := config["views"].(map[string]interface{})
+	if !ok {
+		return views, nil
+	}
+
+	for name, viewData := range viewsData {
+		rawData, err := json.Marshal(viewData)
+		if err != nil {
+			vs.log.Warn().Str("name", name).Err(err).Msg("Failed to marshal notebook view")
+			continue
+		}
+
+		view, err := core.ParseViewDefinition(rawData)
+		if err != nil {
+			vs.log.Warn().Str("name", name).Err(err).Msg("Failed to parse notebook view")
+			continue
+		}
+
+		views = append(views, core.ViewInfo{
+			Name:        view.Name,
+			Origin:      "notebook",
+			Description: view.Description,
+			Parameters:  view.Parameters,
+		})
+	}
+
+	return views, nil
 }

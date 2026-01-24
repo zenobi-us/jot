@@ -870,3 +870,380 @@ func TestCLI_SQLFlag_EmptyResult(t *testing.T) {
 		t.Errorf("expected empty JSON array '[]', got: %s", stdout)
 	}
 }
+
+// TestCLI_ViewDiscovery_EmptyCommandListsViews tests that running "notes view" without arguments lists views
+func TestCLI_ViewDiscovery_EmptyCommandListsViews(t *testing.T) {
+	env := newTestEnv(t)
+
+	// Create notebook
+	notebookDir := env.createNotebook("view-discovery-test")
+
+	// Run "notes view" with no arguments
+	stdout, stderr, exitCode := env.runInDir(notebookDir, "notes", "view")
+
+	// Should succeed
+	if exitCode != 0 {
+		t.Errorf("view command with no args failed with exit code %d, stderr: %s", exitCode, stderr)
+	}
+
+	// Should list views
+	if !strings.Contains(stdout, "AVAILABLE VIEWS") {
+		t.Errorf("expected 'AVAILABLE VIEWS' header in output, got: %s", stdout)
+	}
+
+	// Should show built-in views
+	if !strings.Contains(stdout, "today") {
+		t.Errorf("expected 'today' view in output, got: %s", stdout)
+	}
+
+	if !strings.Contains(stdout, "recent") {
+		t.Errorf("expected 'recent' view in output, got: %s", stdout)
+	}
+
+	// Should show descriptions
+	if !strings.Contains(stdout, "Notes created or updated today") {
+		t.Errorf("expected view description in output, got: %s", stdout)
+	}
+}
+
+// TestCLI_ViewDiscovery_ListFlag tests that --list flag shows all views
+func TestCLI_ViewDiscovery_ListFlag(t *testing.T) {
+	env := newTestEnv(t)
+
+	// Create notebook
+	notebookDir := env.createNotebook("view-list-flag-test")
+
+	// Run "notes view --list"
+	stdout, stderr, exitCode := env.runInDir(notebookDir, "notes", "view", "--list")
+
+	// Should succeed
+	if exitCode != 0 {
+		t.Errorf("view --list failed with exit code %d, stderr: %s", exitCode, stderr)
+	}
+
+	// Should list views
+	if !strings.Contains(stdout, "AVAILABLE VIEWS") {
+		t.Errorf("expected 'AVAILABLE VIEWS' header, got: %s", stdout)
+	}
+
+	// Should show all built-in views
+	builtinViews := []string{"today", "recent", "kanban", "untagged", "orphans", "broken-links"}
+	for _, view := range builtinViews {
+		if !strings.Contains(stdout, view) {
+			t.Errorf("expected view '%s' in output, got: %s", view, stdout)
+		}
+	}
+}
+
+// TestCLI_ViewDiscovery_ListFlagJSON tests that --list --format json outputs valid JSON
+func TestCLI_ViewDiscovery_ListFlagJSON(t *testing.T) {
+	env := newTestEnv(t)
+
+	// Create notebook
+	notebookDir := env.createNotebook("view-list-json-test")
+
+	// Run "notes view --list --format json"
+	stdout, stderr, exitCode := env.runInDir(notebookDir, "notes", "view", "--list", "--format", "json")
+
+	// Should succeed
+	if exitCode != 0 {
+		t.Errorf("view --list --format json failed with exit code %d, stderr: %s", exitCode, stderr)
+	}
+
+	// Parse JSON output
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(stdout), &result); err != nil {
+		t.Errorf("invalid JSON output: %v, output: %s", err, stdout)
+	}
+
+	// Should have "views" key
+	views, ok := result["views"].([]interface{})
+	if !ok {
+		t.Errorf("expected 'views' array in JSON, got: %v", result)
+	}
+
+	// Should have at least 6 views (built-in)
+	if len(views) < 6 {
+		t.Errorf("expected at least 6 views, got %d", len(views))
+	}
+
+	// First view should have required fields
+	firstView, ok := views[0].(map[string]interface{})
+	if !ok {
+		t.Errorf("view should be an object, got: %v", views[0])
+	}
+
+	if _, ok := firstView["name"]; !ok {
+		t.Errorf("view should have 'name' field, got: %v", firstView)
+	}
+
+	if _, ok := firstView["origin"]; !ok {
+		t.Errorf("view should have 'origin' field, got: %v", firstView)
+	}
+
+	if _, ok := firstView["description"]; !ok {
+		t.Errorf("view should have 'description' field, got: %v", firstView)
+	}
+}
+
+// TestCLI_ViewDiscovery_OriginInfo tests that views show origin information
+func TestCLI_ViewDiscovery_OriginInfo(t *testing.T) {
+	env := newTestEnv(t)
+
+	// Create notebook
+	notebookDir := env.createNotebook("view-origin-test")
+
+	// Add a custom view to notebook config
+	configPath := filepath.Join(notebookDir, ".opennotes.json")
+	configData := map[string]interface{}{
+		"name": "Test Notebook",
+		"root": "notes",
+		"views": map[string]interface{}{
+			"my-custom-view": map[string]interface{}{
+				"name":        "my-custom-view",
+				"description": "A custom notebook view",
+				"query": map[string]interface{}{
+					"order_by": "updated DESC",
+				},
+			},
+		},
+	}
+
+	configJSON, _ := json.Marshal(configData)
+	if err := os.WriteFile(configPath, configJSON, 0644); err != nil {
+		t.Fatalf("failed to write config: %v", err)
+	}
+
+	// Run "notes view --list --format json"
+	stdout, stderr, exitCode := env.runInDir(notebookDir, "notes", "view", "--list", "--format", "json")
+
+	if exitCode != 0 {
+		t.Errorf("view --list --format json failed with exit code %d, stderr: %s", exitCode, stderr)
+	}
+
+	// Parse JSON
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(stdout), &result); err != nil {
+		t.Errorf("invalid JSON output: %v", err)
+	}
+
+	views, _ := result["views"].([]interface{})
+
+	// Check origins
+	origins := make(map[string]int)
+	for _, v := range views {
+		view, _ := v.(map[string]interface{})
+		origin, _ := view["origin"].(string)
+		origins[origin]++
+	}
+
+	// Should have built-in views
+	if origins["built-in"] == 0 {
+		t.Errorf("expected at least one built-in view, got: %v", origins)
+	}
+
+	// Should have notebook views
+	if origins["notebook"] == 0 {
+		t.Errorf("expected at least one notebook view, got: %v", origins)
+	}
+}
+
+// TestCLI_ViewDiscovery_ParameterDisplay tests that parameters are displayed in view listings
+func TestCLI_ViewDiscovery_ParameterDisplay(t *testing.T) {
+	env := newTestEnv(t)
+
+	// Create notebook
+	notebookDir := env.createNotebook("view-params-test")
+
+	// Run "notes view"
+	stdout, stderr, exitCode := env.runInDir(notebookDir, "notes", "view")
+
+	if exitCode != 0 {
+		t.Errorf("view command failed with exit code %d, stderr: %s", exitCode, stderr)
+	}
+
+	// kanban view should show parameters
+	if !strings.Contains(stdout, "kanban") {
+		t.Errorf("expected 'kanban' view in output")
+	}
+
+	// Should show parameter info
+	if !strings.Contains(stdout, "status") {
+		t.Errorf("expected 'status' parameter for kanban view")
+	}
+
+	if !strings.Contains(stdout, "[list, optional") {
+		t.Errorf("expected parameter type and required status in output")
+	}
+
+	if !strings.Contains(stdout, "default:") {
+		t.Errorf("expected parameter default value in output")
+	}
+}
+
+// TestCLI_ViewDiscovery_JSONParametersComplete tests that JSON output includes all parameter details
+func TestCLI_ViewDiscovery_JSONParametersComplete(t *testing.T) {
+	env := newTestEnv(t)
+
+	// Create notebook
+	notebookDir := env.createNotebook("view-json-params-test")
+
+	// Run "notes view --list --format json"
+	stdout, stderr, exitCode := env.runInDir(notebookDir, "notes", "view", "--list", "--format", "json")
+
+	if exitCode != 0 {
+		t.Errorf("view --list --format json failed with exit code %d, stderr: %s", exitCode, stderr)
+	}
+
+	// Parse JSON
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(stdout), &result); err != nil {
+		t.Errorf("invalid JSON output: %v", err)
+	}
+
+	views, _ := result["views"].([]interface{})
+
+	// Find kanban view
+	var kanbanView map[string]interface{}
+	for _, v := range views {
+		view, _ := v.(map[string]interface{})
+		if name, _ := view["name"].(string); name == "kanban" {
+			kanbanView = view
+			break
+		}
+	}
+
+	if kanbanView == nil {
+		t.Errorf("could not find kanban view in output")
+		return
+	}
+
+	// Check parameters array exists
+	params, ok := kanbanView["parameters"].([]interface{})
+	if !ok {
+		t.Errorf("kanban view should have 'parameters' array, got: %v", kanbanView)
+		return
+	}
+
+	// Should have at least one parameter
+	if len(params) == 0 {
+		t.Errorf("kanban view should have at least one parameter")
+	}
+
+	// Check parameter details
+	statusParam, ok := params[0].(map[string]interface{})
+	if !ok {
+		t.Errorf("parameter should be an object, got: %v", params[0])
+		return
+	}
+
+	if name, _ := statusParam["name"].(string); name != "status" {
+		t.Errorf("expected parameter name 'status', got: %s", name)
+	}
+
+	if paramType, _ := statusParam["type"].(string); paramType != "list" {
+		t.Errorf("expected parameter type 'list', got: %s", paramType)
+	}
+
+	if _, ok := statusParam["required"]; !ok {
+		t.Errorf("parameter should have 'required' field")
+	}
+
+	if _, ok := statusParam["default"]; !ok {
+		t.Errorf("parameter should have 'default' field")
+	}
+
+	if _, ok := statusParam["description"]; !ok {
+		t.Errorf("parameter should have 'description' field")
+	}
+}
+
+// TestCLI_ViewDiscovery_Sorting tests that views are sorted by origin
+func TestCLI_ViewDiscovery_Sorting(t *testing.T) {
+	env := newTestEnv(t)
+
+	// Create notebook
+	notebookDir := env.createNotebook("view-sorting-test")
+
+	// Add custom views to both global config and notebook config
+	configDir := filepath.Join(env.tmpDir, ".config", "opennotes")
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatalf("failed to create config dir: %v", err)
+	}
+
+	globalConfigPath := filepath.Join(configDir, "config.json")
+	globalConfig := map[string]interface{}{
+		"notebooks": []interface{}{},
+		"views": map[string]interface{}{
+			"global-view": map[string]interface{}{
+				"name":        "global-view",
+				"description": "A global view",
+				"query": map[string]interface{}{
+					"order_by": "updated DESC",
+				},
+			},
+		},
+	}
+
+	globalJSON, _ := json.Marshal(globalConfig)
+	if err := os.WriteFile(globalConfigPath, globalJSON, 0644); err != nil {
+		t.Fatalf("failed to write global config: %v", err)
+	}
+
+	// Add notebook view
+	notebookConfigPath := filepath.Join(notebookDir, ".opennotes.json")
+	notebookConfig := map[string]interface{}{
+		"name": "Test Notebook",
+		"root": "notes",
+		"views": map[string]interface{}{
+			"notebook-view": map[string]interface{}{
+				"name":        "notebook-view",
+				"description": "A notebook view",
+				"query": map[string]interface{}{
+					"order_by": "updated DESC",
+				},
+			},
+		},
+	}
+
+	notebookJSON, _ := json.Marshal(notebookConfig)
+	if err := os.WriteFile(notebookConfigPath, notebookJSON, 0644); err != nil {
+		t.Fatalf("failed to write notebook config: %v", err)
+	}
+
+	// Run "notes view --list --format json"
+	stdout, stderr, exitCode := env.runInDir(notebookDir, "notes", "view", "--list", "--format", "json")
+
+	if exitCode != 0 {
+		t.Errorf("view --list --format json failed with exit code %d, stderr: %s", exitCode, stderr)
+	}
+
+	// Parse JSON
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(stdout), &result); err != nil {
+		t.Errorf("invalid JSON output: %v", err)
+	}
+
+	views, _ := result["views"].([]interface{})
+
+	// Track origin order
+	originOrder := []string{}
+	lastOriginIndex := map[string]int{"built-in": 0, "global": 1, "notebook": 2}
+
+	for _, v := range views {
+		view, _ := v.(map[string]interface{})
+		origin, _ := view["origin"].(string)
+
+		// Skip if we've already seen this origin
+		if len(originOrder) == 0 || originOrder[len(originOrder)-1] != origin {
+			originOrder = append(originOrder, origin)
+		}
+	}
+
+	// Verify ordering: built-in before global before notebook
+	for i := 0; i < len(originOrder)-1; i++ {
+		if lastOriginIndex[originOrder[i]] >= lastOriginIndex[originOrder[i+1]] {
+			t.Errorf("views not properly sorted by origin, got order: %v", originOrder)
+		}
+	}
+}

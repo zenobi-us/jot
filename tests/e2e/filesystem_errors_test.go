@@ -40,7 +40,7 @@ func TestNotebookService_ReadOnlyDirectory(t *testing.T) {
 
 	// Verify the error is user-friendly (not just a system error)
 	assert.True(t, strings.Contains(err.Error(), "denied") ||
-		strings.Contains(err.Error(), "permission"), 
+		strings.Contains(err.Error(), "permission"),
 		"Error should mention permission issue: %v", err)
 }
 
@@ -64,7 +64,7 @@ func TestConfigService_PermissionDeniedWrite(t *testing.T) {
 	configPath := filepath.Join(configDir, "config.json")
 	configService, err := services.NewConfigServiceWithPath(configPath)
 	require.NoError(t, err)
-	
+
 	// Make config directory read-only after creation
 	err = os.Chmod(configDir, 0444)
 	require.NoError(t, err)
@@ -142,11 +142,11 @@ func TestNoteService_InvalidCharacters(t *testing.T) {
 
 	// Test invalid characters per OS
 	invalidChars := []string{
-		"test\x00null.md",     // Null character
-		"test\nnewline.md",    // Newline
-		"test\ttab.md",        // Tab character
+		"test\x00null.md",  // Null character
+		"test\nnewline.md", // Newline
+		"test\ttab.md",     // Tab character
 	}
-	
+
 	// Windows-specific invalid characters
 	if runtime.GOOS == "windows" {
 		invalidChars = append(invalidChars,
@@ -164,7 +164,7 @@ func TestNoteService_InvalidCharacters(t *testing.T) {
 		t.Run("invalid_char_"+filename, func(t *testing.T) {
 			filePath := filepath.Join(tempDir, filename)
 			err := os.WriteFile(filePath, []byte("# Test"), 0644)
-			
+
 			// Expect either an error or successful sanitization
 			if err != nil {
 				// Error is expected and acceptable
@@ -192,7 +192,7 @@ func TestNoteService_LongPaths(t *testing.T) {
 		if err != nil {
 			// This is expected at some depth
 			t.Logf("Path length limit reached at depth %d: %v", i, err)
-			assert.Contains(t, strings.ToLower(err.Error()), 
+			assert.Contains(t, strings.ToLower(err.Error()),
 				"name too long", "Error should indicate path length issue")
 			return
 		}
@@ -262,7 +262,7 @@ func TestNoteService_DiskSpaceSimulation(t *testing.T) {
 
 	// Try to write a very large file to potentially trigger space issues
 	largeFile := filepath.Join(tempDir, "large-file.md")
-	
+
 	// Create 100MB of content
 	content := make([]byte, 100*1024*1024)
 	for i := range content {
@@ -273,7 +273,7 @@ func TestNoteService_DiskSpaceSimulation(t *testing.T) {
 	if err != nil {
 		// If this fails due to disk space, that's what we're testing
 		if strings.Contains(strings.ToLower(err.Error()), "space") ||
-		   strings.Contains(strings.ToLower(err.Error()), "full") {
+			strings.Contains(strings.ToLower(err.Error()), "full") {
 			t.Logf("Disk space error handled correctly: %v", err)
 		} else {
 			t.Logf("Large file write failed: %v", err)
@@ -298,7 +298,7 @@ func TestNoteService_StaleFileHandle(t *testing.T) {
 	// Open file handle
 	file, err := os.Open(testFile)
 	require.NoError(t, err)
-	
+
 	// Remove the file while handle is open (simulates stale handle)
 	err = os.Remove(testFile)
 	require.NoError(t, err)
@@ -306,7 +306,7 @@ func TestNoteService_StaleFileHandle(t *testing.T) {
 	// Try to read from stale handle
 	buffer := make([]byte, 100)
 	_, err = file.Read(buffer)
-	
+
 	if err != nil {
 		t.Logf("Stale file handle correctly detected: %v", err)
 		// This is expected behavior

@@ -177,9 +177,9 @@ func TestDisplay_formatValueForTable_ComplexTypes(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		input    interface{}
-		contains []string // strings that should be in the output
+		name        string
+		input       interface{}
+		contains    []string // strings that should be in the output
 		notContains []string // strings that should NOT be in the output
 	}{
 		{
@@ -216,8 +216,8 @@ func TestDisplay_formatValueForTable_ComplexTypes(t *testing.T) {
 			notContains: []string{"<nil>"},
 		},
 		{
-			name: "long string truncation",
-			input: "This is a very long string that should be truncated when displayed in table format because it exceeds the 50 character limit",
+			name:        "long string truncation",
+			input:       "This is a very long string that should be truncated when displayed in table format because it exceeds the 50 character limit",
 			contains:    []string{"This is a very long string that should be tru", "..."},
 			notContains: []string{"limit"}, // end of string should be cut off
 		},
@@ -225,7 +225,7 @@ func TestDisplay_formatValueForTable_ComplexTypes(t *testing.T) {
 			name: "complex nested structure truncation",
 			input: map[string]interface{}{
 				"verylongkey1": "verylongvalue1",
-				"verylongkey2": "verylongvalue2", 
+				"verylongkey2": "verylongvalue2",
 				"verylongkey3": "verylongvalue3",
 				"verylongkey4": "verylongvalue4",
 			},

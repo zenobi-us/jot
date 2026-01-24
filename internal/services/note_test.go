@@ -1732,3 +1732,147 @@ priority: high
 		assert.True(t, priority == "high" || priority == "critical", "Priority should be high or critical")
 	}
 }
+
+// TestParseDataFlags tests the data flag parsing functionality
+func TestParseDataFlags(t *testing.T) {
+	tests := []struct {
+		name     string
+		flags    []string
+		want     map[string]interface{}
+		wantErr  bool
+		errMatch string
+	}{
+		{
+			name:  "empty flags",
+			flags: []string{},
+			want:  map[string]interface{}{},
+		},
+		{
+			name:  "single field",
+			flags: []string{"tag=meeting"},
+			want:  map[string]interface{}{"tag": "meeting"},
+		},
+		{
+			name:  "multiple different fields",
+			flags: []string{"tag=meeting", "priority=high", "status=draft"},
+			want: map[string]interface{}{
+				"tag":      "meeting",
+				"priority": "high",
+				"status":   "draft",
+			},
+		},
+		{
+			name:  "repeated field creates array",
+			flags: []string{"tag=meeting", "tag=sprint", "tag=planning"},
+			want: map[string]interface{}{
+				"tag": []interface{}{"meeting", "sprint", "planning"},
+			},
+		},
+		{
+			name:  "mixed single and repeated fields",
+			flags: []string{"tag=meeting", "priority=high", "tag=sprint"},
+			want: map[string]interface{}{
+				"tag":      []interface{}{"meeting", "sprint"},
+				"priority": "high",
+			},
+		},
+		{
+			name:     "invalid format no equals",
+			flags:    []string{"tagmeeting"},
+			wantErr:  true,
+			errMatch: "invalid --data format",
+		},
+		{
+			name:     "invalid format empty field",
+			flags:    []string{"=value"},
+			wantErr:  true,
+			errMatch: "field name cannot be empty",
+		},
+		{
+			name:  "invalid format empty value",
+			flags: []string{"field="},
+			want:  map[string]interface{}{"field": ""},
+		},
+		{
+			name:  "field with special characters in value",
+			flags: []string{"description=Meeting notes: Q1 planning (2024)"},
+			want:  map[string]interface{}{"description": "Meeting notes: Q1 planning (2024)"},
+		},
+		{
+			name:  "field with equals in value",
+			flags: []string{"equation=x=y+1"},
+			want:  map[string]interface{}{"equation": "x=y+1"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := services.ParseDataFlags(tt.flags)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.errMatch != "" {
+					assert.Contains(t, err.Error(), tt.errMatch)
+				}
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+// TestResolvePath tests the path resolution functionality
+func TestResolvePath(t *testing.T) {
+	tests := []struct {
+		name           string
+		notebookRoot   string
+		inputPath      string
+		slugifiedTitle string
+		want           string
+	}{
+		{
+			name:           "no path uses root and slugified title",
+			notebookRoot:   "/notebook",
+			inputPath:      "",
+			slugifiedTitle: "my-note",
+			want:           "/notebook/my-note.md",
+		},
+		{
+			name:           "folder path ending with slash",
+			notebookRoot:   "/notebook",
+			inputPath:      "meetings/",
+			slugifiedTitle: "sprint-planning",
+			want:           "/notebook/meetings/sprint-planning.md",
+		},
+		{
+			name:           "full filepath with extension",
+			notebookRoot:   "/notebook",
+			inputPath:      "meetings/2024-01-20.md",
+			slugifiedTitle: "meeting-notes",
+			want:           "/notebook/meetings/2024-01-20.md",
+		},
+		{
+			name:           "filepath without extension",
+			notebookRoot:   "/notebook",
+			inputPath:      "meetings/2024-01-20",
+			slugifiedTitle: "meeting-notes",
+			want:           "/notebook/meetings/2024-01-20.md",
+		},
+		{
+			name:           "nested folder path",
+			notebookRoot:   "/notebook",
+			inputPath:      "work/meetings/",
+			slugifiedTitle: "standup",
+			want:           "/notebook/work/meetings/standup.md",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := services.ResolvePath(tt.notebookRoot, tt.inputPath, tt.slugifiedTitle)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}

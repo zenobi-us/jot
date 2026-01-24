@@ -4,10 +4,18 @@ import "encoding/json"
 
 // ViewDefinition represents a named, reusable query preset
 type ViewDefinition struct {
-	Name        string            `json:"name"`
-	Description string            `json:"description"`
-	Parameters  []ViewParameter   `json:"parameters,omitempty"`
-	Query       ViewQuery         `json:"query"`
+	Name        string          `json:"name"`
+	Description string          `json:"description"`
+	Parameters  []ViewParameter `json:"parameters,omitempty"`
+	Query       ViewQuery       `json:"query"`
+}
+
+// ViewInfo represents view metadata for discovery/listing (includes origin)
+type ViewInfo struct {
+	Name        string          `json:"name"`
+	Origin      string          `json:"origin"` // "built-in", "global", "notebook"
+	Description string          `json:"description"`
+	Parameters  []ViewParameter `json:"parameters,omitempty"`
 }
 
 // ViewParameter represents a dynamic parameter in a view

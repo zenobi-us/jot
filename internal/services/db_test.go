@@ -628,7 +628,7 @@ func TestDbService_preprocessSQL_BasicGlobPatterns(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := svc.preprocessSQL(tt.query, tt.notebookRoot)
-			
+
 			if tt.expectError {
 				assert.Error(t, err)
 			} else {
@@ -751,7 +751,7 @@ func TestDbService_preprocessSQL_EdgeCases(t *testing.T) {
 			name:         "empty notebook root",
 			query:        "SELECT * FROM '*.md'",
 			notebookRoot: "",
-			expectError:  false, 
+			expectError:  false,
 			description:  "empty notebook root should work (relative to current dir)",
 		},
 		{
@@ -787,7 +787,7 @@ func TestDbService_preprocessSQL_EdgeCases(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := svc.preprocessSQL(tt.query, tt.notebookRoot)
-			
+
 			if tt.expectError {
 				assert.Error(t, err, tt.description)
 			} else {
@@ -811,14 +811,14 @@ func TestDbService_preprocessSQL_ErrorHandling(t *testing.T) {
 			name:         "malformed bracket pattern",
 			query:        "SELECT * FROM '[unclosed'",
 			notebookRoot: "/notebook",
-			expectedErr:  "",  // This should actually work - it's just a literal string
+			expectedErr:  "", // This should actually work - it's just a literal string
 		},
 	}
 
 	for _, tt := range errorTests {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := svc.preprocessSQL(tt.query, tt.notebookRoot)
-			
+
 			if tt.expectedErr != "" {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), tt.expectedErr)
@@ -855,7 +855,7 @@ func TestDbService_resolveGlobPattern(t *testing.T) {
 			expectError:  false,
 		},
 		{
-			name:         "subdirectory pattern", 
+			name:         "subdirectory pattern",
 			pattern:      "docs/*.md",
 			notebookRoot: "/notebook",
 			expected:     "/notebook/docs/*.md",
@@ -880,7 +880,7 @@ func TestDbService_resolveGlobPattern(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := svc.resolveGlobPattern(tt.pattern, tt.notebookRoot)
-			
+
 			if tt.expectError {
 				assert.Error(t, err)
 			} else {
@@ -940,7 +940,7 @@ func TestDbService_validateNotebookPath(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := svc.validateNotebookPath(tt.resolvedPath, tt.notebookRoot)
-			
+
 			if tt.expectError {
 				assert.Error(t, err, tt.description)
 				if err != nil {
@@ -1101,16 +1101,16 @@ func TestDbService_GetDB_ConcurrentInitWithCancelledContext(t *testing.T) {
 
 func createTestNotebookWithStructure(t *testing.T) *testNotebook {
 	t.Helper()
-	
+
 	tmpDir := t.TempDir()
 	notebookDir := filepath.Join(tmpDir, "test-notebook")
 	notesDir := filepath.Join(notebookDir, "notes")
 	subDir := filepath.Join(notesDir, "subfolder")
-	
+
 	// Create directory structure
 	require.NoError(t, os.MkdirAll(notesDir, 0755))
 	require.NoError(t, os.MkdirAll(subDir, 0755))
-	
+
 	// Create test markdown files
 	files := []struct {
 		path    string
@@ -1152,15 +1152,15 @@ This is a note in a subdirectory.
 `,
 		},
 		{
-			path: filepath.Join(notesDir, "readme.txt"),
+			path:    filepath.Join(notesDir, "readme.txt"),
 			content: "This is a text file that should not match *.md patterns",
 		},
 	}
-	
+
 	for _, file := range files {
 		require.NoError(t, os.WriteFile(file.path, []byte(file.content), 0644))
 	}
-	
+
 	return &testNotebook{
 		Path:     notebookDir,
 		NotesDir: notesDir,
@@ -1186,38 +1186,38 @@ func TestDbService_ExecuteSQLSafe_WithPreprocessing_Integration(t *testing.T) {
 			t.Logf("warning: failed to close db: %v", err)
 		}
 	})
-	
+
 	// Create test notebook with structure
 	notebook := createTestNotebookWithStructure(t)
-	
+
 	t.Run("preprocessing works from different working directories", func(t *testing.T) {
 		originalDir, err := os.Getwd()
 		require.NoError(t, err)
 		defer func() {
 			require.NoError(t, os.Chdir(originalDir))
 		}()
-		
+
 		// Execute from notebook root
 		require.NoError(t, os.Chdir(notebook.Path))
 		processedQuery1, err := dbService.preprocessSQL("SELECT * FROM '*.md'", notebook.Path)
 		require.NoError(t, err)
-		
-		// Execute from subdirectory  
+
+		// Execute from subdirectory
 		require.NoError(t, os.Chdir(notebook.SubDir))
 		processedQuery2, err := dbService.preprocessSQL("SELECT * FROM '*.md'", notebook.Path)
 		require.NoError(t, err)
-		
+
 		// Should produce identical results regardless of working directory
 		assert.Equal(t, processedQuery1, processedQuery2, "Preprocessing should be consistent regardless of working directory")
 	})
-	
+
 	t.Run("security validation blocks path traversal", func(t *testing.T) {
 		// Test path traversal attempts - only patterns with * or ? get processed
 		maliciousQueries := []string{
-			"SELECT * FROM '../*.md'",            // Has *, will be processed and blocked
-			"SELECT * FROM '../../../home/*'",    // Has *, will be processed and blocked
+			"SELECT * FROM '../*.md'",         // Has *, will be processed and blocked
+			"SELECT * FROM '../../../home/*'", // Has *, will be processed and blocked
 		}
-		
+
 		for _, query := range maliciousQueries {
 			_, err := dbService.preprocessSQL(query, notebook.Path)
 			assert.Error(t, err, "Query should be blocked: %s", query)
@@ -1225,25 +1225,25 @@ func TestDbService_ExecuteSQLSafe_WithPreprocessing_Integration(t *testing.T) {
 				assert.Contains(t, err.Error(), "path traversal", "Error should mention path traversal for query: %s", query)
 			}
 		}
-		
+
 		// Non-glob patterns are not processed, so no error (but also no security risk since no pattern expansion)
 		result, err := dbService.preprocessSQL("SELECT * FROM '../../etc/passwd'", notebook.Path)
 		assert.NoError(t, err, "Non-glob patterns are not processed")
 		assert.Equal(t, "SELECT * FROM '../../etc/passwd'", result, "Non-glob patterns should remain unchanged")
 	})
-	
+
 	t.Run("mixed legitimate and malicious patterns blocked", func(t *testing.T) {
 		// The current implementation processes this as one large pattern due to regex limitation
 		query := "SELECT * FROM 'notes/*.md' UNION SELECT * FROM '../secret/*'"
 		_, err := dbService.preprocessSQL(query, notebook.Path)
-		
+
 		// The current implementation actually BLOCKS this correctly because the combined pattern contains ../
 		assert.Error(t, err, "Mixed query with path traversal should be blocked")
 		if err != nil {
 			assert.Contains(t, err.Error(), "path traversal", "Should detect path traversal in combined pattern")
 		}
 	})
-	
+
 	t.Run("complex query with multiple valid patterns", func(t *testing.T) {
 		query := `
 			WITH md_files AS (
@@ -1256,10 +1256,10 @@ func TestDbService_ExecuteSQLSafe_WithPreprocessing_Integration(t *testing.T) {
 			UNION ALL 
 			SELECT * FROM sub_files
 		`
-		
+
 		processedQuery, err := dbService.preprocessSQL(query, notebook.Path)
 		require.NoError(t, err)
-		
+
 		// Verify patterns were processed (current implementation has limitations)
 		assert.Contains(t, processedQuery, fmt.Sprintf("%s/notes", notebook.Path))
 		assert.NotContains(t, processedQuery, "'notes/*.md'", "At least some patterns should be replaced")
@@ -1270,10 +1270,10 @@ func TestDbService_preprocessSQL_PerformanceBenchmark(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping performance test in short mode")
 	}
-	
+
 	svc := NewDbService()
 	notebookRoot := "/test/performance/notebook"
-	
+
 	// Test simple query performance
 	startTime := time.Now()
 	for i := 0; i < 1000; i++ {
@@ -1281,10 +1281,10 @@ func TestDbService_preprocessSQL_PerformanceBenchmark(t *testing.T) {
 		require.NoError(t, err)
 	}
 	duration := time.Since(startTime)
-	
+
 	averageTime := duration / 1000
 	t.Logf("Average preprocessing time: %v", averageTime)
-	
+
 	// Verify performance target (<1ms per operation)
 	assert.Less(t, averageTime, time.Millisecond, "Preprocessing should be under 1ms per operation")
 }
@@ -1292,13 +1292,13 @@ func TestDbService_preprocessSQL_PerformanceBenchmark(t *testing.T) {
 func TestDbService_preprocessSQL_ConcurrentProcessing(t *testing.T) {
 	svc := NewDbService()
 	notebookRoot := "/test/concurrent"
-	
+
 	const numGoroutines = 50
 	const queriesPerGoroutine = 20
-	
+
 	var allErrs []error
 	errChan := make(chan error, numGoroutines*queriesPerGoroutine)
-	
+
 	// Launch concurrent preprocessing operations
 	for i := 0; i < numGoroutines; i++ {
 		go func(routineID int) {
@@ -1309,14 +1309,14 @@ func TestDbService_preprocessSQL_ConcurrentProcessing(t *testing.T) {
 			}
 		}(i)
 	}
-	
+
 	// Collect all errors
 	for i := 0; i < numGoroutines*queriesPerGoroutine; i++ {
 		if err := <-errChan; err != nil {
 			allErrs = append(allErrs, err)
 		}
 	}
-	
+
 	// Verify no errors occurred during concurrent processing
 	assert.Empty(t, allErrs, "No errors should occur during concurrent preprocessing")
 }
@@ -1324,7 +1324,7 @@ func TestDbService_preprocessSQL_ConcurrentProcessing(t *testing.T) {
 func TestDbService_preprocessSQL_RegressionTests(t *testing.T) {
 	svc := NewDbService()
 	notebookRoot := "/notebook"
-	
+
 	// Test cases that ensure existing functionality continues working
 	regressionTests := []struct {
 		name     string
@@ -1357,7 +1357,7 @@ func TestDbService_preprocessSQL_RegressionTests(t *testing.T) {
 			expected: "SELECT read_markdown('/notebook/*.md'), LENGTH(content) FROM notes",
 		},
 	}
-	
+
 	for _, tt := range regressionTests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := svc.preprocessSQL(tt.query, notebookRoot)

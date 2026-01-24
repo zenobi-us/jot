@@ -462,3 +462,58 @@ func (s *NoteService) SearchWithConditions(ctx context.Context, conditions []Que
 	s.log.Debug().Int("count", len(notes)).Msg("boolean query completed")
 	return notes, nil
 }
+
+// ParseDataFlags parses --data flags in "field=value" format (exported for cmd package)
+func ParseDataFlags(dataFlags []string) (map[string]interface{}, error) {
+	result := make(map[string]interface{})
+
+	for _, dataFlag := range dataFlags {
+		parts := strings.SplitN(dataFlag, "=", 2)
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid --data format: %s (expected field=value)", dataFlag)
+		}
+
+		field := strings.TrimSpace(parts[0])
+		value := strings.TrimSpace(parts[1])
+
+		// Validate field name is not empty
+		if field == "" {
+			return nil, fmt.Errorf("field name cannot be empty in --data flag")
+		}
+
+		// Support multiple values for same field (convert to array)
+		if existing, ok := result[field]; ok {
+			switch v := existing.(type) {
+			case []interface{}:
+				result[field] = append(v, value)
+			default:
+				result[field] = []interface{}{v, value}
+			}
+		} else {
+			result[field] = value
+		}
+	}
+
+	return result, nil
+}
+
+// ResolvePath resolves the final note path based on input path and slugified title (exported for cmd package)
+func ResolvePath(notebookRoot, inputPath, slugifiedTitle string) string {
+	// Case 1: No path specified - use root + slugified title
+	if inputPath == "" {
+		return filepath.Join(notebookRoot, slugifiedTitle+".md")
+	}
+
+	// Case 2: Ends with "/" - explicit folder
+	if strings.HasSuffix(inputPath, "/") {
+		return filepath.Join(notebookRoot, inputPath, slugifiedTitle+".md")
+	}
+
+	// Case 3: Full filepath with .md extension
+	if strings.HasSuffix(inputPath, ".md") {
+		return filepath.Join(notebookRoot, inputPath)
+	}
+
+	// Case 4: Filepath without extension - auto-add .md
+	return filepath.Join(notebookRoot, inputPath+".md")
+}
