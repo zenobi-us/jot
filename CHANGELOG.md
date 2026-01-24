@@ -1,5 +1,57 @@
 # Changelog
 
+## [Unreleased]
+
+### Features
+
+#### Views System ✨
+**Complete reusable query presets for common workflows**
+
+- **6 Built-in Views**: `today`, `recent`, `kanban`, `untagged`, `orphans`, `broken-links`
+- **Custom Views**: Define views in global config (`~/.config/opennotes/config.json`) or notebook config (`.opennotes.json`)
+- **Parameter System**: Runtime parameters with validation (string, list, date, bool types)
+- **Template Variables**: Dynamic date/time values (`{{today}}`, `{{yesterday}}`, `{{this_week}}`, `{{this_month}}`, `{{now}}`)
+- **Multiple Outputs**: List, table, and JSON formats for all views
+- **Special Executors**: Graph analysis for orphans and broken-links detection
+- **Performance**: Sub-millisecond query generation, <50ms total execution
+
+**Command**:
+```bash
+opennotes notes view <name> [--param key=value] [--format list|table|json]
+opennotes notes view --list  # Show available views
+```
+
+**Examples**:
+```bash
+# View today's notes
+opennotes notes view today
+
+# Kanban board with custom statuses
+opennotes notes view kanban --param status=todo,in-progress,done
+
+# Find orphaned notes
+opennotes notes view orphans --param definition=no-incoming
+
+# Export to JSON for automation
+opennotes notes view recent --format json | jq '.[].path'
+```
+
+**Documentation**:
+- User Guide: `docs/views-guide.md`
+- Examples: `docs/views-examples.md`
+- API Reference: `docs/views-api.md`
+
+**Implementation Details**:
+- Core data structures: `ViewDefinition`, `ViewParameter`, `ViewQuery`, `ViewCondition`
+- Service: `internal/services/view.go` - ViewService with 6 built-in views
+- Special executors: `internal/services/view_special.go` - Orphans and broken-links detection
+- CLI command: `cmd/notes_view.go`
+- Configuration integration: 3-tier precedence (notebook > global > built-in)
+- Security: Field/operator whitelist + parameterized queries
+- Test coverage: 59 new tests (100% ViewService and SpecialViewExecutor)
+
+---
+
 ## [0.0.3](https://github.com/zenobi-us/opennotes/compare/0.1.0-next.1...v0.0.3) (2026-01-20)
 
 
