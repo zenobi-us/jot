@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.0](https://github.com/zenobi-us/opennotes/compare/v0.0.3...v0.1.0) (2026-01-25)
+
+
+### Features
+
+* Advanced Search System with Views & Enhanced Note Creation ([#9](https://github.com/zenobi-us/opennotes/issues/9)) ([b517454](https://github.com/zenobi-us/opennotes/commit/b517454d518bd04609035ebbf9defbbf41c784f2))
+* **notebook:** implement OPENNOTES_NOTEBOOK envvar and fix resolution priority ([#14](https://github.com/zenobi-us/opennotes/issues/14)) ([349683c](https://github.com/zenobi-us/opennotes/commit/349683cfa4143c8c2605d87b03596f2ce9e1053a))
+* **schema:** add JSON schema for notebook configuration ([#10](https://github.com/zenobi-us/opennotes/issues/10)) ([38f4fbe](https://github.com/zenobi-us/opennotes/commit/38f4fbe1ad75c77da38dceedda83e6dca66f8a7d))
+
+
+### Bug Fixes
+
+* **docs:** convert notebook discovery flowchart from Mermaid to D2 ([#7](https://github.com/zenobi-us/opennotes/issues/7)) ([6c56012](https://github.com/zenobi-us/opennotes/commit/6c5601237b03c1e54d79840cd059174a633e512e))
+* **views:** correct DuckDB metadata schema for all built-in views ([#11](https://github.com/zenobi-us/opennotes/issues/11)) ([5da5fe9](https://github.com/zenobi-us/opennotes/commit/5da5fe9e96f0d63dce8faeb55da9df760c7f600e))
+
 ## [Unreleased]
 
 ### Features
