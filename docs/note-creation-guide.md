@@ -37,10 +37,12 @@ opennotes notes add <title> [path] [flags]
 ```
 
 **Arguments**:
+
 - `<title>` - Note title (required) - will be slugified for filename
 - `[path]` - Optional path (file or folder) - defaults to notebook root
 
 **Common Flags**:
+
 - `--data field=value` - Add metadata to frontmatter (repeatable)
 - `--template <name>` - Use a specific template
 - `--notebook <name>` - Target specific notebook
@@ -73,6 +75,7 @@ opennotes notes add "Sprint Planning" \
 ```
 
 **Result** (`sprint-planning.md`):
+
 ```markdown
 ---
 author: John Doe
@@ -81,7 +84,6 @@ priority: high
 ---
 
 # Sprint Planning
-
 ```
 
 ### Array Values (Repeated Fields)
@@ -97,6 +99,7 @@ opennotes notes add "Team Standup" \
 ```
 
 **Result** (`team-standup.md`):
+
 ```markdown
 ---
 tag:
@@ -106,7 +109,6 @@ tag:
 ---
 
 # Team Standup
-
 ```
 
 ### Mixed Metadata
@@ -122,6 +124,7 @@ opennotes notes add "API Design Review" \
 ```
 
 **Result**:
+
 ```markdown
 ---
 author: Engineering Team
@@ -134,7 +137,6 @@ reviewers: Alice,Bob,Charlie
 ---
 
 # API Design Review
-
 ```
 
 ## Path Options
@@ -180,6 +182,7 @@ opennotes notes add "Changelog" CHANGELOG
 OpenNotes prioritizes content from multiple sources:
 
 **Priority Order** (highest to lowest):
+
 1. **Stdin** - Piped or redirected content
 2. **Template** - Content from `--template` flag
 3. **Default** - Simple `# Title\n\n`
@@ -216,8 +219,6 @@ If no stdin or template is provided, OpenNotes creates a simple note:
 
 ```markdown
 # Your Title Here
-
-
 ```
 
 ## Real-World Examples
@@ -323,6 +324,7 @@ opennotes notes add --title "My Note"
 ```
 
 **Warning shown**:
+
 ```
 Warning: --title flag is deprecated, use positional argument instead
 Example: opennotes notes add "My Note"
@@ -379,7 +381,7 @@ opennotes notes add "Note 2" --data tag=meeting   # singular
 Titles are automatically slugified for filenames:
 
 ```bash
-opennotes notes add "My Great Idea!" 
+opennotes notes add "My Great Idea!"
 # Creates: my-great-idea.md
 
 opennotes notes add "2026-01-24: Daily Log"
@@ -442,6 +444,7 @@ opennotes notes add "Note" non-existent-folder/
 **Problem**: Metadata not showing in frontmatter
 
 **Check**:
+
 1. Using `--data field=value` format (no spaces around `=`)
 2. Field names are valid YAML keys (no special characters)
 3. File was created successfully
