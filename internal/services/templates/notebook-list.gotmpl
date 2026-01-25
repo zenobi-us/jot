@@ -4,7 +4,7 @@ No notebooks found.
 ## Notebooks ({{ len .Notebooks }})
 
 {{ range .Notebooks -}}
-{{ if and $.CurrentNotebook (eq .Config.Path $.CurrentNotebook.Config.Path) }}✨ {{ else }}   {{ end }}### {{ .Config.Name }}
+### {{ .Config.Name }} {{ if and $.CurrentNotebook (eq .Config.Path $.CurrentNotebook.Config.Path) }}✅ {{ end }}
 - **Path:** {{ .Config.Path }}
 - **Root:** {{ .Config.Root }}
 {{ if .Config.Contexts -}}
