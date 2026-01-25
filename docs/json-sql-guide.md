@@ -26,6 +26,7 @@ opennotes notes search --sql "SELECT title, path FROM notes"
 ```
 
 **Example Output:**
+
 ```json
 [
   {
@@ -33,7 +34,7 @@ opennotes notes search --sql "SELECT title, path FROM notes"
     "path": "projects/ideas.md"
   },
   {
-    "title": "Meeting Notes", 
+    "title": "Meeting Notes",
     "path": "meetings/2024-01-15.md"
   }
 ]
@@ -56,6 +57,7 @@ opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', inc
 ```
 
 **Output:**
+
 ```json
 [
   {
@@ -72,15 +74,16 @@ opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', inc
 ```bash
 # Get file paths with word counts
 opennotes notes search --sql "
-  SELECT 
-    file_path, 
-    (md_stats(content)).word_count as word_count 
-  FROM read_markdown('**/*.md', include_filepath:=true) 
+  SELECT
+    file_path,
+    (md_stats(content)).word_count as word_count
+  FROM read_markdown('**/*.md', include_filepath:=true)
   LIMIT 3
 "
 ```
 
 **Output:**
+
 ```json
 [
   {
@@ -88,7 +91,7 @@ opennotes notes search --sql "
     "word_count": 1250
   },
   {
-    "file_path": "/path/to/notebook/meetings/daily.md", 
+    "file_path": "/path/to/notebook/meetings/daily.md",
     "word_count": 340
   }
 ]
@@ -99,7 +102,7 @@ opennotes notes search --sql "
 ```bash
 # Find notes with more than 500 words, sorted by word count
 opennotes notes search --sql "
-  SELECT 
+  SELECT
     file_path,
     (md_stats(content)).word_count as words
   FROM read_markdown('**/*.md', include_filepath:=true)
@@ -119,15 +122,16 @@ Markdown statistics return as nested JSON objects:
 ```bash
 # Get comprehensive statistics
 opennotes notes search --sql "
-  SELECT 
-    file_path, 
-    md_stats(content) as stats 
-  FROM read_markdown('**/*.md', include_filepath:=true) 
+  SELECT
+    file_path,
+    md_stats(content) as stats
+  FROM read_markdown('**/*.md', include_filepath:=true)
   LIMIT 2
 "
 ```
 
 **Output:**
+
 ```json
 [
   {
@@ -152,7 +156,7 @@ Extract links and code blocks as arrays:
 ```bash
 # Extract all links from notes
 opennotes notes search --sql "
-  SELECT 
+  SELECT
     file_path,
     md_extract_links(content) as links
   FROM read_markdown('**/*.md', include_filepath:=true)
@@ -162,6 +166,7 @@ opennotes notes search --sql "
 ```
 
 **Output:**
+
 ```json
 [
   {
@@ -191,7 +196,7 @@ opennotes notes search --sql "
 ```bash
 # Extract code blocks with languages
 opennotes notes search --sql "
-  SELECT 
+  SELECT
     file_path,
     md_extract_code_blocks(content) as code_blocks
   FROM read_markdown('**/*.md', include_filepath:=true)
@@ -201,6 +206,7 @@ opennotes notes search --sql "
 ```
 
 **Output:**
+
 ```json
 [
   {
@@ -215,7 +221,7 @@ opennotes notes search --sql "
       {
         "code": "def hello():\n    print('Hello from Python')\n",
         "info_string": "python",
-        "language": "python", 
+        "language": "python",
         "line_number": 52
       }
     ]
@@ -240,7 +246,7 @@ jq -r '.[].file_path'
 ```bash
 # Get notes with high word counts
 opennotes notes search --sql "
-  SELECT file_path, (md_stats(content)).word_count as words 
+  SELECT file_path, (md_stats(content)).word_count as words
   FROM read_markdown('**/*.md', include_filepath:=true)
 " | \
 jq '.[] | select(.words > 1000) | .file_path'
@@ -251,8 +257,8 @@ jq '.[] | select(.words > 1000) | .file_path'
 ```bash
 # Create a summary report
 opennotes notes search --sql "
-  SELECT 
-    file_path, 
+  SELECT
+    file_path,
     (md_stats(content)).word_count as words,
     array_length(md_extract_links(content)) as link_count
   FROM read_markdown('**/*.md', include_filepath:=true)
@@ -266,6 +272,7 @@ jq '{
 ```
 
 **Output:**
+
 ```json
 {
   "total_notes": 47,
@@ -284,9 +291,9 @@ opennotes notes search --sql "
   FROM read_markdown('**/*.md', include_filepath:=true)
 " | \
 jq -r '
-  .[] | 
-  .links[] | 
-  select(.url | startswith("http")) | 
+  .[] |
+  .links[] |
+  select(.url | startswith("http")) |
   "\(.url) - \(.text)"
 '
 ```
@@ -304,7 +311,7 @@ jq -r '.[].file_path' > note-list.txt
 ```bash
 # Get notes modified in last 7 days
 opennotes notes search --sql "
-  SELECT file_path 
+  SELECT file_path
   FROM read_markdown('**/*.md', include_filepath:=true)
   WHERE file_path IN (
     SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)
@@ -323,7 +330,7 @@ done
 ```bash
 # Count words in each note and sort
 opennotes notes search --sql "
-  SELECT 
+  SELECT
     file_path,
     (md_stats(content)).word_count as words
   FROM read_markdown('**/*.md', include_filepath:=true)
@@ -340,7 +347,7 @@ head -10
 ```bash
 # Convert to CSV for spreadsheet import
 opennotes notes search --sql "
-  SELECT 
+  SELECT
     file_path,
     (md_stats(content)).word_count as words,
     (md_stats(content)).reading_time_minutes as reading_time
@@ -354,7 +361,7 @@ jq -r '["File", "Words", "Reading Time"], (.[] | [.file_path, .words, .reading_t
 ```bash
 # Prepare data for database import
 opennotes notes search --sql "
-  SELECT 
+  SELECT
     file_path,
     content,
     md_stats(content) as stats
@@ -384,7 +391,7 @@ mkdir -p "$backup_dir"
 
 echo "Exporting notebook metadata..."
 opennotes notes search --sql "
-  SELECT 
+  SELECT
     file_path,
     content,
     md_stats(content) as stats,
@@ -418,7 +425,7 @@ export_dir="exports"
 mkdir -p "$export_dir"
 
 opennotes notes search --sql "
-  SELECT 
+  SELECT
     file_path,
     content,
     md_stats(content) as stats
@@ -427,7 +434,7 @@ opennotes notes search --sql "
   # Extract data
   filename=$(echo "$note" | jq -r '.file_path | split("/")[-1] | split(".")[0]')
   word_count=$(echo "$note" | jq -r '.stats.word_count')
-  
+
   # Create structured export
   echo "$note" | jq '{
     exported_at: now | todate,
@@ -435,7 +442,7 @@ opennotes notes search --sql "
     statistics: .stats,
     content: .content
   }' > "$export_dir/${filename}-export.json"
-  
+
   echo "Exported: $filename ($word_count words)"
 done
 ```
@@ -454,7 +461,7 @@ echo "" >> daily-report.md
 # Note statistics
 echo "## Overview" >> daily-report.md
 opennotes notes search --sql "
-  SELECT 
+  SELECT
     COUNT(*) as total_notes,
     SUM((md_stats(content)).word_count) as total_words,
     AVG((md_stats(content)).word_count) as avg_words,
@@ -462,7 +469,7 @@ opennotes notes search --sql "
   FROM read_markdown('**/*.md', include_filepath:=true)
 " | jq -r '.[] | "
 - **Total Notes:** \(.total_notes)
-- **Total Words:** \(.total_words)  
+- **Total Words:** \(.total_words)
 - **Average Words per Note:** \(.avg_words | floor)
 - **Total Links:** \(.total_links)
 "' >> daily-report.md
@@ -471,7 +478,7 @@ opennotes notes search --sql "
 echo "" >> daily-report.md
 echo "## Longest Notes" >> daily-report.md
 opennotes notes search --sql "
-  SELECT 
+  SELECT
     file_path,
     (md_stats(content)).word_count as words
   FROM read_markdown('**/*.md', include_filepath:=true)
@@ -491,14 +498,14 @@ echo "Report generated: daily-report.md"
 echo "Analyzing code usage across notes..."
 
 opennotes notes search --sql "
-  SELECT 
+  SELECT
     file_path,
     md_extract_code_blocks(content) as code_blocks
   FROM read_markdown('**/*.md', include_filepath:=true)
   WHERE array_length(md_extract_code_blocks(content)) > 0
 " | jq -r '
-  [.[] | .code_blocks[]] | 
-  group_by(.language) | 
+  [.[] | .code_blocks[]] |
+  group_by(.language) |
   map({
     language: .[0].language,
     count: length,
@@ -556,7 +563,7 @@ done
 # quality-metrics.sh - Generate content quality metrics
 
 opennotes notes search --sql "
-  SELECT 
+  SELECT
     file_path,
     (md_stats(content)).word_count as words,
     array_length(md_extract_links(content)) as links,
@@ -565,13 +572,13 @@ opennotes notes search --sql "
 " | jq '{
   quality_score: (
     map(
-      (.words * 0.5) + 
-      (.links * 2) + 
+      (.words * 0.5) +
+      (.links * 2) +
       (.code_blocks * 3)
     ) | add / length
   ),
   notes_needing_attention: [
-    .[] | 
+    .[] |
     select(.words < 50 and .links == 0) |
     .file_path
   ]
@@ -587,7 +594,7 @@ opennotes notes search --sql "
 ```bash
 # Analyze content organization by directory structure
 opennotes notes search --sql "
-  SELECT 
+  SELECT
     file_path,
     (md_stats(content)).word_count as words,
     array_length(md_extract_links(content)) as links
@@ -615,18 +622,18 @@ echo "Analyzing note creation patterns..."
 
 # Get file modification times and content stats
 opennotes notes search --sql "
-  SELECT 
+  SELECT
     file_path,
     (md_stats(content)).word_count as words
   FROM read_markdown('**/*.md', include_filepath:=true)
 " | jq -c '.[]' | while read note; do
   filepath=$(echo "$note" | jq -r '.file_path')
   words=$(echo "$note" | jq -r '.words')
-  
+
   if [ -f "$filepath" ]; then
     mod_date=$(stat -c %Y "$filepath" 2>/dev/null || date +%s)
     month=$(date -d "@$mod_date" +%Y-%m)
-    
+
     echo "$month $words"
   fi
 done | awk '
@@ -636,8 +643,8 @@ done | awk '
 }
 END {
   for (month in month_words) {
-    printf "%s: %d notes, %d words, %.1f avg\n", 
-           month, month_count[month], month_words[month], 
+    printf "%s: %d notes, %d words, %.1f avg\n",
+           month, month_count[month], month_words[month],
            month_words[month]/month_count[month]
   }
 }' | sort
@@ -650,7 +657,7 @@ END {
 ```bash
 # Create link network data for visualization
 opennotes notes search --sql "
-  SELECT 
+  SELECT
     file_path,
     md_extract_links(content) as links
   FROM read_markdown('**/*.md', include_filepath:=true)
@@ -684,7 +691,7 @@ opennotes notes search --sql "
 echo "Finding notes with shared external links..."
 
 opennotes notes search --sql "
-  SELECT 
+  SELECT
     file_path,
     md_extract_links(content) as links
   FROM read_markdown('**/*.md', include_filepath:=true)
@@ -697,7 +704,7 @@ opennotes notes search --sql "
     } |
     select(.external_links | length > 0)
   ] as $notes |
-  
+
   [
     range(0; $notes | length) as $i |
     range($i + 1; $notes | length) as $j |
@@ -726,6 +733,7 @@ opennotes notes search --sql "
 **Causes and Solutions**:
 
 1. **Empty Results**: Query returns no data
+
    ```bash
    # Check for empty results
    opennotes notes search --sql "SELECT COUNT(*) as count FROM read_markdown('**/*.md')"
@@ -733,6 +741,7 @@ opennotes notes search --sql "
    ```
 
 2. **File Access Issues**: Notebook path not found
+
    ```bash
    # Verify notebook directory
    opennotes notebook list
@@ -757,9 +766,9 @@ opennotes notes search --sql "SELECT metadata FROM read_markdown('**/*.md')"
 
 # Use this (safer):
 opennotes notes search --sql "
-  SELECT 
+  SELECT
     file_path,
-    CASE 
+    CASE
       WHEN metadata IS NOT NULL THEN metadata
       ELSE CAST(NULL AS JSON)
     END as metadata
@@ -780,7 +789,7 @@ echo '[{"a":1}, {"a":2}]' | jq '.a'  # Error: null
 # Correct: iterate array
 echo '[{"a":1}, {"a":2}]' | jq '.[].a'  # Output: 1, 2
 
-# Correct: map over array  
+# Correct: map over array
 echo '[{"a":1}, {"a":2}]' | jq 'map(.a)'  # Output: [1, 2]
 ```
 
@@ -805,19 +814,21 @@ jq '.[] | select((.word_count // 0) > 100)'
 **Solutions**:
 
 1. **Use LIMIT clauses**:
+
    ```bash
    # Instead of all notes
    opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md')"
-   
+
    # Use pagination
    opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md') LIMIT 100 OFFSET 0"
    ```
 
 2. **Filter early**:
+
    ```bash
    # Instead of filtering in jq
    opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md')" | jq '.[] | select(.words > 1000)'
-   
+
    # Filter in SQL
    opennotes notes search --sql "
      SELECT * FROM read_markdown('**/*.md', include_filepath:=true)
@@ -826,10 +837,11 @@ jq '.[] | select((.word_count // 0) > 100)'
    ```
 
 3. **Select specific columns**:
+
    ```bash
    # Instead of SELECT *
    opennotes notes search --sql "SELECT file_path, content FROM read_markdown('**/*.md', include_filepath:=true)"
-   
+
    # Select only needed columns
    opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)"
    ```
@@ -849,22 +861,22 @@ offset=0
 
 while true; do
   echo "Processing batch starting at offset $offset..."
-  
+
   result=$(opennotes notes search --sql "
     SELECT file_path, md_stats(content) as stats
     FROM read_markdown('**/*.md', include_filepath:=true)
     LIMIT $batch_size OFFSET $offset
   ")
-  
+
   # Check if result is empty array
   if [[ $(echo "$result" | jq 'length') -eq 0 ]]; then
     echo "No more results, processing complete."
     break
   fi
-  
+
   # Process this batch
   echo "$result" | jq -r '.[] | "\(.file_path): \(.stats.word_count) words"'
-  
+
   offset=$((offset + batch_size))
 done
 ```

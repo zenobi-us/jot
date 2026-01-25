@@ -25,41 +25,45 @@ Before diving into specific sections, use this flowchart to identify your issue:
 **Causes and solutions**:
 
 1. **Notebook doesn't exist yet**
+
    ```bash
    # List existing notebooks
    opennotes notebook list
-   
+
    # Create the notebook
    opennotes notebook create "MyNotebook" --path ~/my-notes
    ```
 
 2. **Notebook name is case-sensitive**
+
    ```bash
    # ❌ Won't work if notebook is named "MyNotebook"
    opennotes notebook info mynotebook
-   
+
    # ✅ Use exact name
    opennotes notebook info MyNotebook
    ```
 
 3. **Notebook configuration file corrupted**
+
    ```bash
    # Check config file location
    cat ~/.config/opennotes/config.json
-   
+
    # Backup and recreate if needed
    cp ~/.config/opennotes/config.json ~/.config/opennotes/config.json.bak
    opennotes notebook create "MyNotebook" --path ~/my-notes --force
    ```
 
 4. **Using wrong notebook in multi-notebook setup**
+
    ```bash
    # See all notebooks
    opennotes notebook list
-   
+
    # Specify notebook explicitly
    opennotes -n "MyNotebook" notes list
-   
+
    # Or set default
    opennotes notebook set-default "MyNotebook"
    ```
@@ -73,46 +77,50 @@ Before diving into specific sections, use this flowchart to identify your issue:
 **Causes and solutions**:
 
 1. **Notebook directory not readable**
+
    ```bash
    # Check permissions
    ls -la ~/my-notes
-   
+
    # Fix if needed (allow owner to read)
    chmod 755 ~/my-notes
    chmod -R 755 ~/my-notes/*
    ```
 
 2. **Running as different user than notebook owner**
+
    ```bash
    # Check who owns the notebook
    ls -la ~/my-notes
-   
+
    # Run commands as the same user
    sudo -u username opennotes notebook create ...
-   
+
    # Or change ownership
    sudo chown -R $USER:$USER ~/my-notes
    ```
 
 3. **SELinux or AppArmor restrictions (Linux)**
+
    ```bash
    # Check if SELinux is enabled
    getenforce
-   
+
    # Temporarily disable for testing
    sudo setenforce 0
-   
+
    # Or configure policy for opennotes (consult your admin)
    ```
 
 4. **Windows: Path with special characters**
+
    ```bash
    # ❌ May fail with spaces or special chars
    opennotes notebook create "My Notes" --path "C:\Users\Me\My Documents\Notes"
-   
+
    # ✅ Use quoted paths
    opennotes notebook create "MyNotes" --path "C:\Users\Me\My Documents\Notes"
-   
+
    # ✅ Or use forward slashes
    opennotes notebook create "MyNotes" --path "C:/Users/Me/My Documents/Notes"
    ```
@@ -126,17 +134,19 @@ Before diving into specific sections, use this flowchart to identify your issue:
 **Causes and solutions**:
 
 1. **Very large collection (1000+ files)**
+
    ```bash
    # Import works, but may take time on first run
    # Be patient - large collections need time to index
    opennotes notebook create "BigCollection" --path ~/large-notes
-   
+
    # Subsequent operations will be faster (cached)
    opennotes notes list  # First time: may take 30-60 seconds
    opennotes notes list  # Second time: <1 second
    ```
 
 2. **Network-mounted notebook (slow storage)**
+
    ```bash
    # Network drives are slower
    # Solution: Copy to local storage first
@@ -145,11 +155,12 @@ Before diving into specific sections, use this flowchart to identify your issue:
    ```
 
 3. **System running out of memory**
+
    ```bash
    # Check available memory
    free -h  # Linux
    vm_stat  # macOS
-   
+
    # If low on memory, close other applications
    # Or process in smaller batches:
    opennotes notebook create "Batch1" --path ~/notes/a-m
@@ -157,10 +168,11 @@ Before diving into specific sections, use this flowchart to identify your issue:
    ```
 
 4. **Antivirus scanning files during import**
+
    ```bash
    # Add opennotes to antivirus exclusions
    # Location depends on antivirus (Windows Defender, etc.)
-   
+
    # Or temporarily disable for import
    # Consult your antivirus documentation
    ```
@@ -174,36 +186,39 @@ Before diving into specific sections, use this flowchart to identify your issue:
 **Causes and solutions**:
 
 1. **UTF-8 characters in filenames**
+
    ```bash
    # UTF-8 filenames are supported
    # If you see garbled text, check terminal encoding
-   
+
    # Set UTF-8 locale
    export LC_ALL=en_US.UTF-8
    export LANG=en_US.UTF-8
-   
+
    # Then run opennotes
    opennotes notebook create "MyNotebook" --path ~/my-notes
    ```
 
 2. **Special shell characters in filenames**
+
    ```bash
    # Files with spaces, quotes, etc. are handled automatically
    # OpenNotes safely escapes these
-   
+
    # These are fine:
    # - "My Note (v2).md"
    # - "TODO: Buy groceries.md"
    # - "Author's notes.md"
-   
+
    opennotes notes list  # Shows all correctly
    ```
 
 3. **Windows: Forbidden characters**
+
    ```bash
    # Windows forbids these in filenames: < > : " / \ | ? *
    # If files have these, rename before importing
-   
+
    # Problematic example: "Q1 < Q2 Analysis.md"
    # Rename to: "Q1-LessThan-Q2-Analysis.md"
    ```
@@ -217,33 +232,36 @@ Before diving into specific sections, use this flowchart to identify your issue:
 **Causes and solutions**:
 
 1. **Circular symlinks (A→B→A)**
+
    ```bash
    # Check for circular symlinks
    find ~/my-notes -type l | while read link; do
      echo "$link -> $(readlink $link)"
    done
-   
+
    # Remove problematic symlinks
    rm ~/my-notes/circular-link
    ```
 
 2. **Symlinks to parent directories**
+
    ```bash
    # ❌ Problematic
    ln -s ~ ~/my-notes/home-link
-   
+
    # ✅ Better: Use actual path or copy
    cp ~/important-file ~/my-notes/important-file
    ```
 
 3. **Deeply nested symlinks**
+
    ```bash
    # OpenNotes resolves symlinks safely
    # But deeply nested structures may be slow
-   
+
    # Check depth
    find ~/my-notes -type l -exec sh -c 'echo "$1" | tr -cd "/" | wc -c' _ {} \; | sort -n | tail -5
-   
+
    # Flatten if needed by copying
    find ~/my-notes -type l -exec cp {} {}.copy \;
    ```
@@ -259,15 +277,16 @@ Before diving into specific sections, use this flowchart to identify your issue:
 **Causes and solutions**:
 
 1. **File pattern doesn't match any files**
+
    ```bash
    # ❌ Wrong pattern
    opennotes notes search --sql "
    SELECT * FROM read_markdown('/wrong/*.md')
    "
-   
+
    # ✅ Check what files exist first
    opennotes notes list
-   
+
    # ✅ Use correct pattern
    opennotes notes search --sql "
    SELECT * FROM read_markdown('*.md')
@@ -275,35 +294,38 @@ Before diving into specific sections, use this flowchart to identify your issue:
    ```
 
 2. **Case-sensitive pattern matching**
+
    ```bash
    # ❌ Won't find files if case doesn't match
    SELECT * FROM read_markdown()
    WHERE file_path LIKE '%todo.md'  -- Looking for lowercase
-   
+
    # ✅ Use ILIKE for case-insensitive
    SELECT * FROM read_markdown()
    WHERE file_path ILIKE '%todo.md'
    ```
 
 3. **Search term not in content**
+
    ```bash
    # ❌ Looking for exact phrase
    SELECT * FROM read_markdown()
    WHERE content LIKE 'exact phrase'
-   
+
    # ✅ Content has this phrase on its own line
    SELECT * FROM read_markdown()
    WHERE content LIKE '%exact phrase%'
    ```
 
 4. **WHERE condition too restrictive**
+
    ```bash
    # ❌ Filtering out actual results
    SELECT * FROM read_markdown()
    WHERE md_stats(content).words > 10000  -- Very high threshold
-   
+
    # ✅ Check distribution first
-   SELECT COUNT(*) as notes, 
+   SELECT COUNT(*) as notes,
           MAX(md_stats(content).words) as max_words
    FROM read_markdown()
    ```
@@ -317,29 +339,32 @@ Before diving into specific sections, use this flowchart to identify your issue:
 **Causes and solutions**:
 
 1. **Absolute vs. relative paths**
+
    ```bash
    # ❌ These don't work as expected in queries
    SELECT * FROM read_markdown('/home/user/notes/*.md')
-   
+
    # ✅ Use relative to notebook root
    SELECT * FROM read_markdown('*.md')
    SELECT * FROM read_markdown('subfolder/*.md')
    ```
 
 2. **Forgotten wildcards**
+
    ```bash
    # ❌ Looking for literal folder name
    SELECT * FROM read_markdown('archive')
-   
+
    # ✅ Need wildcard for files
    SELECT * FROM read_markdown('archive/*.md')
    ```
 
 3. **Special characters in paths**
+
    ```bash
    # ❌ May fail with spaces
    SELECT * FROM read_markdown('My Projects/*.md')
-   
+
    # ✅ Use wildcards with care
    SELECT * FROM read_markdown('%my%project%.md')
    ```
@@ -353,11 +378,12 @@ Before diving into specific sections, use this flowchart to identify your issue:
 **Causes and solutions**:
 
 1. **Scanning entire content without LIMIT**
+
    ```bash
    # ❌ Slow: Reads all content
    SELECT * FROM read_markdown()
    WHERE content LIKE '%keyword%'
-   
+
    # ✅ Fast: Add LIMIT
    SELECT file_path FROM read_markdown()
    WHERE content LIKE '%keyword%'
@@ -365,12 +391,13 @@ Before diving into specific sections, use this flowchart to identify your issue:
    ```
 
 2. **Inefficient JOIN patterns**
+
    ```bash
    # ❌ May be slow on large sets
    SELECT * FROM read_markdown() a
-   JOIN read_markdown() b 
+   JOIN read_markdown() b
    ON a.file_path = b.file_path
-   
+
    # ✅ Better: Use CTE
    WITH notes AS (
     SELECT * FROM read_markdown()
@@ -379,15 +406,16 @@ Before diving into specific sections, use this flowchart to identify your issue:
    ```
 
 3. **Missing indexes on frequently queried fields**
+
    ```bash
    # Queries on file_path are fastest
    # Queries on content are slower
    # Optimize by checking file_path first
-   
+
    # ❌ Content scan on all files
    SELECT * FROM read_markdown()
    WHERE content LIKE '%pattern%'
-   
+
    # ✅ Filter files first
    SELECT * FROM read_markdown()
    WHERE file_path LIKE '%docs%'
@@ -403,21 +431,23 @@ Before diving into specific sections, use this flowchart to identify your issue:
 **Causes and solutions**:
 
 1. **Queries on very large notebooks (10,000+ files)**
+
    ```bash
    # ❌ May consume all memory
    SELECT content FROM read_markdown()
    WHERE content IS NOT NULL
-   
+
    # ✅ Use pagination
    SELECT file_path FROM read_markdown()
    LIMIT 1000 OFFSET 0
    ```
 
 2. **Storing results in memory**
+
    ```bash
    # ❌ Can't display million-row result
    SELECT * FROM read_markdown()
-   
+
    # ✅ Export incrementally
    opennotes notes search --sql "
    SELECT file_path FROM read_markdown()
@@ -426,10 +456,11 @@ Before diving into specific sections, use this flowchart to identify your issue:
    ```
 
 3. **Complex aggregations**
+
    ```bash
    # ❌ Complex aggregation on large set
    SELECT GROUP_CONCAT(content) FROM read_markdown()
-   
+
    # ✅ Aggregate metadata instead
    SELECT COUNT(*) as total,
           SUM(md_stats(content).words) as total_words
@@ -445,13 +476,14 @@ Before diving into specific sections, use this flowchart to identify your issue:
 **Causes and solutions**:
 
 1. **Very complex query on large collection**
+
    ```bash
    # ❌ Complex operations
    SELECT DISTINCT content FROM read_markdown()
    WHERE content LIKE '%a%'
    AND content LIKE '%b%'
    AND content LIKE '%c%'
-   
+
    # ✅ Simpler operations or pagination
    SELECT DISTINCT file_path FROM read_markdown()
    WHERE file_path LIKE '%docs%'
@@ -459,22 +491,24 @@ Before diving into specific sections, use this flowchart to identify your issue:
    ```
 
 2. **Query blocked by other operations**
+
    ```bash
    # ❌ Can't run while importing
    # Wait for import to complete
    opennotes notebook create "Notebook" --path ~/notes  # Taking long
-   
+
    # In another terminal, queries will wait
    opennotes notes search --sql "SELECT * FROM read_markdown()"  # Waits
    ```
 
 3. **System under heavy load**
+
    ```bash
    # Check system load
    top  # Linux
    Activity Monitor  # macOS
    Task Manager  # Windows
-   
+
    # Close other applications to free resources
    ```
 
@@ -489,22 +523,24 @@ Before diving into specific sections, use this flowchart to identify your issue:
 **Causes and solutions**:
 
 1. **opennotes not in PATH**
+
    ```bash
    # Check if opennotes is installed
    which opennotes
-   
+
    # If not found, install it
    # See README for installation instructions
-   
+
    # If installed but not found, add to PATH
    export PATH="$PATH:$HOME/.local/bin"
    ```
 
 2. **Typo in command name**
+
    ```bash
    # ❌ Wrong command
    opennotes note list
-   
+
    # ✅ Correct commands
    opennotes notes list
    opennotes notebook list
@@ -527,13 +563,14 @@ Before diving into specific sections, use this flowchart to identify your issue:
 **Causes and solutions**:
 
 1. **Config file corrupted**
+
    ```bash
    # Check config file
    cat ~/.config/opennotes/config.json
-   
+
    # Validate JSON (if you have jq)
    jq empty ~/.config/opennotes/config.json
-   
+
    # Backup and regenerate if needed
    cp ~/.config/opennotes/config.json ~/.config/opennotes/config.json.bak
    rm ~/.config/opennotes/config.json
@@ -541,21 +578,23 @@ Before diving into specific sections, use this flowchart to identify your issue:
    ```
 
 2. **Wrong permissions on config file**
+
    ```bash
    # Config file should be readable by user
    ls -la ~/.config/opennotes/config.json
-   
+
    # Fix permissions if needed
    chmod 644 ~/.config/opennotes/config.json
    chmod 755 ~/.config/opennotes
    ```
 
 3. **Config file in wrong location (custom HOME)**
+
    ```bash
    # OpenNotes looks in $HOME/.config/opennotes
    echo $HOME
    ls -la ~/.config/opennotes/
-   
+
    # If custom config location needed, check docs
    ```
 
@@ -568,35 +607,38 @@ Before diving into specific sections, use this flowchart to identify your issue:
 **Causes and solutions**:
 
 1. **Two notebooks with similar names**
+
    ```bash
    # List all notebooks
    opennotes notebook list
-   
+
    # Use full name or set default
    opennotes -n "Work" notes list
    opennotes notebook set-default "Work"
    ```
 
 2. **Environment variable overriding settings**
+
    ```bash
    # Check for OPENNOTES environment variables
    env | grep OPENNOTES
-   
+
    # Unset if causing conflicts
    unset OPENNOTES_NOTEBOOK
-   
+
    # Use explicit flag instead
    opennotes -n "MyNotebook" notes list
    ```
 
 3. **Auto-discovery finding multiple matches**
+
    ```bash
    # OpenNotes searches parent directories for .opennotes.json
    # May find multiple if nested
-   
+
    # Specify explicitly
    opennotes -n "MyNotebook" notes list
-   
+
    # Or move to directory containing .opennotes.json
    cd ~/my-notes
    opennotes notes list
@@ -611,33 +653,36 @@ Before diving into specific sections, use this flowchart to identify your issue:
 **Causes and solutions**:
 
 1. **PATH not including OpenNotes**
+
    ```bash
    # Check PATH
    echo $PATH
-   
+
    # Add OpenNotes location
    export PATH="/home/user/.local/bin:$PATH"
-   
+
    # Make permanent in ~/.bashrc or ~/.zshrc
    echo 'export PATH="/home/user/.local/bin:$PATH"' >> ~/.bashrc
    ```
 
 2. **HOME variable not set (unusual)**
+
    ```bash
    # Check HOME
    echo $HOME
-   
+
    # If empty, set it
    export HOME=/home/username
-   
+
    # Then opennotes can find config
    ```
 
 3. **Shell not loading environment**
+
    ```bash
    # Interactive shell should load env
    bash --login
-   
+
    # Check ~/.bashrc or ~/.profile are executable
    ls -la ~/.bashrc ~/.profile
    ```
@@ -651,6 +696,7 @@ Before diving into specific sections, use this flowchart to identify your issue:
 **Issue**: "opennotes cannot be opened because it is not from an identified developer"
 
 Solution:
+
 ```bash
 # Allow in Security & Privacy
 # System Preferences → Security & Privacy → General
@@ -665,6 +711,7 @@ spctl --add --label "OpenNotes" $(which opennotes)
 **Issue**: Scripts show `permission denied` even when executable
 
 Solution:
+
 ```bash
 # Windows uses different permission model
 # Make sure script file is in a writable directory
@@ -681,6 +728,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 **Issue**: "cannot execute: required file not found"
 
 Solution:
+
 ```bash
 # Check if binary is for your architecture
 file $(which opennotes)
@@ -703,21 +751,23 @@ file $(which opennotes)
 **Causes and solutions**:
 
 1. **First search on large notebook always slower**
+
    ```bash
    # First run: slower (loading index)
    # opennotes notes search "keyword"  # ~5-30 seconds
-   
+
    # Subsequent runs: much faster (cached)
    # opennotes notes search "keyword"  # <1 second
-   
+
    # This is normal behavior
    ```
 
 2. **Very large collection with slow storage**
+
    ```bash
    # Check notebook size
    du -sh ~/my-notes
-   
+
    # Slow storage (USB drive, network mount) impacts performance
    # Solution: Copy to SSD
    cp -r /mnt/slow-drive/notes ~/fast-ssd/notes
@@ -725,10 +775,11 @@ file $(which opennotes)
    ```
 
 3. **Regex patterns can be slow**
+
    ```bash
    # ❌ Complex regex may be slow
    opennotes notes search "^[A-Z].*\d{4}$"
-   
+
    # ✅ Simpler patterns are faster
    opennotes notes search "word1 word2"
    ```
@@ -742,12 +793,13 @@ file $(which opennotes)
 **Solutions**:
 
 1. **Use metadata instead of content when possible**
+
    ```bash
    # ❌ Slow: Reads all content
    opennotes notes search --sql "
    SELECT * FROM read_markdown()
    "
-   
+
    # ✅ Fast: Uses metadata only
    opennotes notes search --sql "
    SELECT file_path FROM read_markdown()
@@ -756,11 +808,12 @@ file $(which opennotes)
    ```
 
 2. **Filter by path pattern first**
+
    ```bash
    # ❌ Content scan across entire collection
    SELECT * FROM read_markdown()
    WHERE content LIKE '%important%'
-   
+
    # ✅ Filter by folder first
    SELECT * FROM read_markdown()
    WHERE file_path LIKE '%archive%'
@@ -768,11 +821,12 @@ file $(which opennotes)
    ```
 
 3. **Split into multiple notebooks**
+
    ```bash
    # Instead of one 20,000-file notebook
    opennotes notebook create "Archive" --path ~/notes/archive
    opennotes notebook create "Active" --path ~/notes/active
-   
+
    # Queries on each will be faster
    opennotes -n "Active" notes search --sql "SELECT * FROM read_markdown()"
    ```
@@ -786,23 +840,25 @@ file $(which opennotes)
 **Solutions**:
 
 1. **Break into simpler queries**
+
    ```bash
    # ❌ Very complex single query
    SELECT complex, nested, aggregate(functions) FROM ...
    WHERE multiple AND conditions AND apply
    GROUP BY multiple fields
    HAVING complex aggregate conditions
-   
+
    # ✅ Two simpler queries
    opennotes notes search --sql "SELECT * FROM read_markdown() LIMIT 100"
    # Process results in script or jq
    ```
 
 2. **Use LIMIT during development**
+
    ```bash
    # Test with small result set first
    SELECT * FROM read_markdown() LIMIT 10
-   
+
    # Then remove LIMIT when confirmed
    SELECT * FROM read_markdown()
    ```
@@ -814,6 +870,7 @@ file $(which opennotes)
 **Solutions** for persistent slow performance:
 
 1. **Rebuild notebook index**
+
    ```bash
    # Remove and recreate notebook
    opennotes notebook delete "MyNotebook"
@@ -821,18 +878,20 @@ file $(which opennotes)
    ```
 
 2. **Check disk space**
+
    ```bash
    # Insufficient disk space can slow queries
    df -h ~
-   
+
    # Free up space if needed
    ```
 
 3. **Check for corrupted files**
+
    ```bash
    # Find files with encoding issues
    find ~/my-notes -name "*.md" -exec file {} \; | grep -v UTF-8
-   
+
    # Convert if needed
    iconv -f iso-8859-1 -t utf-8 file.md > file-utf8.md
    ```
@@ -848,30 +907,33 @@ file $(which opennotes)
 **Causes and solutions**:
 
 1. **jq not installed**
+
    ```bash
    # Install jq
    # Ubuntu/Debian
    sudo apt-get install jq
-   
+
    # macOS
    brew install jq
-   
+
    # Or download from jqlang.github.io/jq
    ```
 
 2. **Invalid JSON from OpenNotes**
+
    ```bash
    # Check if opennotes output is valid JSON
    opennotes notes search --sql "SELECT * FROM read_markdown() LIMIT 1" | jq .
-   
+
    # If error, may need --json flag (if available)
    ```
 
 3. **jq syntax error**
+
    ```bash
    # ❌ Invalid jq syntax
    opennotes notes search --sql "..." | jq '.[] | invalid syntax'
-   
+
    # ✅ Valid jq syntax
    opennotes notes search --sql "..." | jq '.[] | .field'
    ```
@@ -885,29 +947,32 @@ file $(which opennotes)
 **Causes and solutions**:
 
 1. **Wrong shebang line**
+
    ```bash
    # ❌ Wrong
    #!/bin/sh  # May not have all bash features
-   
+
    # ✅ Correct
    #!/bin/bash
    ```
 
 2. **Bash-specific features in /bin/sh script**
+
    ```bash
    # ❌ Won't work in /bin/sh
    #!/bin/sh
    opennotes notes search --sql "SELECT ..."  # Command substitution
-   
+
    # ✅ Fix by using #!/bin/bash
    #!/bin/bash
    ```
 
 3. **Script not executable**
+
    ```bash
    # Make executable
    chmod +x script.sh
-   
+
    # Then run
    ./script.sh
    ```
@@ -921,31 +986,34 @@ file $(which opennotes)
 **Causes and solutions**:
 
 1. **Backslashes vs. forward slashes**
+
    ```bash
    # ❌ Backslashes in bash/PowerShell
    opennotes notebook create "Notes" --path "C:\Users\Me\Notes"
-   
+
    # ✅ Use forward slashes
    opennotes notebook create "Notes" --path "C:/Users/Me/Notes"
-   
+
    # ✅ Or escape backslashes
    opennotes notebook create "Notes" --path "C:\\Users\\Me\\Notes"
    ```
 
 2. **Spaces in paths**
+
    ```bash
    # ❌ Unquoted path with spaces fails
    opennotes notebook create "Notes" --path C:\Users\My Documents\Notes
-   
+
    # ✅ Quote the path
    opennotes notebook create "Notes" --path "C:/Users/My Documents/Notes"
    ```
 
 3. **UNC paths (network shares)**
+
    ```bash
    # UNC paths are supported
    opennotes notebook create "Remote" --path "//server/share/notes"
-   
+
    # But may be slower than local storage
    ```
 
@@ -958,29 +1026,32 @@ file $(which opennotes)
 **Causes and solutions**:
 
 1. **Terminal encoding mismatch**
+
    ```bash
    # Check terminal encoding
    echo $LANG
-   
+
    # Set to UTF-8
    export LC_ALL=en_US.UTF-8
    export LANG=en_US.UTF-8
    ```
 
 2. **File encoding not UTF-8**
+
    ```bash
    # Check encoding
    file ~/my-notes/*.md
-   
+
    # Convert to UTF-8
    iconv -f iso-8859-1 -t UTF-8 oldfile.md > newfile.md
    ```
 
 3. **Git/editor saved with wrong encoding**
+
    ```bash
    # Resave file in UTF-8
    # In most editors: File → Save with Encoding → UTF-8
-   
+
    # Or use command line
    iconv -f cp1252 -t utf-8 file.md > file-utf8.md
    mv file-utf8.md file.md
@@ -995,28 +1066,31 @@ file $(which opennotes)
 **Causes and solutions**:
 
 1. **OpenNotes version too old**
+
    ```bash
    # Check version
    opennotes --version
-   
+
    # Update to latest
    # See README for update instructions
    ```
 
 2. **DuckDB version mismatch**
+
    ```bash
    # OpenNotes includes correct DuckDB version
    # Shouldn't need separate installation
-   
+
    # If issues, try rebuilding
    # See README build instructions
    ```
 
 3. **jq version incompatibility**
+
    ```bash
    # Check jq version
    jq --version
-   
+
    # Update jq if needed
    brew upgrade jq  # macOS
    sudo apt-get upgrade jq  # Linux
@@ -1028,7 +1102,8 @@ file $(which opennotes)
 
 ### Q: How do I get better performance?
 
-**A**: 
+**A**:
+
 1. **Use metadata queries** instead of full content scans
 2. **Add LIMIT** to queries during development
 3. **Filter by path** before filtering by content
@@ -1037,7 +1112,8 @@ file $(which opennotes)
 
 ### Q: Can I use OpenNotes with Obsidian/Bear/Notion?
 
-**A**: 
+**A**:
+
 - **Obsidian**: Yes! OpenNotes can read Obsidian vaults directly
 - **Bear**: You must export from Bear first (as Markdown)
 - **Notion**: Export to Markdown, then import
@@ -1045,7 +1121,8 @@ file $(which opennotes)
 
 ### Q: Is my data safe with OpenNotes?
 
-**A**: 
+**A**:
+
 - **OpenNotes doesn't modify notes** unless you explicitly run commands
 - **SQL queries are read-only** (defensive programming prevents writes)
 - **Backups recommended** - store notebook on git for version control
@@ -1053,7 +1130,8 @@ file $(which opennotes)
 
 ### Q: Can I share notebooks with my team?
 
-**A**: 
+**A**:
+
 - **Local notebooks**: Share the folder (via cloud sync, git, etc.)
 - **Set up on each machine**: `opennotes notebook create "Shared" --path /path/to/notes`
 - **Git workflow**: Pull latest, run queries, commit results
@@ -1061,7 +1139,8 @@ file $(which opennotes)
 
 ### Q: How do I export results?
 
-**A**: 
+**A**:
+
 - **SQL queries return JSON** - pipe to jq for transformation
 - **Export to CSV**: Use SQL's text output or jq conversion
 - **Save to file**: Redirect output: `opennotes notes search ... > results.md`
@@ -1069,36 +1148,41 @@ file $(which opennotes)
 
 ### Q: What SQL functions are available?
 
-**A**: 
+**A**:
+
 - **read_markdown()** - Read markdown files
 - **md_stats()** - Get word count, line count, etc.
 - See [SQL Functions Reference](sql-functions-reference.md)
 
 ### Q: Is Windows supported?
 
-**A**: 
+**A**:
 Yes! **Fully supported** on Windows 10+. See:
+
 - Use forward slashes in paths: `C:/Users/Me/Notes`
 - Or escape backslashes: `C:\\Users\\Me\\Notes`
 - Platform-specific issues section above
 
 ### Q: Where are my notes stored?
 
-**A**: 
+**A**:
+
 - **Notes stay in original location** - OpenNotes doesn't move them
 - **Configuration**: `~/.config/opennotes/config.json`
 - **All original files**: Untouched in your notebook directory
 
 ### Q: Can I run SQL queries on encrypted notes?
 
-**A**: 
+**A**:
+
 - **Encrypted files**: Must be decrypted first (done at OS level)
 - **Encrypted filesystems**: Supported if mounted and readable
 - **Encrypted text**: OpenNotes sees encrypted content as regular text
 
 ### Q: How do I troubleshoot a slow query?
 
-**A**: 
+**A**:
+
 1. **Check system resources**: `top` or Task Manager
 2. **Simplify the query**: Remove JOINs, aggregate functions
 3. **Add LIMIT**: See intermediate results faster
@@ -1129,7 +1213,7 @@ You've solved your problem when:
 - ✅ You've documented the solution for next time (if applicable)
 
 Next steps:
+
 - Explore [Advanced Workflows](automation-recipes.md) for automation
 - Master [SQL Queries](sql-quick-reference.md) for custom analysis
 - Build a [Personal Knowledge Base](getting-started-power-users.md) with OpenNotes
-

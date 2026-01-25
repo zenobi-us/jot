@@ -74,8 +74,8 @@ opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')"
 ```bash
 # Search for "deadline" across all notes
 opennotes notes search --sql \
-  "SELECT file_path, content FROM read_markdown('**/*.md', include_filepath:=true) 
-   WHERE content ILIKE '%deadline%' 
+  "SELECT file_path, content FROM read_markdown('**/*.md', include_filepath:=true)
+   WHERE content ILIKE '%deadline%'
    LIMIT 10"
 ```
 
@@ -84,9 +84,9 @@ opennotes notes search --sql \
 ```bash
 # Find your longest notes (by word count)
 opennotes notes search --sql \
-  "SELECT file_path, (md_stats(content)).word_count as words 
-   FROM read_markdown('**/*.md', include_filepath:=true) 
-   ORDER BY words DESC 
+  "SELECT file_path, (md_stats(content)).word_count as words
+   FROM read_markdown('**/*.md', include_filepath:=true)
+   ORDER BY words DESC
    LIMIT 10"
 ```
 
@@ -95,8 +95,8 @@ opennotes notes search --sql \
 ```bash
 # Find all unchecked tasks in your notes
 opennotes notes search --sql \
-  "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) 
-   WHERE content LIKE '%[ ]%' 
+  "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)
+   WHERE content LIKE '%[ ]%'
    ORDER BY file_path"
 ```
 
@@ -105,8 +105,8 @@ opennotes notes search --sql \
 ```bash
 # See word count distribution
 opennotes notes search --sql \
-  "SELECT 
-     CASE 
+  "SELECT
+     CASE
        WHEN (md_stats(content)).word_count < 500 THEN 'short'
        WHEN (md_stats(content)).word_count < 2000 THEN 'medium'
        ELSE 'long'
@@ -135,7 +135,7 @@ All OpenNotes query results are JSON—perfect for piping to tools and scripts.
 
 ```bash
 # All SQL query results are automatically JSON
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" 
+opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')"
 # Output:
 # [
 #   { "file_path": "notes/project-ideas.md" },
@@ -227,7 +227,7 @@ Use cron + OpenNotes for automated note processing:
 # Save as ~/bin/note-stats.sh
 
 STATS=$(opennotes notes search --sql \
-  "SELECT 
+  "SELECT
      COUNT(*) as total_notes,
      AVG((md_stats(content)).word_count) as avg_words
    FROM read_markdown('**/*.md')" \
@@ -282,7 +282,7 @@ opennotes notes search --sql \
 
 # Get documentation completeness
 opennotes notes search --sql \
-  "SELECT 
+  "SELECT
      file_path,
      CASE WHEN (md_stats(content)).word_count > 500 THEN 'complete' ELSE 'needs-work' END
    FROM read_markdown('**/*.md')
@@ -311,7 +311,7 @@ opennotes notes search --sql \
 ```bash
 # Weekly stats email
 WEEKLY_REPORT=$(opennotes notes search --sql \
-  "SELECT 
+  "SELECT
      COUNT(*) as new_notes,
      ROUND(AVG((md_stats(content)).word_count)) as avg_length
    FROM read_markdown('**/*.md')" \
@@ -432,12 +432,14 @@ Most note tools give you basic search. OpenNotes gives you a full database query
 ## Related Learning Resources
 
 ### If You're New to Importing:
+
 - **[Import Workflow Guide](import-workflow-guide.md)** - Comprehensive guide for importing existing markdown collections
   - Step-by-step import process for all scenarios
   - Migration from Obsidian, Bear, and generic markdown folders
   - Troubleshooting common import issues
 
 ### If You Want to Learn SQL Progressively:
+
 - **[SQL Quick Reference](sql-quick-reference.md)** - Progressive learning path with 20+ practical examples
   - Level 1: Basic queries
   - Level 2: Content search
@@ -446,11 +448,13 @@ Most note tools give you basic search. OpenNotes gives you a full database query
   - Practice exercises for each level
 
 ### For Complete Reference Documentation:
+
 - **[SQL Query Guide](sql-guide.md)** - Detailed query documentation and patterns
 - **[SQL Functions Reference](sql-functions-reference.md)** - Complete SQL function list
 - **[JSON Output Guide](json-sql-guide.md)** - Automation and tool integration
 
 ### For Multi-Notebook Management:
+
 - **[Notebook Discovery](notebook-discovery.md)** - Manage multiple notebooks and contexts
 
 ---
@@ -461,4 +465,3 @@ Most note tools give you basic search. OpenNotes gives you a full database query
 - **[Read the SQL Guide](sql-guide.md)** for advanced query patterns
 - **[See the Import Guide](import-workflow-guide.md)** if you're having import issues
 - **[Join the Community](https://github.com/zenobi-us/opennotes)** on GitHub
-

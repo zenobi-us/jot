@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag'
+        description: "Release tag"
         required: false
-        default: ''
+        default: ""
   repository_dispatch:
     types: [publish-package]
 
@@ -40,4 +40,3 @@ jobs:
           fi
           echo "Publishing with tag: $TAG"
           mise run publish --tag "$TAG"
-

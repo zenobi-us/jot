@@ -5,6 +5,7 @@ This document describes the JSON schema for `.opennotes.json` notebook configura
 ## Purpose
 
 The schema provides:
+
 1. **IDE Support**: Autocomplete and validation in editors (VSCode, IntelliJ, etc.)
 2. **Documentation**: Clear reference for configuration structure
 3. **Validation**: Catch configuration errors early
@@ -12,6 +13,7 @@ The schema provides:
 ## Schema Location
 
 The schema will be available at:
+
 - Local: `./opennotes.schema.json` (generated on notebook creation)
 - Remote: `https://opennotes.dev/schema/v1/notebook.json` (future)
 
