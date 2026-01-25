@@ -1,0 +1,5 @@
+{
+  "name": "OpenNotes Memory",
+  "description": "Project memory and knowledge base for OpenNotes development",
+  "notes_dir": "."
+}
