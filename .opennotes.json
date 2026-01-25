@@ -1,3 +1,16 @@
 {
-  "path": ".memory/"
+  "root": ".notes",
+  "name": "my-notes",
+  "contexts": [
+    "/mnt/Store/Projects/Mine/Github/opennotes"
+  ],
+  "groups": [
+    {
+      "name": "Default",
+      "globs": [
+        "**/*.md"
+      ],
+      "metadata": {}
+    }
+  ]
 }
