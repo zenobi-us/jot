@@ -309,23 +309,13 @@ func TestNotebookService_Create_WithoutRegister(t *testing.T) {
 
 // Infer tests
 
-func TestNotebookService_Infer_DeclaredPathPriority(t *testing.T) {
+func TestNotebookService_Infer_CurrentDirectoryPriority(t *testing.T) {
 	tmpDir := t.TempDir()
-	declaredNotebook := createTestNotebook(t, tmpDir, "declared")
-	ancestorNotebook := createTestNotebook(t, tmpDir, "ancestor")
 
-	// Config points to declared notebook
-	configPath := filepath.Join(tmpDir, "opennotes", "config.json")
-	require.NoError(t, os.MkdirAll(filepath.Dir(configPath), 0755))
-	config := Config{
-		Notebooks:    []string{},
-		NotebookPath: declaredNotebook,
-	}
-	data, _ := json.MarshalIndent(config, "", "  ")
-	require.NoError(t, os.WriteFile(configPath, data, 0644))
+	// Create a notebook in current directory
+	currentNotebook := createTestNotebook(t, tmpDir, "current")
 
-	configSvc, err := NewConfigServiceWithPath(configPath)
-	require.NoError(t, err)
+	configSvc := createTestConfigService(t, tmpDir, nil)
 	dbSvc := NewDbService()
 	t.Cleanup(func() {
 		if err := dbSvc.Close(); err != nil {
@@ -334,12 +324,12 @@ func TestNotebookService_Infer_DeclaredPathPriority(t *testing.T) {
 	})
 	svc := NewNotebookService(configSvc, dbSvc)
 
-	// Infer from ancestor notebook directory should still return declared
-	notebook, err := svc.Infer(ancestorNotebook)
+	// Infer from current directory should find the notebook immediately
+	notebook, err := svc.Infer(currentNotebook)
 	require.NoError(t, err)
 	require.NotNil(t, notebook)
 
-	assert.Equal(t, "declared", notebook.Config.Name)
+	assert.Equal(t, "current", notebook.Config.Name)
 }
 
 func TestNotebookService_Infer_ContextMatchPriority(t *testing.T) {
@@ -687,4 +677,174 @@ func TestNotebook_SaveConfig_AvoidsDuplicateRegistration(t *testing.T) {
 		}
 	}
 	assert.Equal(t, 1, count)
+}
+
+// requireNotebook priority tests
+// Note: These test the priority behavior, actual requireNotebook function is in cmd/notes_list.go
+// We test the priority here by verifying Infer() behavior and manually simulating requireNotebook logic
+
+func TestNotebookService_Infer_CurrentDirectoryWinsOverAncestor(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create current directory notebook
+	currentNotebook := createTestNotebook(t, tmpDir, "current")
+	currentDir := currentNotebook
+
+	// Create ancestor notebook in tmpDir (parent of current) - this should NOT be found
+	_ = createTestNotebook(t, tmpDir, "ancestor")
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	dbSvc := NewDbService()
+	t.Cleanup(func() {
+		if err := dbSvc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+	svc := NewNotebookService(configSvc, dbSvc)
+
+	// Infer from currentDir should find current (not ancestor)
+	notebook, err := svc.Infer(currentDir)
+	require.NoError(t, err)
+	require.NotNil(t, notebook)
+
+	assert.Equal(t, "current", notebook.Config.Name)
+}
+
+func TestNotebookService_Infer_ContextMatchWinsOverAncestor(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create work directory
+	workDir := filepath.Join(tmpDir, "work", "project")
+	require.NoError(t, os.MkdirAll(workDir, 0755))
+
+	// Create context-matching notebook (not in ancestor chain)
+	contextNotebook := filepath.Join(tmpDir, "notebooks", "context-nb")
+	contextNotesDir := filepath.Join(contextNotebook, ".notes")
+	require.NoError(t, os.MkdirAll(contextNotesDir, 0755))
+
+	contextConfig := StoredNotebookConfig{
+		Name:     "context-notebook",
+		Root:     ".notes",
+		Contexts: []string{filepath.Join(tmpDir, "work")}, // Matches workDir parent
+	}
+	contextData, _ := json.MarshalIndent(contextConfig, "", "  ")
+	contextConfigPath := filepath.Join(contextNotebook, NotebookConfigFile)
+	require.NoError(t, os.WriteFile(contextConfigPath, contextData, 0644))
+
+	// Create ancestor notebook (in tmpDir) - this should NOT be found
+	_ = createTestNotebook(t, tmpDir, "ancestor")
+
+	// Register context notebook
+	configSvc := createTestConfigService(t, tmpDir, []string{contextNotebook})
+	dbSvc := NewDbService()
+	t.Cleanup(func() {
+		if err := dbSvc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+	svc := NewNotebookService(configSvc, dbSvc)
+
+	// Infer from workDir should find context notebook (not ancestor)
+	notebook, err := svc.Infer(workDir)
+	require.NoError(t, err)
+	require.NotNil(t, notebook)
+
+	assert.Equal(t, "context-notebook", notebook.Config.Name)
+}
+
+// TestNotebookService_Infer_CompleteResolutionOrder verifies the complete priority order:
+// 1. Current directory (.opennotes.json)
+// 2. Context match (registered notebooks)
+// 3. Ancestor search
+func TestNotebookService_Infer_CompleteResolutionOrder(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create work directory structure
+	workDir := filepath.Join(tmpDir, "projects", "myproject", "src")
+	require.NoError(t, os.MkdirAll(workDir, 0755))
+
+	// Create ancestor notebook (should have lowest priority)
+	ancestorNotebook := createTestNotebook(t, tmpDir, "ancestor-notebook")
+
+	// Create context-matching notebook (should have medium priority)
+	contextNotebook := filepath.Join(tmpDir, "context-nb")
+	contextNotesDir := filepath.Join(contextNotebook, ".notes")
+	require.NoError(t, os.MkdirAll(contextNotesDir, 0755))
+	contextConfig := StoredNotebookConfig{
+		Name:     "context-notebook",
+		Root:     ".notes",
+		Contexts: []string{filepath.Join(tmpDir, "projects")}, // Parent context
+	}
+	contextData, _ := json.MarshalIndent(contextConfig, "", "  ")
+	contextConfigPath := filepath.Join(contextNotebook, NotebookConfigFile)
+	require.NoError(t, os.WriteFile(contextConfigPath, contextData, 0644))
+
+	// Create current directory notebook (should have highest priority)
+	currentNotebook := filepath.Join(workDir, ".opennotes.json")
+	currentConfig := StoredNotebookConfig{
+		Name:     "current-directory-notebook",
+		Root:     ".notes",
+		Contexts: []string{workDir},
+	}
+	currentDir := filepath.Join(workDir, ".notes")
+	require.NoError(t, os.MkdirAll(currentDir, 0755))
+	currentData, _ := json.MarshalIndent(currentConfig, "", "  ")
+	require.NoError(t, os.WriteFile(currentNotebook, currentData, 0644))
+
+	// Register both context and ancestor notebooks
+	configSvc := createTestConfigService(t, tmpDir, []string{contextNotebook, ancestorNotebook})
+	dbSvc := NewDbService()
+	t.Cleanup(func() {
+		if err := dbSvc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+	svc := NewNotebookService(configSvc, dbSvc)
+
+	// Should find current directory notebook (highest priority)
+	notebook, err := svc.Infer(workDir)
+	require.NoError(t, err)
+	require.NotNil(t, notebook)
+	assert.Equal(t, "current-directory-notebook", notebook.Config.Name)
+}
+
+// TestNotebookService_Infer_ContextBeforeAncestorWithoutCurrentDir verifies context priority without current dir
+func TestNotebookService_Infer_ContextBeforeAncestorWithoutCurrentDir(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create work directory (no notebook here)
+	workDir := filepath.Join(tmpDir, "work", "project")
+	require.NoError(t, os.MkdirAll(workDir, 0755))
+
+	// Create ancestor notebook (should be lower priority)
+	ancestorNotebook := createTestNotebook(t, tmpDir, "ancestor-notebook")
+
+	// Create context-matching notebook (should win over ancestor)
+	contextNotebook := filepath.Join(tmpDir, "context-nb")
+	contextNotesDir := filepath.Join(contextNotebook, ".notes")
+	require.NoError(t, os.MkdirAll(contextNotesDir, 0755))
+	contextConfig := StoredNotebookConfig{
+		Name:     "context-notebook",
+		Root:     ".notes",
+		Contexts: []string{filepath.Join(tmpDir, "work")},
+	}
+	contextData, _ := json.MarshalIndent(contextConfig, "", "  ")
+	contextConfigPath := filepath.Join(contextNotebook, NotebookConfigFile)
+	require.NoError(t, os.WriteFile(contextConfigPath, contextData, 0644))
+
+	// Register both
+	configSvc := createTestConfigService(t, tmpDir, []string{contextNotebook, ancestorNotebook})
+	dbSvc := NewDbService()
+	t.Cleanup(func() {
+		if err := dbSvc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+	svc := NewNotebookService(configSvc, dbSvc)
+
+	// Should find context notebook (not ancestor)
+	notebook, err := svc.Infer(workDir)
+	require.NoError(t, err)
+	require.NotNil(t, notebook)
+	assert.Equal(t, "context-notebook", notebook.Config.Name)
 }

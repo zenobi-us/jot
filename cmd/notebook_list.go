@@ -39,7 +39,10 @@ Examples:
 			return nil
 		}
 
-		return displayNotebookList(notebooks)
+		// Get current notebook for marking
+		currentNotebook, _ := notebookService.Infer("")
+
+		return displayNotebookList(notebooks, currentNotebook)
 	},
 }
 
@@ -47,9 +50,10 @@ func init() {
 	notebookCmd.AddCommand(notebookListCmd)
 }
 
-func displayNotebookList(notebooks []*services.Notebook) error {
+func displayNotebookList(notebooks []*services.Notebook, currentNotebook *services.Notebook) error {
 	output, err := services.TuiRender("notebook-list", map[string]any{
-		"Notebooks": notebooks,
+		"Notebooks":       notebooks,
+		"CurrentNotebook": currentNotebook,
 	})
 	if err != nil {
 		// Fallback to simple output

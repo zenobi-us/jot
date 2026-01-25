@@ -4,11 +4,13 @@ OpenNotes automatically discovers and loads notebooks based on the user's curren
 
 ## Overview
 
-The notebook discovery follows a **3-tier priority system**:
+The notebook discovery follows a **5-tier priority system** (first wins):
 
-1. **Declared Path** (highest priority) - From `--notebook` flag or `OPENNOTES_NOTEBOOK` env var
-2. **Registered Notebooks** (medium priority) - Check each registered notebook for context match
-3. **Ancestor Search** (fallback) - Walk up directory tree looking for `.opennotes.json`
+1. **OPENNOTES_NOTEBOOK** (highest priority) - Environment variable
+2. **--notebook flag** (CLI override) - Command line argument
+3. **Current Directory** (direct check) - `.opennotes.json` in current working directory
+4. **Registered Notebooks** (context matching) - Check each registered notebook for context match
+5. **Ancestor Search** (fallback) - Walk up directory tree looking for `.opennotes.json`
 
 ## Discovery Flowchart
 
@@ -26,9 +28,40 @@ Start: {
   }
 }
 
-# Tier 1: Declared Path
-CheckDeclared: {
-  label: "Check Declared\nNotebook Path\n--notebook flag or\nOPENNOTES_NOTEBOOK env"
+# Tier 1: OPENNOTES_NOTEBOOK envvar
+CheckEnvvar: {
+  label: "Check\nOPENNOTES_NOTEBOOK\nenvironment variable"
+  shape: diamond
+  style: {
+    fill: "#c8e6c9"
+    stroke: "#1b5e20"
+    stroke-width: 2
+  }
+}
+
+HasEnvvarConfig: {
+  label: "Has .opennotes.json\nin OPENNOTES_NOTEBOOK\npath?"
+  shape: diamond
+  style: {
+    fill: "#c8e6c9"
+    stroke: "#1b5e20"
+    stroke-width: 2
+  }
+}
+
+LoadEnvvar: {
+  label: "Load & Open\nEnvvar Notebook\n(Tier 1: HIGHEST PRIORITY)"
+  shape: rectangle
+  style: {
+    fill: "#c8e6c9"
+    stroke: "#1b5e20"
+    stroke-width: 2
+  }
+}
+
+# Tier 2: --notebook flag
+CheckFlag: {
+  label: "Check\n--notebook CLI flag"
   shape: diamond
   style: {
     fill: "#fff3e0"
@@ -37,8 +70,8 @@ CheckDeclared: {
   }
 }
 
-HasDeclaredConfig: {
-  label: "Has .opennotes.json\nin declared path?"
+HasFlagConfig: {
+  label: "Has .opennotes.json\nin flag path?"
   shape: diamond
   style: {
     fill: "#fff3e0"
@@ -47,8 +80,8 @@ HasDeclaredConfig: {
   }
 }
 
-LoadDeclared: {
-  label: "Load & Open\nDeclared Notebook"
+LoadFlag: {
+  label: "Load & Open\nFlag Notebook\n(Tier 2)"
   shape: rectangle
   style: {
     fill: "#f3e5f5"
@@ -57,7 +90,28 @@ LoadDeclared: {
   }
 }
 
-# Tier 2: Registered Notebooks
+# Tier 3: Current Directory
+CheckCurrentDir: {
+  label: "Check Current\nDirectory for\n.opennotes.json"
+  shape: diamond
+  style: {
+    fill: "#fff3e0"
+    stroke: "#ef6c00"
+    stroke-width: 2
+  }
+}
+
+LoadCurrentDir: {
+  label: "Load & Open\nCurrent Directory Notebook\n(Tier 3)"
+  shape: rectangle
+  style: {
+    fill: "#f3e5f5"
+    stroke: "#4a148c"
+    stroke-width: 2
+  }
+}
+
+# Tier 4: Registered Notebooks
 CheckRegistered: {
   label: "Check Registered\nNotebooks from\nglobal config"
   shape: diamond
@@ -128,9 +182,9 @@ NextRegistered: {
   }
 }
 
-# Tier 3: Ancestor Search
+# Tier 5: Ancestor Search
 StartAncestorSearch: {
-  label: "Start Ancestor Search\ncurrent = cwd"
+  label: "Start Ancestor Search\ncurrent = parent(cwd)"
   shape: rectangle
   style: {
     fill: "#f3e5f5"
@@ -201,13 +255,22 @@ NotFound: {
 }
 
 # Connections
-Start -> CheckDeclared
+Start -> CheckEnvvar
 
-CheckDeclared -> HasDeclaredConfig: "Path provided"
-CheckDeclared -> CheckRegistered: "No path"
+CheckEnvvar -> HasEnvvarConfig: "Envvar set"
+CheckEnvvar -> CheckFlag: "No envvar"
 
-HasDeclaredConfig -> LoadDeclared: "Yes"
-HasDeclaredConfig -> CheckRegistered: "No"
+HasEnvvarConfig -> LoadEnvvar: "Yes"
+HasEnvvarConfig -> CheckFlag: "No"
+
+CheckFlag -> HasFlagConfig: "Flag provided"
+CheckFlag -> CheckCurrentDir: "No flag"
+
+HasFlagConfig -> LoadFlag: "Yes"
+HasFlagConfig -> CheckCurrentDir: "No"
+
+CheckCurrentDir -> LoadCurrentDir: "Yes"
+CheckCurrentDir -> CheckRegistered: "No"
 
 CheckRegistered -> ForEachRegistered
 ForEachRegistered -> HasRegisteredConfig
@@ -233,23 +296,54 @@ HasAncestorConfig -> GoToParent: "No"
 
 GoToParent -> IsRoot
 
-LoadDeclared -> Success
+LoadEnvvar -> Success
+LoadFlag -> Success
+LoadCurrentDir -> Success
 LoadRegistered -> Success
 LoadAncestor -> Success
 ```
 
-### 1. Declared Path (Tier 1 - Highest Priority)
+### 1. OPENNOTES_NOTEBOOK Environment Variable (Tier 1 - Highest Priority)
 
-The system first checks if a notebook path has been explicitly declared via:
-- CLI flag: `opennotes --notebook /path/to/notebook`
-- Environment variable: `OPENNOTES_NOTEBOOK=/path/to/notebook`
+The system first checks if the `OPENNOTES_NOTEBOOK` environment variable is set:
 
-If a declared path exists:
+```bash
+export OPENNOTES_NOTEBOOK=/path/to/notebook
+opennotes notes list  # Uses the notebook from envvar
+```
+
+If the envvar is set:
 1. Check if `.opennotes.json` exists in that path
 2. If yes: Load and open the notebook → **SUCCESS**
 3. If no: Continue to Tier 2
 
-### 2. Registered Notebooks (Tier 2 - Context Matching)
+### 2. --notebook CLI Flag (Tier 2)
+
+The system checks if the `--notebook` flag was provided on the command line:
+
+```bash
+opennotes notes list --notebook /path/to/notebook
+```
+
+If a flag path exists:
+1. Check if `.opennotes.json` exists in that path
+2. If yes: Load and open the notebook → **SUCCESS**
+3. If no: Continue to Tier 3
+
+### 3. Current Directory (Tier 3)
+
+The system checks if `.opennotes.json` exists in the current working directory:
+
+```bash
+cd /home/user/project  # Contains .opennotes.json
+opennotes notes list   # Auto-discovers notebook in cwd
+```
+
+If `.opennotes.json` exists in current directory:
+1. Load and open the notebook → **SUCCESS**
+2. If no: Continue to Tier 4
+
+### 4. Registered Notebooks (Tier 4 - Context Matching)
 
 The system checks notebooks registered in the global configuration:
 
@@ -281,11 +375,11 @@ Match check: strings.HasPrefix("/home/user/project/src", "/home/user/project")
 Result: TRUE → Context matches → Return this notebook
 ```
 
-### 3. Ancestor Search (Tier 3 - Fallback)
+### 5. Ancestor Search (Tier 5 - Fallback)
 
-If no declared or registered notebooks match, the system performs an ancestor directory search:
+If no environment variable, flag, current directory, or registered notebooks match, the system performs an ancestor directory search:
 
-1. Start with current working directory
+1. Start with parent directory (not current, as that was checked in Tier 3)
 2. Check if `.opennotes.json` exists in current directory
 3. If yes: Load and open the notebook → **SUCCESS**
 4. If no: Move to parent directory
@@ -355,11 +449,13 @@ If no declared or registered notebooks match, the system performs an ancestor di
 
 ## State Transitions Summary
 
-1. **DECLARED PATH** → Success or Continue to Tier 2
-2. **REGISTERED SEARCH** → For each registered notebook:
+1. **TIER 1: OPENNOTES_NOTEBOOK envvar** → Success or Continue to Tier 2
+2. **TIER 2: --notebook flag** → Success or Continue to Tier 3
+3. **TIER 3: Current Directory** → Success or Continue to Tier 4
+4. **TIER 4: REGISTERED SEARCH** → For each registered notebook:
    - Check exists → Check context match → Success or Continue
-3. **ANCESTOR SEARCH** → Walk up directories until found or root
-4. **SUCCESS** → Return notebook instance
-5. **NOT FOUND** → Return nil
+5. **TIER 5: ANCESTOR SEARCH** → Walk up directories until found or root
+6. **SUCCESS** → Return notebook instance
+7. **NOT FOUND** → Return nil
 
-This discovery system ensures OpenNotes works seamlessly across different project environments while maintaining predictable, efficient behavior.
+This discovery system ensures OpenNotes works seamlessly across different project environments while maintaining predictable, efficient behavior. The priority order follows the principle of least surprise: environment variable (global) → flag (explicit) → auto-detection (implicit).

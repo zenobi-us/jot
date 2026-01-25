@@ -83,27 +83,6 @@ Choose the guide that matches your current need:
   - Troubleshooting: 7 common import scenarios
   - Follow after: Getting started guide
 
-### Using Views System
-
-- **[Views Guide](views-guide.md)** (17.7 KB, comprehensive guide)
-  - Perfect for: Named query presets and common workflows
-  - Contains: 6 built-in views, custom views, parameters, templates
-  - Quick start: List views, use views, change formats
-  - See also: [Views Examples](views-examples.md), [Views API](views-api.md)
-  - Follow after: Getting started guide
-
-- **[Views Examples](views-examples.md)** (16.3 KB, practical guide)
-  - Perfect for: Real-world workflows and automation
-  - Contains: Daily workflows, project management, knowledge graph
-  - Use cases: Standup, kanban, orphans, team collaboration
-  - Follow after: Views Guide
-
-- **[Views API Reference](views-api.md)** (18.2 KB, technical spec)
-  - Perfect for: Creating custom views
-  - Contains: Complete schema, parameter types, template variables
-  - Includes: Built-in views specs, error codes, JSON schema
-  - Follow after: Views Examples
-
 ### Learning SQL
 
 - **[SQL Quick Reference](sql-quick-reference.md)** (2,400 words, 4 learning levels)
@@ -244,50 +223,38 @@ Goal: Complete mastery of all features and patterns
 
 ### By Topic
 
-| Topic              | Best Guide                                                                  | Key Sections                                        |
-| ------------------ | --------------------------------------------------------------------------- | --------------------------------------------------- |
-| **Views System**   | [Views Guide](views-guide.md)                                               | Built-in views, custom views, parameters, templates |
-| **Views Examples** | [Views Examples](views-examples.md)                                         | Daily workflows, project management, automation     |
-| **Views API**      | [Views API Reference](views-api.md)                                         | Schema, parameters, template variables, error codes |
-| **Import**         | [Import Workflow Guide](import-workflow-guide.md)                           | Step-by-step, organization patterns, migrations     |
-| **SQL Basics**     | [SQL Quick Reference](sql-quick-reference.md)                               | Levels 1-2, examples, common mistakes               |
-| **SQL Advanced**   | [SQL Guide](sql-guide.md)                                                   | CTEs, aggregations, window functions                |
-| **Functions**      | [SQL Functions Reference](sql-functions-reference.md)                       | read_markdown(), md_stats(), all functions          |
-| **Automation**     | [Automation Recipes](automation-recipes.md)                                 | Scripts, cron, jq, tool integration                 |
-| **JSON Output**    | [JSON-SQL Guide](json-sql-guide.md)                                         | JSON export, jq examples, pipelines                 |
-| **Multi-Notebook** | [Notebook Discovery](notebook-discovery.md)                                 | Auto-discovery, multiple notebooks                  |
-| **Problems**       | [Getting Started Troubleshooting Guide](getting-started-troubleshooting.md) | Error solutions, performance, debugging             |
-| **Onboarding**     | [Getting Started for Power Users](getting-started-power-users.md)           | 15-minute overview, all basics                      |
+| Topic              | Best Guide                                                                  | Key Sections                                    |
+| ------------------ | --------------------------------------------------------------------------- | ----------------------------------------------- |
+| **Import**         | [Import Workflow Guide](import-workflow-guide.md)                           | Step-by-step, organization patterns, migrations |
+| **SQL Basics**     | [SQL Quick Reference](sql-quick-reference.md)                               | Levels 1-2, examples, common mistakes           |
+| **SQL Advanced**   | [SQL Guide](sql-guide.md)                                                   | CTEs, aggregations, window functions            |
+| **Functions**      | [SQL Functions Reference](sql-functions-reference.md)                       | read_markdown(), md_stats(), all functions      |
+| **Automation**     | [Automation Recipes](automation-recipes.md)                                 | Scripts, cron, jq, tool integration             |
+| **JSON Output**    | [JSON-SQL Guide](json-sql-guide.md)                                         | JSON export, jq examples, pipelines             |
+| **Multi-Notebook** | [Notebook Discovery](notebook-discovery.md)                                 | Auto-discovery, multiple notebooks              |
+| **Problems**       | [Getting Started Troubleshooting Guide](getting-started-troubleshooting.md) | Error solutions, performance, debugging         |
+| **Onboarding**     | [Getting Started for Power Users](getting-started-power-users.md)           | 15-minute overview, all basics                  |
 
 ### By Feature
 
-| Feature                  | Best Guide                                              | Details                          |
-| ------------------------ | ------------------------------------------------------- | -------------------------------- |
-| **Views (today)**        | [Views Guide](views-guide.md)                           | Today's notes                    |
-| **Views (recent)**       | [Views Guide](views-guide.md)                           | 20 most recent notes             |
-| **Views (kanban)**       | [Views Guide](views-guide.md)                           | Notes by status                  |
-| **Views (untagged)**     | [Views Guide](views-guide.md)                           | Notes without tags               |
-| **Views (orphans)**      | [Views Guide](views-guide.md)                           | Notes with no incoming links     |
-| **Views (broken-links)** | [Views Guide](views-guide.md)                           | Notes with broken references     |
-| **Custom Views**         | [Views API Reference](views-api.md)                     | Create your own views            |
-| **View Parameters**      | [Views API Reference](views-api.md)                     | Runtime customization            |
-| **Template Variables**   | [Views API Reference](views-api.md)                     | Dynamic date/time values         |
-| **SELECT queries**       | [SQL Quick Reference](sql-quick-reference.md) - Level 1 | Basic queries and LIMIT          |
-| **Search queries**       | [SQL Quick Reference](sql-quick-reference.md) - Level 2 | LIKE, wildcards, text search     |
-| **Metadata**             | [SQL Quick Reference](sql-quick-reference.md) - Level 3 | Word count, line count, analysis |
-| **Complex queries**      | [SQL Quick Reference](sql-quick-reference.md) - Level 4 | GROUP BY, ORDER BY, aggregates   |
-| **Functions**            | [SQL Functions Reference](sql-functions-reference.md)   | Function parameters and returns  |
-| **read_markdown()**      | [SQL Functions Reference](sql-functions-reference.md)   | File reading and patterns        |
-| **md_stats()**           | [SQL Functions Reference](sql-functions-reference.md)   | Metadata extraction              |
-| **JSON output**          | [JSON-SQL Guide](json-sql-guide.md)                     | JSON export patterns             |
-| **jq integration**       | [JSON-SQL Guide](json-sql-guide.md)                     | jq pipelines and examples        |
-| **Import workflow**      | [Import Workflow Guide](import-workflow-guide.md)       | From any source                  |
-| **Obsidian import**      | [Import Workflow Guide](import-workflow-guide.md)       | Obsidian-specific steps          |
-| **Bear import**          | [Import Workflow Guide](import-workflow-guide.md)       | Bear-specific steps              |
-| **Daily reports**        | [Automation Recipes](automation-recipes.md)             | note-stats.sh, cron              |
-| **Weekly summaries**     | [Automation Recipes](automation-recipes.md)             | weekly-note-summary.sh           |
-| **Backups**              | [Automation Recipes](automation-recipes.md)             | note-backup.sh, git              |
-| **Export**               | [Automation Recipes](automation-recipes.md)             | note-export.sh, formats          |
+| Feature              | Best Guide                                              | Details                          |
+| -------------------- | ------------------------------------------------------- | -------------------------------- |
+| **SELECT queries**   | [SQL Quick Reference](sql-quick-reference.md) - Level 1 | Basic queries and LIMIT          |
+| **Search queries**   | [SQL Quick Reference](sql-quick-reference.md) - Level 2 | LIKE, wildcards, text search     |
+| **Metadata**         | [SQL Quick Reference](sql-quick-reference.md) - Level 3 | Word count, line count, analysis |
+| **Complex queries**  | [SQL Quick Reference](sql-quick-reference.md) - Level 4 | GROUP BY, ORDER BY, aggregates   |
+| **Functions**        | [SQL Functions Reference](sql-functions-reference.md)   | Function parameters and returns  |
+| **read_markdown()**  | [SQL Functions Reference](sql-functions-reference.md)   | File reading and patterns        |
+| **md_stats()**       | [SQL Functions Reference](sql-functions-reference.md)   | Metadata extraction              |
+| **JSON output**      | [JSON-SQL Guide](json-sql-guide.md)                     | JSON export patterns             |
+| **jq integration**   | [JSON-SQL Guide](json-sql-guide.md)                     | jq pipelines and examples        |
+| **Import workflow**  | [Import Workflow Guide](import-workflow-guide.md)       | From any source                  |
+| **Obsidian import**  | [Import Workflow Guide](import-workflow-guide.md)       | Obsidian-specific steps          |
+| **Bear import**      | [Import Workflow Guide](import-workflow-guide.md)       | Bear-specific steps              |
+| **Daily reports**    | [Automation Recipes](automation-recipes.md)             | note-stats.sh, cron              |
+| **Weekly summaries** | [Automation Recipes](automation-recipes.md)             | weekly-note-summary.sh           |
+| **Backups**          | [Automation Recipes](automation-recipes.md)             | note-backup.sh, git              |
+| **Export**           | [Automation Recipes](automation-recipes.md)             | note-export.sh, formats          |
 
 ### By Audience
 
@@ -368,11 +335,6 @@ opennotes notes search --help  # See --sql flag documentation
 │   ├── Getting Started Troubleshooting (problem solver)
 │   └── Import Workflow Guide (import from any source)
 │
-├── 🎯 Views System (NEW)
-│   ├── Views Guide (comprehensive guide + quick start)
-│   ├── Views Examples (daily workflows, project management)
-│   └── Views API Reference (schema, parameters, templates)
-│
 ├── 📊 SQL Learning
 │   ├── SQL Quick Reference (4 learning levels + 25 examples)
 │   ├── SQL Guide (advanced patterns and functions)
@@ -439,9 +401,6 @@ ORDER BY words DESC
 | Need                          | Link                                                                        |
 | ----------------------------- | --------------------------------------------------------------------------- |
 | **15-min onboarding**         | [Getting Started for Power Users](getting-started-power-users.md)           |
-| **Views System**              | [Views Guide](views-guide.md)                                               |
-| **Views Examples**            | [Views Examples](views-examples.md)                                         |
-| **Views API**                 | [Views API Reference](views-api.md)                                         |
 | **Import guides**             | [Import Workflow Guide](import-workflow-guide.md)                           |
 | **SQL learning (Levels 1-4)** | [SQL Quick Reference](sql-quick-reference.md)                               |
 | **Advanced SQL**              | [SQL Guide](sql-guide.md)                                                   |

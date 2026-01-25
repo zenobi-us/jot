@@ -168,18 +168,20 @@ func (s *NotebookService) Create(name, path string, register bool) (*Notebook, e
 	return notebook, nil
 }
 
-// Infer discovers notebook from current context.
-// Priority: 1. Declared path, 2. Context matching, 3. Ancestor search.
+// Infer discovers notebook from current context (auto-detection only).
+// Note: OPENNOTES_NOTEBOOK envvar and --notebook flag are handled upstream in requireNotebook().
+// Infer() handles auto-detection priority:
+// 1. .opennotes.json in current directory
+// 2. Context matching (registered notebooks with path context)
+// 3. Ancestor search (walk up tree for .opennotes.json)
 func (s *NotebookService) Infer(cwd string) (*Notebook, error) {
 	if cwd == "" {
 		cwd, _ = os.Getwd()
 	}
 
-	// Step 1: Check declared notebook path
-	if declaredPath := s.configService.Store.NotebookPath; declaredPath != "" {
-		if s.HasNotebook(declaredPath) {
-			return s.Open(declaredPath)
-		}
+	// Step 1: Check .opennotes.json in current directory (direct check)
+	if s.HasNotebook(cwd) {
+		return s.Open(cwd)
 	}
 
 	// Step 2: Check registered notebooks for context match
@@ -190,8 +192,8 @@ func (s *NotebookService) Infer(cwd string) (*Notebook, error) {
 		}
 	}
 
-	// Step 3: Search ancestor directories
-	current := cwd
+	// Step 3: Search ancestor directories (start from parent, not current)
+	current := filepath.Dir(cwd)
 	for current != "/" && current != "" {
 		if s.HasNotebook(current) {
 			return s.Open(current)
