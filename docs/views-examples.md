@@ -239,7 +239,7 @@ opennotes notes view kanban --param status=in-progress
 
 # 3. Export to JSON for dashboard
 opennotes notes view kanban --format json \
-  | jq 'group_by(.metadata.status) | map({status: .[0].metadata.status, tasks: [.[] | .title]})'
+  | jq 'group_by(.metadata->>\'status\') | map({status: .[0].metadata->>\'status\', tasks: [.[] | .title]})'
 ```
 
 **Custom Kanban States**:
@@ -317,7 +317,7 @@ opennotes notes view urgent
 
 # Filter by category
 opennotes notes view urgent --format json \
-  | jq '.[] | select(.metadata.category == "bugs")'
+  | jq '.[] | select(.metadata->>\'category\' == "bugs")'
 ```
 
 ---
@@ -814,7 +814,7 @@ mkdir -p metrics
 
 jq -n \
   --argjson total $(opennotes notes list --format json | jq '. | length') \
-  --argjson completed $(opennotes notes view this-week --format json | jq '[.[] | select(.metadata.status == "done")] | length') \
+  --argjson completed $(opennotes notes view this-week --format json | jq '[.[] | select(.metadata.status == "done")] | length') \\\
   --argjson in_progress $(opennotes notes view kanban --param status=in-progress --format json | jq '. | length') \
   --argjson orphans $(opennotes notes view orphans --format json | jq '. | length') \
   --argjson untagged $(opennotes notes view untagged --format json | jq '. | length') \
