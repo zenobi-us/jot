@@ -1450,8 +1450,8 @@ status: active
 
 	// Verify all results match both conditions
 	for _, note := range results {
-		tag, _ := note.Metadata["tag"]
-		status, _ := note.Metadata["status"]
+		tag := note.Metadata["tag"]
+		status := note.Metadata["status"]
 		assert.Equal(t, "workflow", tag)
 		assert.Equal(t, "active", status)
 	}
@@ -1501,7 +1501,7 @@ priority: low
 
 	// Verify no low priority notes
 	for _, note := range results {
-		priority, _ := note.Metadata["priority"]
+		priority := note.Metadata["priority"]
 		assert.NotEqual(t, "low", priority, "Should not include low priority")
 	}
 }
@@ -1553,7 +1553,7 @@ status: done
 
 	// Verify no archived notes
 	for _, note := range results {
-		status, _ := note.Metadata["status"]
+		status := note.Metadata["status"]
 		assert.NotEqual(t, "archived", status, "Should not include archived notes")
 	}
 }
@@ -1724,9 +1724,9 @@ priority: high
 
 	// Verify the match
 	for _, note := range results {
-		tag, _ := note.Metadata["tag"]
-		status, _ := note.Metadata["status"]
-		priority, _ := note.Metadata["priority"]
+		tag := note.Metadata["tag"]
+		status := note.Metadata["status"]
+		priority := note.Metadata["priority"]
 		assert.Equal(t, "workflow", tag)
 		assert.Equal(t, "active", status)
 		assert.True(t, priority == "high" || priority == "critical", "Priority should be high or critical")

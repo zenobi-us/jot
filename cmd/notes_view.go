@@ -113,7 +113,9 @@ EXAMPLES:
 		if err != nil {
 			return fmt.Errorf("query execution failed: %w", err)
 		}
-		defer rows.Close()
+		defer func() {
+			_ = rows.Close()
+		}()
 
 		// Convert rows to map format for display
 		columns, err := rows.Columns()

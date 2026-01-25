@@ -13,8 +13,9 @@ import (
 func createTestNote(t *testing.T, notebookPath string, filename string, content string) {
 	filePath := filepath.Join(notebookPath, filename)
 	dir := filepath.Dir(filePath)
-	os.MkdirAll(dir, 0755)
-	err := os.WriteFile(filePath, []byte(content), 0644)
+	err := os.MkdirAll(dir, 0755)
+	require.NoError(t, err)
+	err = os.WriteFile(filePath, []byte(content), 0644)
 	require.NoError(t, err)
 }
 
