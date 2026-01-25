@@ -54,12 +54,12 @@ func (vs *ViewService) initializeBuiltinViews() {
 			Conditions: []core.ViewCondition{
 				{
 					Logic:    "AND",
-					Field:    "data.created",
+					Field:    "metadata->>'created_at'",
 					Operator: ">=",
 					Value:    "{{today}}",
 				},
 			},
-			OrderBy: "updated DESC",
+			OrderBy: "metadata->>'updated_at' DESC",
 			Limit:   50,
 		},
 	}
@@ -69,7 +69,7 @@ func (vs *ViewService) initializeBuiltinViews() {
 		Name:        "recent",
 		Description: "Recently modified notes (last 20)",
 		Query: core.ViewQuery{
-			OrderBy: "updated DESC",
+			OrderBy: "metadata->>'updated_at' DESC",
 			Limit:   20,
 		},
 	}
@@ -91,12 +91,12 @@ func (vs *ViewService) initializeBuiltinViews() {
 			Conditions: []core.ViewCondition{
 				{
 					Logic:    "AND",
-					Field:    "data.status",
+					Field:    "metadata->>'status'",
 					Operator: "IN",
 					Value:    "{{status}}",
 				},
 			},
-			OrderBy: "data.priority DESC, updated DESC",
+			OrderBy: "(metadata->>'priority')::INTEGER DESC, metadata->>'updated_at' DESC",
 		},
 	}
 
@@ -108,12 +108,12 @@ func (vs *ViewService) initializeBuiltinViews() {
 			Conditions: []core.ViewCondition{
 				{
 					Logic:    "AND",
-					Field:    "data.tags",
+					Field:    "metadata->>'tags'",
 					Operator: "IS NULL",
 					Value:    "",
 				},
 			},
-			OrderBy: "created DESC",
+			OrderBy: "metadata->>'created_at' DESC",
 		},
 	}
 
@@ -131,7 +131,7 @@ func (vs *ViewService) initializeBuiltinViews() {
 			},
 		},
 		Query: core.ViewQuery{
-			OrderBy: "created DESC",
+			OrderBy: "metadata->>'created_at' DESC",
 		},
 	}
 
@@ -140,7 +140,7 @@ func (vs *ViewService) initializeBuiltinViews() {
 		Name:        "broken-links",
 		Description: "Notes containing links to non-existent files",
 		Query: core.ViewQuery{
-			OrderBy: "updated DESC",
+			OrderBy: "metadata->>'updated_at' DESC",
 		},
 	}
 }
@@ -409,18 +409,25 @@ func isValidViewName(name string) bool {
 func validateField(field string) error {
 	// Whitelist of allowed field prefixes
 	allowedPrefixes := []string{
-		"data.",
+		"metadata->>", // JSON field extraction (primary access pattern)
+		"metadata->",  // JSON object access
 		"path",
-		"created",
-		"updated",
-		"body",
-		"file.",
+		"file_path",
 		"content",
-		"metadata.",
+		"stats->", // File statistics JSON
+		"stats->>",
 	}
 
 	// Remove quotes if present
 	cleanField := strings.Trim(field, "\"'")
+
+	// Special case: allow casting syntax like (metadata->>'priority')::INTEGER
+	if strings.Contains(cleanField, "::") {
+		parts := strings.Split(cleanField, "::")
+		if len(parts) == 2 {
+			cleanField = strings.TrimSpace(strings.Trim(parts[0], "()"))
+		}
+	}
 
 	for _, prefix := range allowedPrefixes {
 		if cleanField == prefix || strings.HasPrefix(cleanField, prefix) {

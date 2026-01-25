@@ -53,7 +53,7 @@ func TestViewService_RecentView(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "recent", view.Name)
 	assert.Equal(t, 20, view.Query.Limit)
-	assert.Equal(t, "updated DESC", view.Query.OrderBy)
+	assert.Equal(t, "metadata->>'updated_at' DESC", view.Query.OrderBy)
 }
 
 func TestViewService_KanbanView_HasParameter(t *testing.T) {
@@ -80,7 +80,7 @@ func TestViewService_UntaggedView(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "untagged", view.Name)
 	assert.Equal(t, 1, len(view.Query.Conditions))
-	assert.Equal(t, "data.tags", view.Query.Conditions[0].Field)
+	assert.Equal(t, "metadata->>'tags'", view.Query.Conditions[0].Field)
 	assert.Equal(t, "IS NULL", view.Query.Conditions[0].Operator)
 }
 
@@ -191,7 +191,7 @@ func TestViewService_ValidateViewDefinition_ValidView(t *testing.T) {
 		Query: core.ViewQuery{
 			Conditions: []core.ViewCondition{
 				{
-					Field:    "created",
+					Field:    "metadata->>'created_at'",
 					Operator: "=",
 					Value:    "test",
 				},
@@ -274,7 +274,7 @@ func TestViewService_ValidateViewDefinition_InvalidOperator(t *testing.T) {
 		Query: core.ViewQuery{
 			Conditions: []core.ViewCondition{
 				{
-					Field:    "created",
+					Field:    "metadata->>'created_at'",
 					Operator: "INVALID",
 					Value:    "test",
 				},
