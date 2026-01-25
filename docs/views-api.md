@@ -96,17 +96,17 @@ Complete specification for a view.
   "query": {
     "conditions": [
       {
-        "field": "data.priority",
+        "field": "metadata->>'priority'",
         "operator": "IN",
         "value": "{{priority}}"
       },
       {
-        "field": "data.status",
+        "field": "metadata->>'status'",
         "operator": "!=",
         "value": "done"
       }
     ],
-    "orderBy": "data.priority ASC, updated_at DESC",
+    "orderBy": "metadata->>'priority' ASC, updated_at DESC",
     "limit": 50
   }
 }
@@ -319,43 +319,43 @@ Individual query condition.
 | `title` | `string` | Note title (from frontmatter or filename) |
 | `created_at` | `datetime` | Note creation timestamp |
 | `updated_at` | `datetime` | Note last modified timestamp |
-| `data.*` | varies | Any frontmatter field (e.g., `data.status`, `data.tags`) |
+| `metadata->>'*'` | varies | Any frontmatter field (e.g., `metadata->>'status'`, `metadata->>'tags'`) |
 
 #### Operators
 
 | Operator | Description | Value Type | Example |
 |----------|-------------|------------|---------|
-| `=` | Exact match | `string`, `number`, `bool` | `{"field": "data.status", "operator": "=", "value": "done"}` |
-| `!=` | Not equal | `string`, `number`, `bool` | `{"field": "data.status", "operator": "!=", "value": "done"}` |
+| `=` | Exact match | `string`, `number`, `bool` | `{"field": "metadata->>'status'", "operator": "=", "value": "done"}` |
+| `!=` | Not equal | `string`, `number`, `bool` | `{"field": "metadata->>'status'", "operator": "!=", "value": "done"}` |
 | `>` | Greater than | `number`, `datetime` | `{"field": "updated_at", "operator": ">", "value": "{{today}}"}` |
 | `>=` | Greater or equal | `number`, `datetime` | `{"field": "updated_at", "operator": ">=", "value": "{{this_week}}"}` |
 | `<` | Less than | `number`, `datetime` | `{"field": "created_at", "operator": "<", "value": "2026-01-01"}` |
 | `<=` | Less or equal | `number`, `datetime` | `{"field": "created_at", "operator": "<=", "value": "{{yesterday}}"}` |
-| `IN` | Value in list | `array` | `{"field": "data.status", "operator": "IN", "value": ["todo", "done"]}` |
-| `NOT IN` | Value not in list | `array` | `{"field": "data.priority", "operator": "NOT IN", "value": ["low"]}` |
+| `IN` | Value in list | `array` | `{"field": "metadata->>'status'", "operator": "IN", "value": ["todo", "done"]}` |
+| `NOT IN` | Value not in list | `array` | `{"field": "metadata->>'priority'", "operator": "NOT IN", "value": ["low"]}` |
 | `LIKE` | Pattern match | `string` | `{"field": "path", "operator": "LIKE", "value": "projects/%"}` |
-| `NOT LIKE` | Pattern not match | `string` | `{"field": "data.tags", "operator": "NOT LIKE", "value": "%archive%"}` |
+| `NOT LIKE` | Pattern not match | `string` | `{"field": "metadata->>'tags'", "operator": "NOT LIKE", "value": "%archive%"}` |
 
 #### Value Types
 
 **String**:
 ```json
-{"field": "data.status", "operator": "=", "value": "done"}
+{"field": "metadata->>'status'", "operator": "=", "value": "done"}
 ```
 
 **Number**:
 ```json
-{"field": "data.priority", "operator": ">", "value": 5}
+{"field": "metadata->>'priority'", "operator": ">", "value": 5}
 ```
 
 **Boolean**:
 ```json
-{"field": "data.archived", "operator": "=", "value": true}
+{"field": "metadata->>'archived'", "operator": "=", "value": true}
 ```
 
 **Array** (for IN/NOT IN):
 ```json
-{"field": "data.status", "operator": "IN", "value": ["todo", "done"]}
+{"field": "metadata->>'status'", "operator": "IN", "value": ["todo", "done"]}
 ```
 
 **Template Variable**:
@@ -365,7 +365,7 @@ Individual query condition.
 
 **Parameter Reference**:
 ```json
-{"field": "data.author", "operator": "=", "value": "{{author}}"}
+{"field": "metadata->>'author'", "operator": "=", "value": "{{author}}"}
 ```
 
 ---
@@ -494,12 +494,12 @@ Complete specifications for all 6 built-in views.
   "query": {
     "conditions": [
       {
-        "field": "data.status",
+        "field": "metadata->>'status'",
         "operator": "IN",
         "value": "{{status}}"
       }
     ],
-    "orderBy": "data.status ASC, updated_at DESC"
+    "orderBy": "metadata->>'status' ASC, updated_at DESC"
   }
 }
 ```
@@ -515,7 +515,7 @@ Complete specifications for all 6 built-in views.
   "query": {
     "conditions": [
       {
-        "field": "data.tags",
+        "field": "metadata->>'tags'",
         "operator": "IS",
         "value": "NULL"
       }
@@ -600,7 +600,7 @@ Views can be defined in two configuration files.
       "query": {
         "conditions": [
           {
-            "field": "data.priority",
+            "field": "metadata->>'priority'",
             "operator": "=",
             "value": "urgent"
           }
@@ -656,7 +656,7 @@ Views can be defined in two configuration files.
       "query": {
         "conditions": [
           {
-            "field": "data.sprint",
+            "field": "metadata->>'sprint'",
             "operator": "=",
             "value": "{{sprint_number}}"
           }

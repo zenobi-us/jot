@@ -159,7 +159,7 @@ opennotes notes view recent
 **Parameters**:
 - `status` (list, optional): Status values to filter (default: `todo,in-progress,done`)
 
-**Query**: Notes where `data.status` IN specified values, grouped by status
+**Query**: Notes where `metadata->>'status'` IN specified values, grouped by status, ordered by priority
 
 **Use Cases**:
 - Project task tracking
@@ -200,7 +200,7 @@ opennotes notes view kanban --param status=in-progress
 
 **Purpose**: Finds notes without tags
 
-**Query**: Notes where `data.tags` is NULL or empty
+**Query**: Notes where `metadata->>'tags'` is NULL or empty
 
 **Use Cases**:
 - Content organization audit
@@ -310,7 +310,7 @@ Add to your config file:
       "query": {
         "conditions": [
           {
-            "field": "data.priority",
+            "field": "metadata->>'priority'",
             "operator": "=",
             "value": "urgent"
           }
@@ -346,7 +346,7 @@ opennotes notes view urgent
       "query": {
         "conditions": [
           {
-            "field": "data.author",
+            "field": "metadata->>'author'",
             "operator": "=",
             "value": "{{author}}"
           }
@@ -402,17 +402,17 @@ opennotes notes view this-week
       "query": {
         "conditions": [
           {
-            "field": "data.status",
+            "field": "metadata->>'status'",
             "operator": "IN",
             "value": ["todo", "in-progress"]
           },
           {
-            "field": "data.priority",
+            "field": "metadata->>'priority'",
             "operator": "IN",
             "value": ["high", "urgent"]
           }
         ],
-        "orderBy": "data.priority DESC, updated_at DESC"
+        "orderBy": "(metadata->>'priority')::INTEGER DESC, metadata->>'updated_at' DESC"
       }
     }
   ]
@@ -650,7 +650,7 @@ opennotes notes view today --format json
 opennotes notes view today --format json | jq -r '.[].path'
 
 # Filter by status
-opennotes notes view kanban --format json | jq '.[] | select(.data.status == "todo")'
+opennotes notes view kanban --format json | jq '.[] | select(.metadata.status == "todo")'
 
 # Count results
 opennotes notes view untagged --format json | jq '. | length'
