@@ -12,6 +12,7 @@ DuckDB community extensions (like `markdown`) need to be downloaded from the int
 - Rate limiting
 
 **Error example:**
+
 ```
 IO Error: Extension "/home/runner/.duckdb/extensions/v1.4.3/linux_amd64/markdown.duckdb_extension" not found.
 ```
@@ -81,6 +82,7 @@ if err != nil {
 ```
 
 **How it works:**
+
 - `INSTALL markdown FROM community;` checks `~/.duckdb/extensions/` first
 - If the extension exists locally, it uses it (no network call)
 - If not found locally, it falls back to downloading (which should never happen in CI now)
@@ -89,9 +91,9 @@ if err != nil {
 
 DuckDB has two extension repositories:
 
-| Type | URL | Examples |
-|------|-----|----------|
-| **Official** | `extensions.duckdb.org` | httpfs, json, parquet, icu |
+| Type          | URL                               | Examples                   |
+| ------------- | --------------------------------- | -------------------------- |
+| **Official**  | `extensions.duckdb.org`           | httpfs, json, parquet, icu |
 | **Community** | `community-extensions.duckdb.org` | **markdown**, spatial, aws |
 
 The markdown extension is a **community extension**, so we download from `community-extensions.duckdb.org`.
@@ -99,16 +101,19 @@ The markdown extension is a **community extension**, so we download from `commun
 ## Benefits
 
 ### Reliability
+
 - ✅ 0% failure rate from network issues
 - ✅ No dependency on external services during test runs
 - ✅ Consistent behavior across all CI runs
 
 ### Performance
+
 - **First run**: ~3 seconds (download + extract)
 - **Cached runs**: ~0 seconds (cache hit)
 - **Net improvement**: Eliminates 2-3 second network delay on every run
 
 ### Maintenance
+
 - Simple to update: Change `.duckdb-version` file
 - Cache automatically invalidates when version changes
 - Works identically in local dev and CI
@@ -133,11 +138,13 @@ gunzip markdown.duckdb_extension.gz
 When upgrading DuckDB:
 
 1. Update `.duckdb-version` file:
+
    ```bash
    echo "v1.5.0" > .duckdb-version
    ```
 
 2. Update workflow download script:
+
    ```bash
    # Change v1.4.3 to v1.5.0 in both places
    mkdir -p ~/.duckdb/extensions/v1.5.0/linux_amd64
@@ -156,12 +163,14 @@ When upgrading DuckDB:
 **Symptom**: Tests fail with "Extension not found" error
 
 **Check:**
+
 1. Verify `.duckdb-version` file exists
 2. Check workflow has cache + download steps
 3. Verify extension URL is correct (`community-extensions.duckdb.org`)
 4. Check GitHub Actions logs for download step output
 
 **Debug:**
+
 ```yaml
 - name: Debug extension status
   run: |
@@ -174,6 +183,7 @@ When upgrading DuckDB:
 **Symptom**: Extension downloads on every run
 
 **Check:**
+
 1. Cache key includes `${{ hashFiles('.duckdb-version') }}`
 2. `.duckdb-version` file is committed to repo
 3. GitHub Actions cache quota not exceeded
@@ -183,6 +193,7 @@ When upgrading DuckDB:
 **Symptom**: Extension loads but crashes or gives errors
 
 **Platform identifiers:**
+
 - GitHub Actions (ubuntu-latest): `linux_amd64` ✓
 - macOS: `osx_amd64` or `osx_arm64`
 - Windows: `windows_amd64`
@@ -192,15 +203,18 @@ Make sure the download URL matches the runner platform.
 ## References
 
 ### DuckDB Documentation
+
 - [Extensions Overview](https://duckdb.org/docs/stable/extensions/overview)
 - [Installing Extensions](https://duckdb.org/docs/stable/extensions/installing_extensions)
 - [Community Extensions](https://duckdb.org/community_extensions/)
 
 ### GitHub Issues
+
 - [#13808: Unable to download extension in GitHub Actions](https://github.com/duckdb/duckdb/issues/13808) - Resolved in v1.1.0+
 - [#19339: Extension installation fails without internet](https://github.com/duckdb/duckdb/issues/19339)
 
 ### Extension Repository
+
 - [Markdown Extension](https://github.com/teaguesterling/duckdb_markdown)
 - [Documentation](https://duckdb-markdown.readthedocs.io/)
 

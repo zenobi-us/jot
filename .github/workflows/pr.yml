@@ -47,4 +47,3 @@ jobs:
           files: ./coverage.out
           flags: unittests
           name: codecov-umbrella
-

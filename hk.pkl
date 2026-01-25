@@ -13,8 +13,10 @@ local linters = new Mapping<String, Step> {
     ["golangci_lint"] {
         glob = "**/*.go"
         exclude = List("**/*_test.go")  // Tests checked by go test
-        check = "golangci-lint run --fix=false {{files}}"
-        fix = "golangci-lint run --fix {{files}}"
+        // Run against all packages to avoid typechecking errors when files from multiple
+        // packages are passed together. Using ./... lets golangci-lint typecheck correctly.
+        check = "golangci-lint run --fix=false ./..."
+        fix = "golangci-lint run --fix ./..."
     }
     ["gomod_tidy"] = Builtins.gomod_tidy
 
