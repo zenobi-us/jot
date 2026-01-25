@@ -4,30 +4,59 @@ OpenNotes automatically discovers and loads notebooks based on the user's curren
 
 ## Overview
 
-The notebook discovery follows a **3-tier priority system**:
+The notebook discovery follows a **5-tier priority system** (first wins):
 
-1. **Declared Path** (highest priority) - From `--notebook` flag or `OPENNOTES_NOTEBOOK` env var
-2. **Registered Notebooks** (medium priority) - Check each registered notebook for context match
-3. **Ancestor Search** (fallback) - Walk up directory tree looking for `.opennotes.json`
+1. **OPENNOTES_NOTEBOOK** (highest priority) - Environment variable
+2. **--notebook flag** (CLI override) - Command line argument
+3. **Current Directory** (direct check) - `.opennotes.json` in current working directory
+4. **Registered Notebooks** (context matching) - Check each registered notebook for context match
+5. **Ancestor Search** (fallback) - Walk up directory tree looking for `.opennotes.json`
 
 ## Discovery Flowchart
 
 ![Notebook Discovery Flowchart](notebook-discovery.svg)
 
-### 1. Declared Path (Tier 1 - Highest Priority)
+### 1. OPENNOTES_NOTEBOOK Environment Variable (Tier 1 - Highest Priority)
 
-The system first checks if a notebook path has been explicitly declared via:
+The system first checks if the `OPENNOTES_NOTEBOOK` environment variable is set:
 
-- CLI flag: `opennotes --notebook /path/to/notebook`
-- Environment variable: `OPENNOTES_NOTEBOOK=/path/to/notebook`
+```bash
+export OPENNOTES_NOTEBOOK=/path/to/notebook
+opennotes notes list  # Uses the notebook from envvar
+```
 
-If a declared path exists:
-
+If the envvar is set:
 1. Check if `.opennotes.json` exists in that path
 2. If yes: Load and open the notebook → **SUCCESS**
 3. If no: Continue to Tier 2
 
-### 2. Registered Notebooks (Tier 2 - Context Matching)
+### 2. --notebook CLI Flag (Tier 2)
+
+The system checks if the `--notebook` flag was provided on the command line:
+
+```bash
+opennotes notes list --notebook /path/to/notebook
+```
+
+If a flag path exists:
+1. Check if `.opennotes.json` exists in that path
+2. If yes: Load and open the notebook → **SUCCESS**
+3. If no: Continue to Tier 3
+
+### 3. Current Directory (Tier 3)
+
+The system checks if `.opennotes.json` exists in the current working directory:
+
+```bash
+cd /home/user/project  # Contains .opennotes.json
+opennotes notes list   # Auto-discovers notebook in cwd
+```
+
+If `.opennotes.json` exists in current directory:
+1. Load and open the notebook → **SUCCESS**
+2. If no: Continue to Tier 4
+
+### 4. Registered Notebooks (Tier 4 - Context Matching)
 
 The system checks notebooks registered in the global configuration:
 
@@ -51,7 +80,6 @@ for _, context := range notebook.Contexts {
 ```
 
 **Example:**
-
 ```
 Notebook contexts: ["/home/user/project", "/tmp/work"]
 Current directory: "/home/user/project/src"
@@ -60,11 +88,11 @@ Match check: strings.HasPrefix("/home/user/project/src", "/home/user/project")
 Result: TRUE → Context matches → Return this notebook
 ```
 
-### 3. Ancestor Search (Tier 3 - Fallback)
+### 5. Ancestor Search (Tier 5 - Fallback)
 
-If no declared or registered notebooks match, the system performs an ancestor directory search:
+If no environment variable, flag, current directory, or registered notebooks match, the system performs an ancestor directory search:
 
-1. Start with current working directory
+1. Start with parent directory (not current, as that was checked in Tier 3)
 2. Check if `.opennotes.json` exists in current directory
 3. If yes: Load and open the notebook → **SUCCESS**
 4. If no: Move to parent directory
@@ -74,7 +102,6 @@ If no declared or registered notebooks match, the system performs an ancestor di
 ## File Locations & Formats
 
 ### Global Configuration
-
 **Location:** `~/.config/opennotes/config.json`
 
 ```json
@@ -88,14 +115,16 @@ If no declared or registered notebooks match, the system performs an ancestor di
 ```
 
 ### Notebook Configuration
-
 **Location:** `<notebook_directory>/.opennotes.json`
 
 ```json
 {
   "root": "./notes",
   "name": "Project Notebook",
-  "contexts": ["/home/user/project", "/home/user/project-related"],
+  "contexts": [
+    "/home/user/project",
+    "/home/user/project-related"
+  ],
   "templates": {
     "default": "# {{.Title}}\n\nDate: {{.Date}}\n\n"
   },
@@ -112,36 +141,35 @@ If no declared or registered notebooks match, the system performs an ancestor di
 ## Key Features
 
 ### Deterministic Behavior
-
 - **Clear Priority**: Declared > Registered > Ancestor
 - **First Match Wins**: Stops at first successful discovery
 - **No Ambiguity**: Priority order prevents conflicts
 
 ### Graceful Fallback
-
 - If higher priority method fails, try next tier
 - Comprehensive search ensures maximum discovery success
 - Returns `nil` only when all methods exhausted
 
 ### Context-Aware
-
 - Registered notebooks define active contexts
 - Automatically selects appropriate notebook for current work environment
 - Supports multiple context paths per notebook
 
 ### Efficient Discovery
-
 - Stops immediately upon successful match
 - Minimal filesystem operations
 - Fast context matching using string prefix comparison
 
 ## State Transitions Summary
 
-1. **DECLARED PATH** → Success or Continue to Tier 2
-2. **REGISTERED SEARCH** → For each registered notebook:
+1. **TIER 1: OPENNOTES_NOTEBOOK envvar** → Success or Continue to Tier 2
+2. **TIER 2: --notebook flag** → Success or Continue to Tier 3
+3. **TIER 3: Current Directory** → Success or Continue to Tier 4
+4. **TIER 4: REGISTERED SEARCH** → For each registered notebook:
    - Check exists → Check context match → Success or Continue
-3. **ANCESTOR SEARCH** → Walk up directories until found or root
-4. **SUCCESS** → Return notebook instance
-5. **NOT FOUND** → Return nil
+5. **TIER 5: ANCESTOR SEARCH** → Walk up directories until found or root
+6. **SUCCESS** → Return notebook instance
+7. **NOT FOUND** → Return nil
 
-This discovery system ensures OpenNotes works seamlessly across different project environments while maintaining predictable, efficient behavior.
+This discovery system ensures OpenNotes works seamlessly across different project environments while maintaining predictable, efficient behavior. The priority order follows the principle of least surprise: environment variable (global) → flag (explicit) → auto-detection (implicit).
+

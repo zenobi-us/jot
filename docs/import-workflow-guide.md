@@ -45,7 +45,6 @@ OpenNotes respects your existing filesystem structure—it doesn't lock your not
 **File Pattern**: How OpenNotes discovers files in your collection. Default pattern `**/*.md` recursively finds all markdown files.
 
 **Metadata Extraction**: OpenNotes automatically extracts:
-
 - **Title**: From frontmatter `title` field, first heading (H1), or filename
 - **Content**: Full markdown content including all formatting
 - **Path**: Relative path from notebook root
@@ -67,7 +66,6 @@ find . -name "*.md" -type f | head -20
 ```
 
 Expected output:
-
 ```
 ./README.md
 ./projects/project-1.md
@@ -78,7 +76,6 @@ Expected output:
 ```
 
 **Good practices before import**:
-
 - ✅ Remove symbolic links (or follow them: see [Symlinks](#symlinks-and-nested-structures))
 - ✅ Clean up duplicate files (search across collection)
 - ✅ Verify file encoding (UTF-8 recommended)
@@ -93,7 +90,6 @@ opennotes notebook create "My Notes" --path ~/my-notes
 ```
 
 Output:
-
 ```
 Created notebook: My Notes
 Location: /home/user/my-notes
@@ -101,14 +97,12 @@ Files discovered: 157
 ```
 
 **What happens**:
-
 - Notebook config created at `~/.config/opennotes/config.json`
 - OpenNotes scans your directory for all `*.md` files recursively
 - Metadata extraction begins in background
 - No files are copied or moved
 
 **Set as current notebook** (optional):
-
 ```bash
 # List all notebooks
 opennotes notebook list
@@ -134,7 +128,6 @@ opennotes notes search "filename"
 ```
 
 Example output:
-
 ```
 ### Notes (157)
 
@@ -144,7 +137,6 @@ Example output:
 ```
 
 **Verify metadata extraction**:
-
 ```bash
 # Check if titles are extracted from frontmatter
 opennotes notes list | grep -i "title"
@@ -168,7 +160,6 @@ opennotes notes search --sql \
 ```
 
 **Success indicators**:
-
 - ✅ Correct number of files returned
 - ✅ File paths and content are accurate
 - ✅ Metadata extraction working (titles, word counts)
@@ -191,13 +182,11 @@ my-notes/
 ```
 
 **Import command**:
-
 ```bash
 opennotes notebook create "My Notes" --path ~/my-notes
 ```
 
 **Query all notes**:
-
 ```bash
 opennotes notes search --sql "SELECT file_path FROM read_markdown('*.md')"
 ```
@@ -232,13 +221,11 @@ my-notes/
 ```
 
 **Import command**:
-
 ```bash
 opennotes notebook create "My Notes" --path ~/my-notes
 ```
 
 **Query notes by folder**:
-
 ```bash
 # All project notes
 opennotes notes search --sql "SELECT file_path FROM read_markdown('projects/**/*.md', include_filepath:=true)"
@@ -275,7 +262,6 @@ client-a/
 ```
 
 **Import commands**:
-
 ```bash
 opennotes notebook create "Work" --path ~/work-notes
 opennotes notebook create "Personal" --path ~/personal-notes
@@ -283,7 +269,6 @@ opennotes notebook create "Client A" --path ~/client-a
 ```
 
 **Switch between notebooks by directory**:
-
 ```bash
 # OpenNotes auto-detects from current directory
 cd ~/work-notes && opennotes notes list        # Uses "Work" notebook
@@ -304,7 +289,6 @@ opennotes notes list --notebook "Client A"
 You have Obsidian vault, Bear notes, or scattered markdown files.
 
 **Setup (5 minutes)**:
-
 ```bash
 # 1. Copy/organize notes into a directory
 mkdir -p ~/my-notes
@@ -322,7 +306,6 @@ opennotes notes search --sql "SELECT COUNT(*) as total FROM read_markdown('**/*.
 ```
 
 **First workflow**: Search and explore
-
 ```bash
 # Find notes about "Python"
 opennotes notes search "Python"
@@ -339,7 +322,6 @@ opennotes notes search --sql \
 Your team uses a Git repository for shared documentation.
 
 **Setup (10 minutes)**:
-
 ```bash
 # 1. Clone or navigate to repo
 cd ~/projects/shared-knowledge
@@ -355,7 +337,6 @@ opennotes notes search "API documentation"
 ```
 
 **First workflow**: Generate team reports
-
 ```bash
 # Find all documentation that needs updating
 opennotes notes search --sql \
@@ -367,7 +348,6 @@ opennotes notes search --sql \
 ```
 
 **Git integration**:
-
 ```bash
 # Notebook points to git repo
 # Changes to .md files are tracked by git
@@ -383,7 +363,6 @@ git commit -m "Updated documentation"
 You manage multiple projects with separate note repositories.
 
 **Setup (15 minutes)**:
-
 ```bash
 # 1. Create notebooks for each project
 opennotes notebook create "Project Alpha" --path ~/projects/alpha/notes
@@ -402,7 +381,6 @@ opennotes notes list
 ```
 
 **First workflow**: Quick project context switching
-
 ```bash
 # Search in current project
 cd ~/projects/alpha/notes && opennotes notes search "feature-x"
@@ -423,7 +401,6 @@ opennotes notebook list
 OpenNotes automatically extracts metadata from YAML frontmatter:
 
 **Example note with frontmatter**:
-
 ```markdown
 ---
 title: Project Alpha Kickoff
@@ -438,13 +415,11 @@ date: 2024-01-15
 ```
 
 **How OpenNotes handles it**:
-
 - **Title source**: Uses `title` field first, falls back to first `# Heading`, then filename
 - **Content**: Full markdown including frontmatter preserved as-is
 - **Metadata access**: In SQL queries, frontmatter available as structured fields
 
 **Query with metadata**:
-
 ```bash
 opennotes notes search --sql \
   "SELECT file_path, content FROM read_markdown('**/*.md', include_filepath:=true) LIMIT 5"
@@ -456,31 +431,24 @@ opennotes notes search --sql \
 
 If you don't use frontmatter, OpenNotes detects titles from content:
 
-| Priority | Source              | Example            |
-| -------- | ------------------- | ------------------ |
-| 1        | Frontmatter `title` | `title: "My Note"` |
-| 2        | First H1 heading    | `# My Note`        |
-| 3        | Filename            | `my-note.md`       |
+| Priority | Source | Example |
+|----------|--------|---------|
+| 1 | Frontmatter `title` | `title: "My Note"` |
+| 2 | First H1 heading | `# My Note` |
+| 3 | Filename | `my-note.md` |
 
 **Examples**:
-
 ```markdown
 # File: meeting-notes.md
-
 # Frontmatter: (none)
-
 # First heading: # Team Sync January 15
-
 # Result: Title = "Team Sync January 15"
 ```
 
 ```markdown
 # File: project-spec.md
-
 # Frontmatter: title: "Alpha Project Specification"
-
 # First heading: # Overview
-
 # Result: Title = "Alpha Project Specification"
 ```
 
@@ -509,7 +477,6 @@ See [SQL Functions Reference](sql-functions-reference.md) for advanced metadata 
 Obsidian stores notes as markdown with optional frontmatter (like OpenNotes):
 
 **Step 1: Export from Obsidian**
-
 ```bash
 # Obsidian vaults are already markdown files
 # Navigate to your vault directory
@@ -520,13 +487,11 @@ find . -name "*.md" -type f | head -10
 ```
 
 **Step 2: Import into OpenNotes**
-
 ```bash
 opennotes notebook create "Obsidian Import" --path ~/Obsidian/My-Vault
 ```
 
 **Step 3: Verify Import**
-
 ```bash
 # Check note count
 opennotes notes list | wc -l
@@ -539,7 +504,6 @@ opennotes notes search "important"
 ```
 
 **Handle Obsidian-specific features**:
-
 - ✅ **Frontmatter**: OpenNotes preserves YAML frontmatter
 - ✅ **Wikilinks**: Content preserved as-is (rendered as `[[link]]` text)
 - ✅ **Tags**: Stored in content, queryable with SQL `LIKE '%#tag%'`
@@ -547,7 +511,6 @@ opennotes notes search "important"
 - ❌ **Vault settings**: Not imported (use OpenNotes config instead)
 
 **Query Obsidian tags**:
-
 ```bash
 opennotes notes search --sql \
   "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) WHERE content LIKE '%#project%' LIMIT 20"
@@ -560,21 +523,18 @@ opennotes notes search --sql \
 Bear uses proprietary database format, but supports markdown export:
 
 **Step 1: Export from Bear**
-
 1. Open Bear
 2. Select "File" → "Export Notes"
 3. Choose "Markdown" format
 4. Save to `~/bear-export`
 
 **Step 2: Import into OpenNotes**
-
 ```bash
 # Bear exports as folder of .md files
 opennotes notebook create "Bear Migration" --path ~/bear-export
 ```
 
 **Step 3: Verify and Clean**
-
 ```bash
 # Check for attachments (Bear may include images)
 find ~/bear-export -type f ! -name "*.md"
@@ -587,7 +547,6 @@ opennotes notes search --sql "SELECT COUNT(*) FROM read_markdown('**/*.md')"
 ```
 
 **Handle Bear-specific content**:
-
 - ✅ **Note content**: Fully preserved as markdown
 - ✅ **Formatting**: Markdown formatting (bold, italic, etc.) preserved
 - ⚠️ **Images**: Exported as separate files, links preserved but external
@@ -601,7 +560,6 @@ opennotes notes search --sql "SELECT COUNT(*) FROM read_markdown('**/*.md')"
 You have a folder of markdown files from any source:
 
 **Step 1: Organize Files**
-
 ```bash
 # Collect all markdown files into one directory
 mkdir -p ~/my-notes
@@ -610,7 +568,6 @@ find ~/Desktop -name "*.md" -type f -exec cp {} ~/my-notes/ \;
 ```
 
 **Step 2: Clean Up Naming**
-
 ```bash
 # Remove special characters from filenames
 cd ~/my-notes
@@ -623,13 +580,11 @@ done
 ```
 
 **Step 3: Import**
-
 ```bash
 opennotes notebook create "Imported Notes" --path ~/my-notes
 ```
 
 **Step 4: Verify**
-
 ```bash
 opennotes notes list
 ```
@@ -645,24 +600,21 @@ opennotes notes list
 **Solutions**:
 
 1. **Check progress with SQL**:
-
    ```bash
    # If this completes quickly, database is working
    opennotes notes search --sql "SELECT COUNT(*) FROM read_markdown('**/*.md')"
    ```
 
 2. **Verify file count**:
-
    ```bash
    # Count files in filesystem
    find ~/my-notes -name "*.md" | wc -l
-
+   
    # Compare with OpenNotes count
    opennotes notes search --sql "SELECT COUNT(*) FROM read_markdown('**/*.md')"
    ```
 
 3. **Import in batches** (if needed):
-
    ```bash
    # Create multiple notebooks for different folders
    opennotes notebook create "Notes A-M" --path ~/my-notes/a-m
@@ -670,19 +622,17 @@ opennotes notes list
    ```
 
 4. **Check system resources**:
-
    ```bash
    # Monitor memory usage
    top
-
+   
    # Check disk space
    df -h ~/my-notes
    ```
 
 **Typical performance**:
-
 - 100 notes: <100ms
-- 1000 notes: <500ms
+- 1000 notes: <500ms  
 - 10000 notes: 2-5 seconds
 
 ---
@@ -692,7 +642,6 @@ opennotes notes list
 **Problem**: Files with special characters not found or cause errors
 
 **Examples**:
-
 ```
 project (2024).md
 notes-final-v2.md
@@ -702,14 +651,12 @@ client[backup].md
 **Solutions**:
 
 1. **View problematic files**:
-
    ```bash
    # Find files with special characters
    find ~/my-notes -name "*.md" -type f | grep -E "[\[\](){}]"
    ```
 
 2. **Rename files**:
-
    ```bash
    # Remove problematic characters
    cd ~/my-notes
@@ -727,7 +674,6 @@ client[backup].md
    ```
 
 **Recommended**: Rename files to use only alphanumeric, hyphens, and underscores:
-
 - ✅ `my-note.md`
 - ✅ `project_2024.md`
 - ❌ `my (note).md`
@@ -740,7 +686,6 @@ client[backup].md
 **Problem**: Symbolic links or deeply nested folders not working as expected
 
 **Symlinks**:
-
 ```bash
 # Check for symlinks
 find ~/my-notes -type l
@@ -753,7 +698,6 @@ cp ~/other-notes/*.md ~/my-notes/
 ```
 
 **Deeply nested structures** (e.g., 5+ levels deep):
-
 ```
 my-notes/
 └── level1/
@@ -765,7 +709,6 @@ my-notes/
 ```
 
 **Handle with SQL patterns**:
-
 ```bash
 # Matches any depth
 opennotes notes search --sql \
@@ -785,7 +728,6 @@ opennotes notes search --sql \
 **Problem**: Non-UTF-8 files show garbled content or errors
 
 **Check encoding**:
-
 ```bash
 # Find non-UTF-8 files
 file -i ~/my-notes/*.md
@@ -796,7 +738,6 @@ file -i ~/my-notes/*.md
 ```
 
 **Convert to UTF-8**:
-
 ```bash
 # For single file
 iconv -f ISO-8859-1 -t UTF-8 old-notes.md -o old-notes-utf8.md
@@ -817,7 +758,6 @@ done
 **Problem**: Error when importing: "Permission denied" or "Cannot read directory"
 
 **Check permissions**:
-
 ```bash
 # List permissions
 ls -la ~/my-notes
@@ -828,7 +768,6 @@ ls -l ~/my-notes | grep -E "^-"
 ```
 
 **Fix permissions**:
-
 ```bash
 # Add read permission
 chmod +r ~/my-notes/*.md
@@ -850,36 +789,32 @@ chmod -R u+rX ~/my-notes
 **Debugging**:
 
 1. **Verify notebook creation**:
-
    ```bash
    opennotes notebook list
    ```
 
 2. **Check directory path**:
-
    ```bash
    # Verify the path exists
    ls -la ~/my-notes
-
+   
    # Count markdown files
    find ~/my-notes -name "*.md" -type f | wc -l
    ```
 
 3. **Manual SQL query**:
-
    ```bash
    # If this works, database is OK
    opennotes notes search --sql "SELECT COUNT(*) FROM read_markdown('**/*.md')"
-
+   
    # If this returns 0, no .md files found
    ```
 
 4. **Check file extensions**:
-
    ```bash
    # Files must be .md (lowercase extension)
    find ~/my-notes -type f | grep -E "\.(md|MD|Md)$"
-
+   
    # Rename if needed
    for file in ~/my-notes/*.MD; do
      [ -f "$file" ] && mv "$file" "${file%.MD}.md"
@@ -898,7 +833,6 @@ chmod -R u+rX ~/my-notes
 **Problem**: Titles showing as "untitled" or file paths instead of proper titles
 
 **Check extraction**:
-
 ```bash
 # List notes with titles
 opennotes notes list
@@ -909,20 +843,18 @@ opennotes notes list
 **Solutions**:
 
 1. **Add frontmatter**:
-
    ```markdown
    ---
    title: "My Proper Title"
    ---
-
+   
    # Content
    ```
 
 2. **Use H1 headings**:
-
    ```markdown
    # My Proper Title
-
+   
    Content here...
    ```
 
@@ -952,3 +884,4 @@ After successfully importing your notes:
 - 📋 **[SQL Quick Reference](sql-quick-reference.md)** - Practical query patterns
 - 🔍 **[Notebook Discovery](notebook-discovery.md)** - Multi-notebook management
 - 🤖 **[Automation & JSON Integration](json-sql-guide.md)** - Advanced automation patterns
+
