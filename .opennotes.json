@@ -1,15 +1,12 @@
 {
-  "root": ".notes",
-  "name": "my-notes",
-  "contexts": [
-    "/mnt/Store/Projects/Mine/Github/opennotes"
-  ],
+  "$schema": "./opennotes.schema.json",
+  "root": ".memory",
+  "name": "opennotes-project-memory",
+  "contexts": ["/mnt/Store/Projects/Mine/Github/opennotes"],
   "groups": [
     {
       "name": "Default",
-      "globs": [
-        "**/*.md"
-      ],
+      "globs": ["**/*.md"],
       "metadata": {}
     }
   ]
