@@ -6,12 +6,6 @@ set -e
 
 echo "Starting CI Tests..."
 
-mise setup
-mise lint
-mise test
-mise test-e2e
-mise test-bats
-mise build
+mise container run "./Containerfile" "localhost/opennotes" "$pwd" "mise checks"
 
 echo "CI Tests completed successfully."
-

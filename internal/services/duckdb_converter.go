@@ -48,7 +48,7 @@ func (c *DuckDBConverter) ConvertResults(results []map[string]interface{}) ([]ma
 	}
 
 	convertedResults := make([]map[string]interface{}, 0, len(results))
-	
+
 	for i, row := range results {
 		convertedRow, err := c.ConvertRow(row)
 		if err != nil {
@@ -101,7 +101,7 @@ func (c *DuckDBConverter) convertMapValue(rv reflect.Value) (interface{}, error)
 	}
 
 	result := make(map[string]interface{})
-	
+
 	// Iterate over map keys
 	for _, key := range rv.MapKeys() {
 		// Convert key to string
@@ -139,7 +139,7 @@ func (c *DuckDBConverter) convertArrayValue(rv reflect.Value) (interface{}, erro
 
 	length := rv.Len()
 	result := make([]interface{}, 0, length)
-	
+
 	for i := 0; i < length; i++ {
 		element := rv.Index(i)
 		convertedElement, err := c.convertValue(element.Interface())
@@ -150,7 +150,7 @@ func (c *DuckDBConverter) convertArrayValue(rv reflect.Value) (interface{}, erro
 				Msg("Failed to convert array element, using string fallback")
 			convertedElement = fmt.Sprintf("%v", element.Interface())
 		}
-		
+
 		result = append(result, convertedElement)
 	}
 

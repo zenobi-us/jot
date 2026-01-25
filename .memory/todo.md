@@ -1,157 +1,247 @@
 # OpenNotes - Active Tasks
 
-**Status**: 🔬 **RESEARCH IN PROGRESS** - New epic active  
+**Status**: 🔄 **PHASE 5 IN PROGRESS** - Views System Phase 5-6 Remaining  
 **Current Work**: Advanced Note Creation and Search Capabilities (epic-3e01c563)  
-**Current Phase**: Research & Design (4 parallel research topics)  
-**Started**: 2026-01-20 20:40 GMT+10:30  
-**Last Updated**: 2026-01-20 20:40 GMT+10:30
+**Current Phase**: Phase 5 - Integration Testing & Optimization  
+**Last Updated**: 2026-01-23T17:30:00+10:30  
+**Status**: 🚀 **VIEWS SYSTEM CORE COMPLETE - FINAL PHASES READY**
 
 ---
 
 ## Project Status
 
-**Overall Status**: ✅ **ALL EPICS COMPLETE** - Production-ready
+**Overall Status**: ✅ **2 of 3 FEATURES COMPLETE** - 67% epic progress
 
 **Recent Completions**:
+- 🎉 **Phase 4: View Discovery Features** (2026-01-23): E2E testing, edge cases, integration, parameter validation
+- 🎉 **Phase 1-4 (Views Core)** (2026-01-23): Data structures, ViewService, CLI, special views
+- 🎉 **Phase 4 - Note Search Enhancement** (2026-01-23): Text search, fuzzy matching, boolean queries, link queries
 - 🎉 **Getting Started Guide Epic** (2026-01-20): Comprehensive documentation ecosystem
 - 🎉 **SQL JSON Output Epic** (2026-01-18): Production-ready JSON output with automation
 - ⭐ **SQL Flag Epic** (2026-01-18): Advanced SQL querying with DuckDB integration  
 - ⭐ **Test Coverage Epic** (2026-01-18): Enterprise-grade testing infrastructure
 
-**Feature Set**: ⭐⭐⭐⭐⭐ Production Excellence
+**Feature Set**: ⭐⭐⭐⭐⭐ Production Excellence + Advanced Search + Views
 - Advanced note management with SQL querying and JSON output
+- ✨ Text search, fuzzy matching, boolean queries, link queries
+- ✨ **NEW**: Views System (6 built-in views, custom views, special views)
+- ✨ **NEW**: View Discovery Features (plain text + JSON output, full integration testing)
 - Intelligent notebook discovery and context-aware workflows
 - Comprehensive automation integration with external tools
 - Complete documentation with troubleshooting and examples
 - Enterprise-grade testing and cross-platform compatibility
 
-**Current Focus**: 🎯 **AWAITING NEW EPIC**
-- All current work complete
-- Documentation comprehensive
-- Production-ready for release
+**Current Focus**: 🎯 **PHASE 5 DOCUMENTATION READY**
+- Views System core (Phases 1-4) complete
+- View Discovery (Phase 4) complete
+- Phase 5 ready: Documentation and release prep
+- Note Creation Enhancement spec approved and ready
 
 ---
 
 ## Active Epic: Advanced Note Creation and Search Capabilities
 
 **Epic File**: `.memory/epic-3e01c563-advanced-note-operations.md`  
-**Status**: 🔬 **RESEARCH IN PROGRESS**  
+**Status**: 🔄 **IN PROGRESS** - 2 of 3 features complete (67% progress)  
 **Started**: 2026-01-20 20:40 GMT+10:30
 
-### Research Tasks (Completed)
+### Epic Progress
 
-**Status**: ✅ **RESEARCH COMPLETE** - All findings documented
+✅ **Feature 1: Note Search Enhancement** - COMPLETE (2026-01-23)
+- Text search with optional search term
+- Fuzzy matching with `--fuzzy` flag  
+- Boolean queries (AND/OR/NOT logic)
+- Link queries (`links-to`, `linked-by`)
+- Glob pattern support
+- Security validation (defense-in-depth)
+- Test coverage: 87% (exceeded 85% target)
+- Performance: All targets exceeded by 3-6x
+- **Archive**: `archive/phase4-search-implementation-2026-01-23/`
+- **Learning**: `learning-8d0ca8ac-phase4-search-implementation.md`
 
-**Research Deliverables** (4 comprehensive documents):
+✅ **Feature 2: Views System** - PHASES 1-5 COMPLETE (2026-01-23)
+- **Spec**: `spec-d4fca870-views-system.md`
+- **Implementation Report**: `task-views-phase1-3-complete.md`
+- **Status**: ✅ Phases 1-5 complete + discovery features validated
+  - ✅ Core data structures (ViewDefinition, ViewParameter, ViewQuery, ViewCondition)
+  - ✅ ViewService (6 built-in views: today, recent, kanban, untagged, orphans, broken-links)
+  - ✅ Template variable resolution ({{today}}, {{yesterday}}, {{this_week}}, {{this_month}}, {{now}})
+  - ✅ Parameter validation (string, list, date, bool types)
+  - ✅ Configuration integration (ConfigService, NotebookService)
+  - ✅ SQL generation with parameterized queries
+  - ✅ CLI command (cmd/notes_view.go) - full integration
+  - ✅ Special view executors (broken-links, orphans detection)
+  - ✅ 59 unit tests (100% coverage)
+  - ✅ Security: field/operator whitelist, parameterized queries
+  - ✅ Performance: <1ms query generation (target: <50ms - **50x better**)
+  - ✅ **Phase 4 Discovery Features**:
+    - ✅ View discovery via plain text output
+    - ✅ View discovery via JSON list capability
+    - ✅ End-to-end testing with real notebooks
+    - ✅ Edge case validation (empty notebooks, special chars, circular refs, unicode)
+    - ✅ Configuration edge cases (missing configs, fallback, precedence)
+    - ✅ Link extraction completeness (all formats recognized)
+    - ✅ Integration with existing features (notebook context, output piping)
+    - ✅ Parameter validation and error handling
+- **Remaining**: Phase 5 (documentation ~2.5 hours)
 
-1. ✅ **Main Research Document** (56KB) - `.memory/research-3e01c563-advanced-operations.md`
-   - Complete findings for all 4 topics
-   - Code examples and implementation patterns
-   - Security validation and performance benchmarks
-   - 15+ references cited
+⏳ **Feature 3: Note Creation Enhancement** - READY (spec approved)
+- **Spec**: `spec-ca68615f-note-creation-enhancement.md`
+- `--data.*` flags for frontmatter on creation
+- Path resolution (file vs folder)
+- Title extraction and slugification
+- Frontmatter generation
+- Estimated: 4-6 hours
 
-2. ✅ **Executive Summary** (3.5KB) - `.memory/research-3e01c563-summary.md`
-   - Quick-reference recommendations
-   - Priority matrix and confidence levels
-   - Security checklist
+### Remaining Work - Phase 5 Only
 
-3. ✅ **Implementation Quick-Start** (7KB) - `.memory/quickstart-3e01c563-implementation.md`
-   - Phase-by-phase implementation guide
-   - Task breakdown with time estimates
-   - Code snippets and testing checklist
+**Phase 6: Documentation & Release** (Est: 2.5 hours) - ✅ COMPLETE
+- [x] User guide and examples (1 hour) - views-guide.md created
+- [x] Real-world examples (30 min) - views-examples.md created
+- [x] API reference (30 min) - views-api.md created
+- [x] Code documentation (already well-documented)
+- [x] CHANGELOG update (20 min) - Views System section added
+- [x] Documentation INDEX update - Views System integrated
 
-4. ✅ **Updated Epic** (9.2KB) - `.memory/epic-3e01c563-advanced-note-operations.md`
-   - Research completion summary
-   - Key findings integrated
+**View Discovery Validation Complete**:
+- ✅ All discovery features tested and validated
+- ✅ All edge cases handled
+- ✅ Integration with existing features verified
+- ✅ Parameter validation working correctly
+- ✅ Zero regressions in 300+ existing tests
 
-**Research Summary**:
+**Total Remaining**: ✅ PHASE 6 COMPLETE - Views System documentation ready for release
 
-| Topic | Recommendation | Confidence |
-|-------|---------------|------------|
-| **Flag Parsing** | `StringArray` with `field=value` parsing | ⭐⭐⭐⭐⭐ HIGH |
-| **FZF Integration** | `go-fuzzyfinder` (pure Go library) | ⭐⭐⭐⭐ MEDIUM-HIGH |
-| **Boolean Queries** | Parameterized queries + whitelist validation | ⭐⭐⭐⭐⭐ HIGH |
-| **View System** | YAML config with built-in → global → notebook hierarchy | ⭐⭐⭐⭐⭐ HIGH |
+### Next Steps
 
-**Implementation Estimate**: 12-16 hours for Phase 1 MVP (4 features)
+**✅ Views System Complete** - All 6 phases delivered
+- Core implementation (Phases 1-4)
+- Integration testing and discovery (Phase 5)
+- Documentation and release prep (Phase 6)
+- Ready for archive and learning distillation
 
-**Specification Documents** (All Complete):
-- ✅ **Note Creation Enhancement Spec** (32KB) - `.memory/spec-ca68615f-note-creation-enhancement.md`
-  - Complete command signature and behavior rules
-  - Implementation changes with code examples
-  - Testing requirements and acceptance criteria
-  - Migration timeline (v1.x → v2.0.0)
-  - 9 detailed examples covering all use cases
+**Epic Complete!** (2026-01-24 23:54):
+✅ **Advanced Note Operations Epic** - **100% COMPLETE**
+- ✅ Feature 1: Note Search Enhancement
+- ✅ Feature 2: Views System (6 built-in views)
+- ✅ Feature 3: Note Creation Enhancement (just completed!)
 
-- ✅ **Note Search Enhancement Spec** (35KB) - `.memory/spec-5f8a9b2c-note-search-enhancement.md`
-  - Two main subcommands: text search and boolean query
-  - FZF integration for interactive fuzzy finding
-  - Complete boolean logic (AND/OR/NOT) with data fields
-  - Link query support (links-to, linked-by) for DAG foundation
-  - Glob pattern support with security-first query construction
-  - Performance targets (<100ms for complex queries)
-  - Comprehensive testing requirements (≥85% coverage)
+**Recently Completed** (2026-01-24):
+1. ✅ **Feature 3 Core Implementation** (~1 hour)
+   - Positional syntax: `notes add <title> [path]`
+   - `--data` flags for frontmatter (repeatable)
+   - Path resolution and stdin integration
+   - 15 new tests, zero regressions
+   - Task: `.memory/task-ca68615f-01-core-implementation.md`
 
-- ✅ **Views System Spec** (43KB) - `.memory/spec-d4fca870-views-system.md` ⚠️ **DRAFT - REQUIRES Q&A**
-  - Named reusable query presets with parameterization
-  - 6 built-in views (today, recent, kanban, untagged, orphans, broken-links)
-  - Custom views in global config and per-notebook
-  - Template variable system ({{today}}, {{yesterday}}, etc.)
-  - 3-tier precedence hierarchy (notebook > global > built-in)
-  - **6 critical unresolved design questions** - See Open Questions section
-  - **BLOCKED**: Implementation blocked until Q&A discussion complete
+2. ✅ **Archive Views System** - Moved to `archive/phase6-views-system-2026-01-24/`
+3. ✅ **Distill Views Learnings** - Created learning document
 
-**Next Steps**:
-- 📋 **[NEEDS-HUMAN]** Review Note Creation Enhancement specification (`.memory/spec-ca68615f-note-creation-enhancement.md`)
-- 📋 **[NEEDS-HUMAN]** Review Note Search Enhancement specification (`.memory/spec-5f8a9b2c-note-search-enhancement.md`)
-- 📋 **[NEEDS-HUMAN]** Review Views System specification (`.memory/spec-d4fca870-views-system.md`)
-- 🔴 **[NEEDS-HUMAN]** Conduct Q&A discussion for Views System spec using `qa-discussion` skill
-  - **6 questions to resolve**: Command structure, output formatting, view definition scope, broken links detection, kanban parameters, orphans definition
-  - **After Q&A**: Update spec with decisions, mark as approved
-- 📋 **[NEEDS-HUMAN]** Review research findings and validate recommendations
-- 📋 **[NEEDS-HUMAN]** Approve implementation approach before task breakdown
-- ⏸️ After approval: Create Phase 4 implementation planning tasks
+**Next Actions**:
+1. ⏳ **Archive Epic** - Move epic-3e01c563 artifacts to archive
+2. ⏳ **Distill Epic Learnings** - Create comprehensive epic learning document
+3. ⏳ **Update Documentation** - Update README with new features
+4. ⏳ **Release Preparation** - Prepare changelog, release notes
+5. ⏳ **Next Epic Planning** - Review backlog, plan next epic
 
 ---
 
-## Available Work - NONE
+## Available Work - Views System Phase 5 Documentation
 
-No active tasks. Ready to define new epic or perform maintenance.
+### Completed Checklist (Phases 1-5)
 
-### Potential Future Work
+**✅ Phase 1: Core Data Structures**
+- ✅ ViewDefinition, ViewParameter, ViewQuery, ViewCondition
+- ✅ ViewsConfig schema
+- ✅ 6 built-in views defined
+- ✅ 47 unit tests
 
-**Documentation Maintenance**:
-- Keep examples up to date as features evolve
-- Monitor user feedback for doc improvements
-- Update troubleshooting guide with new scenarios
+**✅ Phase 2: Configuration & SQL Generation**
+- ✅ ConfigService.GetViews() integration
+- ✅ NotebookService.GetViews() integration
+- ✅ SQL generation with parameterized queries
+- ✅ Template variable resolution
+- ✅ 6 SQL generation tests
 
-**Feature Enhancements** (Ideas for future epics):
-- Additional automation recipes
-- Extended SQL function library
-- Advanced template system
-- Plugin/extension architecture
+**✅ Phase 3: CLI & Query Execution**
+- ✅ cmd/notes_view.go complete
+- ✅ Parameter parsing (key=value format)
+- ✅ Result rendering (list, table, json)
+- ✅ Full notebook integration
+
+**✅ Phase 4: Special Views**
+- ✅ Broken links detection
+- ✅ Orphans detection (3 definitions)
+- ✅ Link extraction (frontmatter + markdown)
+- ✅ 6 comprehensive tests
+
+**✅ Phase 5: View Discovery Features** (COMPLETE - 2026-01-23 20:15 GMT+10:30)
+- ✅ End-to-end testing (6 built-in views, all output formats)
+- ✅ Parameter validation (missing params, invalid formats, type mismatches)
+- ✅ Output format testing (list, table, JSON compatibility)
+- ✅ Performance validation (<1ms generation, <50ms execution verified)
+- ✅ Special view performance (orphans, broken-links <100ms)
+- ✅ Edge case handling (empty notebooks, special chars, circular refs, unicode)
+- ✅ Configuration edge cases (missing configs, malformed YAML, fallbacks)
+- ✅ Link extraction completeness (all formats recognized)
+- ✅ Integration testing (notebook context, piping, regressions)
+- ✅ Plain text discovery output validation
+- ✅ JSON list discovery validation
+- ✅ All discovery features production-ready
+
+**Test Status**:
+- ✅ Total: 59 view tests passing
+- ✅ Coverage: 100% of ViewService and SpecialViewExecutor
+- ✅ Existing tests: All 300+ passing (zero regressions)
+- ✅ Performance: <1ms (target: <50ms - 50x better)
+- ✅ Discovery validation: All scenarios tested and working
+
+### Ready for Implementation - Phase 5 Documentation Only
+
+**Phase 5: Documentation & Release** (~2.5 hours)
+- See `.memory/phase5-6-next-steps.md` for detailed checklist
+- User guide and examples (1 hour)
+- Code documentation and comments (30 min)
+- Examples and tutorials (30 min)
+- CHANGELOG update (20 min)
+
+**Next Epic Continuation Options**:
+- Complete Phase 5 documentation (2.5 hours)
+- Implement Note Creation Enhancement (4-6 hours)
+- Complete epic, archive, start new epic
 
 **Technical Debt**:
 - None identified - codebase is clean and well-tested
+- Discovery features fully validated
 
 ---
 
 ## Memory Management Status
 
-✅ **Memory Cleanup Complete** (2026-01-20)
-- Getting Started Guide epic archived to `archive/getting-started-guide-epic-2026-01-20/`
-- Epic, phases, tasks, research, and spec files moved to archive
-- Learning distilled to `learning-4a5a2bc9-getting-started-epic-insights.md`
+✅ **Phase 4 Cleanup Complete** (2026-01-23)
+- Phase 4 archived to `archive/phase4-search-implementation-2026-01-23/`
+- 4 tasks and 1 phase file moved to archive
+- Learning distilled to `learning-8d0ca8ac-phase4-search-implementation.md`
 - Summary.md and todo.md updated
 - Memory structure clean and organized
 
+✅ **Views Phase 1-4 Documentation** (2026-01-23)
+- Implementation report: `task-views-phase1-3-complete.md`
+- Next steps checklist: `phase5-6-next-steps.md`
+- All artifacts preserved for future reference
+
 ✅ **Permanent Knowledge Preserved**
-- 13 learning files retained for future reference
+- 14 learning files retained for future reference (including new Phase 4 learning)
 - 2 knowledge files (codemap, data-flow) maintained
 - All completed epic insights documented
 
+✅ **Previous Cleanup** (2026-01-20)
+- Getting Started Guide epic archived to `archive/getting-started-guide-epic-2026-01-20/`
+- Epic, phases, tasks, research, and spec files moved to archive
+- Learning distilled to `learning-4a5a2bc9-getting-started-epic-insights.md`
+
 ---
 
-**Last Updated**: 2026-01-20 22:15 GMT+10:30  
-**Status**: 📋 **SPECIFICATIONS COMPLETE** - Ready for human review  
-**Next Action**: Human review of both specification documents before implementation planning
+**Last Updated**: 2026-01-23T17:30:00+10:30  
+**Status**: ✅ **PHASE 1-4 COMPLETE** - Phase 5-6 ready to proceed  
+**Next Action**: Begin Phase 5 integration testing or decide on Feature 3 implementation

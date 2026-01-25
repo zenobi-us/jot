@@ -81,6 +81,26 @@ Choose the guide that matches your current need:
   - Troubleshooting: 7 common import scenarios
   - Follow after: Getting started guide
 
+### Using Views System
+- **[Views Guide](views-guide.md)** (17.7 KB, comprehensive guide)
+  - Perfect for: Named query presets and common workflows
+  - Contains: 6 built-in views, custom views, parameters, templates
+  - Quick start: List views, use views, change formats
+  - See also: [Views Examples](views-examples.md), [Views API](views-api.md)
+  - Follow after: Getting started guide
+
+- **[Views Examples](views-examples.md)** (16.3 KB, practical guide)
+  - Perfect for: Real-world workflows and automation
+  - Contains: Daily workflows, project management, knowledge graph
+  - Use cases: Standup, kanban, orphans, team collaboration
+  - Follow after: Views Guide
+
+- **[Views API Reference](views-api.md)** (18.2 KB, technical spec)
+  - Perfect for: Creating custom views
+  - Contains: Complete schema, parameter types, template variables
+  - Includes: Built-in views specs, error codes, JSON schema
+  - Follow after: Views Examples
+
 ### Learning SQL
 - **[SQL Quick Reference](sql-quick-reference.md)** (2,400 words, 4 learning levels)
   - Perfect for: Progressive SQL learning
@@ -213,6 +233,9 @@ Goal: Complete mastery of all features and patterns
 
 | Topic | Best Guide | Key Sections |
 |-------|-----------|--------------|
+| **Views System** | [Views Guide](views-guide.md) | Built-in views, custom views, parameters, templates |
+| **Views Examples** | [Views Examples](views-examples.md) | Daily workflows, project management, automation |
+| **Views API** | [Views API Reference](views-api.md) | Schema, parameters, template variables, error codes |
 | **Import** | [Import Workflow Guide](import-workflow-guide.md) | Step-by-step, organization patterns, migrations |
 | **SQL Basics** | [SQL Quick Reference](sql-quick-reference.md) | Levels 1-2, examples, common mistakes |
 | **SQL Advanced** | [SQL Guide](sql-guide.md) | CTEs, aggregations, window functions |
@@ -227,6 +250,15 @@ Goal: Complete mastery of all features and patterns
 
 | Feature | Best Guide | Details |
 |---------|-----------|---------|
+| **Views (today)** | [Views Guide](views-guide.md) | Today's notes |
+| **Views (recent)** | [Views Guide](views-guide.md) | 20 most recent notes |
+| **Views (kanban)** | [Views Guide](views-guide.md) | Notes by status |
+| **Views (untagged)** | [Views Guide](views-guide.md) | Notes without tags |
+| **Views (orphans)** | [Views Guide](views-guide.md) | Notes with no incoming links |
+| **Views (broken-links)** | [Views Guide](views-guide.md) | Notes with broken references |
+| **Custom Views** | [Views API Reference](views-api.md) | Create your own views |
+| **View Parameters** | [Views API Reference](views-api.md) | Runtime customization |
+| **Template Variables** | [Views API Reference](views-api.md) | Dynamic date/time values |
 | **SELECT queries** | [SQL Quick Reference](sql-quick-reference.md) - Level 1 | Basic queries and LIMIT |
 | **Search queries** | [SQL Quick Reference](sql-quick-reference.md) - Level 2 | LIKE, wildcards, text search |
 | **Metadata** | [SQL Quick Reference](sql-quick-reference.md) - Level 3 | Word count, line count, analysis |
@@ -317,6 +349,11 @@ opennotes notes search --help  # See --sql flag documentation
 │   ├── Getting Started Troubleshooting (problem solver)
 │   └── Import Workflow Guide (import from any source)
 │
+├── 🎯 Views System (NEW)
+│   ├── Views Guide (comprehensive guide + quick start)
+│   ├── Views Examples (daily workflows, project management)
+│   └── Views API Reference (schema, parameters, templates)
+│
 ├── 📊 SQL Learning
 │   ├── SQL Quick Reference (4 learning levels + 25 examples)
 │   ├── SQL Guide (advanced patterns and functions)
@@ -380,6 +417,9 @@ ORDER BY words DESC
 | Need | Link |
 |------|------|
 | **15-min onboarding** | [Getting Started for Power Users](getting-started-power-users.md) |
+| **Views System** | [Views Guide](views-guide.md) |
+| **Views Examples** | [Views Examples](views-examples.md) |
+| **Views API** | [Views API Reference](views-api.md) |
 | **Import guides** | [Import Workflow Guide](import-workflow-guide.md) |
 | **SQL learning (Levels 1-4)** | [SQL Quick Reference](sql-quick-reference.md) |
 | **Advanced SQL** | [SQL Guide](sql-guide.md) |

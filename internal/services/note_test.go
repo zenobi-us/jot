@@ -25,7 +25,7 @@ func TestNoteService_SearchNotes_NoNotebookSelected(t *testing.T) {
 	cfg, _ := services.NewConfigServiceWithPath(t.TempDir() + "/config.json")
 	svc := services.NewNoteService(cfg, db, "")
 
-	notes, err := svc.SearchNotes(ctx, "")
+	notes, err := svc.SearchNotes(ctx, "", false)
 	assert.Error(t, err)
 	assert.Nil(t, notes)
 	assert.Contains(t, err.Error(), "no notebook selected")
@@ -51,7 +51,7 @@ func TestNoteService_SearchNotes_FindsAllNotes(t *testing.T) {
 
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
-	notes, err := svc.SearchNotes(ctx, "")
+	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
 
 	assert.Len(t, notes, 3)
@@ -78,7 +78,7 @@ func TestNoteService_SearchNotes_FiltersByQuery(t *testing.T) {
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
 	// Search for "apple"
-	notes, err := svc.SearchNotes(ctx, "apple")
+	notes, err := svc.SearchNotes(ctx, "apple", false)
 	require.NoError(t, err)
 
 	assert.Len(t, notes, 1)
@@ -103,7 +103,7 @@ func TestNoteService_SearchNotes_FiltersByQueryCaseInsensitive(t *testing.T) {
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
 	// Search with lowercase should match uppercase content
-	notes, err := svc.SearchNotes(ctx, "uppercase")
+	notes, err := svc.SearchNotes(ctx, "uppercase", false)
 	require.NoError(t, err)
 
 	assert.Len(t, notes, 1)
@@ -128,7 +128,7 @@ func TestNoteService_SearchNotes_FiltersByFilepath(t *testing.T) {
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
 	// Search by filename pattern
-	notes, err := svc.SearchNotes(ctx, "project")
+	notes, err := svc.SearchNotes(ctx, "project", false)
 	require.NoError(t, err)
 
 	assert.Len(t, notes, 1)
@@ -154,7 +154,7 @@ func TestNoteService_SearchNotes_EmptyNotebook(t *testing.T) {
 
 	// Note: DuckDB's read_markdown errors when no files match the glob.
 	// This tests the current behavior - the service returns an error for empty notebooks.
-	notes, err := svc.SearchNotes(ctx, "")
+	notes, err := svc.SearchNotes(ctx, "", false)
 	assert.Error(t, err)
 	assert.Nil(t, notes)
 	assert.Contains(t, err.Error(), "File or directory does not exist")
@@ -185,7 +185,7 @@ func TestNoteService_SearchNotes_ExtractsMetadata(t *testing.T) {
 
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
-	notes, err := svc.SearchNotes(ctx, "")
+	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
 
 	require.Len(t, notes, 1)
@@ -210,7 +210,7 @@ func TestNoteService_SearchNotes_SetsRelativePath(t *testing.T) {
 
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
-	notes, err := svc.SearchNotes(ctx, "")
+	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
 
 	require.Len(t, notes, 1)
@@ -351,7 +351,7 @@ func TestNoteService_SearchNotes_MultipleQueryMatches(t *testing.T) {
 
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
-	notes, err := svc.SearchNotes(ctx, "golang")
+	notes, err := svc.SearchNotes(ctx, "golang", false)
 	require.NoError(t, err)
 
 	assert.Len(t, notes, 2)
@@ -375,7 +375,7 @@ func TestNoteService_SearchNotes_ContentHasText(t *testing.T) {
 
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
-	notes, err := svc.SearchNotes(ctx, "")
+	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
 
 	require.Len(t, notes, 1)
@@ -877,11 +877,11 @@ func TestNoteService_ExecuteSQLSafe_ComplexQuery(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, results, 2)
-	
+
 	// First result (n=3)
 	assert.Equal(t, int32(3), results[0]["n"])
 	assert.Equal(t, "c", results[0]["letter"])
-	
+
 	// Second result (n=2)
 	assert.Equal(t, int32(2), results[1]["n"])
 	assert.Equal(t, "b", results[1]["letter"])
@@ -907,7 +907,7 @@ func TestNoteService_ExecuteSQLSafe_ReadOnlyEnforcement(t *testing.T) {
 	// This is caught by ValidateSQL, but the read-only connection is a defense-in-depth layer
 	_, err := svc.ExecuteSQLSafe(ctx, "SELECT 1")
 	require.NoError(t, err)
-	
+
 	// DELETE would be caught by validation before reaching the DB
 	_, err = svc.ExecuteSQLSafe(ctx, "DELETE FROM markdown")
 	assert.Error(t, err)
@@ -938,7 +938,7 @@ func TestNoteService_SearchNotes_DisplayNameWithTitle(t *testing.T) {
 
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
-	notes, err := svc.SearchNotes(ctx, "")
+	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
 
 	require.Len(t, notes, 1)
@@ -964,7 +964,7 @@ func TestNoteService_SearchNotes_DisplayNameSlugifyFilename(t *testing.T) {
 
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
-	notes, err := svc.SearchNotes(ctx, "")
+	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
 
 	require.Len(t, notes, 1)
@@ -998,7 +998,7 @@ func TestNoteService_SearchNotes_DisplayNameMultipleNotes(t *testing.T) {
 
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
-	notes, err := svc.SearchNotes(ctx, "")
+	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
 
 	require.Len(t, notes, 3)
@@ -1031,7 +1031,7 @@ func TestNoteService_SearchNotes_ComplexQueries(t *testing.T) {
 
 	// Create test notebook with diverse content
 	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "complex-search-test")
-	
+
 	// Create notes with varied content for complex searching
 	testutil.CreateTestNote(t, notebookDir, "golang-tips.md", "# Golang Tips\n\nUseful golang programming patterns.")
 	testutil.CreateTestNote(t, notebookDir, "javascript-tricks.md", "# JavaScript Tricks\n\nSome javascript and golang comparisons.")
@@ -1055,7 +1055,7 @@ func TestNoteService_SearchNotes_ComplexQueries(t *testing.T) {
 		{
 			"partial_word_match",
 			"java",
-			2, // javascript-tricks.md, mixed-content.md  
+			2, // javascript-tricks.md, mixed-content.md
 			"Should find partial word matches",
 		},
 		{
@@ -1086,10 +1086,10 @@ func TestNoteService_SearchNotes_ComplexQueries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			notes, err := svc.SearchNotes(ctx, tt.query)
+			notes, err := svc.SearchNotes(ctx, tt.query, false)
 			require.NoError(t, err, tt.description)
-			assert.Len(t, notes, tt.expectedCount, 
-				"Expected %d notes for query '%s', got %d", 
+			assert.Len(t, notes, tt.expectedCount,
+				"Expected %d notes for query '%s', got %d",
 				tt.expectedCount, tt.query, len(notes))
 		})
 	}
@@ -1108,7 +1108,7 @@ func TestNoteService_SearchNotes_SpecialCharacters(t *testing.T) {
 	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
 
 	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "special-chars-test")
-	
+
 	// Create notes with special characters
 	testutil.CreateTestNote(t, notebookDir, "unicode-test.md", "# Unicode Test\n\nCafé, naïve, résumé")
 	testutil.CreateTestNote(t, notebookDir, "symbols.md", "# Symbols\n\nC++ programming, @mentions, #hashtags")
@@ -1118,8 +1118,8 @@ func TestNoteService_SearchNotes_SpecialCharacters(t *testing.T) {
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
 	tests := []struct {
-		name  string
-		query string
+		name          string
+		query         string
 		expectedCount int
 	}{
 		{
@@ -1166,7 +1166,7 @@ func TestNoteService_SearchNotes_SpecialCharacters(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			notes, err := svc.SearchNotes(ctx, tt.query)
+			notes, err := svc.SearchNotes(ctx, tt.query, false)
 			require.NoError(t, err)
 			assert.Len(t, notes, tt.expectedCount,
 				"Expected %d notes for query '%s'", tt.expectedCount, tt.query)
@@ -1191,7 +1191,7 @@ func TestNoteService_SearchNotes_LargeResultSets(t *testing.T) {
 	// Create many notes with shared content
 	commonWord := "shared"
 	for i := 1; i <= 25; i++ {
-		content := fmt.Sprintf("# Note %d\n\nThis note contains the %s keyword and unique content %d.", 
+		content := fmt.Sprintf("# Note %d\n\nThis note contains the %s keyword and unique content %d.",
 			i, commonWord, i)
 		testutil.CreateTestNote(t, notebookDir, fmt.Sprintf("note%03d.md", i), content)
 	}
@@ -1205,12 +1205,12 @@ func TestNoteService_SearchNotes_LargeResultSets(t *testing.T) {
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
 	// Test large result set
-	notes, err := svc.SearchNotes(ctx, commonWord)
+	notes, err := svc.SearchNotes(ctx, commonWord, false)
 	require.NoError(t, err)
 	assert.Len(t, notes, 25, "Should find all notes with shared keyword")
 
 	// Test all notes (empty query)
-	allNotes, err := svc.SearchNotes(ctx, "")
+	allNotes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
 	assert.Len(t, allNotes, 30, "Should find all 30 notes")
 
@@ -1282,19 +1282,19 @@ Content despite frontmatter issues.`
 	svc := services.NewNoteService(cfg, db, notebookDir)
 
 	// Test that all notes are found regardless of frontmatter quality
-	allNotes, err := svc.SearchNotes(ctx, "")
+	allNotes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
 	assert.Len(t, allNotes, 4, "Should find all notes regardless of frontmatter")
 
 	// Test searching content works even with frontmatter issues
-	contentSearch, err := svc.SearchNotes(ctx, "Content")
+	contentSearch, err := svc.SearchNotes(ctx, "Content", false)
 	require.NoError(t, err)
 	assert.Len(t, contentSearch, 4, "Content search should work despite frontmatter variations")
 
 	// Verify metadata is populated where possible
 	for _, note := range allNotes {
 		assert.NotNil(t, note.Metadata, "Metadata map should exist even if empty")
-		
+
 		// Check specific notes
 		switch {
 		case strings.Contains(note.File.Relative, "complex-frontmatter"):
@@ -1322,7 +1322,7 @@ func TestNoteService_SearchNotes_ErrorConditions(t *testing.T) {
 	// Test with empty/non-existent notebook
 	svc := services.NewNoteService(cfg, db, "")
 
-	notes, err := svc.SearchNotes(ctx, "test")
+	notes, err := svc.SearchNotes(ctx, "test", false)
 	assert.Error(t, err, "Should error when no notebook selected")
 	assert.Nil(t, notes, "Notes should be nil on error")
 	assert.Contains(t, err.Error(), "no notebook selected", "Error should mention no notebook")
@@ -1332,12 +1332,547 @@ func TestNoteService_SearchNotes_ErrorConditions(t *testing.T) {
 	svc2 := services.NewNoteService(cfg, db, nonExistentPath)
 
 	// This might not error immediately since DuckDB might handle empty globs gracefully
-	notes2, err := svc2.SearchNotes(ctx, "test")
+	notes2, err := svc2.SearchNotes(ctx, "test", false)
 	if err != nil {
 		// If it errors, that's fine - means validation exists
 		assert.Nil(t, notes2)
 	} else {
 		// If no error, should return empty result set
 		assert.Empty(t, notes2, "Non-existent notebook should return empty results")
+	}
+}
+
+// ============================================================================
+// SearchWithConditions Tests
+// ============================================================================
+
+func TestNoteService_SearchWithConditions_SimpleAnd(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+
+	// Create test notebook with notes
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+	testutil.CreateTestNote(t, notebookDir, "workflow1.md", `---
+tag: workflow
+status: active
+---
+# Workflow 1
+Active workflow note.
+`)
+	testutil.CreateTestNote(t, notebookDir, "workflow2.md", `---
+tag: workflow
+status: done
+---
+# Workflow 2
+Completed workflow.
+`)
+	testutil.CreateTestNote(t, notebookDir, "meeting.md", `---
+tag: meeting
+status: active
+---
+# Meeting Notes
+Team meeting.
+`)
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	// Single AND condition
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "data.tag", Operator: "=", Value: "workflow"},
+	}
+
+	results, err := svc.SearchWithConditions(ctx, conditions)
+
+	assert.NoError(t, err)
+	assert.GreaterOrEqual(t, len(results), 2, "Should find at least 2 workflow notes")
+
+	// Verify all results have workflow tag
+	for _, note := range results {
+		tag, ok := note.Metadata["tag"]
+		if ok {
+			assert.Equal(t, "workflow", tag, "All results should have workflow tag")
+		}
+	}
+}
+
+func TestNoteService_SearchWithConditions_MultipleAnd(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+	testutil.CreateTestNote(t, notebookDir, "active-workflow.md", `---
+tag: workflow
+status: active
+---
+# Active Workflow
+`)
+	testutil.CreateTestNote(t, notebookDir, "done-workflow.md", `---
+tag: workflow
+status: done
+---
+# Done Workflow
+`)
+	testutil.CreateTestNote(t, notebookDir, "active-meeting.md", `---
+tag: meeting
+status: active
+---
+# Active Meeting
+`)
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	// Multiple AND conditions - both must match
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "data.tag", Operator: "=", Value: "workflow"},
+		{Type: "and", Field: "data.status", Operator: "=", Value: "active"},
+	}
+
+	results, err := svc.SearchWithConditions(ctx, conditions)
+
+	assert.NoError(t, err)
+	assert.GreaterOrEqual(t, len(results), 1, "Should find active workflow")
+
+	// Verify all results match both conditions
+	for _, note := range results {
+		tag := note.Metadata["tag"]
+		status := note.Metadata["status"]
+		assert.Equal(t, "workflow", tag)
+		assert.Equal(t, "active", status)
+	}
+}
+
+func TestNoteService_SearchWithConditions_OrConditions(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+	testutil.CreateTestNote(t, notebookDir, "high-priority.md", `---
+priority: high
+---
+# High Priority
+`)
+	testutil.CreateTestNote(t, notebookDir, "critical-priority.md", `---
+priority: critical
+---
+# Critical Priority
+`)
+	testutil.CreateTestNote(t, notebookDir, "low-priority.md", `---
+priority: low
+---
+# Low Priority
+`)
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	// OR conditions - any can match
+	conditions := []services.QueryCondition{
+		{Type: "or", Field: "data.priority", Operator: "=", Value: "high"},
+		{Type: "or", Field: "data.priority", Operator: "=", Value: "critical"},
+	}
+
+	results, err := svc.SearchWithConditions(ctx, conditions)
+
+	assert.NoError(t, err)
+	assert.GreaterOrEqual(t, len(results), 2, "Should find high OR critical priority")
+
+	// Verify no low priority notes
+	for _, note := range results {
+		priority := note.Metadata["priority"]
+		assert.NotEqual(t, "low", priority, "Should not include low priority")
+	}
+}
+
+func TestNoteService_SearchWithConditions_NotCondition(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+	testutil.CreateTestNote(t, notebookDir, "epic1.md", `---
+tag: epic
+status: active
+---
+# Epic 1
+`)
+	testutil.CreateTestNote(t, notebookDir, "epic2.md", `---
+tag: epic
+status: archived
+---
+# Epic 2
+`)
+	testutil.CreateTestNote(t, notebookDir, "epic3.md", `---
+tag: epic
+status: done
+---
+# Epic 3
+`)
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	// NOT condition - exclude archived
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "data.tag", Operator: "=", Value: "epic"},
+		{Type: "not", Field: "data.status", Operator: "=", Value: "archived"},
+	}
+
+	results, err := svc.SearchWithConditions(ctx, conditions)
+
+	assert.NoError(t, err)
+	assert.GreaterOrEqual(t, len(results), 2, "Should find non-archived epics")
+
+	// Verify no archived notes
+	for _, note := range results {
+		status := note.Metadata["status"]
+		assert.NotEqual(t, "archived", status, "Should not include archived notes")
+	}
+}
+
+func TestNoteService_SearchWithConditions_PathGlob(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+
+	// Create flat structure (all notes in notes/ directory)
+	testutil.CreateTestNote(t, notebookDir, "epic1.md", `---
+title: Epic 1
+---
+# Epic 1
+`)
+	testutil.CreateTestNote(t, notebookDir, "epic2.md", `---
+title: Epic 2
+---
+# Epic 2
+`)
+	testutil.CreateTestNote(t, notebookDir, "task1.md", `---
+title: Task 1
+---
+# Task 1
+`)
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	// Path glob pattern matching "epic*.md" files
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "path", Operator: "=", Value: "epic*.md"},
+	}
+
+	results, err := svc.SearchWithConditions(ctx, conditions)
+
+	assert.NoError(t, err)
+	assert.GreaterOrEqual(t, len(results), 2, "Should find epic notes")
+
+	// Verify all results match the pattern
+	for _, note := range results {
+		assert.Contains(t, note.File.Relative, "epic", "All results should contain 'epic'")
+	}
+}
+
+func TestNoteService_SearchWithConditions_NoResults(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+	testutil.CreateTestNote(t, notebookDir, "meeting.md", `---
+tag: meeting
+---
+# Meeting
+`)
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	// Search for non-existent tag
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "data.tag", Operator: "=", Value: "nonexistent"},
+	}
+
+	results, err := svc.SearchWithConditions(ctx, conditions)
+
+	assert.NoError(t, err, "Should not error on no results")
+	assert.Empty(t, results, "Should return empty results")
+}
+
+func TestNoteService_SearchWithConditions_NoNotebook(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+
+	// Create service without notebook path
+	svc := services.NewNoteService(cfg, db, "")
+
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "data.tag", Operator: "=", Value: "test"},
+	}
+
+	results, err := svc.SearchWithConditions(ctx, conditions)
+
+	assert.Error(t, err, "Should error when no notebook selected")
+	assert.Nil(t, results, "Results should be nil on error")
+	assert.Contains(t, err.Error(), "no notebook selected", "Error should mention no notebook")
+}
+
+func TestNoteService_SearchWithConditions_ComplexQuery(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+	testutil.CreateTestNote(t, notebookDir, "match.md", `---
+tag: workflow
+status: active
+priority: high
+---
+# Should Match
+`)
+	testutil.CreateTestNote(t, notebookDir, "wrong-status.md", `---
+tag: workflow
+status: archived
+priority: high
+---
+# Wrong Status
+`)
+	testutil.CreateTestNote(t, notebookDir, "wrong-priority.md", `---
+tag: workflow
+status: active
+priority: low
+---
+# Wrong Priority
+`)
+	testutil.CreateTestNote(t, notebookDir, "wrong-tag.md", `---
+tag: meeting
+status: active
+priority: high
+---
+# Wrong Tag
+`)
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	// Complex query: AND + OR
+	conditions := []services.QueryCondition{
+		{Type: "and", Field: "data.tag", Operator: "=", Value: "workflow"},
+		{Type: "and", Field: "data.status", Operator: "=", Value: "active"},
+		{Type: "or", Field: "data.priority", Operator: "=", Value: "high"},
+		{Type: "or", Field: "data.priority", Operator: "=", Value: "critical"},
+	}
+
+	results, err := svc.SearchWithConditions(ctx, conditions)
+
+	assert.NoError(t, err)
+	assert.GreaterOrEqual(t, len(results), 1, "Should find matching note")
+
+	// Verify the match
+	for _, note := range results {
+		tag := note.Metadata["tag"]
+		status := note.Metadata["status"]
+		priority := note.Metadata["priority"]
+		assert.Equal(t, "workflow", tag)
+		assert.Equal(t, "active", status)
+		assert.True(t, priority == "high" || priority == "critical", "Priority should be high or critical")
+	}
+}
+
+// TestParseDataFlags tests the data flag parsing functionality
+func TestParseDataFlags(t *testing.T) {
+	tests := []struct {
+		name     string
+		flags    []string
+		want     map[string]interface{}
+		wantErr  bool
+		errMatch string
+	}{
+		{
+			name:  "empty flags",
+			flags: []string{},
+			want:  map[string]interface{}{},
+		},
+		{
+			name:  "single field",
+			flags: []string{"tag=meeting"},
+			want:  map[string]interface{}{"tag": "meeting"},
+		},
+		{
+			name:  "multiple different fields",
+			flags: []string{"tag=meeting", "priority=high", "status=draft"},
+			want: map[string]interface{}{
+				"tag":      "meeting",
+				"priority": "high",
+				"status":   "draft",
+			},
+		},
+		{
+			name:  "repeated field creates array",
+			flags: []string{"tag=meeting", "tag=sprint", "tag=planning"},
+			want: map[string]interface{}{
+				"tag": []interface{}{"meeting", "sprint", "planning"},
+			},
+		},
+		{
+			name:  "mixed single and repeated fields",
+			flags: []string{"tag=meeting", "priority=high", "tag=sprint"},
+			want: map[string]interface{}{
+				"tag":      []interface{}{"meeting", "sprint"},
+				"priority": "high",
+			},
+		},
+		{
+			name:     "invalid format no equals",
+			flags:    []string{"tagmeeting"},
+			wantErr:  true,
+			errMatch: "invalid --data format",
+		},
+		{
+			name:     "invalid format empty field",
+			flags:    []string{"=value"},
+			wantErr:  true,
+			errMatch: "field name cannot be empty",
+		},
+		{
+			name:  "invalid format empty value",
+			flags: []string{"field="},
+			want:  map[string]interface{}{"field": ""},
+		},
+		{
+			name:  "field with special characters in value",
+			flags: []string{"description=Meeting notes: Q1 planning (2024)"},
+			want:  map[string]interface{}{"description": "Meeting notes: Q1 planning (2024)"},
+		},
+		{
+			name:  "field with equals in value",
+			flags: []string{"equation=x=y+1"},
+			want:  map[string]interface{}{"equation": "x=y+1"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := services.ParseDataFlags(tt.flags)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.errMatch != "" {
+					assert.Contains(t, err.Error(), tt.errMatch)
+				}
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+// TestResolvePath tests the path resolution functionality
+func TestResolvePath(t *testing.T) {
+	tests := []struct {
+		name           string
+		notebookRoot   string
+		inputPath      string
+		slugifiedTitle string
+		want           string
+	}{
+		{
+			name:           "no path uses root and slugified title",
+			notebookRoot:   "/notebook",
+			inputPath:      "",
+			slugifiedTitle: "my-note",
+			want:           "/notebook/my-note.md",
+		},
+		{
+			name:           "folder path ending with slash",
+			notebookRoot:   "/notebook",
+			inputPath:      "meetings/",
+			slugifiedTitle: "sprint-planning",
+			want:           "/notebook/meetings/sprint-planning.md",
+		},
+		{
+			name:           "full filepath with extension",
+			notebookRoot:   "/notebook",
+			inputPath:      "meetings/2024-01-20.md",
+			slugifiedTitle: "meeting-notes",
+			want:           "/notebook/meetings/2024-01-20.md",
+		},
+		{
+			name:           "filepath without extension",
+			notebookRoot:   "/notebook",
+			inputPath:      "meetings/2024-01-20",
+			slugifiedTitle: "meeting-notes",
+			want:           "/notebook/meetings/2024-01-20.md",
+		},
+		{
+			name:           "nested folder path",
+			notebookRoot:   "/notebook",
+			inputPath:      "work/meetings/",
+			slugifiedTitle: "standup",
+			want:           "/notebook/work/meetings/standup.md",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := services.ResolvePath(tt.notebookRoot, tt.inputPath, tt.slugifiedTitle)
+			assert.Equal(t, tt.want, got)
+		})
 	}
 }

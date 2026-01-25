@@ -393,8 +393,8 @@ func TestObjectToFrontmatter_ErrorConditions(t *testing.T) {
 		note     string
 	}{
 		{
-			name: "empty map",
-			input: map[string]any{},
+			name:     "empty map",
+			input:    map[string]any{},
 			contains: []string{},
 			note:     "Empty map should produce empty result",
 		},
@@ -410,14 +410,14 @@ func TestObjectToFrontmatter_ErrorConditions(t *testing.T) {
 		{
 			name: "keys with special characters",
 			input: map[string]any{
-				"normal-key":    "value1",
+				"normal-key":     "value1",
 				"key with space": "value2",
 				"key:with:colon": "value3",
 				"key\"quote":     "value4",
 			},
 			contains: []string{
 				"normal-key: value1",
-				"key with space: value2", 
+				"key with space: value2",
 				"key:with:colon: value3",
 				"key\"quote: value4",
 			},
@@ -428,7 +428,7 @@ func TestObjectToFrontmatter_ErrorConditions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := ObjectToFrontmatter(tt.input)
-			
+
 			if len(tt.contains) == 0 {
 				assert.Empty(t, result, "Test: %s", tt.note)
 			} else {

@@ -815,7 +815,7 @@ func TestDisplay_RenderSQLResultsAsJSON_ValidJSONOutput(t *testing.T) {
 	actualBytes, _ := json.Marshal(actual)
 
 	if !bytes.Equal(expectedBytes, actualBytes) {
-		t.Errorf("JSON structure mismatch.\nExpected: %s\nActual: %s", 
+		t.Errorf("JSON structure mismatch.\nExpected: %s\nActual: %s",
 			string(expectedBytes), string(actualBytes))
 	}
 }
@@ -1049,7 +1049,7 @@ func TestDisplay_RenderSQLResultsAsJSON_ComplexTypes_Arrays(t *testing.T) {
 		}
 	}
 
-	// Test numeric arrays 
+	// Test numeric arrays
 	scores, ok := row["scores"].([]interface{})
 	if !ok {
 		t.Fatalf("scores should be []interface{}, got %T", row["scores"])
@@ -1203,7 +1203,7 @@ func TestDisplay_RenderSQLResultsAsJSON_ErrorHandling_JSONMarshalFailure(t *test
 	}
 
 	// Create data that would cause JSON marshal to fail (circular reference simulation)
-	// Since Go's json.Marshal doesn't fail on basic types, we test the error path by 
+	// Since Go's json.Marshal doesn't fail on basic types, we test the error path by
 	// checking that valid data doesn't error (error conditions are hard to simulate with standard types)
 	input := []map[string]interface{}{
 		{
@@ -1237,12 +1237,12 @@ func TestDisplay_RenderSQLResultsWithFormat_ErrorHandling_InvalidJSON(t *testing
 	// Test that we can handle edge case data that might cause issues
 	input := []map[string]interface{}{
 		{
-			"special_chars":  "\x00\x01\x02\x1f",  // Control characters
-			"large_number":   float64(9223372036854775807), // Max int64
-			"tiny_number":    1e-10,
-			"infinity":       1.0,  // Not infinity, but large number  
-			"empty_string":   "",
-			"unicode_null":   "\u0000",
+			"special_chars": "\x00\x01\x02\x1f",           // Control characters
+			"large_number":  float64(9223372036854775807), // Max int64
+			"tiny_number":   1e-10,
+			"infinity":      1.0, // Not infinity, but large number
+			"empty_string":  "",
+			"unicode_null":  "\u0000",
 		},
 	}
 
@@ -1264,13 +1264,13 @@ func TestDisplay_RenderSQLResultsAsJSON_Performance_LargeDataset(t *testing.T) {
 	input := make([]map[string]interface{}, 1000)
 	for i := 0; i < 1000; i++ {
 		input[i] = map[string]interface{}{
-			"id":          i,
-			"title":       fmt.Sprintf("Note %d", i),
-			"content":     strings.Repeat("Lorem ipsum dolor sit amet. ", 20), // ~560 chars
-			"tags":        []interface{}{"tag1", "tag2", "tag3"},
-			"metadata":    map[string]interface{}{"author": fmt.Sprintf("user%d", i%10), "created": "2024-01-01"},
-			"active":      i%2 == 0,
-			"score":       float64(i) * 0.1,
+			"id":       i,
+			"title":    fmt.Sprintf("Note %d", i),
+			"content":  strings.Repeat("Lorem ipsum dolor sit amet. ", 20), // ~560 chars
+			"tags":     []interface{}{"tag1", "tag2", "tag3"},
+			"metadata": map[string]interface{}{"author": fmt.Sprintf("user%d", i%10), "created": "2024-01-01"},
+			"active":   i%2 == 0,
+			"score":    float64(i) * 0.1,
 		}
 	}
 
@@ -1317,10 +1317,10 @@ func TestDisplay_RenderSQLResultsAsJSON_Performance_SmallDataset(t *testing.T) {
 	input := make([]map[string]interface{}, 100)
 	for i := 0; i < 100; i++ {
 		input[i] = map[string]interface{}{
-			"id":       i,
-			"title":    fmt.Sprintf("Note %d", i),
-			"content":  "Short content",
-			"active":   i%2 == 0,
+			"id":      i,
+			"title":   fmt.Sprintf("Note %d", i),
+			"content": "Short content",
+			"active":  i%2 == 0,
 		}
 	}
 
@@ -1384,11 +1384,11 @@ func BenchmarkDisplay_RenderSQLResultsAsJSON_MediumDataset(b *testing.B) {
 	input := make([]map[string]interface{}, 100)
 	for i := 0; i < 100; i++ {
 		input[i] = map[string]interface{}{
-			"id":          i,
-			"title":       fmt.Sprintf("Note %d", i),
-			"content":     strings.Repeat("Sample content. ", 50),
-			"tags":        []interface{}{"work", "personal", "urgent"},
-			"metadata":    map[string]interface{}{"author": "user", "version": i},
+			"id":       i,
+			"title":    fmt.Sprintf("Note %d", i),
+			"content":  strings.Repeat("Sample content. ", 50),
+			"tags":     []interface{}{"work", "personal", "urgent"},
+			"metadata": map[string]interface{}{"author": "user", "version": i},
 		}
 	}
 
@@ -1411,16 +1411,16 @@ func BenchmarkDisplay_RenderSQLResultsAsJSON_LargeDataset(b *testing.B) {
 	input := make([]map[string]interface{}, 1000)
 	for i := 0; i < 1000; i++ {
 		input[i] = map[string]interface{}{
-			"id":       i,
-			"title":    fmt.Sprintf("Note %d", i),
-			"content":  strings.Repeat("Lorem ipsum dolor sit amet, consectetur adipiscing elit. ", 20),
-			"tags":     []interface{}{"tag1", "tag2", "tag3", "tag4"},
+			"id":      i,
+			"title":   fmt.Sprintf("Note %d", i),
+			"content": strings.Repeat("Lorem ipsum dolor sit amet, consectetur adipiscing elit. ", 20),
+			"tags":    []interface{}{"tag1", "tag2", "tag3", "tag4"},
 			"metadata": map[string]interface{}{
-				"author":     fmt.Sprintf("author%d", i%5),
-				"created":    "2024-01-01T00:00:00Z",
-				"updated":    "2024-01-02T00:00:00Z",
-				"wordCount":  500 + i,
-				"published":  i%3 == 0,
+				"author":    fmt.Sprintf("author%d", i%5),
+				"created":   "2024-01-01T00:00:00Z",
+				"updated":   "2024-01-02T00:00:00Z",
+				"wordCount": 500 + i,
+				"published": i%3 == 0,
 			},
 		}
 	}
@@ -1443,7 +1443,7 @@ func TestDisplay_RenderSQLResultsAsJSON_EdgeCases_EmptyMaps(t *testing.T) {
 	}
 
 	input := []map[string]interface{}{
-		{},  // Empty map
+		{}, // Empty map
 		{"empty_nested": map[string]interface{}{}},
 		{"empty_array": []interface{}{}},
 		{"null_value": nil},
@@ -1558,17 +1558,17 @@ func TestDisplay_RenderSQLResultsAsJSON_EdgeCases_SpecialStrings(t *testing.T) {
 
 	input := []map[string]interface{}{
 		{
-			"empty_string":     "",
-			"whitespace":       "   \t\n\r   ",
-			"json_like":        `{"key": "value"}`,
-			"quotes_double":    `"quoted string"`,
-			"quotes_single":    "'single quoted'",
-			"backslashes":      `C:\path\to\file`,
-			"newlines":         "line1\nline2\nline3",
-			"tabs":             "col1\tcol2\tcol3",
-			"unicode_emoji":    "Hello 👋 World 🌍",
-			"unicode_chars":    "αβγδε 中文 العربية",
-			"control_chars":    "start\x00\x01\x02end",
+			"empty_string":  "",
+			"whitespace":    "   \t\n\r   ",
+			"json_like":     `{"key": "value"}`,
+			"quotes_double": `"quoted string"`,
+			"quotes_single": "'single quoted'",
+			"backslashes":   `C:\path\to\file`,
+			"newlines":      "line1\nline2\nline3",
+			"tabs":          "col1\tcol2\tcol3",
+			"unicode_emoji": "Hello 👋 World 🌍",
+			"unicode_chars": "αβγδε 中文 العربية",
+			"control_chars": "start\x00\x01\x02end",
 		},
 	}
 
@@ -1616,15 +1616,15 @@ func TestDisplay_RenderSQLResultsAsJSON_RealWorld_NotesQuery(t *testing.T) {
 	// Simulate real notes query results
 	input := []map[string]interface{}{
 		{
-			"path":          "/notebook/projects/project-alpha.md",
-			"title":         "Project Alpha Planning",
-			"content":       "# Project Alpha\n\nThis is a planning document...",
-			"display_name":  "Project Alpha Planning",
-			"tags":          []interface{}{"project", "planning", "alpha"},
-			"created":       "2024-01-15T10:30:00Z",
-			"modified":      "2024-01-20T15:45:00Z",
-			"word_count":    450,
-			"frontmatter":   map[string]interface{}{"status": "in-progress", "priority": "high"},
+			"path":         "/notebook/projects/project-alpha.md",
+			"title":        "Project Alpha Planning",
+			"content":      "# Project Alpha\n\nThis is a planning document...",
+			"display_name": "Project Alpha Planning",
+			"tags":         []interface{}{"project", "planning", "alpha"},
+			"created":      "2024-01-15T10:30:00Z",
+			"modified":     "2024-01-20T15:45:00Z",
+			"word_count":   450,
+			"frontmatter":  map[string]interface{}{"status": "in-progress", "priority": "high"},
 		},
 		{
 			"path":         "/notebook/meetings/standup-2024-01-20.md",
@@ -1633,7 +1633,7 @@ func TestDisplay_RenderSQLResultsAsJSON_RealWorld_NotesQuery(t *testing.T) {
 			"display_name": "Daily Standup - 2024-01-20",
 			"tags":         []interface{}{"meeting", "standup", "team"},
 			"created":      "2024-01-20T09:00:00Z",
-			"modified":     "2024-01-20T09:30:00Z", 
+			"modified":     "2024-01-20T09:30:00Z",
 			"word_count":   125,
 			"frontmatter":  map[string]interface{}{"attendees": []interface{}{"alice", "bob", "charlie"}},
 		},
@@ -1767,8 +1767,8 @@ func TestDisplay_RenderSQLResultsAsJSON_DeepNestedStructures(t *testing.T) {
 				"level3": map[string]interface{}{
 					"level4": map[string]interface{}{
 						"level5": map[string]interface{}{
-							"data":  "deep value",
-							"array": []interface{}{"item1", "item2", "item3"},
+							"data":   "deep value",
+							"array":  []interface{}{"item1", "item2", "item3"},
 							"number": 42,
 						},
 					},

@@ -47,6 +47,7 @@ func (n *Note) DisplayName() string {
 type NoteService struct {
 	configService *ConfigService
 	dbService     *DbService
+	searchService *SearchService
 	notebookPath  string
 	log           zerolog.Logger
 }
@@ -56,24 +57,42 @@ func NewNoteService(cfg *ConfigService, db *DbService, notebookPath string) *Not
 	return &NoteService{
 		configService: cfg,
 		dbService:     db,
+		searchService: NewSearchService(),
 		notebookPath:  notebookPath,
 		log:           Log("NoteService"),
 	}
 }
 
 // SearchNotes returns all notes in the notebook matching the query.
-func (s *NoteService) SearchNotes(ctx context.Context, query string) ([]Note, error) {
+// If fuzzy is true, uses fuzzy matching; otherwise uses exact text search.
+func (s *NoteService) SearchNotes(ctx context.Context, query string, fuzzy bool) ([]Note, error) {
 	if s.notebookPath == "" {
 		return nil, fmt.Errorf("no notebook selected")
 	}
 
+	// Get all notes first
+	notes, err := s.getAllNotes(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Apply search filtering
+	if fuzzy {
+		return s.searchService.FuzzySearch(query, notes), nil
+	}
+
+	return s.searchService.TextSearch(query, notes), nil
+}
+
+// getAllNotes retrieves all notes from the notebook without filtering.
+func (s *NoteService) getAllNotes(ctx context.Context) ([]Note, error) {
 	db, err := s.dbService.GetDB(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	glob := filepath.Join(s.notebookPath, "**", "*.md")
-	s.log.Debug().Str("glob", glob).Str("query", query).Msg("searching notes")
+	s.log.Debug().Str("glob", glob).Msg("loading notes")
 
 	// Use DuckDB's read_markdown function with filepath included
 	sqlQuery := `SELECT * FROM read_markdown(?, include_filepath:=true)`
@@ -149,15 +168,6 @@ func (s *NoteService) SearchNotes(ctx context.Context, query string) ([]Note, er
 			}
 		}
 
-		// Filter by query if provided
-		if query != "" {
-			// Simple contains check on content and filepath
-			if !strings.Contains(strings.ToLower(note.Content), strings.ToLower(query)) &&
-				!strings.Contains(strings.ToLower(note.File.Filepath), strings.ToLower(query)) {
-				continue
-			}
-		}
-
 		notes = append(notes, note)
 	}
 
@@ -165,7 +175,7 @@ func (s *NoteService) SearchNotes(ctx context.Context, query string) ([]Note, er
 		return nil, err
 	}
 
-	s.log.Debug().Int("count", len(notes)).Msg("notes found")
+	s.log.Debug().Int("count", len(notes)).Msg("notes loaded")
 	return notes, nil
 }
 
@@ -329,4 +339,181 @@ func (s *NoteService) rowsToMaps(rows *sql.Rows) ([]map[string]any, error) {
 	}
 
 	return results, nil
+}
+
+// SearchWithConditions executes a boolean query with the given conditions.
+// Uses parameterized queries for security.
+func (s *NoteService) SearchWithConditions(ctx context.Context, conditions []QueryCondition) ([]Note, error) {
+	if s.notebookPath == "" {
+		return nil, fmt.Errorf("no notebook selected")
+	}
+
+	db, err := s.dbService.GetDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	glob := filepath.Join(s.notebookPath, "**", "*.md")
+
+	// Build WHERE clause from conditions, passing glob for linked-by queries
+	whereClause, params, err := s.searchService.BuildWhereClauseWithGlob(conditions, glob)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build query: %w", err)
+	}
+
+	// Build the SQL query with parameterized WHERE clause
+	// Start with base query including glob pattern
+	baseQuery := `SELECT * FROM read_markdown(?, include_filepath:=true)`
+
+	// Prepend the glob to params
+	allParams := append([]interface{}{glob}, params...)
+
+	// Add WHERE clause if we have conditions
+	query := baseQuery
+	if whereClause != "" {
+		query += " WHERE " + whereClause
+	}
+	query += " ORDER BY file_path"
+
+	s.log.Info().
+		Str("query", query).
+		Int("paramCount", len(allParams)).
+		Int("conditionCount", len(conditions)).
+		Msg("executing boolean query")
+
+	// Create context with timeout for safety
+	timeoutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	rows, err := db.QueryContext(timeoutCtx, query, allParams...)
+	if err != nil {
+		return nil, fmt.Errorf("query failed: %w", err)
+	}
+	defer func() {
+		if err := rows.Close(); err != nil {
+			s.log.Warn().Err(err).Msg("failed to close rows")
+		}
+	}()
+
+	// Parse results into Note structs
+	var notes []Note
+	columns, err := rows.Columns()
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		values := make([]interface{}, len(columns))
+		valuePtrs := make([]interface{}, len(columns))
+		for i := range values {
+			valuePtrs[i] = &values[i]
+		}
+
+		if err := rows.Scan(valuePtrs...); err != nil {
+			s.log.Warn().Err(err).Msg("failed to scan row")
+			continue
+		}
+
+		note := Note{
+			Metadata: make(map[string]any),
+		}
+
+		for i, col := range columns {
+			val := values[i]
+			switch col {
+			case "filepath", "file_path", "filename":
+				if v, ok := val.(string); ok {
+					note.File.Filepath = v
+					note.File.Relative = strings.TrimPrefix(v, s.notebookPath+"/")
+				}
+			case "content", "body":
+				if v, ok := val.(string); ok {
+					note.Content = v
+				}
+			case "metadata":
+				rv := reflect.ValueOf(val)
+				if rv.Kind() == reflect.Map {
+					for _, key := range rv.MapKeys() {
+						if keyStr, ok := key.Interface().(string); ok {
+							note.Metadata[keyStr] = rv.MapIndex(key).Interface()
+						}
+					}
+				} else if v, ok := val.(map[any]any); ok {
+					for k, val := range v {
+						if keyStr, ok := k.(string); ok {
+							note.Metadata[keyStr] = val
+						}
+					}
+				} else if v, ok := val.(map[string]any); ok {
+					note.Metadata = v
+				}
+			default:
+				note.Metadata[col] = val
+			}
+		}
+
+		notes = append(notes, note)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	s.log.Debug().Int("count", len(notes)).Msg("boolean query completed")
+	return notes, nil
+}
+
+// ParseDataFlags parses --data flags in "field=value" format (exported for cmd package)
+func ParseDataFlags(dataFlags []string) (map[string]interface{}, error) {
+	result := make(map[string]interface{})
+
+	for _, dataFlag := range dataFlags {
+		parts := strings.SplitN(dataFlag, "=", 2)
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid --data format: %s (expected field=value)", dataFlag)
+		}
+
+		field := strings.TrimSpace(parts[0])
+		value := strings.TrimSpace(parts[1])
+
+		// Validate field name is not empty
+		if field == "" {
+			return nil, fmt.Errorf("field name cannot be empty in --data flag")
+		}
+
+		// Support multiple values for same field (convert to array)
+		if existing, ok := result[field]; ok {
+			switch v := existing.(type) {
+			case []interface{}:
+				result[field] = append(v, value)
+			default:
+				result[field] = []interface{}{v, value}
+			}
+		} else {
+			result[field] = value
+		}
+	}
+
+	return result, nil
+}
+
+// ResolvePath resolves the final note path based on input path and slugified title (exported for cmd package)
+func ResolvePath(notebookRoot, inputPath, slugifiedTitle string) string {
+	// Case 1: No path specified - use root + slugified title
+	if inputPath == "" {
+		return filepath.Join(notebookRoot, slugifiedTitle+".md")
+	}
+
+	// Case 2: Ends with "/" - explicit folder
+	if strings.HasSuffix(inputPath, "/") {
+		return filepath.Join(notebookRoot, inputPath, slugifiedTitle+".md")
+	}
+
+	// Case 3: Full filepath with .md extension
+	if strings.HasSuffix(inputPath, ".md") {
+		return filepath.Join(notebookRoot, inputPath)
+	}
+
+	// Case 4: Filepath without extension - auto-add .md
+	return filepath.Join(notebookRoot, inputPath+".md")
 }

@@ -115,9 +115,10 @@ If you prefer to start simple:
 ### Note Operations
 
 - `opennotes notes list` - List all notes in current notebook
-- `opennotes notes add <title>` - Create a new note
+- `opennotes notes add <title> [path]` - Create a note with optional metadata ([guide](docs/note-creation-guide.md))
 - `opennotes notes remove <path>` - Delete a note
 - `opennotes notes search <query>` - Search notes
+- `opennotes notes view <name>` - Use predefined views for common queries ([guide](docs/views-guide.md))
 
 ## Configuration
 
@@ -160,10 +161,15 @@ opennotes notebook create "Work"
 
 # Add notes to your notebook
 opennotes notes add "Team Meeting Notes"
-opennotes notes add "Project Ideas"
+opennotes notes add "Sprint Planning" --data tag=meeting --data priority=high
+opennotes notes add "Retrospective" meetings/
 
 # Search across notes
 opennotes notes search "deadline"
+
+# Use views for common queries
+opennotes notes view today
+opennotes notes view kanban --param status=todo,in-progress,done
 
 # List all notes
 opennotes notes list
@@ -202,6 +208,24 @@ From beginner to advanced SQL querying:
   - Level 3: Metadata analysis (word counts, statistics)
   - Level 4: Complex queries (joins, aggregations)
   - Practice exercises for each level
+
+### Note Creation & Views
+
+Master note creation and query patterns:
+
+- **[Note Creation Guide](docs/note-creation-guide.md)** - Create notes with metadata and flexible paths
+  - Basic note creation syntax
+  - Adding metadata with `--data` flags
+  - Path options (files vs folders)
+  - Content sources (stdin, templates, defaults)
+  - Real-world examples and workflows
+
+- **[Views Guide](docs/views-guide.md)** - Reusable query presets for common workflows
+  - 6 built-in views (today, recent, kanban, untagged, orphans, broken-links)
+  - Custom view configuration
+  - Parameter system with runtime values
+  - Template variables for dynamic queries
+  - Multiple output formats (list, table, JSON)
 
 ### SQL & Automation Reference
 

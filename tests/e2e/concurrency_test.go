@@ -72,7 +72,7 @@ func TestDbService_ConnectionPoolStress(t *testing.T) {
 		wg.Add(1)
 		go func(workerID int) {
 			defer wg.Done()
-			
+
 			for j := 0; j < queriesPerGoroutine; j++ {
 				ctx := context.Background()
 				_, err := dbService.GetDB(ctx)
@@ -117,13 +117,13 @@ func TestDbService_ConcurrentInitialization(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			
+
 			dbService := services.NewDbService()
 			defer func() { _ = dbService.Close() }()
-			
+
 			ctx := context.Background()
 			_, err := dbService.GetDB(ctx)
-			
+
 			results <- (err == nil)
 		}()
 	}
@@ -139,7 +139,7 @@ func TestDbService_ConcurrentInitialization(t *testing.T) {
 		}
 	}
 
-	assert.Equal(t, numGoroutines, successCount, 
+	assert.Equal(t, numGoroutines, successCount,
 		"All concurrent database initializations should succeed")
 	t.Logf("All %d concurrent database initializations succeeded", successCount)
 }
@@ -159,13 +159,13 @@ func TestConfigService_ConcurrentAccess(t *testing.T) {
 		wg.Add(1)
 		go func(readerID int) {
 			defer wg.Done()
-			
+
 			for j := 0; j < numOperations; j++ {
 				// Test concurrent access to config properties
 				_ = configService.Store.Notebooks
 				_ = configService.Store.NotebookPath
 				_ = configService.Path()
-				
+
 				// Small delay to increase chance of race conditions
 				time.Sleep(1 * time.Millisecond)
 			}
@@ -203,10 +203,10 @@ func TestServices_ContextCancellation(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			
+
 			dbService := services.NewDbService()
 			defer func() { _ = dbService.Close() }()
-			
+
 			// This should be cancelled by context timeout
 			_, err := dbService.GetDB(ctx)
 			if err != nil && (ctx.Err() == context.DeadlineExceeded || ctx.Err() == context.Canceled) {
@@ -222,7 +222,7 @@ func TestServices_ContextCancellation(t *testing.T) {
 
 	finalCancelled := <-cancelledCount
 	t.Logf("Context cancellation affected %d/%d operations", finalCancelled, numGoroutines)
-	
+
 	// Some operations should be cancelled due to timeout
 	assert.Greater(t, finalCancelled, 0, "Some operations should be cancelled by context")
 }
@@ -245,23 +245,23 @@ func TestServices_MemoryGrowth(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			
+
 			// Create and use services briefly
 			configService, err := services.NewConfigService()
 			if err != nil {
 				return
 			}
-			
+
 			dbService := services.NewDbService()
 			defer func() { _ = dbService.Close() }()
-			
+
 			notebookService := services.NewNotebookService(configService, dbService)
 			_, _ = notebookService.List("") // Trigger some operations
 		}()
 	}
 
 	wg.Wait()
-	
+
 	runtime.GC()
 	runtime.ReadMemStats(&m2)
 
@@ -269,9 +269,9 @@ func TestServices_MemoryGrowth(t *testing.T) {
 	growthPerOp := growth / numOperations
 
 	t.Logf("Memory growth: %d bytes total, %d bytes per operation", growth, growthPerOp)
-	
+
 	// Memory growth should be reasonable (less than 100KB per operation)
-	assert.Less(t, growthPerOp, uint64(100*1024), 
+	assert.Less(t, growthPerOp, uint64(100*1024),
 		"Memory growth per operation should be reasonable")
 }
 
@@ -280,10 +280,10 @@ func TestServices_RaceConditions(t *testing.T) {
 	// This test is designed to be run with -race flag
 	configService, err := services.NewConfigService()
 	require.NoError(t, err)
-	
+
 	dbService := services.NewDbService()
 	defer func() { _ = dbService.Close() }()
-	
+
 	notebookService := services.NewNotebookService(configService, dbService)
 
 	const numGoroutines = 30
@@ -294,25 +294,25 @@ func TestServices_RaceConditions(t *testing.T) {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()
-			
+
 			switch id % 4 {
 			case 0:
 				// Config access
 				_ = configService.Store.Notebooks
 				_ = configService.Path()
-				
+
 			case 1:
 				// Database operations
 				ctx := context.Background()
 				if db, err := dbService.GetDB(ctx); err == nil && db != nil {
 					_, _ = dbService.Query(ctx, "SELECT 1")
 				}
-				
+
 			case 2:
 				// Notebook operations
 				_, _ = notebookService.List("")
 				notebookService.HasNotebook("/tmp/test")
-				
+
 			case 3:
 				// Mixed operations
 				_ = configService.Store.NotebookPath
@@ -320,7 +320,7 @@ func TestServices_RaceConditions(t *testing.T) {
 				_, _ = dbService.GetDB(ctx)
 				_, _ = notebookService.List("")
 			}
-			
+
 			// Small delay to increase chance of race conditions
 			time.Sleep(1 * time.Millisecond)
 		}(i)
@@ -338,7 +338,7 @@ func TestServices_HighConcurrency(t *testing.T) {
 
 	const numWorkers = 100
 	const operationsPerWorker = 10
-	
+
 	start := time.Now()
 	var wg sync.WaitGroup
 	errors := make(chan error, numWorkers*operationsPerWorker)
@@ -348,16 +348,16 @@ func TestServices_HighConcurrency(t *testing.T) {
 		wg.Add(1)
 		go func(workerID int) {
 			defer wg.Done()
-			
+
 			_, err := services.NewConfigService()
 			if err != nil {
 				errors <- err
 				return
 			}
-			
+
 			dbService := services.NewDbService()
 			defer func() { _ = dbService.Close() }()
-			
+
 			for j := 0; j < operationsPerWorker; j++ {
 				ctx := context.Background()
 				if _, err := dbService.GetDB(ctx); err != nil {

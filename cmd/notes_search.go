@@ -10,54 +10,68 @@ import (
 
 var notesSearchCmd = &cobra.Command{
 	Use:   "search [query]",
-	Short: "Search notes (text or SQL)",
-	Long: `Searches notes by content or filename using DuckDB SQL.
+	Short: "Search notes with text, fuzzy matching, boolean queries, or SQL",
+	Long: `Search notes using multiple methods: text search, fuzzy matching, boolean queries, or SQL.
 
-The query searches both file names and content of markdown files.
+SEARCH METHODS:
+
+  1. Text Search (default): Exact substring matching
+     opennotes notes search "meeting"
+
+  2. Fuzzy Search: Similarity-based, typo-tolerant, ranked results
+     opennotes notes search --fuzzy "mtng"
+
+  3. Boolean Queries: Structured AND/OR/NOT filtering (see 'query' subcommand)
+     opennotes notes search query --and data.tag=workflow
+
+  4. SQL Queries: Full DuckDB SQL power
+     opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md') LIMIT 10"
+
+TEXT SEARCH EXAMPLES:
+  opennotes notes search "meeting"              # Search for "meeting"
+  opennotes notes search "todo" --notebook ~/n  # Search in specific notebook
+  opennotes notes search                        # List all notes
+
+FUZZY SEARCH EXAMPLES:
+  opennotes notes search --fuzzy "mtng"         # Matches "meeting", "meetings"
+  opennotes notes search "project" --fuzzy      # Ranked by similarity
+  opennotes notes search --fuzzy                # All notes, ranked
+
+  Fuzzy matching:
+  - Uses character sequence matching (like VS Code's Ctrl+P)
+  - Title matches weighted 2x higher than body matches
+  - Results sorted by match score (best first)
+  - Searches first 500 chars of body for performance
+
+BOOLEAN QUERY SUBCOMMAND:
+  Use 'opennotes notes search query' for structured filtering:
+  
+  opennotes notes search query --and data.tag=workflow
+  opennotes notes search query --and data.tag=epic --not data.status=archived
+  opennotes notes search query --or data.priority=high --or data.priority=critical
+  opennotes notes search query --and links-to=tasks/**/*.md
+
+  Supported fields:
+  - data.tag, data.status, data.priority, data.assignee, data.author
+  - data.type, data.category, data.project, data.sprint
+  - path, title
+  - links-to (find notes linking TO target)
+  - linked-by (find notes linked FROM source)
+
+SQL QUERY EXAMPLES:
+  opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md') LIMIT 10"
+  opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) WHERE content LIKE '%todo%'"
+
+SQL SECURITY:
+  - Only SELECT and WITH queries allowed (read-only)
+  - 30-second timeout per query
+  - Path traversal (../) blocked
+  - File access restricted to notebook directory
 
 DOCUMENTATION:
-  🔍 Complete SQL Guide: https://github.com/zenobi-us/opennotes/blob/main/docs/sql-guide.md
-  📚 Function Reference: https://github.com/zenobi-us/opennotes/blob/main/docs/sql-functions-reference.md
-  🤖 Automation & JSON: https://github.com/zenobi-us/opennotes/blob/main/docs/json-sql-guide.md
-
-Examples:
-  # Search for notes containing "meeting"
-  opennotes notes search "meeting"
-
-  # Search with specific notebook
-  opennotes notes search "todo" --notebook ~/notes
-
-  # Execute custom SQL query to find all notes
-  opennotes notes search --sql "SELECT file_path, content FROM read_markdown('**/*.md', include_filepath:=true) LIMIT 10"
-
-  # Find notes with Python code blocks
-  opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) WHERE content LIKE '%python%'"
-
-SQL Query Examples:
-  Basic pattern search:
-    opennotes notes search --sql "SELECT * FROM read_markdown('*.md') LIMIT 5"
-  
-  Content search across all notes:
-    opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) WHERE content LIKE '%todo%'"
-  
-  Specific folder query:
-    opennotes notes search --sql "SELECT title FROM read_markdown('projects/*.md') ORDER BY title"
-  
-  Complex filtering with statistics:
-    opennotes notes search --sql "SELECT file_path, (md_stats(content)).word_count as words FROM read_markdown('**/*.md', include_filepath:=true) WHERE (md_stats(content)).word_count > 1000"
-
-File Pattern Behavior:
-  - All file patterns resolve from notebook root directory
-  - Queries work consistently regardless of current directory
-  - Security restrictions prevent access to files outside notebook
-  - Use forward slashes in patterns (cross-platform compatibility)
-  - Supported patterns: *.md (root files), **/*.md (all files), subfolder/*.md (specific folder)
-
-SQL Security:
-  Only SELECT and WITH queries allowed. Read-only access enforced.
-  30-second timeout per query. No data modification possible.
-  Path traversal protection: attempts to access files outside notebook (../) are blocked.
-  All file access restricted to notebook directory tree for security.`,
+  📖 Command Reference: docs/commands/notes-search.md
+  🔍 SQL Guide: docs/sql-guide.md
+  📚 Functions: docs/sql-functions-reference.md`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Get --sql flag if provided
@@ -85,9 +99,13 @@ SQL Security:
 			return display.RenderSQLResults(results)
 		}
 
-		// Normal search mode - require a query argument
-		if len(args) == 0 {
-			return fmt.Errorf("query argument required (or use --sql flag)")
+		// Get --fuzzy flag
+		fuzzyFlag, _ := cmd.Flags().GetBool("fuzzy")
+
+		// Get search term (optional for fuzzy mode)
+		var searchTerm string
+		if len(args) > 0 {
+			searchTerm = args[0]
 		}
 
 		nb, err := requireNotebook(cmd)
@@ -95,17 +113,30 @@ SQL Security:
 			return err
 		}
 
-		notes, err := nb.Notes.SearchNotes(context.Background(), args[0])
+		notes, err := nb.Notes.SearchNotes(context.Background(), searchTerm, fuzzyFlag)
 		if err != nil {
 			return fmt.Errorf("failed to search notes: %w", err)
 		}
 
 		if len(notes) == 0 {
-			fmt.Printf("No notes found matching '%s'\n", args[0])
+			if searchTerm != "" {
+				fmt.Printf("No notes found matching '%s'\n", searchTerm)
+			} else {
+				fmt.Println("No notes found")
+			}
 			return nil
 		}
 
-		fmt.Printf("Found %d note(s) matching '%s':\n\n", len(notes), args[0])
+		if searchTerm != "" {
+			searchMode := "matching"
+			if fuzzyFlag {
+				searchMode = "fuzzy matching"
+			}
+			fmt.Printf("Found %d note(s) %s '%s':\n\n", len(notes), searchMode, searchTerm)
+		} else {
+			fmt.Printf("Found %d note(s):\n\n", len(notes))
+		}
+
 		return displayNoteList(notes)
 	},
 }
@@ -118,5 +149,12 @@ func init() {
 		"sql",
 		"",
 		"Execute custom SQL query against notes (read-only, 30s timeout, SELECT/WITH only). File patterns (*.md, **/*.md) are resolved relative to notebook root directory for consistent behavior. Path traversal (../) is blocked for security. Examples: --sql \"SELECT * FROM read_markdown('**/*.md') LIMIT 5\"",
+	)
+
+	// Add --fuzzy flag for fuzzy matching
+	notesSearchCmd.Flags().Bool(
+		"fuzzy",
+		false,
+		"Enable fuzzy matching for ranked results. Matches notes by similarity instead of exact text. Title matches weighted higher than body matches.",
 	)
 }

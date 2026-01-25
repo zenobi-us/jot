@@ -10,7 +10,7 @@ import (
 func main() {
 	// Set version information from this package's variables
 	cmd.Version = Version
-	cmd.BuildDate = BuildDate  
+	cmd.BuildDate = BuildDate
 	cmd.GitCommit = GitCommit
 	cmd.GitBranch = GitBranch
 
@@ -34,6 +34,6 @@ var (
 	// GitCommit is set during build time
 	GitCommit = "unknown"
 
-	// GitBranch is set during build time  
+	// GitBranch is set during build time
 	GitBranch = "unknown"
 )

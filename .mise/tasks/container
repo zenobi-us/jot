@@ -1,0 +1,271 @@
+#!/usr/bin/env bash
+#MISE description="Run tests in isolated container (no host filesystem pollution)"
+
+CONTAINER_RUNTIME="${CONTAINER_RUNTIME:-podman}"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+log() { echo -e "${GREEN}[container]${NC} $*"; }
+warn() { echo -e "${YELLOW}[container]${NC} $*"; }
+err() { echo -e "${RED}[container]${NC} $*" >&2; }
+
+requires_arg() {
+	local arg_value
+	local msg
+
+	arg_value="$1"
+	msg="$2"
+
+	if [[ -z "$arg_value" ]]; then
+		err "requires_arg: ${msg:-Argument is required}"
+		exit 1
+	fi
+}
+
+requires_cmd() {
+	local cmd
+	local msg
+
+	cmd="$1"
+	msg="$2"
+
+	requires_arg cmd "Command name is required"
+
+	if ! command -v "$cmd" >/dev/null 2>&1; then
+		err "requires_cmd: ${msg:-Required command "$cmd" is not installed or not in PATH}"
+		exit 1
+	fi
+
+}
+
+requires_file() {
+	local file
+	local msg
+	file="$1"
+
+	requires_arg file "File path is required"
+
+	if [[ ! -f "$file" ]]; then
+		err "requires_file: missing required file: $file"
+		exit 1
+	fi
+}
+
+image_exists() {
+	local image_name
+	image_name="$1"
+
+	requires_arg image_name "Image name is required"
+
+	if [[ -z "$($CONTAINER_RUNTIME images -q "$image_name" 2>/dev/null || true)" ]]; then
+		return 1
+	else
+		return 0
+	fi
+}
+
+image_created_date() {
+	local image_name
+	local build_timestamp
+	image_name="$1"
+
+	requires_arg image_name "Image name is required"
+
+	# Try to get build timestamp from label first (most accurate)
+	build_timestamp=$($CONTAINER_RUNTIME inspect --format='{{index .Config.Labels "build.timestamp"}}' "$image_name" 2>/dev/null || echo "")
+	
+	if [[ -n "$build_timestamp" && "$build_timestamp" != "<no value>" ]]; then
+		echo "$build_timestamp"
+		return
+	fi
+	
+	# Fallback to image creation time (for images built without label)
+	local created_str
+	created_str=$($CONTAINER_RUNTIME inspect --format='{{.Created}}' "$image_name" 2>/dev/null || echo "")
+	
+	if [[ -z "$created_str" ]]; then
+		echo "0"
+		return
+	fi
+	
+	# Remove timezone name suffix (e.g., " UTC") that confuses date parsers
+	created_str="${created_str% UTC}"
+	created_str="${created_str% GMT}"
+	created_str="${created_str% MST}"
+	created_str="${created_str% EST}"
+	created_str="${created_str% PST}"
+	
+	# Convert to Unix timestamp
+	if date -d "$created_str" +%s >/dev/null 2>&1; then
+		# GNU date
+		date -d "$created_str" +%s
+	else
+		# BSD date - parse without subseconds
+		date -j -f "%Y-%m-%d %H:%M:%S" "${created_str%.*}" +%s 2>/dev/null || echo "0"
+	fi
+}
+
+image_needs_building() {
+	local image_name
+	local containerfile
+	image_name="$1"
+	containerfile="$2"
+
+	requires_arg image_name "Image name is required"
+	requires_arg containerfile "Containerfile is required"
+
+	if ! image_exists "$image_name"; then
+		return 0
+	fi
+
+	local image_created_ts
+	local containerfile_ts
+	
+	# Get Unix timestamps (works on both GNU and BSD)
+	image_created_ts=$(image_created_date "$image_name")
+	containerfile_ts=$(date -r "$containerfile" +%s)
+
+	if [[ "$containerfile_ts" -gt "$image_created_ts" ]]; then
+		log "Containerfile has been modified since image was built."
+		return 0
+	else
+		log "Container image is up to date."
+		return 1
+	fi
+}
+
+build_image() {
+	local image_name
+	local containerfile
+	local build_timestamp
+	image_name="$1"
+	containerfile="$2"
+
+	requires_arg image_name "Image name is required"
+	requires_arg containerfile "Containerfile is required"
+
+	# Add build timestamp as label to force new image creation even with cached layers
+	build_timestamp=$(date +%s)
+	
+	log "Building test container image..."
+	$CONTAINER_RUNTIME build \
+		--label "build.timestamp=$build_timestamp" \
+		--label "build.date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+		-t "$image_name" \
+		-f "$containerfile" \
+		.
+}
+
+image_run() {
+	local image_name
+	local container_name
+	local cwd
+	local cmd
+	image_name="$1"
+	container_name="$2"
+	cwd="$3"
+	cmd="$4"
+
+	requires_arg image_name "Image name is required"
+	requires_arg container_name "Container name is required"
+	requires_arg cwd "Current working directory is required"
+	requires_arg cmd "Command to run is required"
+
+	# Build environment variables array
+	local env_args=()
+	if [[ -n "${GITHUB_TOKEN:-}" ]]; then
+		env_args+=(-e "GITHUB_TOKEN=$GITHUB_TOKEN")
+	fi
+
+	# Serialize mise operations to avoid resource exhaustion
+	env_args+=(-e "MISE_JOBS=1")
+	env_args+=(-e "MISE_FETCH_REMOTE_VERSIONS_TIMEOUT=120")
+
+	# Run with increased limits for mise install (lots of parallel npm/go operations)
+	# and network access for fetching tools
+	$CONTAINER_RUNTIME run --rm \
+		--name "$container_name" \
+		--network host \
+		--ulimit nproc=4096:8192 \
+		--pids-limit 2048 \
+		-v "$cwd":/app:z \
+		-w /app \
+		"${env_args[@]}" \
+		"$image_name" \
+		bash -c "$cmd"
+}
+
+cmd_build() {
+	local containerfile
+	local image_name
+
+	containerfile="${1}"
+	image_name="${2}"
+
+	requires_arg containerfile "Containerfile is required"
+	requires_arg image_name "Image name is required"
+	requires_file "$containerfile"
+
+	if image_needs_building "$image_name" "$containerfile"; then
+		build_image "$image_name" "$containerfile"
+	else
+		log "Test container image is up to date. No rebuild needed."
+	fi
+}
+
+cmd_run() {
+	local containerfile
+	local image_name
+	local cwd
+	local cmd
+
+	containerfile="${1}"
+	image_name="${2}"
+	cwd="${3}"
+	cmd="${4}"
+
+	requires_arg image_name "Image name is required"
+	requires_arg cwd "Current working directory is required"
+	requires_arg cmd "Command to run is required"
+
+	requires_file "$containerfile"
+
+	cmd_build "$containerfile" "$image_name"
+
+	log "Running cmd in container"
+	log "Container image: $image_name"
+	log "Working directory: $cwd"
+
+	image_run "$image_name" "$cwd" "$cmd"
+
+}
+
+cmd_help() {
+	echo "Usage: $0 {build|run}"
+	echo
+	echo "Commands:"
+	echo "  build    Build the test container image"
+	echo "  run      Run tests in the container"
+	echo
+}
+
+requires_arg "$1" "Command is required"
+
+log "ContainerRuntime: $CONTAINER_RUNTIME"
+
+case "$1" in
+build)
+	cmd_build "${@:2}"
+	;;
+run)
+	cmd_run "${@:2}"
+	;;
+*)
+	cmd_help
+	echo "Unknown command: $1"
+	;;
+esac

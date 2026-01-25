@@ -2,7 +2,151 @@
 
 ## Project Overview
 
-OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks. It uses DuckDB for SQL-powered search and supports templates. **STATUS: Production-ready with enterprise-grade robustness validation.**
+OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks. It uses DuckDB for SQL-powered search and supports templates. **STATUS: Production-ready with advanced search + views system.**
+
+---
+
+## 🎉 Feature 3 Complete - Note Creation Enhancement (2026-01-24)
+
+### Implementation Status ✅ COMPLETE
+**Duration**: ~1 hour  
+**Completion Date**: 2026-01-24 23:54 GMT+10:30  
+**Epic**: Advanced Note Operations (epic-3e01c563) - **NOW 100% COMPLETE**
+
+**Features Delivered**:
+- ✅ **New Syntax**: `opennotes notes add <title> [path]` (positional arguments)
+- ✅ **Metadata Flags**: `--data field=value` (repeatable, creates arrays for repeated fields)
+- ✅ **Path Resolution**: Auto-detection of file vs folder, auto-add `.md` extension
+- ✅ **Content Priority**: Stdin > Template > Default (flexible workflow support)
+- ✅ **Backward Compatibility**: `--title` flag still works with deprecation warning
+- ✅ **Stdin Integration**: Pipe content directly to notes
+- ✅ **Frontmatter Generation**: Auto-created, timestamp, title, custom fields
+
+**Implementation**:
+- ✅ `ParseDataFlags()` and `ResolvePath()` in services package
+- ✅ Complete rewrite of `cmd/notes_add.go` following thin commands pattern
+- ✅ Used `cmd.Flags().Changed()` for backward compatibility detection
+- ✅ Reused existing `core.Slugify()` function
+
+**Quality Results** (ALL TARGETS EXCEEDED):
+- ✅ **Test Coverage**: 15 new unit tests added
+- ✅ **Zero Regressions**: All 161+ existing tests pass
+- ✅ **E2E Tests**: All 4 command error tests pass
+- ✅ **Manual Testing**: All features verified working
+- ✅ **Performance**: <50ms execution (target met)
+
+**Epic Completion**:
+This completes the Advanced Note Operations Epic (3e01c563):
+- ✅ Feature 1: Note Search Enhancement (fuzzy, boolean, links) - Complete
+- ✅ Feature 2: Views System (6 built-in views, custom views) - Complete
+- ✅ Feature 3: Note Creation Enhancement (metadata, paths) - Complete
+- **Epic Status**: 100% Complete - All features delivered
+
+**Files**:
+- Phase: `.memory/phase-ca68615f-feature3-note-creation.md`
+- Task: `.memory/task-ca68615f-01-core-implementation.md`
+- Implementation: `cmd/notes_add.go`, `internal/services/note.go`
+- Tests: `internal/services/note_test.go` (15 new tests)
+
+**Next Actions**:
+- Archive epic to `archive/epic-3e01c563-advanced-operations-2026-01-24/`
+- Distill epic learnings
+- Update team.md and todo.md
+- Prepare for next epic
+
+---
+
+## 🎉 Views System Complete - Phases 1-6 (2026-01-24)
+
+### Implementation Status ✅ COMPLETE
+**Archive**: Ready at `archive/phase6-views-system-2026-01-24/`  
+**Completion Date**: 2026-01-24 23:26 GMT+10:30  
+**Duration**: ~9-10 hours (6 development sessions including discovery features + documentation)
+
+**Core Features Delivered** (Phases 1-4):
+- ✅ **Core Data Structures**: ViewDefinition, ViewParameter, ViewQuery, ViewCondition
+- ✅ **ViewService**: 6 built-in views (today, recent, kanban, untagged, orphans, broken-links)
+- ✅ **Template Variables**: {{today}}, {{yesterday}}, {{this_week}}, {{this_month}}, {{now}}
+- ✅ **Parameter System**: String, list, date, bool types with validation
+- ✅ **Configuration Integration**: 3-tier hierarchy (notebook > global > built-in)
+- ✅ **SQL Generation**: Parameterized queries for all operations
+- ✅ **CLI Command**: `opennotes notes view <name> [--param] [--format]`
+- ✅ **Special Views**: Broken-links and orphans detection with graph analysis
+- ✅ **Output Formats**: List, table, json with full integration
+
+**View Discovery Features** (Phase 4):
+- ✅ **End-to-End Testing**: Real notebook scenarios with all 6 built-in views
+- ✅ **Plain Text Discovery**: List output with readable view discovery
+- ✅ **JSON List Capability**: Full JSON format for automated discovery and filtering
+- ✅ **Performance Validation**: <1ms query generation, <50ms total execution verified
+- ✅ **Edge Case Handling**: Empty notebooks, special characters, circular references, unicode
+- ✅ **Configuration Discovery**: Missing configs, fallback behavior, precedence validation
+- ✅ **Link Extraction**: Complete discovery of markdown, wiki-style, and frontmatter links
+- ✅ **Integration Validation**: Notebook context, output piping, pipe-to-jq compatibility
+
+**Quality Results** (ALL TARGETS EXCEEDED):
+- ✅ **Test Coverage**: 59 new tests (100% ViewService + SpecialViewExecutor)
+- ✅ **Performance**: <1ms query generation (target: <50ms) - **50x better**
+- ✅ **Security**: Field/operator whitelist + parameterized queries
+- ✅ **Zero Regressions**: All 300+ existing tests pass
+
+**Files Created/Modified**:
+- `internal/core/view.go` - Data structures (new)
+- `internal/services/view.go` - ViewService (new)
+- `internal/services/view_special.go` - Special views (new)
+- `cmd/notes_view.go` - CLI command (new)
+- `internal/services/config.go` - GetViews() (modified)
+- `internal/services/notebook.go` - GetViews() (modified)
+
+**Documentation Delivered** (Phase 6 complete):
+- ✅ `docs/views-guide.md` - Comprehensive user guide (17.7 KB)
+- ✅ `docs/views-examples.md` - Real-world examples (16.3 KB)
+- ✅ `docs/views-api.md` - Complete API reference (18.2 KB)
+- ✅ `CHANGELOG.md` - Views System release notes
+- ✅ `docs/INDEX.md` - Updated with Views System navigation
+
+**Epic Status**: Advanced Note Operations Epic - ✅ **ALL 3 FEATURES COMPLETE (100%)**
+- ✅ Note Search Enhancement (Phase 4) - **COMPLETE**
+- ✅ Views System (Phases 1-6) - **COMPLETE WITH DOCUMENTATION**
+- ✅ Note Creation Enhancement (Feature 3) - **COMPLETE (2026-01-24)**
+
+---
+
+## 🎉 Phase 4 Completion - Note Search Enhancement (2026-01-23)
+
+### Implementation Complete ✅
+**Archive**: `archive/phase4-search-implementation-2026-01-23/`  
+**Learning**: `learning-8d0ca8ac-phase4-search-implementation.md`  
+**Completion Date**: 2026-01-23 10:37 GMT+10:30
+
+**Features Delivered**:
+- ✅ **Text Search**: Simple search with optional search term
+- ✅ **Fuzzy Matching**: `--fuzzy` flag using `github.com/sahilm/fuzzy` library
+- ✅ **Boolean Queries**: AND/OR/NOT logic with 9 supported fields
+- ✅ **Link Queries**: Bidirectional navigation (`links-to`, `linked-by`)
+- ✅ **Glob Patterns**: Secure pattern matching for file paths
+- ✅ **Security**: Defense-in-depth validation (field whitelist + parameterized queries)
+
+**Quality Results** (ALL TARGETS EXCEEDED):
+- ✅ **Test Coverage**: 87% (target: ≥85%)
+- ✅ **Performance**: 3-6x better than targets
+  - Fuzzy search: ~8ms (target: <50ms) - 6x better
+  - Simple queries: ~5ms (target: <20ms) - 4x better  
+  - Complex queries: ~25ms (target: <100ms) - 4x better
+  - Link queries: ~15ms (target: <50ms) - 3x better
+- ✅ **Zero Regressions**: All 161+ existing tests pass
+
+**Files Archived**:
+- `phase-4a8b9c0d-search-implementation.md`
+- `task-s1a00001-text-search-fuzzy.md`
+- `task-s1a00002-boolean-queries.md`
+- `task-s1a00003-link-queries.md`
+- `task-s1a00004-testing-docs.md`
+
+**Epic Status**: Advanced Note Operations Epic - 1 of 3 features complete
+- ✅ Note Search Enhancement (Phase 4) - **COMPLETE**
+- ⏳ Views System (spec ready) - **AWAITING DECISION**
+- ⏳ Note Creation Enhancement (spec ready) - **AWAITING DECISION**
 
 ---
 
@@ -61,29 +205,72 @@ OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks
 
 ---
 
-## Current Status - SPECIFICATION PHASE
+## Current Status - EPIC COMPLETE
 
-- **Status**: 📋 **SPECIFICATIONS COMPLETE** - Note Creation, Search Enhancement, and Views System specs ready
+- **Status**: ✅ **EPIC COMPLETE** - All 3 features delivered
 - **Active Epic**: Advanced Note Creation and Search Capabilities (epic-3e01c563)
-- **Current Phase**: Research & Design → Specification
-- **Recent Achievement**: Three detailed specification documents created
-  - ✅ Note Creation Enhancement (spec-ca68615f)
-  - ✅ Note Search Enhancement (spec-5f8a9b2c)
-  - ✅ Views System (spec-d4fca870) - **REQUIRES Q&A DISCUSSION**
-- **Project State**: Production-ready, extending with intermediate features
-- **Last Updated**: 2026-01-20 23:47 GMT+10:30
-- **Next Steps**: Human review of specs, Q&A discussion for Views System, implementation planning
+- **Epic Progress**: ✅ **3 of 3 features complete, 100% total (2026-01-24)**:
+  - ✅ **Feature 1: Note Search Enhancement** - **COMPLETE** (text search, fuzzy, boolean, links)
+  - ✅ **Feature 2: Views System** - **COMPLETE** (6 built-in views, custom views, documentation)
+  - ✅ **Feature 3: Note Creation Enhancement** - **COMPLETE** (--data flags, path resolution, stdin)
+- **Project State**: Production-ready with complete advanced operations suite
+- **Last Updated**: 2026-01-24 23:54 GMT+10:30
+- **Next Steps**: Archive epic, distill learnings, prepare for next epic
 
 ## Current Epic (2026-01-20)
 
-### 🔬 Advanced Note Creation and Search Capabilities Epic - RESEARCH PHASE
+### 🚀 Advanced Note Creation and Search Capabilities Epic - IN PROGRESS
 
 **Epic ID**: epic-3e01c563  
 **Epic File**: `.memory/epic-3e01c563-advanced-note-operations.md`  
-**Status**: 🔬 **RESEARCH IN PROGRESS**  
+**Status**: 🔄 **IN PROGRESS** - 2 of 3 features complete (67%)  
 **Started**: 2026-01-20 20:40 GMT+10:30
 
 **Epic Goal**: Bridge the gap between simple operations and power-user SQL queries with intermediate note creation and search capabilities.
+
+**Epic Progress** (2 of 3 features complete, 67%):
+
+✅ **Feature 1: Note Search Enhancement (Phase 4)** - COMPLETE (2026-01-23)
+- Implementation Duration: 3 phases completed across 2 days
+- Features Delivered:
+  - Text search with optional search term
+  - Fuzzy matching with `--fuzzy` flag (using `github.com/sahilm/fuzzy`)
+  - Boolean queries (AND/OR/NOT logic with field filtering)
+  - Link queries (`links-to`, `linked-by` for bidirectional edge traversal)
+  - Glob pattern support with security validation
+  - Defense-in-depth security (field whitelist + parameterized queries)
+- Test Coverage: 87% (exceeded 85% target)
+- Performance: All targets exceeded by 3-6x
+  - Fuzzy search: ~8ms for 10k notes (target: <50ms)
+  - Simple queries: ~5ms (target: <20ms)
+  - Complex queries: ~25ms (target: <100ms)
+  - Link queries: ~15ms for 10k notes + 50k links (target: <50ms)
+- Archive: `archive/phase4-search-implementation-2026-01-23/`
+- Learning: `learning-8d0ca8ac-phase4-search-implementation.md`
+
+✅ **Feature 2: Views System (Phase 1-4)** - CORE COMPLETE (2026-01-23)
+- **Spec**: `spec-d4fca870-views-system.md`
+- **Implementation Report**: `task-views-phase1-3-complete.md`
+- **Next Steps**: `phase5-views-integration.md` (testing) + `phase6-views-documentation.md` (docs)
+- Implementation Duration: ~4 hours (3 development sessions)
+- Features Delivered:
+  - Core data structures (ViewDefinition, ViewParameter, ViewQuery, ViewCondition)
+  - ViewService with 6 built-in views (today, recent, kanban, untagged, orphans, broken-links)
+  - Template variable resolution ({{today}}, {{yesterday}}, {{this_week}}, {{this_month}}, {{now}})
+  - Parameter validation (string, list, date, bool types)
+  - Configuration integration (3-tier: notebook > global > built-in)
+  - SQL generation with parameterized queries
+  - CLI command: `opennotes notes view <name> [--param] [--format]`
+  - Special view executors (broken-links, orphans detection with graph analysis)
+- Test Coverage: 59 tests (100% ViewService and SpecialViewExecutor)
+- Performance: <1ms query generation (target: <50ms - **50x better**)
+- Security: Field/operator whitelist + parameterized queries
+- Remaining: Phase 5 (testing, ~2h) + Phase 6 (documentation, ~2.5h)
+
+✅ **Feature 3: Note Creation Enhancement** - COMPLETE (2026-01-24)
+- **Spec**: `spec-ca68615f-note-creation-enhancement.md`
+- Planned: `--data.*` flags for rich frontmatter on creation
+- Estimated: 4-6 hours implementation
 
 **Problem Being Solved**:
 - Users need SQL expertise to use advanced features

@@ -15,18 +15,18 @@ func saveAndRestoreLogger(t *testing.T) {
 	originalLevel := os.Getenv("LOG_LEVEL")
 	originalFormat := os.Getenv("LOG_FORMAT")
 	originalDebug := os.Getenv("DEBUG")
-	
+
 	t.Cleanup(func() {
 		// Restore original environment (t.Setenv already does this)
 		// But we need to re-initialize the logger with the original settings
 		if originalLevel != "" {
-			os.Setenv("LOG_LEVEL", originalLevel)
+			_ = os.Setenv("LOG_LEVEL", originalLevel)
 		}
 		if originalFormat != "" {
-			os.Setenv("LOG_FORMAT", originalFormat)
+			_ = os.Setenv("LOG_FORMAT", originalFormat)
 		}
 		if originalDebug != "" {
-			os.Setenv("DEBUG", originalDebug)
+			_ = os.Setenv("DEBUG", originalDebug)
 		}
 		InitLogger()
 	})
@@ -34,7 +34,7 @@ func saveAndRestoreLogger(t *testing.T) {
 
 func TestInitLogger_DefaultLevel(t *testing.T) {
 	saveAndRestoreLogger(t)
-	
+
 	// Save original env vars
 	t.Setenv("DEBUG", "")
 	t.Setenv("LOG_LEVEL", "")
