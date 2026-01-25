@@ -63,12 +63,12 @@ Complete specification for a view.
 
 ### Field Descriptions
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `name` | `string` | ✅ Yes | Unique view identifier (lowercase, alphanumeric + hyphens) |
-| `description` | `string` | ❌ No | Human-readable description |
-| `parameters` | `array` | ❌ No | Runtime parameters (see [Parameter Schema](#parameter-schema)) |
-| `query` | `object` | ✅ Yes | SQL generation instructions (see [Query Schema](#query-schema)) |
+| Field         | Type     | Required | Description                                                     |
+| ------------- | -------- | -------- | --------------------------------------------------------------- |
+| `name`        | `string` | ✅ Yes   | Unique view identifier (lowercase, alphanumeric + hyphens)      |
+| `description` | `string` | ❌ No    | Human-readable description                                      |
+| `parameters`  | `array`  | ❌ No    | Runtime parameters (see [Parameter Schema](#parameter-schema))  |
+| `query`       | `object` | ✅ Yes   | SQL generation instructions (see [Query Schema](#query-schema)) |
 
 ### Constraints
 
@@ -132,13 +132,13 @@ Parameters allow runtime customization of views.
 
 ### Field Descriptions
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `name` | `string` | ✅ Yes | Parameter identifier (lowercase, alphanumeric + underscores) |
-| `type` | `string` | ✅ Yes | Data type: `string`, `list`, `date`, `bool` |
-| `required` | `boolean` | ❌ No | Whether parameter must be provided (default: `false`) |
-| `default` | varies | ❌ No | Default value if not provided |
-| `description` | `string` | ❌ No | Human-readable description |
+| Field         | Type      | Required | Description                                                  |
+| ------------- | --------- | -------- | ------------------------------------------------------------ |
+| `name`        | `string`  | ✅ Yes   | Parameter identifier (lowercase, alphanumeric + underscores) |
+| `type`        | `string`  | ✅ Yes   | Data type: `string`, `list`, `date`, `bool`                  |
+| `required`    | `boolean` | ❌ No    | Whether parameter must be provided (default: `false`)        |
+| `default`     | varies    | ❌ No    | Default value if not provided                                |
+| `description` | `string`  | ❌ No    | Human-readable description                                   |
 
 ### Constraints
 
@@ -155,6 +155,7 @@ Parameters allow runtime customization of views.
 **Description**: Single text value
 
 **Example**:
+
 ```json
 {
   "name": "author",
@@ -165,11 +166,13 @@ Parameters allow runtime customization of views.
 ```
 
 **CLI Usage**:
+
 ```bash
 opennotes notes view my-view --param author="Alice"
 ```
 
 **Validation**:
+
 - Cannot be empty
 - Max length: 1000 characters
 
@@ -180,6 +183,7 @@ opennotes notes view my-view --param author="Alice"
 **Description**: Comma-separated values
 
 **Example**:
+
 ```json
 {
   "name": "status",
@@ -191,11 +195,13 @@ opennotes notes view my-view --param author="Alice"
 ```
 
 **CLI Usage**:
+
 ```bash
 opennotes notes view my-view --param status=todo,in-progress,done
 ```
 
 **Validation**:
+
 - At least one value required
 - Each value: max 100 characters
 - Max values: 50
@@ -207,6 +213,7 @@ opennotes notes view my-view --param status=todo,in-progress,done
 **Description**: ISO 8601 date or template variable
 
 **Example**:
+
 ```json
 {
   "name": "after_date",
@@ -218,12 +225,14 @@ opennotes notes view my-view --param status=todo,in-progress,done
 ```
 
 **CLI Usage**:
+
 ```bash
 opennotes notes view my-view --param after_date=2026-01-24
 opennotes notes view my-view --param after_date="{{today}}"
 ```
 
 **Validation**:
+
 - Must be valid ISO 8601 format: `YYYY-MM-DD` or `YYYY-MM-DDTHH:MM:SSZ`
 - Or valid template variable (see [Template Variables](#template-variables))
 
@@ -234,6 +243,7 @@ opennotes notes view my-view --param after_date="{{today}}"
 **Description**: Boolean value
 
 **Example**:
+
 ```json
 {
   "name": "include_archived",
@@ -245,12 +255,14 @@ opennotes notes view my-view --param after_date="{{today}}"
 ```
 
 **CLI Usage**:
+
 ```bash
 opennotes notes view my-view --param include_archived=true
 opennotes notes view my-view --param include_archived=false
 ```
 
 **Validation**:
+
 - Must be `true` or `false` (case-insensitive)
 
 ---
@@ -277,11 +289,11 @@ Defines SQL generation instructions.
 
 ### Field Descriptions
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `conditions` | `array` | ✅ Yes | Query conditions (see [Condition Schema](#condition-schema)) |
-| `orderBy` | `string` | ❌ No | SQL ORDER BY clause |
-| `limit` | `integer` | ❌ No | Max results to return |
+| Field        | Type      | Required | Description                                                  |
+| ------------ | --------- | -------- | ------------------------------------------------------------ |
+| `conditions` | `array`   | ✅ Yes   | Query conditions (see [Condition Schema](#condition-schema)) |
+| `orderBy`    | `string`  | ❌ No    | SQL ORDER BY clause                                          |
+| `limit`      | `integer` | ❌ No    | Max results to return                                        |
 
 ### Constraints
 
@@ -305,67 +317,73 @@ Individual query condition.
 
 #### Field Descriptions
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `field` | `string` | ✅ Yes | Note field to filter (see [Queryable Fields](#queryable-fields)) |
-| `operator` | `string` | ✅ Yes | Comparison operator (see [Operators](#operators)) |
-| `value` | varies | ✅ Yes | Value to compare (string, array, template variable) |
+| Field      | Type     | Required | Description                                                      |
+| ---------- | -------- | -------- | ---------------------------------------------------------------- |
+| `field`    | `string` | ✅ Yes   | Note field to filter (see [Queryable Fields](#queryable-fields)) |
+| `operator` | `string` | ✅ Yes   | Comparison operator (see [Operators](#operators))                |
+| `value`    | varies   | ✅ Yes   | Value to compare (string, array, template variable)              |
 
 #### Queryable Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `path` | `string` | Note file path (relative to notebook root) |
-| `title` | `string` | Note title (from frontmatter or filename) |
-| `created_at` | `datetime` | Note creation timestamp |
-| `updated_at` | `datetime` | Note last modified timestamp |
-| `metadata->>'*'` | varies | Any frontmatter field (e.g., `metadata->>'status'`, `metadata->>'tags'`) |
+| Field            | Type       | Description                                                              |
+| ---------------- | ---------- | ------------------------------------------------------------------------ |
+| `path`           | `string`   | Note file path (relative to notebook root)                               |
+| `title`          | `string`   | Note title (from frontmatter or filename)                                |
+| `created_at`     | `datetime` | Note creation timestamp                                                  |
+| `updated_at`     | `datetime` | Note last modified timestamp                                             |
+| `metadata->>'*'` | varies     | Any frontmatter field (e.g., `metadata->>'status'`, `metadata->>'tags'`) |
 
 #### Operators
 
-| Operator | Description | Value Type | Example |
-|----------|-------------|------------|---------|
-| `=` | Exact match | `string`, `number`, `bool` | `{"field": "metadata->>'status'", "operator": "=", "value": "done"}` |
-| `!=` | Not equal | `string`, `number`, `bool` | `{"field": "metadata->>'status'", "operator": "!=", "value": "done"}` |
-| `>` | Greater than | `number`, `datetime` | `{"field": "updated_at", "operator": ">", "value": "{{today}}"}` |
-| `>=` | Greater or equal | `number`, `datetime` | `{"field": "updated_at", "operator": ">=", "value": "{{this_week}}"}` |
-| `<` | Less than | `number`, `datetime` | `{"field": "created_at", "operator": "<", "value": "2026-01-01"}` |
-| `<=` | Less or equal | `number`, `datetime` | `{"field": "created_at", "operator": "<=", "value": "{{yesterday}}"}` |
-| `IN` | Value in list | `array` | `{"field": "metadata->>'status'", "operator": "IN", "value": ["todo", "done"]}` |
-| `NOT IN` | Value not in list | `array` | `{"field": "metadata->>'priority'", "operator": "NOT IN", "value": ["low"]}` |
-| `LIKE` | Pattern match | `string` | `{"field": "path", "operator": "LIKE", "value": "projects/%"}` |
-| `NOT LIKE` | Pattern not match | `string` | `{"field": "metadata->>'tags'", "operator": "NOT LIKE", "value": "%archive%"}` |
+| Operator   | Description       | Value Type                 | Example                                                                         |
+| ---------- | ----------------- | -------------------------- | ------------------------------------------------------------------------------- |
+| `=`        | Exact match       | `string`, `number`, `bool` | `{"field": "metadata->>'status'", "operator": "=", "value": "done"}`            |
+| `!=`       | Not equal         | `string`, `number`, `bool` | `{"field": "metadata->>'status'", "operator": "!=", "value": "done"}`           |
+| `>`        | Greater than      | `number`, `datetime`       | `{"field": "updated_at", "operator": ">", "value": "{{today}}"}`                |
+| `>=`       | Greater or equal  | `number`, `datetime`       | `{"field": "updated_at", "operator": ">=", "value": "{{this_week}}"}`           |
+| `<`        | Less than         | `number`, `datetime`       | `{"field": "created_at", "operator": "<", "value": "2026-01-01"}`               |
+| `<=`       | Less or equal     | `number`, `datetime`       | `{"field": "created_at", "operator": "<=", "value": "{{yesterday}}"}`           |
+| `IN`       | Value in list     | `array`                    | `{"field": "metadata->>'status'", "operator": "IN", "value": ["todo", "done"]}` |
+| `NOT IN`   | Value not in list | `array`                    | `{"field": "metadata->>'priority'", "operator": "NOT IN", "value": ["low"]}`    |
+| `LIKE`     | Pattern match     | `string`                   | `{"field": "path", "operator": "LIKE", "value": "projects/%"}`                  |
+| `NOT LIKE` | Pattern not match | `string`                   | `{"field": "metadata->>'tags'", "operator": "NOT LIKE", "value": "%archive%"}`  |
 
 #### Value Types
 
 **String**:
+
 ```json
-{"field": "metadata->>'status'", "operator": "=", "value": "done"}
+{ "field": "metadata->>'status'", "operator": "=", "value": "done" }
 ```
 
 **Number**:
+
 ```json
-{"field": "metadata->>'priority'", "operator": ">", "value": 5}
+{ "field": "metadata->>'priority'", "operator": ">", "value": 5 }
 ```
 
 **Boolean**:
+
 ```json
-{"field": "metadata->>'archived'", "operator": "=", "value": true}
+{ "field": "metadata->>'archived'", "operator": "=", "value": true }
 ```
 
 **Array** (for IN/NOT IN):
+
 ```json
-{"field": "metadata->>'status'", "operator": "IN", "value": ["todo", "done"]}
+{ "field": "metadata->>'status'", "operator": "IN", "value": ["todo", "done"] }
 ```
 
 **Template Variable**:
+
 ```json
-{"field": "updated_at", "operator": ">=", "value": "{{today}}"}
+{ "field": "updated_at", "operator": ">=", "value": "{{today}}" }
 ```
 
 **Parameter Reference**:
+
 ```json
-{"field": "metadata->>'author'", "operator": "=", "value": "{{author}}"}
+{ "field": "metadata->>'author'", "operator": "=", "value": "{{author}}" }
 ```
 
 ---
@@ -376,17 +394,18 @@ Dynamic values resolved at query execution time.
 
 ### Available Variables
 
-| Variable | Type | Description | Example Value |
-|----------|------|-------------|---------------|
-| `{{today}}` | `datetime` | Current date at midnight (UTC) | `2026-01-24T00:00:00Z` |
-| `{{yesterday}}` | `datetime` | Yesterday at midnight (UTC) | `2026-01-23T00:00:00Z` |
-| `{{this_week}}` | `datetime` | Start of current week (Monday) | `2026-01-20T00:00:00Z` |
-| `{{this_month}}` | `datetime` | Start of current month | `2026-01-01T00:00:00Z` |
-| `{{now}}` | `datetime` | Current timestamp | `2026-01-24T15:30:45Z` |
+| Variable         | Type       | Description                    | Example Value          |
+| ---------------- | ---------- | ------------------------------ | ---------------------- |
+| `{{today}}`      | `datetime` | Current date at midnight (UTC) | `2026-01-24T00:00:00Z` |
+| `{{yesterday}}`  | `datetime` | Yesterday at midnight (UTC)    | `2026-01-23T00:00:00Z` |
+| `{{this_week}}`  | `datetime` | Start of current week (Monday) | `2026-01-20T00:00:00Z` |
+| `{{this_month}}` | `datetime` | Start of current month         | `2026-01-01T00:00:00Z` |
+| `{{now}}`        | `datetime` | Current timestamp              | `2026-01-24T15:30:45Z` |
 
 ### Usage
 
 **In Query Conditions**:
+
 ```json
 {
   "field": "updated_at",
@@ -396,6 +415,7 @@ Dynamic values resolved at query execution time.
 ```
 
 **In Parameter Defaults**:
+
 ```json
 {
   "name": "since",
@@ -405,6 +425,7 @@ Dynamic values resolved at query execution time.
 ```
 
 **Combined with Parameters**:
+
 ```json
 {
   "parameters": [
@@ -575,6 +596,7 @@ Views can be defined in two configuration files.
 **Scope**: All notebooks
 
 **Structure**:
+
 ```json
 {
   "views": [
@@ -588,6 +610,7 @@ Views can be defined in two configuration files.
 ```
 
 **Example**:
+
 ```json
 {
   "notebooks": {
@@ -620,6 +643,7 @@ Views can be defined in two configuration files.
 **Scope**: Current notebook only
 
 **Structure**:
+
 ```json
 {
   "notebook": {
@@ -636,6 +660,7 @@ Views can be defined in two configuration files.
 ```
 
 **Example**:
+
 ```json
 {
   "notebook": {
@@ -675,35 +700,35 @@ Views System error codes and descriptions.
 
 ### View Errors
 
-| Code | Message | Cause | Solution |
-|------|---------|-------|----------|
-| `VIEW_NOT_FOUND` | `View '{name}' not found` | View doesn't exist | Check available views with `--list` |
-| `VIEW_INVALID_NAME` | `Invalid view name '{name}'` | Name doesn't match `^[a-z0-9-]+$` | Use only lowercase letters, numbers, hyphens |
-| `VIEW_DUPLICATE_NAME` | `View '{name}' already exists` | Name conflict in config | Use unique names or override with higher precedence |
+| Code                  | Message                        | Cause                             | Solution                                            |
+| --------------------- | ------------------------------ | --------------------------------- | --------------------------------------------------- |
+| `VIEW_NOT_FOUND`      | `View '{name}' not found`      | View doesn't exist                | Check available views with `--list`                 |
+| `VIEW_INVALID_NAME`   | `Invalid view name '{name}'`   | Name doesn't match `^[a-z0-9-]+$` | Use only lowercase letters, numbers, hyphens        |
+| `VIEW_DUPLICATE_NAME` | `View '{name}' already exists` | Name conflict in config           | Use unique names or override with higher precedence |
 
 ### Parameter Errors
 
-| Code | Message | Cause | Solution |
-|------|---------|-------|----------|
-| `PARAM_REQUIRED` | `Required parameter '{name}' not provided` | Missing required parameter | Provide via `--param` flag |
-| `PARAM_INVALID_TYPE` | `Parameter '{name}' must be {type}` | Type mismatch | Check parameter type in view definition |
-| `PARAM_INVALID_FORMAT` | `Parameter '{name}' has invalid format` | Parsing failed | Check format (e.g., comma-separated for lists) |
-| `PARAM_UNKNOWN` | `Unknown parameter '{name}'` | Parameter not defined | Check view parameters with `--list` |
+| Code                   | Message                                    | Cause                      | Solution                                       |
+| ---------------------- | ------------------------------------------ | -------------------------- | ---------------------------------------------- |
+| `PARAM_REQUIRED`       | `Required parameter '{name}' not provided` | Missing required parameter | Provide via `--param` flag                     |
+| `PARAM_INVALID_TYPE`   | `Parameter '{name}' must be {type}`        | Type mismatch              | Check parameter type in view definition        |
+| `PARAM_INVALID_FORMAT` | `Parameter '{name}' has invalid format`    | Parsing failed             | Check format (e.g., comma-separated for lists) |
+| `PARAM_UNKNOWN`        | `Unknown parameter '{name}'`               | Parameter not defined      | Check view parameters with `--list`            |
 
 ### Query Errors
 
-| Code | Message | Cause | Solution |
-|------|---------|-------|----------|
-| `QUERY_INVALID_FIELD` | `Field '{field}' is not queryable` | Invalid field name | Use valid fields (see [Queryable Fields](#queryable-fields)) |
-| `QUERY_INVALID_OPERATOR` | `Operator '{operator}' is not supported` | Invalid operator | Use valid operators (see [Operators](#operators)) |
-| `QUERY_SQL_ERROR` | `SQL generation failed: {details}` | SQL error | Check query syntax and field names |
+| Code                     | Message                                  | Cause              | Solution                                                     |
+| ------------------------ | ---------------------------------------- | ------------------ | ------------------------------------------------------------ |
+| `QUERY_INVALID_FIELD`    | `Field '{field}' is not queryable`       | Invalid field name | Use valid fields (see [Queryable Fields](#queryable-fields)) |
+| `QUERY_INVALID_OPERATOR` | `Operator '{operator}' is not supported` | Invalid operator   | Use valid operators (see [Operators](#operators))            |
+| `QUERY_SQL_ERROR`        | `SQL generation failed: {details}`       | SQL error          | Check query syntax and field names                           |
 
 ### Template Errors
 
-| Code | Message | Cause | Solution |
-|------|---------|-------|----------|
-| `TEMPLATE_UNKNOWN_VAR` | `Unknown template variable '{{var}}'` | Invalid variable name | Use valid variables (see [Template Variables](#template-variables)) |
-| `TEMPLATE_RESOLUTION_FAILED` | `Failed to resolve template '{template}'` | Resolution error | Check template syntax and parameter names |
+| Code                         | Message                                   | Cause                 | Solution                                                            |
+| ---------------------------- | ----------------------------------------- | --------------------- | ------------------------------------------------------------------- |
+| `TEMPLATE_UNKNOWN_VAR`       | `Unknown template variable '{{var}}'`     | Invalid variable name | Use valid variables (see [Template Variables](#template-variables)) |
+| `TEMPLATE_RESOLUTION_FAILED` | `Failed to resolve template '{template}'` | Resolution error      | Check template syntax and parameter names                           |
 
 ---
 
@@ -768,7 +793,20 @@ Complete JSON Schema for view definitions (for validation).
                 "type": "string"
               },
               "operator": {
-                "enum": ["=", "!=", ">", ">=", "<", "<=", "IN", "NOT IN", "LIKE", "NOT LIKE", "IS", "IS NOT"]
+                "enum": [
+                  "=",
+                  "!=",
+                  ">",
+                  ">=",
+                  "<",
+                  "<=",
+                  "IN",
+                  "NOT IN",
+                  "LIKE",
+                  "NOT LIKE",
+                  "IS",
+                  "IS NOT"
+                ]
               },
               "value": {}
             }
