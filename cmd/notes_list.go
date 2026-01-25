@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/zenobi-us/opennotes/internal/services"
@@ -65,22 +66,32 @@ func displayNoteList(notes []services.Note) error {
 }
 
 // requireNotebook is a helper to get the current notebook or return an error.
+// Resolution order (first wins):
+// 1. OPENNOTES_NOTEBOOK envvar
+// 2. --notebook flag
+// 3. .opennotes.json in current directory
+// 4. context match (registered notebooks)
+// 5. ancestor search
 func requireNotebook(cmd *cobra.Command) (*services.Notebook, error) {
-	// Check --notebook flag first
-	notebookPath, _ := cmd.Flags().GetString("notebook")
+	// Step 1: Check OPENNOTES_NOTEBOOK envvar
+	if envNotebook := os.Getenv("OPENNOTES_NOTEBOOK"); envNotebook != "" {
+		return notebookService.Open(envNotebook)
+	}
 
+	// Step 2: Check --notebook flag
+	notebookPath, _ := cmd.Flags().GetString("notebook")
 	if notebookPath != "" {
 		return notebookService.Open(notebookPath)
 	}
 
-	// Try to infer from context
+	// Step 3-5: Use Infer() for auto-detection
 	nb, err := notebookService.Infer("")
 	if err != nil {
 		return nil, err
 	}
 
 	if nb == nil {
-		return nil, fmt.Errorf("no notebook found. Create one with: opennotes notebook create --name \"My Notebook\"")
+		return nil, fmt.Errorf("no notebook found. Set OPENNOTES_NOTEBOOK, use --notebook flag, or create one with: opennotes notebook create --name \"My Notebook\"")
 	}
 
 	return nb, nil
