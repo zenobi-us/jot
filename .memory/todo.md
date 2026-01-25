@@ -41,17 +41,44 @@
 
 ---
 
-## No Active Tasks
+## Active Tasks
 
-**Status**: ✅ **MEMORY CLEAN** - All previous epic artifacts archived  
-**Available Epics**: Storage Abstraction Layer (epic-a9b3f2c1) - research in progress
+### 📝 Documentation Cleanup (1 task)
 
-### Potential Next Actions
+1. **[task-3f8e2a91]** Update Views Documentation with Correct DuckDB Schema
+   - **Status**: 🆕 TODO - Just created (2026-01-25 20:46)
+   - **Priority**: Medium
+   - **Estimate**: 30-45 minutes
+   - **Context**: After fixing views DuckDB schema bug, documentation needs updates
+   - **Files**: docs/views-guide.md, docs/views-examples.md, docs/views-api.md
+   - **Action**: Replace `data.*` references with `metadata->>'*'` syntax
 
-1. **Continue Storage Abstraction Epic**: Research files exist for VFS integration
-2. **Define New Epic**: Based on project priorities or user needs
-3. **Maintenance Work**: Code refactoring, dependency updates, documentation improvements
-4. **Release Preparation**: Package and release Advanced Operations Epic features
+### Completed Today (2026-01-25)
+
+1. **[task-b2d67264]** ✅ Views Feature Fault Tolerance Investigation - COMPLETED
+   - Fixed built-in views to use correct DuckDB schema
+   - Commit: 5da5fe9 - fix(views): correct DuckDB metadata schema
+   - Identified documentation updates needed (spawned task-3f8e2a91)
+
+---
+
+## Potential Next Actions
+
+### Short-term (Available Now)
+
+1. **📝 Documentation Task** (task-3f8e2a91) - 30-45 minutes
+   - Update views documentation with correct schema
+   - Quick win for documentation accuracy
+
+2. **Continue Storage Abstraction Epic** - 4-5 hours
+   - Research files exist for VFS integration
+   - See: epic-a9b3f2c1, task-c81f27bd
+
+### Medium-term (Strategic)
+
+3. **Define New Epic**: Based on project priorities or user needs
+4. **Maintenance Work**: Code refactoring, dependency updates
+5. **Release Preparation**: Package and release Advanced Operations Epic features
 
 ### Available Research (Storage Abstraction Layer)
 

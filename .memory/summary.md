@@ -6,6 +6,34 @@ OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks
 
 ---
 
+## 🔧 Views Schema Fix & Documentation Cleanup (2026-01-25)
+
+### Bug Fix Complete ✅
+**Issue**: Built-in views referenced incorrect DuckDB schema (`data.*` instead of `metadata->>'*'`)  
+**Fix Commit**: 5da5fe9 - fix(views): correct DuckDB metadata schema for all built-in views (#11)  
+**Investigation**: task-b2d67264 - Views Feature Fault Tolerance Investigation (COMPLETED)  
+**Duration**: ~1 hour (investigation + fix)
+
+**Root Cause**:
+- View definitions referenced `data.created`, `data.status`, `data.tags`, etc.
+- But `read_markdown()` function returns `metadata` JSON column, not flattened `data` table
+- Correct access pattern: `metadata->>'field_name'` for JSON field extraction
+
+**Changes Made**:
+- ✅ Updated all 6 built-in views to use `metadata->>'*'` syntax
+- ✅ Updated field validation to allow `metadata->` and `metadata->>` prefixes
+- ✅ Added support for type casting: `(metadata->>'priority')::INTEGER`
+- ✅ All tests updated and passing (161+ tests, zero regressions)
+
+**New Task Created**: 
+- 📝 **task-3f8e2a91**: Update Views Documentation with Correct DuckDB Schema
+- **Status**: TODO
+- **Estimate**: 30-45 minutes
+- **Files**: docs/views-guide.md, docs/views-examples.md, docs/views-api.md
+- **Action**: Replace `data.*` references with `metadata->>'*'` syntax in all examples
+
+---
+
 ## 🎉 Feature 3 Complete - Note Creation Enhancement (2026-01-24)
 
 ### Implementation Status ✅ COMPLETE
@@ -205,14 +233,15 @@ This completes the Advanced Note Operations Epic (3e01c563):
 
 ---
 
-## Current Status - READY FOR NEXT EPIC
+## Current Status - DOCUMENTATION CLEANUP IN PROGRESS
 
-- **Status**: 🎯 **READY FOR NEXT EPIC** - Previous epic archived, codebase clean
-- **Active Epic**: None (awaiting new epic definition)
+- **Status**: 📝 **DOCUMENTATION TASK ACTIVE** - Views schema fix requires doc updates
+- **Active Epic**: None (maintenance task in progress)
 - **Project State**: Production-ready with complete advanced operations suite
-- **Last Updated**: 2026-01-25 15:56 GMT+10:30
+- **Last Updated**: 2026-01-25 20:46 GMT+10:30
 - **Recent Completion**: Advanced Note Operations Epic (2026-01-25) - All 3 features delivered
-- **Next Steps**: Define new epic or continue with storage abstraction layer research
+- **Current Task**: Views documentation updates (task-3f8e2a91) - 30-45 minutes
+- **Next Steps**: Complete documentation updates, then define new epic or continue with storage abstraction layer research
 
 ## Recently Completed Epic (2026-01-25)
 
