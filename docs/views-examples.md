@@ -20,6 +20,7 @@ Real-world examples and workflows using OpenNotes Views System.
 **Goal**: Review today's work and prepare standup notes
 
 **Workflow**:
+
 ```bash
 # 1. See what you worked on today
 opennotes notes view today
@@ -35,6 +36,7 @@ opennotes notes view today --format json > /tmp/standup-$(date +%Y-%m-%d).json
 ```
 
 **Custom View**: `standup` (add to `~/.config/opennotes/config.json`)
+
 ```json
 {
   "views": [
@@ -49,12 +51,12 @@ opennotes notes view today --format json > /tmp/standup-$(date +%Y-%m-%d).json
             "value": "{{today}}"
           },
           {
-            "field": "data.status",
+            "field": "metadata->>'status'",
             "operator": "IN",
             "value": ["in-progress", "done"]
           }
         ],
-        "orderBy": "data.status ASC, updated_at DESC"
+        "orderBy": "metadata->>'status' ASC, updated_at DESC"
       }
     }
   ]
@@ -62,6 +64,7 @@ opennotes notes view today --format json > /tmp/standup-$(date +%Y-%m-%d).json
 ```
 
 **Usage**:
+
 ```bash
 opennotes notes view standup
 ```
@@ -73,6 +76,7 @@ opennotes notes view standup
 **Goal**: Capture daily accomplishments and plan tomorrow
 
 **Workflow**:
+
 ```bash
 # 1. Review today's completed work
 opennotes notes view kanban --param status=done --format json \
@@ -86,6 +90,7 @@ opennotes notes view kanban --param status=todo,in-progress
 ```
 
 **Custom View**: `completed-today`
+
 ```json
 {
   "views": [
@@ -100,7 +105,7 @@ opennotes notes view kanban --param status=todo,in-progress
             "value": "{{today}}"
           },
           {
-            "field": "data.status",
+            "field": "metadata->>'status'",
             "operator": "=",
             "value": "done"
           }
@@ -119,6 +124,7 @@ opennotes notes view kanban --param status=todo,in-progress
 **Goal**: Summarize week's accomplishments
 
 **Custom View**: `this-week` (add to global config)
+
 ```json
 {
   "views": [
@@ -141,25 +147,27 @@ opennotes notes view kanban --param status=todo,in-progress
 ```
 
 **Workflow**:
+
 ```bash
 # 1. Review week's activity
 opennotes notes view this-week
 
 # 2. Count completed tasks this week
 opennotes notes view this-week --format json \
-  | jq '[.[] | select(.data.status == "done")] | length'
+  | jq '[.[] | select(.metadata.status == "done")] | length'
 
 # 3. Generate weekly report
 opennotes notes view this-week --format json \
-  | jq 'group_by(.data.status) | map({status: .[0].data.status, count: length})'
+  | jq 'group_by(.metadata.status) | map({status: .[0].metadata.status, count: length})'
 ```
 
 **Output**:
+
 ```json
 [
-  {"status": "done", "count": 15},
-  {"status": "in-progress", "count": 3},
-  {"status": "todo", "count": 8}
+  { "status": "done", "count": 15 },
+  { "status": "in-progress", "count": 3 },
+  { "status": "todo", "count": 8 }
 ]
 ```
 
@@ -172,6 +180,7 @@ opennotes notes view this-week --format json \
 **Goal**: Organize work for 2-week sprint
 
 **Custom View**: `sprint` (add to notebook `.opennotes.json`)
+
 ```json
 {
   "views": [
@@ -189,12 +198,12 @@ opennotes notes view this-week --format json \
       "query": {
         "conditions": [
           {
-            "field": "data.sprint",
+            "field": "metadata->>'sprint'",
             "operator": "=",
             "value": "{{sprint_number}}"
           }
         ],
-        "orderBy": "data.priority DESC, data.status ASC"
+        "orderBy": "metadata->>'priority' DESC, metadata->>'status' ASC"
       }
     }
   ]
@@ -202,6 +211,7 @@ opennotes notes view this-week --format json \
 ```
 
 **Usage**:
+
 ```bash
 # View current sprint
 opennotes notes view sprint --param sprint_number=sprint-12
@@ -218,6 +228,7 @@ opennotes notes view sprint --param sprint_number=sprint-12 --format json \
 **Goal**: Track project status across multiple states
 
 **Workflow**:
+
 ```bash
 # 1. See full kanban board
 opennotes notes view kanban
@@ -228,12 +239,13 @@ opennotes notes view kanban --param status=in-progress
 
 # 3. Export to JSON for dashboard
 opennotes notes view kanban --format json \
-  | jq 'group_by(.data.status) | map({status: .[0].data.status, tasks: [.[] | .title]})'
+  | jq 'group_by(.metadata.status) | map({status: .[0].metadata.status, tasks: [.[] | .title]})'
 ```
 
 **Custom Kanban States**:
 
 Add to notebook config for project-specific workflow:
+
 ```json
 {
   "views": [
@@ -251,12 +263,12 @@ Add to notebook config for project-specific workflow:
       "query": {
         "conditions": [
           {
-            "field": "data.status",
+            "field": "metadata->>'status'",
             "operator": "IN",
             "value": "{{status}}"
           }
         ],
-        "orderBy": "data.priority DESC"
+        "orderBy": "metadata->>'priority' DESC"
       }
     }
   ]
@@ -270,6 +282,7 @@ Add to notebook config for project-specific workflow:
 **Goal**: Focus on high-priority work
 
 **Custom View**: `urgent`
+
 ```json
 {
   "views": [
@@ -279,17 +292,17 @@ Add to notebook config for project-specific workflow:
       "query": {
         "conditions": [
           {
-            "field": "data.priority",
+            "field": "metadata->>'priority'",
             "operator": "IN",
             "value": ["urgent", "high"]
           },
           {
-            "field": "data.status",
+            "field": "metadata->>'status'",
             "operator": "!=",
             "value": "done"
           }
         ],
-        "orderBy": "data.priority ASC, data.due_date ASC"
+        "orderBy": "metadata->>'priority' ASC, metadata->>'due_date' ASC"
       }
     }
   ]
@@ -297,13 +310,14 @@ Add to notebook config for project-specific workflow:
 ```
 
 **Workflow**:
+
 ```bash
 # Morning: Check urgent tasks
 opennotes notes view urgent
 
 # Filter by category
 opennotes notes view urgent --format json \
-  | jq '.[] | select(.data.category == "bugs")'
+  | jq '.[] | select(.metadata.category == "bugs")'
 ```
 
 ---
@@ -315,6 +329,7 @@ opennotes notes view urgent --format json \
 **Goal**: Identify disconnected content for integration
 
 **Built-in Views**:
+
 ```bash
 # Notes with no incoming links (common orphans)
 opennotes notes view orphans
@@ -327,6 +342,7 @@ opennotes notes view orphans --param definition=isolated
 ```
 
 **Maintenance Workflow**:
+
 ```bash
 # 1. Find orphans
 opennotes notes view orphans --format json > /tmp/orphans.json
@@ -350,6 +366,7 @@ opennotes notes view orphans --format json | jq '. | length'
 **Goal**: Maintain link integrity
 
 **Workflow**:
+
 ```bash
 # 1. Find notes with broken links
 opennotes notes view broken-links
@@ -367,12 +384,13 @@ cat /tmp/broken.json | jq -r '.[] | .broken_links[]' | sort | uniq -c | sort -rn
 ```
 
 **Example Output**:
+
 ```
 ### Notes with Broken Links (4)
 
 - [Project Overview] projects/main.md
   Broken: [[old-architecture]] → File doesn't exist
-  
+
 - [Meeting Notes] meetings/2026-01-15.md
   Broken: [[action-items]] → File doesn't exist
 ```
@@ -384,6 +402,7 @@ cat /tmp/broken.json | jq -r '.[] | .broken_links[]' | sort | uniq -c | sort -rn
 **Goal**: Find and tag unorganized content
 
 **Workflow**:
+
 ```bash
 # 1. Find untagged notes
 opennotes notes view untagged
@@ -410,6 +429,7 @@ opennotes notes view untagged --format json | jq '. | length'
 **Goal**: Track individual contributions
 
 **Custom View**: `by-author`
+
 ```json
 {
   "views": [
@@ -427,7 +447,7 @@ opennotes notes view untagged --format json | jq '. | length'
       "query": {
         "conditions": [
           {
-            "field": "data.author",
+            "field": "metadata->>'author'",
             "operator": "=",
             "value": "{{author}}"
           }
@@ -440,6 +460,7 @@ opennotes notes view untagged --format json | jq '. | length'
 ```
 
 **Usage**:
+
 ```bash
 # View Alice's notes
 opennotes notes view by-author --param author="Alice"
@@ -456,6 +477,7 @@ opennotes notes view by-author --param author="Bob" --format json \
 **Goal**: Aggregate team's daily updates
 
 **Custom View**: `team-today`
+
 ```json
 {
   "views": [
@@ -470,12 +492,12 @@ opennotes notes view by-author --param author="Bob" --format json \
             "value": "{{today}}"
           },
           {
-            "field": "data.type",
+            "field": "metadata->>'type'",
             "operator": "=",
             "value": "standup"
           }
         ],
-        "orderBy": "data.author ASC, updated_at DESC"
+        "orderBy": "metadata->>'author' ASC, updated_at DESC"
       }
     }
   ]
@@ -483,12 +505,13 @@ opennotes notes view by-author --param author="Bob" --format json \
 ```
 
 **Workflow**:
+
 ```bash
 # Generate team standup report
 opennotes notes view team-today --format json \
-  | jq 'group_by(.data.author) | map({
-      author: .[0].data.author,
-      updates: [.[] | {title, status: .data.status}]
+  | jq 'group_by(.metadata.author) | map({
+      author: .[0].metadata.author,
+      updates: [.[] | {title, status: .metadata.status}]
     })'
 ```
 
@@ -499,6 +522,7 @@ opennotes notes view team-today --format json \
 **Goal**: Track release-specific work
 
 **Custom View**: `release`
+
 ```json
 {
   "views": [
@@ -516,12 +540,12 @@ opennotes notes view team-today --format json \
       "query": {
         "conditions": [
           {
-            "field": "data.release",
+            "field": "metadata->>'release'",
             "operator": "=",
             "value": "{{version}}"
           }
         ],
-        "orderBy": "data.priority DESC"
+        "orderBy": "metadata->>'priority' DESC"
       }
     }
   ]
@@ -529,13 +553,14 @@ opennotes notes view team-today --format json \
 ```
 
 **Usage**:
+
 ```bash
 # View release notes and tasks
 opennotes notes view release --param version=v1.2.0
 
 # Count remaining work
 opennotes notes view release --param version=v1.2.0 --format json \
-  | jq '[.[] | select(.data.status != "done")] | length'
+  | jq '[.[] | select(.metadata.status != "done")] | length'
 ```
 
 ---
@@ -545,6 +570,7 @@ opennotes notes view release --param version=v1.2.0 --format json \
 ### Time-based Filters
 
 **Last 7 Days**:
+
 ```json
 {
   "name": "last-week",
@@ -561,6 +587,7 @@ opennotes notes view release --param version=v1.2.0 --format json \
 ```
 
 **This Month**:
+
 ```json
 {
   "name": "this-month",
@@ -577,6 +604,7 @@ opennotes notes view release --param version=v1.2.0 --format json \
 ```
 
 **Before Date**:
+
 ```json
 {
   "name": "before-date",
@@ -604,6 +632,7 @@ opennotes notes view release --param version=v1.2.0 --format json \
 ### Multi-field Filtering
 
 **Filtered by Multiple Criteria**:
+
 ```json
 {
   "name": "active-bugs",
@@ -618,22 +647,22 @@ opennotes notes view release --param version=v1.2.0 --format json \
   "query": {
     "conditions": [
       {
-        "field": "data.type",
+        "field": "metadata->>'type'",
         "operator": "=",
         "value": "bug"
       },
       {
-        "field": "data.status",
+        "field": "metadata->>'status'",
         "operator": "!=",
         "value": "resolved"
       },
       {
-        "field": "data.priority",
+        "field": "metadata->>'priority'",
         "operator": "IN",
         "value": "{{priority}}"
       }
     ],
-    "orderBy": "data.priority ASC, created_at ASC"
+    "orderBy": "metadata->>'priority' ASC, created_at ASC"
   }
 }
 ```
@@ -643,6 +672,7 @@ opennotes notes view release --param version=v1.2.0 --format json \
 ### Negation Filters
 
 **Exclude Specific Tags**:
+
 ```json
 {
   "name": "no-archive",
@@ -650,7 +680,7 @@ opennotes notes view release --param version=v1.2.0 --format json \
   "query": {
     "conditions": [
       {
-        "field": "data.tags",
+        "field": "metadata->>'tags'",
         "operator": "NOT LIKE",
         "value": "%archive%"
       }
@@ -660,6 +690,7 @@ opennotes notes view release --param version=v1.2.0 --format json \
 ```
 
 **Not in Specific Status**:
+
 ```json
 {
   "name": "incomplete",
@@ -667,7 +698,7 @@ opennotes notes view release --param version=v1.2.0 --format json \
   "query": {
     "conditions": [
       {
-        "field": "data.status",
+        "field": "metadata->>'status'",
         "operator": "!=",
         "value": "done"
       }
@@ -683,6 +714,7 @@ opennotes notes view release --param version=v1.2.0 --format json \
 ### Automated Reporting
 
 **Daily Summary Email**:
+
 ```bash
 #!/bin/bash
 # daily-report.sh
@@ -713,6 +745,7 @@ mail -s "Daily Report - $DATE" team@example.com < "$REPORT"
 ### Dashboard Integration
 
 **Export to JSON for Web Dashboard**:
+
 ```bash
 #!/bin/bash
 # export-dashboard.sh
@@ -747,6 +780,7 @@ echo "Dashboard exported to /tmp/dashboard/dashboard.json"
 ### CI/CD Integration
 
 **Pre-commit Hook (Check for Broken Links)**:
+
 ```bash
 #!/bin/bash
 # .git/hooks/pre-commit
@@ -768,6 +802,7 @@ echo "✅ No broken links detected"
 ### Weekly Metrics Tracking
 
 **Track Productivity Trends**:
+
 ```bash
 #!/bin/bash
 # weekly-metrics.sh
@@ -779,7 +814,7 @@ mkdir -p metrics
 
 jq -n \
   --argjson total $(opennotes notes list --format json | jq '. | length') \
-  --argjson completed $(opennotes notes view this-week --format json | jq '[.[] | select(.data.status == "done")] | length') \
+  --argjson completed $(opennotes notes view this-week --format json | jq '[.[] | select(.metadata.status == "done")] | length') \
   --argjson in_progress $(opennotes notes view kanban --param status=in-progress --format json | jq '. | length') \
   --argjson orphans $(opennotes notes view orphans --format json | jq '. | length') \
   --argjson untagged $(opennotes notes view untagged --format json | jq '. | length') \
