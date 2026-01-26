@@ -8,13 +8,21 @@ Complete guide to OpenNotes documentation, organized for quick navigation by use
 
 ### I'm new to OpenNotes
 
-**Time**: 15 minutes | **Goal**: Get productive with your first query
+Choose your path:
 
-1. Start: [Getting Started for Power Users](getting-started-power-users.md) - Complete 15-minute onboarding
-2. Then: [Import Workflow Guide](import-workflow-guide.md) - Understand how to organize your notes
-3. Next: [SQL Quick Reference](sql-quick-reference.md) - Learn Level 1 (Basic Queries)
+**Path A: Beginner (No SQL)**
+- **Time**: 15 minutes | **Goal**: Get comfortable with basic note management
+- 1. Start: [Getting Started: Beginner's Guide](getting-started-basics.md) - Simple intro
+- 2. Then: Create notebooks and manage notes naturally
+- 3. When ready: Graduate to [Getting Started for Power Users](getting-started-power-users.md)
+- **Result**: You can manage, search, and organize your notes ✅
 
-**Result**: You'll have imported your notes and run your first SQL query ✅
+**Path B: Power User (With SQL)**
+- **Time**: 15 minutes | **Goal**: Get productive with SQL queries
+- 1. Start: [Getting Started for Power Users](getting-started-power-users.md) - Complete 15-minute onboarding
+- 2. Then: [Import Workflow Guide](import-workflow-guide.md) - Understand how to organize your notes
+- 3. Next: [SQL Quick Reference](sql-quick-reference.md) - Learn Level 1 (Basic Queries)
+- **Result**: You'll have imported your notes and run your first SQL query ✅
 
 ### I'm migrating from another tool
 
@@ -67,11 +75,21 @@ Complete guide to OpenNotes documentation, organized for quick navigation by use
 Choose the guide that matches your current need:
 
 ### Just Getting Started
+
+**Choose your path based on your comfort level:**
+
+- **[Getting Started: Beginner's Guide](getting-started-basics.md)** (11.2 KB, 15 min read)
+  - Perfect for: Users who want simple note management without SQL
+  - Contains: Installation, creating notebooks, adding notes, simple searches
+  - Key sections: 5-part beginner tutorial with troubleshooting
+  - Follow after: README quick start
+  - Next step: Graduate to Power Users guide when ready for SQL
+
 - **[Getting Started for Power Users](getting-started-power-users.md)** (12.4 KB, 15 min read)
-  - Perfect for: New users wanting to get productive quickly
+  - Perfect for: Developers and power users wanting SQL and automation
   - Contains: Import, SQL basics, automation intro, workflows
   - Key sections: 4-part onboarding, troubleshooting, learning paths
-  - Follow after: README quick start
+  - Follow after: README quick start or complete basics guide
 
 ### Importing Notes
 - **[Import Workflow Guide](import-workflow-guide.md)** (2,200 words, 20 min read)

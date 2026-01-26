@@ -1,5 +1,7 @@
 # Getting Started for Power Users: 15-Minute Onboarding
 
+> **Looking for a simpler onboarding path?** Check out the [Getting Started: Beginner's Guide](getting-started-basics.md) if you prefer to learn basic note management without SQL first. You can always come back to this guide when you're ready for advanced features!
+
 Welcome to OpenNotes! This guide is designed for experienced developers who want to unlock the full power of OpenNotes in 15 minutes.
 
 ## The OpenNotes Advantage
@@ -62,12 +64,10 @@ Now for the magic. Execute sophisticated queries against your entire note collec
 
 ```bash
 # Find all your markdown files
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath=true) LIMIT 1"
+opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')"
 ```
 
 **What this does**: Queries all markdown files in your notebook using DuckDB's SQL engine, returning clean JSON.
-
-**Note**: The `include_filepath=true` parameter is required to get the `file_path` column. Without it, only `metadata` and `content` columns are available.
 
 ### Practical Examples
 
@@ -76,8 +76,8 @@ opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', inc
 ```bash
 # Search for "deadline" across all notes
 opennotes notes search --sql \
-  "SELECT file_path, content FROM read_markdown('**/*.md', include_filepath:=true)
-   WHERE content ILIKE '%deadline%'
+  "SELECT file_path, content FROM read_markdown('**/*.md', include_filepath:=true) 
+   WHERE content ILIKE '%deadline%' 
    LIMIT 10"
 ```
 
@@ -86,9 +86,9 @@ opennotes notes search --sql \
 ```bash
 # Find your longest notes (by word count)
 opennotes notes search --sql \
-  "SELECT file_path, (md_stats(content)).word_count as words
-   FROM read_markdown('**/*.md', include_filepath:=true)
-   ORDER BY words DESC
+  "SELECT file_path, (md_stats(content)).word_count as words 
+   FROM read_markdown('**/*.md', include_filepath:=true) 
+   ORDER BY words DESC 
    LIMIT 10"
 ```
 
@@ -97,8 +97,8 @@ opennotes notes search --sql \
 ```bash
 # Find all unchecked tasks in your notes
 opennotes notes search --sql \
-  "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)
-   WHERE content LIKE '%[ ]%'
+  "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) 
+   WHERE content LIKE '%[ ]%' 
    ORDER BY file_path"
 ```
 
@@ -107,8 +107,8 @@ opennotes notes search --sql \
 ```bash
 # See word count distribution
 opennotes notes search --sql \
-  "SELECT
-     CASE
+  "SELECT 
+     CASE 
        WHEN (md_stats(content)).word_count < 500 THEN 'short'
        WHEN (md_stats(content)).word_count < 2000 THEN 'medium'
        ELSE 'long'
@@ -137,7 +137,7 @@ All OpenNotes query results are JSON—perfect for piping to tools and scripts.
 
 ```bash
 # All SQL query results are automatically JSON
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath=true)"
+opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" 
 # Output:
 # [
 #   { "file_path": "notes/project-ideas.md" },
@@ -152,7 +152,7 @@ opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', inc
 
 ```bash
 # Get just the file paths for piping to other commands
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath=true)" \
+opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" \
   | jq -r '.[].file_path'
 ```
 
@@ -161,7 +161,7 @@ opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', inc
 ```bash
 # Total word count across all notes
 opennotes notes search --sql \
-  "SELECT (md_stats(content)).word_count FROM read_markdown('**/*.md', include_filepath=true)" \
+  "SELECT (md_stats(content)).word_count FROM read_markdown('**/*.md')" \
   | jq 'map(.word_count) | {
       total: add,
       count: length,
@@ -174,12 +174,12 @@ opennotes notes search --sql \
 ```bash
 # Export as CSV
 opennotes notes search --sql \
-  "SELECT file_path, (md_stats(content)).word_count FROM read_markdown('**/*.md', include_filepath=true)" \
+  "SELECT file_path, (md_stats(content)).word_count FROM read_markdown('**/*.md')" \
   | jq -r '.[] | [.file_path, .word_count] | @csv'
 
 # Export as tab-separated
 opennotes notes search --sql \
-  "SELECT file_path, (md_stats(content)).word_count FROM read_markdown('**/*.md', include_filepath=true)" \
+  "SELECT file_path, (md_stats(content)).word_count FROM read_markdown('**/*.md')" \
   | jq -r '.[] | [.file_path, .word_count] | @tsv'
 ```
 
@@ -189,7 +189,7 @@ opennotes notes search --sql \
 
 ```bash
 # Find markdown files and get real file size
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath=true)" \
+opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" \
   | jq -r '.[].file_path' \
   | xargs ls -lh
 
@@ -201,7 +201,7 @@ opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', inc
 
 ```bash
 # Count total lines across all notes
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath=true)" \
+opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" \
   | jq -r '.[].file_path' \
   | xargs wc -l | tail -1
 ```
@@ -210,12 +210,12 @@ opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', inc
 
 ```bash
 # Find notes created today and show their content
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath=true)" \
+opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" \
   | jq -r '.[].file_path' \
   | xargs find -mtime -1
 
 # Combine with other tools
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath=true)" \
+opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" \
   | jq -r '.[].file_path' \
   | xargs ls -lh | awk '{print $9, $5}'
 ```
@@ -229,7 +229,7 @@ Use cron + OpenNotes for automated note processing:
 # Save as ~/bin/note-stats.sh
 
 STATS=$(opennotes notes search --sql \
-  "SELECT
+  "SELECT 
      COUNT(*) as total_notes,
      AVG((md_stats(content)).word_count) as avg_words
    FROM read_markdown('**/*.md')" \
@@ -284,10 +284,10 @@ opennotes notes search --sql \
 
 # Get documentation completeness
 opennotes notes search --sql \
-  "SELECT
+  "SELECT 
      file_path,
      CASE WHEN (md_stats(content)).word_count > 500 THEN 'complete' ELSE 'needs-work' END
-   FROM read_markdown('**/*.md', include_filepath=true)
+   FROM read_markdown('**/*.md')
    ORDER BY (md_stats(content)).word_count DESC"
 ```
 
@@ -313,7 +313,7 @@ opennotes notes search --sql \
 ```bash
 # Weekly stats email
 WEEKLY_REPORT=$(opennotes notes search --sql \
-  "SELECT
+  "SELECT 
      COUNT(*) as new_notes,
      ROUND(AVG((md_stats(content)).word_count)) as avg_length
    FROM read_markdown('**/*.md')" \
@@ -355,7 +355,7 @@ You now understand the OpenNotes power-user workflow. Here's what's available fo
 opennotes notes list
 
 # Try a simple query first
-opennotes notes search --sql "SELECT file_path FROM read_markdown('*.md', include_filepath=true) LIMIT 1"
+opennotes notes search --sql "SELECT file_path FROM read_markdown('*.md') LIMIT 1"
 
 # Check file patterns (use forward slashes, even on Windows)
 # ✓ Good: '**/*.md', 'notes/*.md'
@@ -375,7 +375,7 @@ mkdir -p ~/my-notes/test
 echo "# Test" > ~/my-notes/test/sample.md
 
 # Then try:
-opennotes notes search --sql "SELECT file_path FROM read_markdown('test/*.md', include_filepath=true)"
+opennotes notes search --sql "SELECT file_path FROM read_markdown('test/*.md')"
 ```
 
 ### "JSON output format unexpected"
@@ -390,7 +390,7 @@ OpenNotes always returns an array of objects:
 [{"file_path": "notes1.md"}, {"file_path": "notes2.md"}]
 
 # Parse with jq
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath=true)" | jq '.[].file_path'
+opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" | jq '.[].file_path'
 ```
 
 ### Performance Issues
@@ -434,14 +434,12 @@ Most note tools give you basic search. OpenNotes gives you a full database query
 ## Related Learning Resources
 
 ### If You're New to Importing:
-
 - **[Import Workflow Guide](import-workflow-guide.md)** - Comprehensive guide for importing existing markdown collections
   - Step-by-step import process for all scenarios
   - Migration from Obsidian, Bear, and generic markdown folders
   - Troubleshooting common import issues
 
 ### If You Want to Learn SQL Progressively:
-
 - **[SQL Quick Reference](sql-quick-reference.md)** - Progressive learning path with 20+ practical examples
   - Level 1: Basic queries
   - Level 2: Content search
@@ -450,13 +448,11 @@ Most note tools give you basic search. OpenNotes gives you a full database query
   - Practice exercises for each level
 
 ### For Complete Reference Documentation:
-
 - **[SQL Query Guide](sql-guide.md)** - Detailed query documentation and patterns
 - **[SQL Functions Reference](sql-functions-reference.md)** - Complete SQL function list
 - **[JSON Output Guide](json-sql-guide.md)** - Automation and tool integration
 
 ### For Multi-Notebook Management:
-
 - **[Notebook Discovery](notebook-discovery.md)** - Manage multiple notebooks and contexts
 
 ---

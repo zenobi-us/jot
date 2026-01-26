@@ -3,7 +3,7 @@ id: 5b6c7d8e
 title: Write Getting Started Guide - Part 2-3 Notebooks & Notes
 created_at: 2026-01-26T13:39:00+10:30
 updated_at: 2026-01-26T13:39:00+10:30
-status: todo
+status: complete
 epic_id: 7b2f4a8c
 phase_id: 9c3d2e1f
 assigned_to: unassigned

@@ -1,5 +1,7 @@
 # Getting Started for Power Users: 15-Minute Onboarding
 
+> **Looking for a simpler onboarding path?** Check out the [Getting Started: Beginner's Guide](getting-started-basics.md) if you prefer to learn basic note management without SQL first. You can always come back to this guide when you're ready for advanced features!
+
 Welcome to OpenNotes! This guide is designed for experienced developers who want to unlock the full power of OpenNotes in 15 minutes.
 
 ## The OpenNotes Advantage
