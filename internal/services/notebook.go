@@ -130,7 +130,16 @@ func (s *NotebookService) Create(name, path string, register bool) (*Notebook, e
 		path, _ = os.Getwd()
 	}
 
-	notesDir := filepath.Join(path, ".notes")
+	// If the directory exists, use "." as root (use existing notes)
+	// If it doesn't exist, create a ".notes" subdirectory for new notes
+	var notesDir string
+	if _, err := os.Stat(path); err == nil {
+		// Directory exists - use it as the root
+		notesDir = path
+	} else {
+		// Directory doesn't exist - create ".notes" subdirectory
+		notesDir = filepath.Join(path, ".notes")
+	}
 
 	config := NotebookConfig{
 		StoredNotebookConfig: StoredNotebookConfig{
@@ -149,8 +158,14 @@ func (s *NotebookService) Create(name, path string, register bool) (*Notebook, e
 		Path: configFilePath(path),
 	}
 
-	// Create notes directory
+	// Create notes directory if it doesn't exist
+	// (it already exists for existing notebook directories)
 	if err := os.MkdirAll(notesDir, 0755); err != nil {
+		return nil, err
+	}
+
+	// Create notebook directory if it doesn't exist
+	if err := os.MkdirAll(path, 0755); err != nil {
 		return nil, err
 	}
 
