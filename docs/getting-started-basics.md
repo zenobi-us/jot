@@ -23,22 +23,7 @@ Let's get OpenNotes installed and verify it's working.
 
 Choose the method that works best for you:
 
-#### Option 1: Homebrew (macOS/Linux) - Easiest
-
-If you have Homebrew installed:
-
-```bash
-brew tap zenobi-us/tools
-brew install opennotes
-```
-
-Verify it worked:
-
-```bash
-opennotes --version
-```
-
-#### Option 2: Download Binary (All Platforms)
+#### Option 1: Download Binary (All Platforms)
 
 Go to the [OpenNotes Releases](https://github.com/zenobi-us/opennotes/releases) page and download the binary for your system:
 
@@ -54,13 +39,10 @@ chmod +x opennotes
 mv opennotes /usr/local/bin/
 ```
 
-#### Option 3: Build from Source (For Developers)
+#### Option 2: Install from Source (Requires Go)
 
 ```bash
-git clone https://github.com/zenobi-us/opennotes.git
-cd opennotes
-go build -o opennotes
-./opennotes --version
+go install https://github.com/zenobi-us/opennotes.git
 ```
 
 ### Verify Installation
@@ -152,7 +134,7 @@ You should see output like:
 • **Root:** ~/learning-notes
 ```
 
-Perfect! You now have a notebook registered. OpenNotes will automatically use the most recent notebook you created.
+Perfect! You now have a notebook registered.
 
 ---
 
