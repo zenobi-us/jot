@@ -43,10 +43,43 @@
 
 ## Active Tasks
 
+### 📝 New Epic: Basic Getting Started Guide (5 tasks)
+
+**Epic**: epic-7b2f4a8c - Create Basic Getting Started Guide for Non-Power Users  
+**Phase**: phase-9c3d2e1f - Content Creation and Testing Phase  
+**Status**: 🎯 PLANNING - Ready to begin  
+**Priority**: High  
+**Total Estimate**: ~2 hours
+
+1. **[task-4a5b6c7d]** Write Part 1 - Installation & Setup
+   - **Status**: TODO
+   - **Estimate**: 25 minutes
+   - **Action**: Create Part 1 (~500 words) covering installation and first notebook
+
+2. **[task-5b6c7d8e]** Write Parts 2-3 - Notebooks & Adding Notes
+   - **Status**: TODO
+   - **Estimate**: 35 minutes
+   - **Action**: Create Parts 2-3 (~1000 words) covering notebooks and note management
+
+3. **[task-6c7d8e9f]** Write Part 4 - Simple Searches
+   - **Status**: TODO
+   - **Estimate**: 25 minutes
+   - **Action**: Create Part 4 (~700 words) covering basic search without SQL
+
+4. **[task-7d8e9f0g]** Write Part 5 - Next Steps & Learning Paths
+   - **Status**: TODO
+   - **Estimate**: 15 minutes
+   - **Action**: Create Part 5 (~400 words) with graduation paths to advanced features
+
+5. **[task-8e9f0g1h]** Test All Examples & Integrate
+   - **Status**: TODO
+   - **Estimate**: 20 minutes
+   - **Action**: Test all commands, update INDEX files, sync to both directories
+
 ### 📝 Documentation Cleanup (1 task)
 
 1. **[task-3f8e2a91]** Update Views Documentation with Correct DuckDB Schema
-   - **Status**: 🆕 TODO - Just created (2026-01-25 20:46)
+   - **Status**: 🆕 TODO - Created (2026-01-25 20:46)
    - **Priority**: Medium
    - **Estimate**: 30-45 minutes
    - **Context**: After fixing views DuckDB schema bug, documentation needs updates

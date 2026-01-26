@@ -6,6 +6,33 @@ OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks
 
 ---
 
+## 🎯 Current Epic: Basic Getting Started Guide (2026-01-26)
+
+### Status: 🚀 PLANNING - Ready to Begin
+
+**Epic**: epic-7b2f4a8c - Create Basic Getting Started Guide for Non-Power Users  
+**Duration**: ~2 hours  
+**Phase**: phase-9c3d2e1f - Content Creation and Testing
+
+**Objective**: Create a beginner-friendly getting started guide for users who want basic note management without SQL. This complements the existing "Getting Started for Power Users" guide.
+
+**What We're Building**:
+- Part 1: Installation & Setup (5 min)
+- Part 2: Creating Notebooks (5 min)
+- Part 3: Adding & Managing Notes (5 min)
+- Part 4: Simple Searches (5 min)
+- Part 5: Next Steps & Learning Paths (5 min)
+
+**Why This Matters**:
+- Current "Power Users" guide is too advanced for beginners
+- Need gentler onboarding path for basic note management
+- Users can graduate to SQL when ready
+- Reduces cognitive load and improves user experience
+
+**Next Action**: Begin Task 1 - Write Part 1 (Installation & Setup)
+
+---
+
 ## 🔧 Views Schema Fix & Documentation Cleanup (2026-01-25)
 
 ### Bug Fix Complete ✅
