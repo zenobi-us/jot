@@ -13,6 +13,7 @@ Let's get OpenNotes installed and verify it's working.
 ### What You'll Need
 
 **System Requirements** (super minimal!):
+
 - macOS, Linux, or Windows with WSL
 - Terminal or command prompt
 - ~5 MB of disk space
@@ -32,6 +33,7 @@ brew install opennotes
 ```
 
 Verify it worked:
+
 ```bash
 opennotes --version
 ```
@@ -39,11 +41,13 @@ opennotes --version
 #### Option 2: Download Binary (All Platforms)
 
 Go to the [OpenNotes Releases](https://github.com/zenobi-us/opennotes/releases) page and download the binary for your system:
+
 - macOS: `opennotes-darwin-arm64` (Apple Silicon) or `opennotes-darwin-amd64` (Intel)
 - Linux: `opennotes-linux-amd64`
 - Windows: `opennotes-windows-amd64.exe`
 
 Make it executable (macOS/Linux):
+
 ```bash
 chmod +x opennotes
 # optionally move it to your PATH
@@ -88,6 +92,7 @@ Now let's create a notebook from your existing markdown files. A **notebook** is
 ### Find Your Notes Folder
 
 First, think about where your markdown notes currently live. Common locations:
+
 - `~/Documents/Notes`
 - `~/my-notes`
 - `~/Desktop/Notes`
@@ -106,6 +111,7 @@ opennotes notebook create ~/Documents/Notes --name "My Notes"
 Replace `~/Documents/Notes` with the actual path to your markdown files.
 
 **What just happened?**
+
 - OpenNotes scanned your folder for all `.md` files
 - It extracted titles from frontmatter (YAML at the top of files) or used filenames
 - It registered your notebook so you can use it anytime
@@ -131,6 +137,7 @@ opennotes notebook list
 ```
 
 You should see output like:
+
 ```
 ## Notebooks (2)
 
@@ -198,6 +205,7 @@ opennotes notes list
 ```
 
 Output looks like:
+
 ```
 ### Notes (3)
 
@@ -207,6 +215,7 @@ Output looks like:
 ```
 
 Each note shows:
+
 - **Title** (extracted from the note or filename)
 - **Filename** (the path where it's stored)
 
@@ -281,11 +290,13 @@ You've got OpenNotes working! Here's what you can do next:
 ### Continue with the Basics
 
 **Master Notebook Management**:
+
 - Learn how to organize notes across multiple notebooks
 - Understand how to use notebooks for different projects or topics
 - See [Notebook Management Guide](notebook-discovery.md)
 
 **Better Search Techniques**:
+
 - Use fuzzy matching for approximate searches
 - Search by file patterns and locations
 - See examples in the [Troubleshooting Guide](getting-started-troubleshooting.md)
@@ -307,6 +318,7 @@ opennotes notes search --sql \
 ```
 
 This lets you:
+
 - Search by metadata (dates, tags, word count)
 - Find relationships between notes
 - Extract statistics and patterns
@@ -332,6 +344,7 @@ Content here...
 ```
 
 Then search by metadata:
+
 ```bash
 opennotes notes search --data status=active
 ```
@@ -341,6 +354,7 @@ opennotes notes search --data status=active
 ### Integration with Your Workflow
 
 **With Git**:
+
 ```bash
 # Initialize your notes folder as a git repo
 cd ~/Documents/Notes
@@ -396,6 +410,7 @@ opennotes notes add "New Note"
 ### "I can't find the note I created"
 
 **Solutions**:
+
 1. Check you're in the right directory
 2. List all notebooks to see which one you created the note in:
    ```bash
@@ -422,6 +437,7 @@ You now know:
 ✅ Where to learn more
 
 **Next Steps**:
+
 - Start using OpenNotes daily with your real notes
 - When you're comfortable, explore the [Power Users Guide](getting-started-power-users.md) for SQL superpowers
 - Check out [Automation Recipes](automation-recipes.md) to integrate with other tools
