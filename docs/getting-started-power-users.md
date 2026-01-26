@@ -62,10 +62,12 @@ Now for the magic. Execute sophisticated queries against your entire note collec
 
 ```bash
 # Find all your markdown files
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')"
+opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath=true) LIMIT 1"
 ```
 
 **What this does**: Queries all markdown files in your notebook using DuckDB's SQL engine, returning clean JSON.
+
+**Note**: The `include_filepath=true` parameter is required to get the `file_path` column. Without it, only `metadata` and `content` columns are available.
 
 ### Practical Examples
 
@@ -135,7 +137,7 @@ All OpenNotes query results are JSON—perfect for piping to tools and scripts.
 
 ```bash
 # All SQL query results are automatically JSON
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')"
+opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath=true)"
 # Output:
 # [
 #   { "file_path": "notes/project-ideas.md" },
@@ -150,7 +152,7 @@ opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')"
 
 ```bash
 # Get just the file paths for piping to other commands
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" \
+opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath=true)" \
   | jq -r '.[].file_path'
 ```
 
@@ -159,7 +161,7 @@ opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" \
 ```bash
 # Total word count across all notes
 opennotes notes search --sql \
-  "SELECT (md_stats(content)).word_count FROM read_markdown('**/*.md')" \
+  "SELECT (md_stats(content)).word_count FROM read_markdown('**/*.md', include_filepath=true)" \
   | jq 'map(.word_count) | {
       total: add,
       count: length,
@@ -172,12 +174,12 @@ opennotes notes search --sql \
 ```bash
 # Export as CSV
 opennotes notes search --sql \
-  "SELECT file_path, (md_stats(content)).word_count FROM read_markdown('**/*.md')" \
+  "SELECT file_path, (md_stats(content)).word_count FROM read_markdown('**/*.md', include_filepath=true)" \
   | jq -r '.[] | [.file_path, .word_count] | @csv'
 
 # Export as tab-separated
 opennotes notes search --sql \
-  "SELECT file_path, (md_stats(content)).word_count FROM read_markdown('**/*.md')" \
+  "SELECT file_path, (md_stats(content)).word_count FROM read_markdown('**/*.md', include_filepath=true)" \
   | jq -r '.[] | [.file_path, .word_count] | @tsv'
 ```
 
@@ -187,7 +189,7 @@ opennotes notes search --sql \
 
 ```bash
 # Find markdown files and get real file size
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" \
+opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath=true)" \
   | jq -r '.[].file_path' \
   | xargs ls -lh
 
@@ -199,7 +201,7 @@ opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" \
 
 ```bash
 # Count total lines across all notes
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" \
+opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath=true)" \
   | jq -r '.[].file_path' \
   | xargs wc -l | tail -1
 ```
@@ -208,12 +210,12 @@ opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" \
 
 ```bash
 # Find notes created today and show their content
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" \
+opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath=true)" \
   | jq -r '.[].file_path' \
   | xargs find -mtime -1
 
 # Combine with other tools
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" \
+opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath=true)" \
   | jq -r '.[].file_path' \
   | xargs ls -lh | awk '{print $9, $5}'
 ```
@@ -285,7 +287,7 @@ opennotes notes search --sql \
   "SELECT
      file_path,
      CASE WHEN (md_stats(content)).word_count > 500 THEN 'complete' ELSE 'needs-work' END
-   FROM read_markdown('**/*.md')
+   FROM read_markdown('**/*.md', include_filepath=true)
    ORDER BY (md_stats(content)).word_count DESC"
 ```
 
@@ -353,7 +355,7 @@ You now understand the OpenNotes power-user workflow. Here's what's available fo
 opennotes notes list
 
 # Try a simple query first
-opennotes notes search --sql "SELECT file_path FROM read_markdown('*.md') LIMIT 1"
+opennotes notes search --sql "SELECT file_path FROM read_markdown('*.md', include_filepath=true) LIMIT 1"
 
 # Check file patterns (use forward slashes, even on Windows)
 # ✓ Good: '**/*.md', 'notes/*.md'
@@ -373,7 +375,7 @@ mkdir -p ~/my-notes/test
 echo "# Test" > ~/my-notes/test/sample.md
 
 # Then try:
-opennotes notes search --sql "SELECT file_path FROM read_markdown('test/*.md')"
+opennotes notes search --sql "SELECT file_path FROM read_markdown('test/*.md', include_filepath=true)"
 ```
 
 ### "JSON output format unexpected"
@@ -388,7 +390,7 @@ OpenNotes always returns an array of objects:
 [{"file_path": "notes1.md"}, {"file_path": "notes2.md"}]
 
 # Parse with jq
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" | jq '.[].file_path'
+opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath=true)" | jq '.[].file_path'
 ```
 
 ### Performance Issues
