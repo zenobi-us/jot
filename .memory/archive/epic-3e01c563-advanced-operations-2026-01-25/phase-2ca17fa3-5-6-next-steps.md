@@ -1,9 +1,12 @@
 ---
 id: phase5-6-next-steps
+epic_id: "3e01c563"
+start_criteria: "N/A"
+end_criteria: "N/A"
 title: Views System Phase 5-6 - Next Steps & Checklist
 created_at: 2026-01-23T17:00:00+10:30
 updated_at: 2026-01-23T20:15:00+10:30
-status: phase5-complete
+status: completed
 ---
 
 # Views System Phase 5-6: Next Steps

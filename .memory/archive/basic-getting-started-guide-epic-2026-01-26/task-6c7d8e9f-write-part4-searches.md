@@ -3,7 +3,7 @@ id: 6c7d8e9f
 title: Write Getting Started Guide - Part 4 Simple Searches
 created_at: 2026-01-26T13:39:00+10:30
 updated_at: 2026-01-26T13:39:00+10:30
-status: complete
+status: completed
 epic_id: 7b2f4a8c
 phase_id: 9c3d2e1f
 assigned_to: unassigned

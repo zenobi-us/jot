@@ -3,7 +3,7 @@ id: 3f8e2a91
 title: Update Views Documentation with Correct DuckDB Schema
 created_at: 2026-01-25T20:46:08+10:30
 updated_at: 2026-01-25T21:15:00+10:30
-status: done
+status: completed
 epic_id: epic-0fece1be
 phase_id: N/A
 assigned_to: unassigned

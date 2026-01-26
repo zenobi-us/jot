@@ -1,11 +1,13 @@
 ---
 id: 9792c8e0
 epic_id: b8e5f2d4
+phase_id: "phase1"
+assigned_to: "unassigned"
 type: task
 title: phase1-implementation-plan (Phase 1)
 created_at: 2026-01-19T23:03:00+10:30
 updated_at: 2026-01-19T23:03:00+10:30
-status: ready
+status: todo
 related: [epic-b8e5f2d4-getting-started-guide.md, .memory/validation-phase1-artifacts.md]
 ---
 

@@ -4,6 +4,7 @@ title: DuckDB Extension CI Failure Fix - Implementation Notes
 created_at: 2026-01-21T23:10:00+10:30
 updated_at: 2026-01-21T23:10:00+10:30
 status: completed
+epic_id: epic-maintenance
 tags: [ci, duckdb, infrastructure, reliability]
 learned_from: Production issue in GitHub Actions
 ---

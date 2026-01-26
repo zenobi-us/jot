@@ -3,7 +3,7 @@ id: a1b2c3d4
 title: OpenNotes Codebase Structure Map
 created_at: 2026-01-18T19:31:53+10:30
 updated_at: 2026-01-18T19:31:53+10:30
-status: active
+status: in-progress
 area: codebase-structure
 tags: [architecture, codebase, state-machine]
 learned_from: [test-improvement-epic, codebase-exploration, architecture-review]

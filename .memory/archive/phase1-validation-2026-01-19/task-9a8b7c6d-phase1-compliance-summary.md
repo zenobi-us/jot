@@ -150,7 +150,7 @@ id: <8-char-hash>
 title: "..."
 created_at: 2026-01-19T22:14:00+10:30
 updated_at: 2026-01-19T23:02:00+10:30
-status: "ready_for_execution"
+status: todo
 type: "phase"|"task"|"research"
 epic_id: "b8e5f2d4"
 phase_id: "686d28b6" [if task only]

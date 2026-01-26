@@ -3,7 +3,7 @@ id: a9b3f2c1
 title: Storage Abstraction Layer with Pluggable Backends
 created_at: 2026-01-23T21:20:00+10:30
 updated_at: 2026-01-23T21:50:00+10:30
-status: approved
+status: archived
 spec: spec-b8c4d5e6-storage-abstraction-architecture.md
 epic_id: null
 tags:

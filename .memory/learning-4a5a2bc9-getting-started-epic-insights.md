@@ -3,6 +3,7 @@ id: 4a5a2bc9
 title: Getting Started Epic - Documentation Strategy Insights
 created_at: 2026-01-20T20:02:00+10:30
 updated_at: 2026-01-20T20:02:00+10:30
+status: completed
 tags:
   - documentation
   - user-experience

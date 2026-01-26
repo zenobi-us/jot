@@ -3,7 +3,7 @@ id: b2c3d4e5
 title: OpenNotes Data Flow Diagram
 created_at: 2026-01-18T19:31:53+10:30
 updated_at: 2026-01-18T19:31:53+10:30
-status: active
+status: in-progress
 area: data-flow
 tags: [architecture, data-flow, state-machine]
 learned_from: [test-improvement-epic, codebase-exploration]

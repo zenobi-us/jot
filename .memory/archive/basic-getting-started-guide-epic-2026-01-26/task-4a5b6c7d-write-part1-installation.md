@@ -3,7 +3,7 @@ id: 4a5b6c7d
 title: Write Getting Started Guide - Part 1 Installation & Setup
 created_at: 2026-01-26T13:39:00+10:30
 updated_at: 2026-01-26T13:39:00+10:30
-status: complete
+status: completed
 epic_id: 7b2f4a8c
 phase_id: 9c3d2e1f
 assigned_to: unassigned

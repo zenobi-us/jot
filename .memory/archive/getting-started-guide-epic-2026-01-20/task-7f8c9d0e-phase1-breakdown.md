@@ -1,9 +1,13 @@
 ---
 id: task-phase1-breakdown
+epic_id: "b8e5f2d4"
+phase_id: "phase1"
+assigned_to: "unassigned"
 title: "Phase 1 Implementation Breakdown - Getting Started Guide"
 created_at: 2026-01-19T22:14:00+10:30
+updated_at: 2026-01-19T22:14:00+10:30
 type: "task"
-status: "ready_for_execution"
+status: todo
 ---
 
 # Phase 1 Implementation Breakdown

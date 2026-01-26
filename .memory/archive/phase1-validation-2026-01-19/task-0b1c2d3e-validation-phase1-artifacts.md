@@ -4,6 +4,7 @@ title: "Phase 1 Implementation Plan - Miniproject Guideline Compliance Validatio
 created_at: 2026-01-19T23:02:00+10:30
 updated_at: 2026-01-19T23:02:00+10:30
 status: "completed"
+assigned_to: unassigned
 type: "research"
 epic_id: "b8e5f2d4"
 phase_id: "phase1"
@@ -114,7 +115,7 @@ id: impl-plan-phase1-b8e5f2d4
 title: "Getting Started Guide for Power Users - Phase 1 Implementation Plan"
 created_at: 2026-01-19T22:14:00+10:30
 updated_at: 2026-01-19T23:02:00+10:30
-status: "ready_for_execution"
+status: todo
 type: "phase"
 epic_id: "b8e5f2d4"
 ---
@@ -134,7 +135,7 @@ id: task-phase1-breakdown
 title: "Phase 1 Implementation Breakdown - Getting Started Guide"
 created_at: 2026-01-19T22:14:00+10:30
 type: "task"
-status: "ready_for_execution"
+status: todo
 ```
 
 **Should Be:**
@@ -144,7 +145,7 @@ title: "Phase 1 Implementation Breakdown - Getting Started Guide"
 created_at: 2026-01-19T22:14:00+10:30
 updated_at: 2026-01-19T23:02:00+10:30
 type: "task"
-status: "ready_for_execution"
+status: todo
 epic_id: "b8e5f2d4"
 phase_id: "686d28b6"  # Link to parent phase
 ```

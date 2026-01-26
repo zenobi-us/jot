@@ -3,7 +3,7 @@ id: s1a00001
 title: Text Search and Fuzzy Matching Implementation
 created_at: 2026-01-22T12:55:00+10:30
 updated_at: 2026-01-22T21:15:00+10:30
-status: done
+status: completed
 epic_id: 3e01c563
 phase_id: 4a8b9c0d
 assigned_to: claude

@@ -3,7 +3,7 @@ id: d4fca870
 title: Views System - Named Reusable Query Presets
 created_at: 2026-01-20T23:47:00+10:30
 updated_at: 2026-01-22T12:45:00+10:30
-status: approved
+status: completed
 epic_id: 3e01c563
 requires_qa: false
 qa_completed: 2026-01-22

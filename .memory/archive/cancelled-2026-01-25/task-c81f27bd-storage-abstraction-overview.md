@@ -5,6 +5,7 @@ created_at: 2026-01-23T21:25:00+10:30
 updated_at: 2026-01-23T21:25:00+10:30
 status: planning
 epic_id: a9b3f2c1
+phase_id: phase-cancelled
 assigned_to: human-review-needed
 ---
 
