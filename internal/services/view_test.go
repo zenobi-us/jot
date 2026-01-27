@@ -1363,3 +1363,280 @@ func TestViewService_GenerateSQL_AggregateWithGroupByAndHaving(t *testing.T) {
 	// Verify argument values
 	assert.Equal(t, []interface{}{"0"}, args)
 }
+
+// Phase 3: Time Arithmetic Tests
+
+func TestViewService_ResolveTemplateVariables_TodayPlusN(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	now := time.Now()
+	expected := now.AddDate(0, 0, 7).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("{{today+7}}")
+	assert.Equal(t, expected, result)
+}
+
+func TestViewService_ResolveTemplateVariables_TodayMinusN(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	now := time.Now()
+	expected := now.AddDate(0, 0, -30).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("{{today-30}}")
+	assert.Equal(t, expected, result)
+}
+
+func TestViewService_ResolveTemplateVariables_ThisWeekPlusN(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	now := time.Now()
+	targetDate := now.AddDate(0, 0, 14)
+	expected := getStartOfWeek(targetDate).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("{{this_week+2}}")
+	assert.Equal(t, expected, result)
+}
+
+func TestViewService_ResolveTemplateVariables_ThisMonthPlusN(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	now := time.Now()
+	targetDate := now.AddDate(0, 3, 0)
+	expected := getFirstOfMonth(targetDate).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("{{this_month+3}}")
+	assert.Equal(t, expected, result)
+}
+
+func TestViewService_ResolveTemplateVariables_EndOfMonth(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	now := time.Now()
+	expected := getEndOfMonth(now).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("{{end_of_month}}")
+	assert.Equal(t, expected, result)
+}
+
+func TestViewService_ResolveTemplateVariables_StartOfMonth(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	now := time.Now()
+	expected := getFirstOfMonth(now).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("{{start_of_month}}")
+	assert.Equal(t, expected, result)
+}
+
+func TestViewService_ResolveTemplateVariables_NextWeek(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	now := time.Now()
+	nextWeekDate := now.AddDate(0, 0, 7)
+	expected := getStartOfWeek(nextWeekDate).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("{{next_week}}")
+	assert.Equal(t, expected, result)
+}
+
+func TestViewService_ResolveTemplateVariables_NextMonth(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	now := time.Now()
+	nextMonthDate := now.AddDate(0, 1, 0)
+	expected := getFirstOfMonth(nextMonthDate).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("{{next_month}}")
+	assert.Equal(t, expected, result)
+}
+
+func TestViewService_ResolveTemplateVariables_LastWeek(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	now := time.Now()
+	lastWeekDate := now.AddDate(0, 0, -7)
+	expected := getStartOfWeek(lastWeekDate).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("{{last_week}}")
+	assert.Equal(t, expected, result)
+}
+
+func TestViewService_ResolveTemplateVariables_LastMonth(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	now := time.Now()
+	lastMonthDate := now.AddDate(0, -1, 0)
+	expected := getFirstOfMonth(lastMonthDate).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("{{last_month}}")
+	assert.Equal(t, expected, result)
+}
+
+func TestViewService_ResolveTemplateVariables_Quarter(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	result := vs.ResolveTemplateVariables("{{quarter}}")
+
+	// Should be Q1, Q2, Q3, or Q4
+	assert.True(t, strings.HasPrefix(result, "Q"), "Quarter should start with Q")
+	assert.True(t, len(result) == 2, "Quarter should be 2 characters (e.g., Q1)")
+}
+
+func TestViewService_ResolveTemplateVariables_Year(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	result := vs.ResolveTemplateVariables("{{year}}")
+	expected := time.Now().Format("2006")
+
+	assert.Equal(t, expected, result)
+}
+
+func TestViewService_ResolveTemplateVariables_StartOfQuarter(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	expected := getStartOfQuarter(time.Now()).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("{{start_of_quarter}}")
+	assert.Equal(t, expected, result)
+}
+
+func TestViewService_ResolveTemplateVariables_EndOfQuarter(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	expected := getEndOfQuarter(time.Now()).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("{{end_of_quarter}}")
+	assert.Equal(t, expected, result)
+}
+
+// Phase 3: Environment Variables Tests
+
+func TestViewService_ResolveTemplateVariables_EnvironmentVariable(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+
+	// Set an environment variable for this test
+	envVar := "TEST_OPENNOTES_VAR"
+	envValue := "test_value_123"
+	t.Setenv(envVar, envValue)
+
+	result := vs.ResolveTemplateVariables("{{env:TEST_OPENNOTES_VAR}}")
+	assert.Equal(t, envValue, result)
+}
+
+func TestViewService_ResolveTemplateVariables_EnvironmentVariableWithDefault(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+
+	// Don't set the env var, should use default
+	result := vs.ResolveTemplateVariables("{{env:default_value:NONEXISTENT_VAR_XYZ}}")
+	assert.Equal(t, "default_value", result)
+}
+
+func TestViewService_ResolveTemplateVariables_EnvironmentVariableNotSet(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+
+	// Don't set env var, should return empty string (but log warning)
+	result := vs.ResolveTemplateVariables("{{env:NONEXISTENT_VAR_ABC}}")
+	assert.Equal(t, "", result)
+}
+
+func TestViewService_ResolveTemplateVariables_EnvironmentVariableWithDefaultOverride(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+
+	// Set the env var, should override default
+	envVar := "TEST_OVERRIDE_VAR"
+	envValue := "actual_value"
+	t.Setenv(envVar, envValue)
+
+	result := vs.ResolveTemplateVariables("{{env:default_value:TEST_OVERRIDE_VAR}}")
+	assert.Equal(t, envValue, result)
+}
+
+// Phase 3: Integration Tests (Multiple Patterns)
+
+func TestViewService_ResolveTemplateVariables_TimeArithmeticMonthBoundary(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	now := time.Now()
+
+	// Test month arithmetic crossing year boundary (Dec -> Jan)
+	targetDate := now.AddDate(0, 6, 0) // 6 months forward
+	expected := getFirstOfMonth(targetDate).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("{{this_month+6}}")
+	assert.Equal(t, expected, result)
+}
+
+func TestViewService_ResolveTemplateVariables_MultiplePatterns(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	now := time.Now()
+
+	// Test multiple patterns in one string
+	today := now.Format("2006-01-02")
+	tomorrow := now.AddDate(0, 0, 1).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("From {{today}} to {{today+1}}")
+	assert.Contains(t, result, today)
+	assert.Contains(t, result, tomorrow)
+	assert.NotContains(t, result, "{{")
+}
+
+func TestViewService_ResolveTemplateVariables_EnvironmentAndTimePatterns(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+
+	t.Setenv("TEST_STATUS", "active")
+	now := time.Now()
+	today := now.Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("status={{env:TEST_STATUS}} since={{today}}")
+	assert.Contains(t, result, "status=active")
+	assert.Contains(t, result, "since="+today)
+	assert.NotContains(t, result, "{{")
+}

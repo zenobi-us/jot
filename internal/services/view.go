@@ -248,19 +248,117 @@ func (vs *ViewService) loadGlobalView(name string) (*core.ViewDefinition, error)
 func (vs *ViewService) ResolveTemplateVariables(value string) string {
 	now := time.Now()
 
+	// Static replacements (no parsing needed)
 	replacements := map[string]string{
-		"{{today}}":      now.Format("2006-01-02"),
-		"{{yesterday}}":  now.AddDate(0, 0, -1).Format("2006-01-02"),
-		"{{this_week}}":  getStartOfWeek(now).Format("2006-01-02"),
-		"{{this_month}}": now.Format("2006-01") + "-01",
-		"{{now}}":        now.Format(time.RFC3339),
+		"{{today}}":            now.Format("2006-01-02"),
+		"{{yesterday}}":        now.AddDate(0, 0, -1).Format("2006-01-02"),
+		"{{this_week}}":        getStartOfWeek(now).Format("2006-01-02"),
+		"{{this_month}}":       now.Format("2006-01") + "-01",
+		"{{start_of_month}}":   now.Format("2006-01") + "-01",
+		"{{end_of_month}}":     getEndOfMonth(now).Format("2006-01-02"),
+		"{{now}}":              now.Format(time.RFC3339),
+		"{{next_week}}":        getStartOfWeek(now.AddDate(0, 0, 7)).Format("2006-01-02"),
+		"{{next_month}}":       getFirstOfMonth(now.AddDate(0, 1, 0)).Format("2006-01-02"),
+		"{{last_week}}":        getStartOfWeek(now.AddDate(0, 0, -7)).Format("2006-01-02"),
+		"{{last_month}}":       getFirstOfMonth(now.AddDate(0, -1, 0)).Format("2006-01-02"),
+		"{{quarter}}":          getCurrentQuarter(now),
+		"{{year}}":             now.Format("2006"),
+		"{{start_of_quarter}}": getStartOfQuarter(now).Format("2006-01-02"),
+		"{{end_of_quarter}}":   getEndOfQuarter(now).Format("2006-01-02"),
 	}
 
 	for placeholder, replacement := range replacements {
 		value = strings.ReplaceAll(value, placeholder, replacement)
 	}
 
+	// Dynamic replacements requiring pattern parsing
+
+	// Handle {{today-N}}, {{today+N}} patterns (time arithmetic by days)
+	value = resolveDayArithmetic(value, now)
+
+	// Handle {{this_week-N}}, {{this_month-N}} patterns (time arithmetic by weeks/months)
+	value = resolveWeekMonthArithmetic(value, now)
+
+	// Handle {{env:VAR}} and {{env:DEFAULT:VAR}} patterns (environment variables)
+	value = resolveEnvironmentVariables(value)
+
 	return value
+}
+
+// resolveDayArithmetic handles {{today-N}} and {{today+N}} patterns
+func resolveDayArithmetic(value string, now time.Time) string {
+	// Match {{today+N}} or {{today-N}} where N is a number
+	re := regexp.MustCompile(`\{\{today([+-]\d+)\}\}`)
+	return re.ReplaceAllStringFunc(value, func(match string) string {
+		// Extract the offset (e.g., "+7" or "-3")
+		offsetStr := strings.TrimPrefix(strings.TrimSuffix(match, "}}"), "{{today")
+		offset, err := strconv.Atoi(offsetStr)
+		if err != nil {
+			return match // Return unchanged if parsing fails
+		}
+		return now.AddDate(0, 0, offset).Format("2006-01-02")
+	})
+}
+
+// resolveWeekMonthArithmetic handles {{this_week-N}}, {{this_month-N}} patterns
+func resolveWeekMonthArithmetic(value string, now time.Time) string {
+	// Match {{this_week-N}} or {{this_week+N}}
+	reWeek := regexp.MustCompile(`\{\{this_week([+-]\d+)\}\}`)
+	value = reWeek.ReplaceAllStringFunc(value, func(match string) string {
+		offsetStr := strings.TrimPrefix(strings.TrimSuffix(match, "}}"), "{{this_week")
+		offsetWeeks, err := strconv.Atoi(offsetStr)
+		if err != nil {
+			return match
+		}
+		targetDate := now.AddDate(0, 0, offsetWeeks*7)
+		return getStartOfWeek(targetDate).Format("2006-01-02")
+	})
+
+	// Match {{this_month-N}} or {{this_month+N}}
+	reMonth := regexp.MustCompile(`\{\{this_month([+-]\d+)\}\}`)
+	value = reMonth.ReplaceAllStringFunc(value, func(match string) string {
+		offsetStr := strings.TrimPrefix(strings.TrimSuffix(match, "}}"), "{{this_month")
+		offsetMonths, err := strconv.Atoi(offsetStr)
+		if err != nil {
+			return match
+		}
+		targetDate := now.AddDate(0, offsetMonths, 0)
+		return getFirstOfMonth(targetDate).Format("2006-01-02")
+	})
+
+	return value
+}
+
+// resolveEnvironmentVariables handles {{env:VAR}} and {{env:DEFAULT:VAR}} patterns
+func resolveEnvironmentVariables(value string) string {
+	// Match {{env:something}} patterns
+	re := regexp.MustCompile(`\{\{env:([^}]+)\}\}`)
+	return re.ReplaceAllStringFunc(value, func(match string) string {
+		// Extract content between env: and }}
+		content := strings.TrimPrefix(strings.TrimSuffix(match, "}}"), "{{env:")
+
+		// Check if it has a default value (format: DEFAULT:VAR_NAME)
+		if strings.Contains(content, ":") {
+			parts := strings.SplitN(content, ":", 2)
+			defaultValue := parts[0]
+			varName := parts[1]
+
+			val := os.Getenv(varName)
+			if val == "" {
+				return defaultValue
+			}
+			return val
+		}
+
+		// No default value, just substitute environment variable
+		val := os.Getenv(content)
+		if val == "" {
+			// Log warning if env var not found but don't fail
+			log := Log("ViewService")
+			log.Warn().Str("var", content).Msg("Environment variable not set, using empty string")
+		}
+		return val
+	})
 }
 
 // getStartOfWeek returns the start of the week (Monday)
@@ -272,6 +370,67 @@ func getStartOfWeek(t time.Time) time.Time {
 	}
 	offset := 1 - weekday
 	return t.AddDate(0, 0, offset)
+}
+
+// getFirstOfMonth returns the first day of the month
+func getFirstOfMonth(t time.Time) time.Time {
+	return t.AddDate(0, 0, 1-t.Day())
+}
+
+// getEndOfMonth returns the last day of the month
+func getEndOfMonth(t time.Time) time.Time {
+	// Get the first day of next month and subtract one day
+	nextMonth := t.AddDate(0, 1, 0)
+	firstOfNext := getFirstOfMonth(nextMonth)
+	return firstOfNext.AddDate(0, 0, -1)
+}
+
+// getCurrentQuarter returns the current quarter (Q1, Q2, Q3, Q4)
+func getCurrentQuarter(t time.Time) string {
+	month := t.Month()
+	if month <= 3 {
+		return "Q1"
+	} else if month <= 6 {
+		return "Q2"
+	} else if month <= 9 {
+		return "Q3"
+	}
+	return "Q4"
+}
+
+// getStartOfQuarter returns the first day of the current quarter
+func getStartOfQuarter(t time.Time) time.Time {
+	month := t.Month()
+	var quarterMonth int
+	switch {
+	case month <= 3:
+		quarterMonth = 1
+	case month <= 6:
+		quarterMonth = 4
+	case month <= 9:
+		quarterMonth = 7
+	default:
+		quarterMonth = 10
+	}
+	return time.Date(t.Year(), time.Month(quarterMonth), 1, 0, 0, 0, 0, t.Location())
+}
+
+// getEndOfQuarter returns the last day of the current quarter
+func getEndOfQuarter(t time.Time) time.Time {
+	month := t.Month()
+	var quarterMonth int
+	switch {
+	case month <= 3:
+		quarterMonth = 3
+	case month <= 6:
+		quarterMonth = 6
+	case month <= 9:
+		quarterMonth = 9
+	default:
+		quarterMonth = 12
+	}
+	lastDay := time.Date(t.Year(), time.Month(quarterMonth)+1, 1, 0, 0, 0, 0, t.Location())
+	return lastDay.AddDate(0, 0, -1)
 }
 
 // ValidateViewDefinition validates a view definition for security and correctness
