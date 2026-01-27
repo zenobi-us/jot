@@ -30,9 +30,11 @@ type ViewParameter struct {
 // ViewQuery represents the query logic for a view
 type ViewQuery struct {
 	Conditions []ViewCondition `json:"conditions,omitempty"`
+	Distinct   bool            `json:"distinct,omitempty"`
 	OrderBy    string          `json:"order_by,omitempty"`
 	GroupBy    string          `json:"group_by,omitempty"`
 	Limit      int             `json:"limit,omitempty"`
+	Offset     int             `json:"offset,omitempty"`
 }
 
 // ViewCondition represents a single query condition

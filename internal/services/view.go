@@ -601,10 +601,21 @@ func (vs *ViewService) GenerateSQL(view *core.ViewDefinition, params map[string]
 
 	// Build query using read_markdown for notebook-relative file access
 	// Note: The glob pattern (first parameter) is added by the caller
-	query := "SELECT * FROM read_markdown(?, include_filepath:=true)"
+	selectClause := "SELECT *"
+	if view.Query.Distinct {
+		selectClause = "SELECT DISTINCT *"
+	}
+	query := selectClause + " FROM read_markdown(?, include_filepath:=true)"
 
 	if len(conditions) > 0 {
 		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	if view.Query.GroupBy != "" {
+		if err := validateField(view.Query.GroupBy); err != nil {
+			return "", nil, fmt.Errorf("invalid group by field: %w", err)
+		}
+		query += " GROUP BY " + view.Query.GroupBy
 	}
 
 	if view.Query.OrderBy != "" {
@@ -613,6 +624,10 @@ func (vs *ViewService) GenerateSQL(view *core.ViewDefinition, params map[string]
 
 	if view.Query.Limit > 0 {
 		query += fmt.Sprintf(" LIMIT %d", view.Query.Limit)
+	}
+
+	if view.Query.Offset > 0 {
+		query += fmt.Sprintf(" OFFSET %d", view.Query.Offset)
 	}
 
 	return query, args, nil

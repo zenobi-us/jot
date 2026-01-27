@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -829,4 +830,178 @@ func TestViewService_GenerateSQL_WithUserParameters(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Contains(t, sql, "WHERE data.status IN (?,?)")
 	assert.Equal(t, []interface{}{"backlog", "in-progress"}, args)
+}
+
+// Phase 1: GROUP BY Implementation Tests
+
+func TestViewService_GenerateSQL_GroupBy_ValidField(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "count-by-status",
+		Query: core.ViewQuery{
+			GroupBy: "metadata->>'status'",
+		},
+	}
+
+	sql, _, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "GROUP BY metadata->>'status'")
+}
+
+func TestViewService_GenerateSQL_GroupBy_InvalidField(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "invalid-groupby",
+		Query: core.ViewQuery{
+			GroupBy: "'; DROP TABLE notes; --",
+		},
+	}
+
+	sql, args, err := vs.GenerateSQL(view, map[string]string{})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid group by field")
+	assert.Equal(t, "", sql)
+	assert.Nil(t, args)
+}
+
+func TestViewService_GenerateSQL_GroupBy_WithOrderBy(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "grouped-and-ordered",
+		Query: core.ViewQuery{
+			GroupBy: "metadata->>'status'",
+			OrderBy: "metadata->>'status' ASC",
+		},
+	}
+
+	sql, _, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "GROUP BY metadata->>'status'")
+	assert.Contains(t, sql, "ORDER BY metadata->>'status' ASC")
+	// Verify ORDER is after GROUP BY in SQL
+	groupByPos := strings.Index(sql, "GROUP BY")
+	orderByPos := strings.Index(sql, "ORDER BY")
+	assert.True(t, groupByPos > 0 && orderByPos > groupByPos, "ORDER BY should come after GROUP BY")
+}
+
+// Phase 1: DISTINCT Support Tests
+
+func TestViewService_GenerateSQL_Distinct_Basic(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "unique-notes",
+		Query: core.ViewQuery{
+			Distinct: true,
+		},
+	}
+
+	sql, _, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "SELECT DISTINCT *")
+}
+
+func TestViewService_GenerateSQL_Distinct_WithWhere(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "unique-by-status",
+		Query: core.ViewQuery{
+			Distinct: true,
+			Conditions: []core.ViewCondition{
+				{
+					Field:    "metadata->>'status'",
+					Operator: "=",
+					Value:    "done",
+				},
+			},
+		},
+	}
+
+	sql, args, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "SELECT DISTINCT *")
+	assert.Contains(t, sql, "WHERE metadata->>'status' = ?")
+	assert.Equal(t, []interface{}{"done"}, args)
+}
+
+// Phase 1: OFFSET Support Tests
+
+func TestViewService_GenerateSQL_Offset_WithLimit(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "paginated",
+		Query: core.ViewQuery{
+			Limit:  10,
+			Offset: 20,
+		},
+	}
+
+	sql, _, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "LIMIT 10")
+	assert.Contains(t, sql, "OFFSET 20")
+	// Verify OFFSET comes after LIMIT
+	limitPos := strings.Index(sql, "LIMIT")
+	offsetPos := strings.Index(sql, "OFFSET")
+	assert.True(t, limitPos > 0 && offsetPos > limitPos, "OFFSET should come after LIMIT")
+}
+
+func TestViewService_GenerateSQL_Offset_Alone(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "skipped-results",
+		Query: core.ViewQuery{
+			Offset: 50,
+		},
+	}
+
+	sql, _, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "OFFSET 50")
+	assert.NotContains(t, sql, "LIMIT")
+}
+
+func TestViewService_GenerateSQL_Pagination_Calculation(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+
+	// Simulate pagination: Page 3 with 10 items per page = OFFSET 20, LIMIT 10
+	pageSize := 10
+	pageNum := 3
+	offset := (pageNum - 1) * pageSize
+
+	view := &core.ViewDefinition{
+		Name: "page-3",
+		Query: core.ViewQuery{
+			Limit:  pageSize,
+			Offset: offset,
+		},
+	}
+
+	sql, _, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "LIMIT 10")
+	assert.Contains(t, sql, "OFFSET 20")
 }
