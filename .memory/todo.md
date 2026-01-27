@@ -7,7 +7,21 @@
 
 ---
 
-## High Priority Maintenance
+## 🔴 High Priority - Implementation Work
+
+### 🚀 Missing View System Features (NEW)
+
+1. **[task-3d477ab8]** Implement Missing View System Features (GROUP BY, DISTINCT, OFFSET, HAVING, Aggregations)
+   - **Status**: 🆕 PLANNING
+   - **Priority**: **HIGH** - Group By is critical for dashboards
+   - **Phases**: 3 phases (2 + 4 + 2 hours)
+   - **Phase 1 (2 hrs)**: GROUP BY, DISTINCT, OFFSET - Immediate impact
+   - **Phase 2 (4 hrs)**: HAVING, Aggregations - Full analytics
+   - **Phase 3 (2 hrs)**: Templates, env vars - Optional enhancements
+   - **Investigation**: Complete (4 documents, /tmp/)
+   - **Next**: Begin Phase 1 implementation
+
+## 🟡 High Priority Maintenance
 
 ### 📝 Documentation Updates
 
