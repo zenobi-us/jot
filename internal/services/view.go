@@ -293,6 +293,34 @@ func (vs *ViewService) ValidateViewDefinition(view *core.ViewDefinition) error {
 		}
 	}
 
+	// Validate HAVING conditions
+	if len(view.Query.Having) > 0 {
+		// HAVING requires GROUP BY
+		if view.Query.GroupBy == "" {
+			return fmt.Errorf("HAVING clause requires GROUP BY to be specified")
+		}
+
+		for _, havingCond := range view.Query.Having {
+			if err := vs.validateHavingCondition(havingCond); err != nil {
+				return err
+			}
+		}
+	}
+
+	// Validate aggregate columns
+	for _, aggFunc := range view.Query.AggregateColumns {
+		if err := vs.validateAggregateFunction(aggFunc); err != nil {
+			return err
+		}
+	}
+
+	// Validate select columns
+	for _, col := range view.Query.SelectColumns {
+		if err := validateField(col); err != nil {
+			return fmt.Errorf("invalid select column: %w", err)
+		}
+	}
+
 	// Validate parameters count
 	if len(view.Parameters) > 5 {
 		return fmt.Errorf("too many parameters (max 5)")
@@ -318,6 +346,85 @@ func (vs *ViewService) validateViewCondition(cond core.ViewCondition) error {
 	// Validate operator
 	if err := validateOperator(cond.Operator); err != nil {
 		return fmt.Errorf("invalid operator in condition: %w", err)
+	}
+
+	return nil
+}
+
+// validateHavingCondition validates a HAVING clause condition
+// Similar to validateViewCondition but allows aggregate functions in field names
+func (vs *ViewService) validateHavingCondition(cond core.ViewCondition) error {
+	// For HAVING, we need to validate that:
+	// 1. The field contains an aggregate function (COUNT, SUM, AVG, MAX, MIN)
+	// 2. The operator is valid
+	// 3. The field follows a safe pattern
+
+	// Whitelist of aggregate functions allowed in HAVING
+	allowedAggregates := []string{
+		"COUNT(",
+		"SUM(",
+		"AVG(",
+		"MAX(",
+		"MIN(",
+	}
+
+	hasAggregate := false
+	for _, agg := range allowedAggregates {
+		if strings.Contains(strings.ToUpper(cond.Field), agg) {
+			hasAggregate = true
+			break
+		}
+	}
+
+	if !hasAggregate {
+		return fmt.Errorf("HAVING condition must contain an aggregate function (COUNT, SUM, AVG, MAX, MIN)")
+	}
+
+	// Basic injection prevention: ensure field ends with ) to close aggregate
+	if !strings.Contains(cond.Field, ")") {
+		return fmt.Errorf("invalid aggregate function format in HAVING condition")
+	}
+
+	// Validate operator
+	if err := validateOperator(cond.Operator); err != nil {
+		return fmt.Errorf("invalid operator in HAVING condition: %w", err)
+	}
+
+	return nil
+}
+
+// validateAggregateFunction validates an aggregate function string
+// Ensures only whitelisted functions are used and prevents SQL injection
+func (vs *ViewService) validateAggregateFunction(aggFunc string) error {
+	// Trim whitespace
+	aggFunc = strings.TrimSpace(aggFunc)
+
+	// Whitelist of allowed aggregate function patterns
+	allowedAggregates := []string{
+		"COUNT(",
+		"SUM(",
+		"AVG(",
+		"MAX(",
+		"MIN(",
+	}
+
+	upperFunc := strings.ToUpper(aggFunc)
+	hasValidAggregate := false
+
+	for _, agg := range allowedAggregates {
+		if strings.HasPrefix(upperFunc, agg) {
+			hasValidAggregate = true
+			break
+		}
+	}
+
+	if !hasValidAggregate {
+		return fmt.Errorf("invalid aggregate function: %s (allowed: COUNT, SUM, AVG, MAX, MIN)", aggFunc)
+	}
+
+	// Ensure function is properly closed with )
+	if !strings.HasSuffix(strings.TrimSpace(aggFunc), ")") {
+		return fmt.Errorf("aggregate function not properly closed: %s", aggFunc)
 	}
 
 	return nil
@@ -601,10 +708,42 @@ func (vs *ViewService) GenerateSQL(view *core.ViewDefinition, params map[string]
 
 	// Build query using read_markdown for notebook-relative file access
 	// Note: The glob pattern (first parameter) is added by the caller
+
+	// Build SELECT clause with support for aggregate functions
 	selectClause := "SELECT *"
 	if view.Query.Distinct {
 		selectClause = "SELECT DISTINCT *"
 	}
+
+	// If explicit columns or aggregates are specified, build custom SELECT clause
+	if len(view.Query.SelectColumns) > 0 || len(view.Query.AggregateColumns) > 0 {
+		var selectParts []string
+
+		// Add explicit columns
+		for _, col := range view.Query.SelectColumns {
+			if err := validateField(col); err != nil {
+				return "", nil, fmt.Errorf("invalid select column: %w", err)
+			}
+			selectParts = append(selectParts, col)
+		}
+
+		// Add aggregate columns
+		for alias, aggFunc := range view.Query.AggregateColumns {
+			if err := vs.validateAggregateFunction(aggFunc); err != nil {
+				return "", nil, fmt.Errorf("invalid aggregate function for column %s: %w", alias, err)
+			}
+			selectParts = append(selectParts, fmt.Sprintf("%s AS %s", aggFunc, alias))
+		}
+
+		if len(selectParts) > 0 {
+			distinct := ""
+			if view.Query.Distinct {
+				distinct = "DISTINCT "
+			}
+			selectClause = "SELECT " + distinct + strings.Join(selectParts, ", ")
+		}
+	}
+
 	query := selectClause + " FROM read_markdown(?, include_filepath:=true)"
 
 	if len(conditions) > 0 {
@@ -616,6 +755,43 @@ func (vs *ViewService) GenerateSQL(view *core.ViewDefinition, params map[string]
 			return "", nil, fmt.Errorf("invalid group by field: %w", err)
 		}
 		query += " GROUP BY " + view.Query.GroupBy
+	}
+
+	// Build HAVING clause if conditions exist
+	if len(view.Query.Having) > 0 {
+		var havingConditions []string
+
+		for _, havingCond := range view.Query.Having {
+			if err := vs.validateHavingCondition(havingCond); err != nil {
+				return "", nil, fmt.Errorf("invalid having condition: %w", err)
+			}
+
+			// Build HAVING condition SQL based on operator
+			var havingSQL string
+			switch havingCond.Operator {
+			case "=":
+				havingSQL = fmt.Sprintf("%s = ?", havingCond.Field)
+			case "!=":
+				havingSQL = fmt.Sprintf("%s != ?", havingCond.Field)
+			case "<":
+				havingSQL = fmt.Sprintf("%s < ?", havingCond.Field)
+			case ">":
+				havingSQL = fmt.Sprintf("%s > ?", havingCond.Field)
+			case "<=":
+				havingSQL = fmt.Sprintf("%s <= ?", havingCond.Field)
+			case ">=":
+				havingSQL = fmt.Sprintf("%s >= ?", havingCond.Field)
+			default:
+				return "", nil, fmt.Errorf("unsupported HAVING operator: %s", havingCond.Operator)
+			}
+
+			havingConditions = append(havingConditions, havingSQL)
+			args = append(args, havingCond.Value)
+		}
+
+		if len(havingConditions) > 0 {
+			query += " HAVING " + strings.Join(havingConditions, " AND ")
+		}
 	}
 
 	if view.Query.OrderBy != "" {

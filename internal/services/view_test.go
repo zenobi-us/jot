@@ -1005,3 +1005,361 @@ func TestViewService_GenerateSQL_Pagination_Calculation(t *testing.T) {
 	assert.Contains(t, sql, "LIMIT 10")
 	assert.Contains(t, sql, "OFFSET 20")
 }
+
+// Phase 2: HAVING Clause Tests
+
+func TestViewService_GenerateSQL_Having_WithCountAggregate(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "status-count-filter",
+		Query: core.ViewQuery{
+			GroupBy: "metadata->>'status'",
+			Having: []core.ViewCondition{
+				{
+					Field:    "COUNT(*)",
+					Operator: ">",
+					Value:    "5",
+				},
+			},
+		},
+	}
+
+	sql, args, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "GROUP BY metadata->>'status'")
+	assert.Contains(t, sql, "HAVING COUNT(*) > ?")
+	assert.Equal(t, []interface{}{"5"}, args)
+}
+
+func TestViewService_GenerateSQL_Having_WithSumAggregate(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "sum-filter",
+		Query: core.ViewQuery{
+			GroupBy: "metadata->>'category'",
+			Having: []core.ViewCondition{
+				{
+					Field:    "SUM(metadata->>'priority')",
+					Operator: ">=",
+					Value:    "100",
+				},
+			},
+		},
+	}
+
+	sql, args, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "GROUP BY metadata->>'category'")
+	assert.Contains(t, sql, "HAVING SUM(metadata->>'priority') >= ?")
+	assert.Equal(t, []interface{}{"100"}, args)
+}
+
+func TestViewService_GenerateSQL_Having_WithMultipleConditions(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "multi-condition-having",
+		Query: core.ViewQuery{
+			GroupBy: "metadata->>'status'",
+			Having: []core.ViewCondition{
+				{
+					Field:    "COUNT(*)",
+					Operator: ">",
+					Value:    "3",
+				},
+				{
+					Field:    "AVG(metadata->>'priority')",
+					Operator: "<",
+					Value:    "7",
+				},
+			},
+		},
+	}
+
+	sql, args, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "GROUP BY metadata->>'status'")
+	assert.Contains(t, sql, "HAVING COUNT(*) > ?")
+	assert.Contains(t, sql, "AVG(metadata->>'priority') < ?")
+	assert.Equal(t, []interface{}{"3", "7"}, args)
+	// Verify conditions are joined with AND
+	assert.Contains(t, sql, "HAVING COUNT(*) > ? AND AVG(metadata->>'priority') < ?")
+}
+
+func TestViewService_GenerateSQL_Having_InvalidCondition(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "invalid-having",
+		Query: core.ViewQuery{
+			GroupBy: "metadata->>'status'",
+			Having: []core.ViewCondition{
+				{
+					Field:    "'; DROP TABLE notes; --",
+					Operator: ">",
+					Value:    "5",
+				},
+			},
+		},
+	}
+
+	sql, args, err := vs.GenerateSQL(view, map[string]string{})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid having condition")
+	assert.Equal(t, "", sql)
+	assert.Nil(t, args)
+}
+
+// Phase 2: Aggregate Functions Tests
+
+func TestViewService_GenerateSQL_SelectColumns_Explicit(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "select-explicit",
+		Query: core.ViewQuery{
+			SelectColumns: []string{
+				"metadata->>'title'",
+				"metadata->>'status'",
+			},
+		},
+	}
+
+	sql, _, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "SELECT metadata->>'title', metadata->>'status'")
+}
+
+func TestViewService_GenerateSQL_AggregateColumns_Count(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "count-aggregate",
+		Query: core.ViewQuery{
+			AggregateColumns: map[string]string{
+				"total_notes": "COUNT(*)",
+			},
+		},
+	}
+
+	sql, _, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "SELECT COUNT(*) AS total_notes")
+}
+
+func TestViewService_GenerateSQL_AggregateColumns_Sum(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "sum-aggregate",
+		Query: core.ViewQuery{
+			AggregateColumns: map[string]string{
+				"total_priority": "SUM(metadata->>'priority')",
+			},
+		},
+	}
+
+	sql, _, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "SELECT SUM(metadata->>'priority') AS total_priority")
+}
+
+func TestViewService_GenerateSQL_AggregateColumns_AvgWithCasting(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "avg-aggregate",
+		Query: core.ViewQuery{
+			AggregateColumns: map[string]string{
+				"avg_priority": "AVG((metadata->>'priority')::INTEGER)",
+			},
+		},
+	}
+
+	sql, _, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "SELECT AVG((metadata->>'priority')::INTEGER) AS avg_priority")
+}
+
+func TestViewService_GenerateSQL_MixingSelectAndAggregate(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "mixed-select",
+		Query: core.ViewQuery{
+			SelectColumns: []string{
+				"metadata->>'status'",
+			},
+			AggregateColumns: map[string]string{
+				"count":        "COUNT(*)",
+				"avg_priority": "AVG((metadata->>'priority')::INTEGER)",
+			},
+		},
+	}
+
+	sql, _, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "SELECT")
+	assert.Contains(t, sql, "metadata->>'status'")
+	assert.Contains(t, sql, "COUNT(*) AS count")
+	assert.Contains(t, sql, "AVG((metadata->>'priority')::INTEGER) AS avg_priority")
+}
+
+func TestViewService_GenerateSQL_AggregateColumns_InvalidFunction(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "invalid-aggregate",
+		Query: core.ViewQuery{
+			AggregateColumns: map[string]string{
+				"malicious": "'; DROP TABLE notes; --",
+			},
+		},
+	}
+
+	sql, args, err := vs.GenerateSQL(view, map[string]string{})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid aggregate function")
+	assert.Equal(t, "", sql)
+	assert.Nil(t, args)
+}
+
+// Phase 2: Integration Tests
+
+func TestViewService_GenerateSQL_Having_WithOrderBy(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "having-with-order",
+		Query: core.ViewQuery{
+			GroupBy: "metadata->>'status'",
+			Having: []core.ViewCondition{
+				{
+					Field:    "COUNT(*)",
+					Operator: ">",
+					Value:    "2",
+				},
+			},
+			OrderBy: "COUNT(*) DESC",
+		},
+	}
+
+	sql, _, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	// Verify clause order: GROUP BY before HAVING before ORDER BY
+	groupByPos := strings.Index(sql, "GROUP BY")
+	havingPos := strings.Index(sql, "HAVING")
+	orderByPos := strings.Index(sql, "ORDER BY")
+	assert.True(t, groupByPos > 0 && havingPos > groupByPos && orderByPos > havingPos,
+		"Clause order should be: GROUP BY, HAVING, ORDER BY")
+}
+
+func TestViewService_GenerateSQL_HavingWithLimitAndOffset(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "complete-aggregation",
+		Query: core.ViewQuery{
+			GroupBy: "metadata->>'status'",
+			Having: []core.ViewCondition{
+				{
+					Field:    "COUNT(*)",
+					Operator: ">=",
+					Value:    "1",
+				},
+			},
+			Limit:  5,
+			Offset: 10,
+		},
+	}
+
+	sql, _, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "GROUP BY metadata->>'status'")
+	assert.Contains(t, sql, "HAVING COUNT(*) >= ?")
+	assert.Contains(t, sql, "LIMIT 5")
+	assert.Contains(t, sql, "OFFSET 10")
+	// Verify order: HAVING before LIMIT before OFFSET
+	havingPos := strings.Index(sql, "HAVING")
+	limitPos := strings.Index(sql, "LIMIT")
+	offsetPos := strings.Index(sql, "OFFSET")
+	assert.True(t, havingPos > 0 && limitPos > havingPos && offsetPos > limitPos,
+		"Clause order should be: HAVING, LIMIT, OFFSET")
+}
+
+func TestViewService_GenerateSQL_AggregateWithGroupByAndHaving(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "full-aggregation",
+		Query: core.ViewQuery{
+			SelectColumns: []string{
+				"metadata->>'status'",
+			},
+			AggregateColumns: map[string]string{
+				"count":        "COUNT(*)",
+				"max_priority": "MAX((metadata->>'priority')::INTEGER)",
+			},
+			GroupBy: "metadata->>'status'",
+			Having: []core.ViewCondition{
+				{
+					Field:    "COUNT(*)",
+					Operator: ">",
+					Value:    "0",
+				},
+			},
+			OrderBy: "count DESC",
+			Limit:   10,
+		},
+	}
+
+	sql, args, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+
+	// Verify SELECT clause has all columns
+	assert.Contains(t, sql, "SELECT")
+	assert.Contains(t, sql, "metadata->>'status'")
+	assert.Contains(t, sql, "COUNT(*) AS count")
+	assert.Contains(t, sql, "MAX((metadata->>'priority')::INTEGER) AS max_priority")
+
+	// Verify GROUP BY
+	assert.Contains(t, sql, "GROUP BY metadata->>'status'")
+
+	// Verify HAVING
+	assert.Contains(t, sql, "HAVING COUNT(*) > ?")
+
+	// Verify ORDER BY and LIMIT
+	assert.Contains(t, sql, "ORDER BY count DESC")
+	assert.Contains(t, sql, "LIMIT 10")
+
+	// Verify argument values
+	assert.Equal(t, []interface{}{"0"}, args)
+}
