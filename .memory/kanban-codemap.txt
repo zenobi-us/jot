@@ -1,0 +1,326 @@
+# Kanban View - CodeMapper Relationship Map
+
+## File Structure
+
+internal/services/
+├── view.go              ← ViewService (main orchestrator)
+├── view_test.go         ← Unit tests (71 test cases)
+└── [other services]
+
+internal/core/
+├── view.go              ← Type definitions
+└── [other types]
+
+cmd/
+└── notes_view.go        ← CLI command handler
+
+tests/
+└── e2e/
+    └── go_smoke_test.go ← Integration tests
+
+---
+
+## Key Functions & Their Relationships
+
+### ViewService Methods (view.go)
+
+GetView(name)
+  ├─ Checks hierarchy: notebook > global > built-in
+  ├─ Calls: loadNotebookView(name)
+  ├─ Calls: loadGlobalView(name)
+  └─ Returns: *ViewDefinition or error
+
+GenerateSQL(view, params)
+  ├─ Calls: ValidateParameters(view, params)
+  │   └─ Calls: validateParamType(param, value)
+  ├─ Calls: ApplyParameterDefaults(view, params)
+  ├─ Calls: ResolveTemplateVariables(value)
+  │   └─ Resolves: {{today}}, {{yesterday}}, {{now}}, etc.
+  ├─ Builds WHERE clauses from conditions
+  │   ├─ "IS NULL" → Direct
+  │   ├─ "IN" → Comma-split, parameterized
+  │   ├─ "LIKE" → Escaped string
+  │   └─ Other → Standard operators
+  ├─ Appends ORDER BY
+  ├─ Appends LIMIT
+  └─ Returns: (SQL string, args []interface{}, error)
+
+ValidateViewDefinition(view)
+  ├─ Calls: validateViewCondition(cond)
+  │   ├─ Calls: validateField(cond.Field)
+  │   │   └─ Whitelist check: metadata->>, metadata->, path, etc.
+  │   └─ Calls: validateOperator(cond.Operator)
+  │       └─ Whitelist check: =, !=, <, >, <=, >=, LIKE, IN, IS NULL
+  └─ Calls: validateViewParameter(param)
+      └─ Type check: string, list, date, bool
+
+FormatQueryValue(operator, value)
+  ├─ "IN" → Split by comma, escape each, wrap in parens
+  ├─ "LIKE" → Escape and quote
+  ├─ "IS NULL" → Empty string
+  └─ Other → Try parse as number, else quote
+
+ListAllViews()
+  ├─ Calls: ListBuiltinViews()
+  ├─ Calls: LoadAllGlobalViews()
+  └─ Calls: LoadAllNotebookViews()
+  └─ Returns: []ViewInfo (with origin info)
+
+### Built-in Views Initialization
+
+initializeBuiltinViews()
+  ├─ Creates: today → Select by date with conditions
+  ├─ Creates: recent → Order by updated_at DESC, limit 20
+  ├─ Creates: kanban ← OUR FOCUS
+  │   ├─ Parameter: status (list, optional, default: "backlog,todo,...")
+  │   ├─ Condition: metadata->>'status' IN {{status}}
+  │   └─ OrderBy: (metadata->>'priority')::INTEGER DESC, updated_at DESC
+  ├─ Creates: untagged → Select where tags IS NULL
+  ├─ Creates: orphans → With definition parameter
+  └─ Creates: broken-links → No parameters
+
+### Command Handler Flow (cmd/notes_view.go)
+
+notesViewCmd.RunE()
+  ├─ Checks: viewList flag or len(args) == 0
+  │   └─ Calls: handleViewList(cmd, format)
+  │       └─ Lists all views
+  │
+  └─ Otherwise: Execute view
+      ├─ Parse: viewName = args[0]
+      ├─ Call: requireNotebook(cmd)
+      ├─ Initialize: NewViewService(cfgService, notebookDir)
+      ├─ Call: vs.GetView(viewName) ← Returns kanban definition
+      ├─ Call: vs.ParseViewParameters(viewParams)
+      │   └─ Format: "status=todo,done" → {status: "todo,done"}
+      ├─ Call: vs.GenerateSQL(view, userParams)
+      │   └─ Returns SQL + args
+      ├─ Build: glob = "/path/**/*.md"
+      ├─ Call: dbService.GetDB(ctx)
+      ├─ Call: db.QueryContext(ctx, sqlQuery, finalArgs...)
+      ├─ Read: rows into []map[string]interface{}
+      ├─ Call: display.RenderSQLResults(results)
+      └─ Output: Formatted results
+
+---
+
+## Kanban-Specific Flow
+
+User Command:
+  opennotes notes view kanban --param status=todo,in-progress
+
+↓
+
+Command Parsing:
+  viewName = "kanban"
+  viewParams = "status=todo,in-progress"
+
+↓
+
+ViewService.GetView("kanban"):
+  1. Check .opennotes.json in notebook → Not found
+  2. Check ~/.config/opennotes/config.json → Not found
+  3. Check builtinViews["kanban"] → FOUND!
+  
+  Returns: &ViewDefinition{
+    Name: "kanban",
+    Description: "Notes grouped by status column",
+    Parameters: [{
+      Name: "status",
+      Type: "list",
+      Required: false,
+      Default: "backlog,todo,in-progress,reviewing,testing,deploying,done"
+    }],
+    Query: ViewQuery{
+      Conditions: [{
+        Logic: "AND",
+        Field: "metadata->>'status'",
+        Operator: "IN",
+        Value: "{{status}}"  ← Placeholder to be replaced
+      }],
+      OrderBy: "(metadata->>'priority')::INTEGER DESC, metadata->>'updated_at' DESC"
+    }
+  }
+
+↓
+
+ViewService.ParseViewParameters("status=todo,in-progress"):
+  Returns: map[string]string{"status": "todo,in-progress"}
+
+↓
+
+ViewService.GenerateSQL(view, params):
+  1. ValidateParameters:
+     - Check "status" is known parameter ✓
+     - Check type is "list" ✓
+     - validateParamType: Split by comma, check no empty items ✓
+  
+  2. ApplyParameterDefaults:
+     - "status" already provided, use "todo,in-progress"
+     - (If not provided, would use default)
+  
+  3. ResolveTemplateVariables:
+     - No {{today}} or date templates to resolve
+  
+  4. Build WHERE clause from conditions:
+     - Condition: Field="metadata->>'status'", Operator="IN", Value="{{status}}"
+     - Replace {{status}} with "todo,in-progress"
+     - Split by comma: ["todo", "in-progress"]
+     - Generate: "WHERE metadata->>'status' IN (?, ?)"
+     - Args: ["todo", "in-progress"]
+  
+  5. Append ORDER BY:
+     - "(metadata->>'priority')::INTEGER DESC, metadata->>'updated_at' DESC"
+  
+  6. Return:
+     SQL: "SELECT * FROM read_markdown(?, include_filepath:=true)
+          WHERE metadata->>'status' IN (?,?)
+          ORDER BY (metadata->>'priority')::INTEGER DESC, 
+                   metadata->>'updated_at' DESC"
+     Args: ["/notebook/**/*.md", "todo", "in-progress"]
+
+↓
+
+DuckDB Execution:
+  - read_markdown() scans all *.md files matching glob
+  - Parses YAML front matter into metadata JSON
+  - Filters: metadata->>'status' must equal "todo" OR "in-progress"
+  - Orders: By priority (highest first), then by last update
+  - Returns: Rows with path, content, metadata, stats columns
+
+↓
+
+Result Formatting:
+  - Extract column names
+  - Convert each row to map[string]interface{}
+  - Format based on --format flag (list/table/json)
+
+↓
+
+Output Display:
+  - List: Human-readable format with metadata highlighted
+  - Table: ASCII table with columns
+  - JSON: Array of objects
+
+---
+
+## Security Validation Points
+
+1. ViewDefinition Validation (validateViewDefinition):
+   - Field names: Must start with whitelisted prefix
+   - Operators: Must be in allowed list
+   - Parameter count: Max 5
+   - Condition count: Max 10
+
+2. Parameter Type Validation (validateParamType):
+   - string: Max 256 chars
+   - list: Non-empty items after split
+   - date: Valid YYYY-MM-DD format
+   - bool: "true" or "false"
+
+3. SQL Generation Safety (GenerateSQL):
+   - Use ? placeholders for all dynamic values
+   - No string concatenation for values
+   - escapeSQL() handles remaining quote escaping
+   - Operator validation prevents SQL keywords
+
+4. Field Whitelist (validateField):
+   ```
+   Allowed: metadata->>, metadata->, path, file_path, content, stats->, stats->>
+   Blocked: SELECT, DROP, UNION, *, ;, --, etc.
+   ```
+
+5. Operator Whitelist (validateOperator):
+   ```
+   Allowed: =, !=, <, >, <=, >=, LIKE, IN, IS NULL
+   Blocked: OR, AND, UNION, DELETE, INSERT, etc.
+   ```
+
+---
+
+## Test Coverage
+
+view_test.go (Main test file):
+
+1. View Loading:
+   - TestViewService_ListAllViews → All 6 built-in views
+   - TestViewService_GetView_* → Hierarchy and loading
+
+2. Kanban Tests:
+   - TestViewService_KanbanView_HasParameter
+     Validates: Parameter name, type, default value
+
+3. SQL Generation Tests:
+   - TestViewService_GenerateSQL_INOperator
+     Input: Kanban with status="todo,done"
+     Output: WHERE metadata->>'status' IN (?,?)
+   
+   - TestViewService_GenerateSQL_WithUserParameters
+     Tests: Parameter substitution and defaults
+   
+   - TestViewService_GenerateSQL_MultipleConditions
+     Tests: AND logic between conditions
+
+4. Parameter Validation:
+   - TestViewService_ValidateParameters_*
+   - TestViewService_ValidateParamType_*
+
+5. Security:
+   - view_test.go: Field/operator validation
+   - e2e/search_test.go: Injection attack attempts
+
+---
+
+## Dependencies & Imports
+
+ViewService depends on:
+  ├─ os (file I/O for config)
+  ├─ json (parsing config)
+  ├─ fmt (error formatting)
+  ├─ strings (template/param parsing)
+  ├─ time (date resolution)
+  ├─ regexp (field name validation)
+  ├─ strconv (number parsing)
+  └─ github.com/zenobi-us/opennotes/internal/core (types)
+
+notes_view.go depends on:
+  ├─ github.com/spf13/cobra (CLI)
+  ├─ github.com/zenobi-us/opennotes/internal/services
+  ├─ context (timeout management)
+  ├─ encoding/json (output format)
+  └─ time (query timeout)
+
+---
+
+## Call Graph Summary
+
+User Input
+  ↓
+cmd/notes_view.go (RunE)
+  ├─ ViewService.GetView("kanban")
+  ├─ ViewService.ParseViewParameters()
+  ├─ ViewService.GenerateSQL()
+  │   ├─ ValidateParameters()
+  │   ├─ ApplyParameterDefaults()
+  │   ├─ ResolveTemplateVariables()
+  │   └─ FormatQueryValue()
+  ├─ DbService.GetDB()
+  ├─ db.QueryContext()
+  ├─ DisplayService.RenderSQLResults()
+  └─ Output
+
+---
+
+## Performance Characteristics
+
+Query: opennotes notes view kanban
+
+Timing (from stress tests):
+  - View lookup: < 1ms
+  - SQL generation: < 1ms
+  - Query execution (1000 notes): ~70-80ms
+  - Result formatting: < 5ms
+  - Total: ~75-85ms
+
+Bottleneck: DuckDB markdown parsing (not view logic)
+
