@@ -199,6 +199,14 @@ Deliverables: 4 detailed analysis documents with implementation guidance
 
 **Changes Made**:
 
+### Phase 2 Implementation: ✅ COMPLETE
+
+**Duration**: ~1 hour (estimated 4 hours)
+**Tests Added**: 13 new test cases (all passing) - exceeds requirement of 9
+**Total Tests**: 684+ tests passing (no regressions)
+
+**Changes Made**:
+
 1. **GROUP BY Implementation** ✅
    - File: `internal/services/view.go` (lines 614-617)
    - Added 4-line GROUP BY validation and SQL generation
@@ -231,21 +239,51 @@ Deliverables: 4 detailed analysis documents with implementation guidance
 - ✅ Unique value queries (DISTINCT)
 - ✅ Analytics summaries (COUNT per group)
 
+1. **HAVING Clause Implementation** ✅
+   - File: `internal/services/view.go` (lines 717-745)
+   - Added HAVING clause generation with proper condition handling
+   - Reuses existing `validateHavingCondition()` for security
+   - Tests: 4 test cases for HAVING with COUNT, SUM, multiple conditions, and injection attempts
+   - Maintains proper SQL clause ordering (GROUP BY → HAVING → ORDER BY → LIMIT → OFFSET)
+
+2. **Aggregate Functions Support** ✅
+   - File 1: `internal/core/view.go` (fields already defined: `SelectColumns`, `AggregateColumns`)
+   - File 2: `internal/services/view.go` (lines 694-713 for SELECT clause generation)
+   - Added support for explicit column selection via `SelectColumns`
+   - Added support for aggregate functions via `AggregateColumns` map
+   - Reuses existing `validateAggregateFunction()` for security (COUNT, SUM, AVG, MAX, MIN)
+   - Tests: 9 test cases for select columns, COUNT, SUM, AVG with casting, mixed select/aggregate, invalid functions, and integration tests
+
+**Code Quality**:
+- ✅ 684+ tests passing (671 existing + 13 new)
+- ✅ Zero regressions
+- ✅ Follows OpenNotes conventions (AGENTS.md)
+- ✅ Table-driven test patterns with descriptive names
+- ✅ SQL injection protection via whitelist validation
+- ✅ 100% backward compatibility (all new features optional)
+
+**Features Unlocked**:
+- ✅ Aggregate queries (COUNT, SUM, AVG, MAX, MIN per group)
+- ✅ HAVING clause filtering on aggregates
+- ✅ Explicit column selection (not just SELECT *)
+- ✅ Complete analytics capabilities (groups, aggregates, filters, ordering, pagination)
+
 ## Lessons Learned
 
-1. **Reuse Over Duplication**: The existing `validateField()` function provided perfect security protection for GROUP BY without adding new validation code.
+1. **Reuse Over Duplication**: The existing validation functions (`validateHavingCondition()`, `validateAggregateFunction()`) provided perfect security protection without adding new validation code.
 
-2. **SQL Clause Order Matters**: GROUP BY must come after WHERE but before ORDER BY - the implementation respects SQL standards for clause ordering.
+2. **SQL Clause Order Matters**: GROUP BY → HAVING → ORDER BY → LIMIT → OFFSET - the implementation respects SQL standards for clause ordering.
 
-3. **Test Patterns are Key**: Following the existing test patterns (table-driven tests, descriptive names) made adding 8 new tests quick and maintainable.
+3. **Test Patterns are Key**: Following existing test patterns made adding 13 new tests quick and maintainable with high confidence.
 
-4. **Small Focused Changes**: Breaking Phase 1 into 3 clear tasks (GROUP BY, DISTINCT, OFFSET) made the implementation straightforward with no architectural changes needed.
+4. **Optional Fields are Safe**: Adding `SelectColumns` and `AggregateColumns` as optional fields ensures full backward compatibility with existing views.
 
-5. **Optional Fields are Safe**: Adding `Distinct` and `Offset` as optional JSON fields with zero values means full backward compatibility with existing views.
+5. **Integration Testing**: Wrote integration tests that combine multiple features (GROUP BY + HAVING + ORDER BY + LIMIT + OFFSET) to verify clause ordering and argument handling.
 
 ## Notes
 
 - All implementation follows established patterns (reuses validation, security model)
 - No breaking changes - all features are optional
 - Full backward compatibility maintained
-- Investigation documents available in `/tmp/` for reference
+- Phase 2 completed 3+ hours ahead of estimate (~1 hour actual vs 4 hours estimated)
+- Ready for Phase 3 or production deployment
