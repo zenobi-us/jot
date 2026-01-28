@@ -143,22 +143,16 @@ EXAMPLES:
 			return fmt.Errorf("row iteration error: %w", err)
 		}
 
-		// Render results based on format
-		display, err := services.NewDisplay()
-		if err != nil {
-			return fmt.Errorf("failed to create display: %w", err)
-		}
+		// Group results if needed
+		viewResults := vs.GroupResults(view, results)
 
-		switch viewFormat {
-		case "json":
-			return display.RenderSQLResults(results)
-		case "table":
-			return display.RenderSQLResults(results)
-		case "list":
-			fallthrough
-		default:
-			return display.RenderSQLResults(results)
+		// Return JSON output
+		jsonBytes, err := json.Marshal(viewResults)
+		if err != nil {
+			return fmt.Errorf("failed to marshal JSON: %w", err)
 		}
+		fmt.Println(string(jsonBytes))
+		return nil
 	},
 }
 

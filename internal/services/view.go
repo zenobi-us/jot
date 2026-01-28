@@ -75,6 +75,10 @@ func (vs *ViewService) initializeBuiltinViews() {
 	}
 
 	// Kanban view: Notes grouped by status
+	// Kanban view - Groups notes by status using SQL GROUP BY with array aggregation
+	// Uses DuckDB's list() aggregate to group content and metadata by status
+	// Returns structured data: one "row" per status with arrays of content and metadata
+	// Note: SQL-level grouping means each result represents one status group
 	vs.builtinViews["kanban"] = &core.ViewDefinition{
 		Name:        "kanban",
 		Description: "Notes grouped by status column",
@@ -96,7 +100,13 @@ func (vs *ViewService) initializeBuiltinViews() {
 					Value:    "{{status}}",
 				},
 			},
-			OrderBy: "(metadata->>'priority')::INTEGER DESC, metadata->>'updated_at' DESC",
+			SelectColumns: []string{
+				"metadata->>'status' AS status",
+				"list(content ORDER BY (metadata->>'priority')::INTEGER ASC, metadata->>'updated_at' DESC) AS content",
+				"list(metadata ORDER BY (metadata->>'priority')::INTEGER ASC, metadata->>'updated_at' DESC) AS metadata",
+			},
+			GroupBy: "metadata->>'status'",
+			OrderBy: "metadata->>'status' ASC",
 		},
 	}
 
@@ -248,19 +258,117 @@ func (vs *ViewService) loadGlobalView(name string) (*core.ViewDefinition, error)
 func (vs *ViewService) ResolveTemplateVariables(value string) string {
 	now := time.Now()
 
+	// Static replacements (no parsing needed)
 	replacements := map[string]string{
-		"{{today}}":      now.Format("2006-01-02"),
-		"{{yesterday}}":  now.AddDate(0, 0, -1).Format("2006-01-02"),
-		"{{this_week}}":  getStartOfWeek(now).Format("2006-01-02"),
-		"{{this_month}}": now.Format("2006-01") + "-01",
-		"{{now}}":        now.Format(time.RFC3339),
+		"{{today}}":            now.Format("2006-01-02"),
+		"{{yesterday}}":        now.AddDate(0, 0, -1).Format("2006-01-02"),
+		"{{this_week}}":        getStartOfWeek(now).Format("2006-01-02"),
+		"{{this_month}}":       now.Format("2006-01") + "-01",
+		"{{start_of_month}}":   now.Format("2006-01") + "-01",
+		"{{end_of_month}}":     getEndOfMonth(now).Format("2006-01-02"),
+		"{{now}}":              now.Format(time.RFC3339),
+		"{{next_week}}":        getStartOfWeek(now.AddDate(0, 0, 7)).Format("2006-01-02"),
+		"{{next_month}}":       getFirstOfMonth(now.AddDate(0, 1, 0)).Format("2006-01-02"),
+		"{{last_week}}":        getStartOfWeek(now.AddDate(0, 0, -7)).Format("2006-01-02"),
+		"{{last_month}}":       getFirstOfMonth(now.AddDate(0, -1, 0)).Format("2006-01-02"),
+		"{{quarter}}":          getCurrentQuarter(now),
+		"{{year}}":             now.Format("2006"),
+		"{{start_of_quarter}}": getStartOfQuarter(now).Format("2006-01-02"),
+		"{{end_of_quarter}}":   getEndOfQuarter(now).Format("2006-01-02"),
 	}
 
 	for placeholder, replacement := range replacements {
 		value = strings.ReplaceAll(value, placeholder, replacement)
 	}
 
+	// Dynamic replacements requiring pattern parsing
+
+	// Handle {{today-N}}, {{today+N}} patterns (time arithmetic by days)
+	value = resolveDayArithmetic(value, now)
+
+	// Handle {{this_week-N}}, {{this_month-N}} patterns (time arithmetic by weeks/months)
+	value = resolveWeekMonthArithmetic(value, now)
+
+	// Handle {{env:VAR}} and {{env:DEFAULT:VAR}} patterns (environment variables)
+	value = resolveEnvironmentVariables(value)
+
 	return value
+}
+
+// resolveDayArithmetic handles {{today-N}} and {{today+N}} patterns
+func resolveDayArithmetic(value string, now time.Time) string {
+	// Match {{today+N}} or {{today-N}} where N is a number
+	re := regexp.MustCompile(`\{\{today([+-]\d+)\}\}`)
+	return re.ReplaceAllStringFunc(value, func(match string) string {
+		// Extract the offset (e.g., "+7" or "-3")
+		offsetStr := strings.TrimPrefix(strings.TrimSuffix(match, "}}"), "{{today")
+		offset, err := strconv.Atoi(offsetStr)
+		if err != nil {
+			return match // Return unchanged if parsing fails
+		}
+		return now.AddDate(0, 0, offset).Format("2006-01-02")
+	})
+}
+
+// resolveWeekMonthArithmetic handles {{this_week-N}}, {{this_month-N}} patterns
+func resolveWeekMonthArithmetic(value string, now time.Time) string {
+	// Match {{this_week-N}} or {{this_week+N}}
+	reWeek := regexp.MustCompile(`\{\{this_week([+-]\d+)\}\}`)
+	value = reWeek.ReplaceAllStringFunc(value, func(match string) string {
+		offsetStr := strings.TrimPrefix(strings.TrimSuffix(match, "}}"), "{{this_week")
+		offsetWeeks, err := strconv.Atoi(offsetStr)
+		if err != nil {
+			return match
+		}
+		targetDate := now.AddDate(0, 0, offsetWeeks*7)
+		return getStartOfWeek(targetDate).Format("2006-01-02")
+	})
+
+	// Match {{this_month-N}} or {{this_month+N}}
+	reMonth := regexp.MustCompile(`\{\{this_month([+-]\d+)\}\}`)
+	value = reMonth.ReplaceAllStringFunc(value, func(match string) string {
+		offsetStr := strings.TrimPrefix(strings.TrimSuffix(match, "}}"), "{{this_month")
+		offsetMonths, err := strconv.Atoi(offsetStr)
+		if err != nil {
+			return match
+		}
+		targetDate := now.AddDate(0, offsetMonths, 0)
+		return getFirstOfMonth(targetDate).Format("2006-01-02")
+	})
+
+	return value
+}
+
+// resolveEnvironmentVariables handles {{env:VAR}} and {{env:DEFAULT:VAR}} patterns
+func resolveEnvironmentVariables(value string) string {
+	// Match {{env:something}} patterns
+	re := regexp.MustCompile(`\{\{env:([^}]+)\}\}`)
+	return re.ReplaceAllStringFunc(value, func(match string) string {
+		// Extract content between env: and }}
+		content := strings.TrimPrefix(strings.TrimSuffix(match, "}}"), "{{env:")
+
+		// Check if it has a default value (format: DEFAULT:VAR_NAME)
+		if strings.Contains(content, ":") {
+			parts := strings.SplitN(content, ":", 2)
+			defaultValue := parts[0]
+			varName := parts[1]
+
+			val := os.Getenv(varName)
+			if val == "" {
+				return defaultValue
+			}
+			return val
+		}
+
+		// No default value, just substitute environment variable
+		val := os.Getenv(content)
+		if val == "" {
+			// Log warning if env var not found but don't fail
+			log := Log("ViewService")
+			log.Warn().Str("var", content).Msg("Environment variable not set, using empty string")
+		}
+		return val
+	})
 }
 
 // getStartOfWeek returns the start of the week (Monday)
@@ -272,6 +380,67 @@ func getStartOfWeek(t time.Time) time.Time {
 	}
 	offset := 1 - weekday
 	return t.AddDate(0, 0, offset)
+}
+
+// getFirstOfMonth returns the first day of the month
+func getFirstOfMonth(t time.Time) time.Time {
+	return t.AddDate(0, 0, 1-t.Day())
+}
+
+// getEndOfMonth returns the last day of the month
+func getEndOfMonth(t time.Time) time.Time {
+	// Get the first day of next month and subtract one day
+	nextMonth := t.AddDate(0, 1, 0)
+	firstOfNext := getFirstOfMonth(nextMonth)
+	return firstOfNext.AddDate(0, 0, -1)
+}
+
+// getCurrentQuarter returns the current quarter (Q1, Q2, Q3, Q4)
+func getCurrentQuarter(t time.Time) string {
+	month := t.Month()
+	if month <= 3 {
+		return "Q1"
+	} else if month <= 6 {
+		return "Q2"
+	} else if month <= 9 {
+		return "Q3"
+	}
+	return "Q4"
+}
+
+// getStartOfQuarter returns the first day of the current quarter
+func getStartOfQuarter(t time.Time) time.Time {
+	month := t.Month()
+	var quarterMonth int
+	switch {
+	case month <= 3:
+		quarterMonth = 1
+	case month <= 6:
+		quarterMonth = 4
+	case month <= 9:
+		quarterMonth = 7
+	default:
+		quarterMonth = 10
+	}
+	return time.Date(t.Year(), time.Month(quarterMonth), 1, 0, 0, 0, 0, t.Location())
+}
+
+// getEndOfQuarter returns the last day of the current quarter
+func getEndOfQuarter(t time.Time) time.Time {
+	month := t.Month()
+	var quarterMonth int
+	switch {
+	case month <= 3:
+		quarterMonth = 3
+	case month <= 6:
+		quarterMonth = 6
+	case month <= 9:
+		quarterMonth = 9
+	default:
+		quarterMonth = 12
+	}
+	lastDay := time.Date(t.Year(), time.Month(quarterMonth)+1, 1, 0, 0, 0, 0, t.Location())
+	return lastDay.AddDate(0, 0, -1)
 }
 
 // ValidateViewDefinition validates a view definition for security and correctness
@@ -290,6 +459,34 @@ func (vs *ViewService) ValidateViewDefinition(view *core.ViewDefinition) error {
 	for _, cond := range view.Query.Conditions {
 		if err := vs.validateViewCondition(cond); err != nil {
 			return err
+		}
+	}
+
+	// Validate HAVING conditions
+	if len(view.Query.Having) > 0 {
+		// HAVING requires GROUP BY
+		if view.Query.GroupBy == "" {
+			return fmt.Errorf("HAVING clause requires GROUP BY to be specified")
+		}
+
+		for _, havingCond := range view.Query.Having {
+			if err := vs.validateHavingCondition(havingCond); err != nil {
+				return err
+			}
+		}
+	}
+
+	// Validate aggregate columns
+	for _, aggFunc := range view.Query.AggregateColumns {
+		if err := vs.validateAggregateFunction(aggFunc); err != nil {
+			return err
+		}
+	}
+
+	// Validate select columns
+	for _, col := range view.Query.SelectColumns {
+		if err := validateField(col); err != nil {
+			return fmt.Errorf("invalid select column: %w", err)
 		}
 	}
 
@@ -318,6 +515,85 @@ func (vs *ViewService) validateViewCondition(cond core.ViewCondition) error {
 	// Validate operator
 	if err := validateOperator(cond.Operator); err != nil {
 		return fmt.Errorf("invalid operator in condition: %w", err)
+	}
+
+	return nil
+}
+
+// validateHavingCondition validates a HAVING clause condition
+// Similar to validateViewCondition but allows aggregate functions in field names
+func (vs *ViewService) validateHavingCondition(cond core.ViewCondition) error {
+	// For HAVING, we need to validate that:
+	// 1. The field contains an aggregate function (COUNT, SUM, AVG, MAX, MIN)
+	// 2. The operator is valid
+	// 3. The field follows a safe pattern
+
+	// Whitelist of aggregate functions allowed in HAVING
+	allowedAggregates := []string{
+		"COUNT(",
+		"SUM(",
+		"AVG(",
+		"MAX(",
+		"MIN(",
+	}
+
+	hasAggregate := false
+	for _, agg := range allowedAggregates {
+		if strings.Contains(strings.ToUpper(cond.Field), agg) {
+			hasAggregate = true
+			break
+		}
+	}
+
+	if !hasAggregate {
+		return fmt.Errorf("HAVING condition must contain an aggregate function (COUNT, SUM, AVG, MAX, MIN)")
+	}
+
+	// Basic injection prevention: ensure field ends with ) to close aggregate
+	if !strings.Contains(cond.Field, ")") {
+		return fmt.Errorf("invalid aggregate function format in HAVING condition")
+	}
+
+	// Validate operator
+	if err := validateOperator(cond.Operator); err != nil {
+		return fmt.Errorf("invalid operator in HAVING condition: %w", err)
+	}
+
+	return nil
+}
+
+// validateAggregateFunction validates an aggregate function string
+// Ensures only whitelisted functions are used and prevents SQL injection
+func (vs *ViewService) validateAggregateFunction(aggFunc string) error {
+	// Trim whitespace
+	aggFunc = strings.TrimSpace(aggFunc)
+
+	// Whitelist of allowed aggregate function patterns
+	allowedAggregates := []string{
+		"COUNT(",
+		"SUM(",
+		"AVG(",
+		"MAX(",
+		"MIN(",
+	}
+
+	upperFunc := strings.ToUpper(aggFunc)
+	hasValidAggregate := false
+
+	for _, agg := range allowedAggregates {
+		if strings.HasPrefix(upperFunc, agg) {
+			hasValidAggregate = true
+			break
+		}
+	}
+
+	if !hasValidAggregate {
+		return fmt.Errorf("invalid aggregate function: %s (allowed: COUNT, SUM, AVG, MAX, MIN)", aggFunc)
+	}
+
+	// Ensure function is properly closed with )
+	if !strings.HasSuffix(strings.TrimSpace(aggFunc), ")") {
+		return fmt.Errorf("aggregate function not properly closed: %s", aggFunc)
 	}
 
 	return nil
@@ -407,7 +683,7 @@ func isValidViewName(name string) bool {
 
 // validateField checks if a field name is whitelisted
 func validateField(field string) error {
-	// Whitelist of allowed field prefixes
+	// Whitelist of allowed field prefixes and simple fields
 	allowedPrefixes := []string{
 		"metadata->>", // JSON field extraction (primary access pattern)
 		"metadata->",  // JSON object access
@@ -416,10 +692,56 @@ func validateField(field string) error {
 		"content",
 		"stats->", // File statistics JSON
 		"stats->>",
+		"status",     // App-level grouping field (extracted from metadata)
+		"priority",   // App-level grouping field (extracted from metadata)
+		"created_at", // App-level grouping field (extracted from metadata)
+	}
+
+	// Allowed SQL aggregate functions
+	allowedFunctions := []string{
+		"list(", // DuckDB list aggregate for array grouping
 	}
 
 	// Remove quotes if present
 	cleanField := strings.Trim(field, "\"'")
+
+	// Allow function calls (e.g., list(...) AS alias)
+	for _, fn := range allowedFunctions {
+		if strings.HasPrefix(cleanField, fn) {
+			// Extract the function argument and validate it
+			funcStart := strings.Index(cleanField, fn) + len(fn)
+			// Find matching closing paren
+			depth := 1
+			pos := funcStart
+			for pos < len(cleanField) && depth > 0 {
+				switch cleanField[pos] {
+				case '(':
+					depth++
+				case ')':
+					depth--
+				}
+				pos++
+			}
+			if depth == 0 {
+				// Function is properly closed, validate the content inside
+				innerContent := cleanField[funcStart : pos-1]
+				// Remove ORDER BY clause for validation
+				if idx := strings.Index(innerContent, " ORDER BY "); idx != -1 {
+					innerContent = innerContent[:idx]
+				}
+				innerContent = strings.TrimSpace(innerContent)
+				// For bare "metadata" without operator, allow it
+				if innerContent == "metadata" || innerContent == "content" {
+					return nil
+				}
+				// Recursively validate the inner field
+				if innerContent != "" {
+					return validateField(innerContent)
+				}
+				return nil
+			}
+		}
+	}
 
 	// Special case: allow casting syntax like (metadata->>'priority')::INTEGER
 	if strings.Contains(cleanField, "::") {
@@ -601,10 +923,95 @@ func (vs *ViewService) GenerateSQL(view *core.ViewDefinition, params map[string]
 
 	// Build query using read_markdown for notebook-relative file access
 	// Note: The glob pattern (first parameter) is added by the caller
-	query := "SELECT * FROM read_markdown(?, include_filepath:=true)"
+
+	// Build SELECT clause with support for aggregate functions
+	selectClause := "SELECT *"
+	if view.Query.Distinct {
+		selectClause = "SELECT DISTINCT *"
+	}
+
+	// If explicit columns or aggregates are specified, build custom SELECT clause
+	if len(view.Query.SelectColumns) > 0 || len(view.Query.AggregateColumns) > 0 {
+		var selectParts []string
+
+		// Add explicit columns
+		for _, col := range view.Query.SelectColumns {
+			if err := validateField(col); err != nil {
+				return "", nil, fmt.Errorf("invalid select column: %w", err)
+			}
+			selectParts = append(selectParts, col)
+		}
+
+		// Add aggregate columns
+		for alias, aggFunc := range view.Query.AggregateColumns {
+			if err := vs.validateAggregateFunction(aggFunc); err != nil {
+				return "", nil, fmt.Errorf("invalid aggregate function for column %s: %w", alias, err)
+			}
+			selectParts = append(selectParts, fmt.Sprintf("%s AS %s", aggFunc, alias))
+		}
+
+		if len(selectParts) > 0 {
+			distinct := ""
+			if view.Query.Distinct {
+				distinct = "DISTINCT "
+			}
+			selectClause = "SELECT " + distinct + strings.Join(selectParts, ", ")
+		}
+	}
+
+	query := selectClause + " FROM read_markdown(?, include_filepath:=true)"
 
 	if len(conditions) > 0 {
 		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	if view.Query.GroupBy != "" {
+		if err := validateField(view.Query.GroupBy); err != nil {
+			return "", nil, fmt.Errorf("invalid group by field: %w", err)
+		}
+		// Only add GROUP BY to SQL if it's a column expression (contains >> or ->)
+		// Simple field names like "status" are handled by app-level GroupResults()
+		if strings.Contains(view.Query.GroupBy, ">>") || strings.Contains(view.Query.GroupBy, "->") {
+			query += " GROUP BY " + view.Query.GroupBy
+		}
+		// If it's a simple field name, skip SQL GROUP BY and rely on app-level grouping
+	}
+
+	// Build HAVING clause if conditions exist
+	if len(view.Query.Having) > 0 {
+		var havingConditions []string
+
+		for _, havingCond := range view.Query.Having {
+			if err := vs.validateHavingCondition(havingCond); err != nil {
+				return "", nil, fmt.Errorf("invalid having condition: %w", err)
+			}
+
+			// Build HAVING condition SQL based on operator
+			var havingSQL string
+			switch havingCond.Operator {
+			case "=":
+				havingSQL = fmt.Sprintf("%s = ?", havingCond.Field)
+			case "!=":
+				havingSQL = fmt.Sprintf("%s != ?", havingCond.Field)
+			case "<":
+				havingSQL = fmt.Sprintf("%s < ?", havingCond.Field)
+			case ">":
+				havingSQL = fmt.Sprintf("%s > ?", havingCond.Field)
+			case "<=":
+				havingSQL = fmt.Sprintf("%s <= ?", havingCond.Field)
+			case ">=":
+				havingSQL = fmt.Sprintf("%s >= ?", havingCond.Field)
+			default:
+				return "", nil, fmt.Errorf("unsupported HAVING operator: %s", havingCond.Operator)
+			}
+
+			havingConditions = append(havingConditions, havingSQL)
+			args = append(args, havingCond.Value)
+		}
+
+		if len(havingConditions) > 0 {
+			query += " HAVING " + strings.Join(havingConditions, " AND ")
+		}
 	}
 
 	if view.Query.OrderBy != "" {
@@ -615,7 +1022,175 @@ func (vs *ViewService) GenerateSQL(view *core.ViewDefinition, params map[string]
 		query += fmt.Sprintf(" LIMIT %d", view.Query.Limit)
 	}
 
+	if view.Query.Offset > 0 {
+		query += fmt.Sprintf(" OFFSET %d", view.Query.Offset)
+	}
+
 	return query, args, nil
+}
+
+// convertToJSONSafe converts duckdb types and other non-JSON-serializable types to JSON-safe types
+func convertToJSONSafe(value interface{}) interface{} {
+	if value == nil {
+		return nil
+	}
+
+	// Handle basic types
+	switch v := value.(type) {
+	case string, int, int32, int64, float32, float64, bool:
+		return v
+	case []interface{}:
+		// Convert array elements
+		result := make([]interface{}, len(v))
+		for i, elem := range v {
+			result[i] = convertToJSONSafe(elem)
+		}
+		return result
+	case map[string]interface{}:
+		// Convert map values
+		result := make(map[string]interface{})
+		for k, val := range v {
+			result[k] = convertToJSONSafe(val)
+		}
+		return result
+	}
+
+	// For any other type (including duckdb.Map), convert to string
+	return fmt.Sprintf("%v", value)
+}
+
+// GroupResults takes raw query results and groups them by the GroupBy field if specified
+// If no GroupBy is specified, returns results as a flat list wrapped in ViewResults
+// Converts all values to JSON-safe types
+// GroupResults transforms query results into grouped or flat structure
+// Returns map[string][]map[string]interface{} if grouped, or []map[string]interface{} if flat
+// This enables Option 2 pattern: pure grouped map or pure flat array
+//
+// Handles two cases:
+// 1. App-level grouping: GroupBy field exists, rows are ungrouped, function groups them
+// 2. SQL-level grouping: SelectColumns contain list() aggregates, rows are already grouped by SQL
+func (vs *ViewService) GroupResults(view *core.ViewDefinition, rows []map[string]interface{}) interface{} {
+	// Convert all rows to JSON-safe types
+	jsonSafeRows := make([]map[string]interface{}, len(rows))
+	for i, row := range rows {
+		jsonSafeRow := make(map[string]interface{})
+		for key, val := range row {
+			jsonSafeRow[key] = convertToJSONSafe(val)
+		}
+		jsonSafeRows[i] = jsonSafeRow
+	}
+
+	// If no GroupBy, return flat results
+	if view.Query.GroupBy == "" {
+		return jsonSafeRows
+	}
+
+	// Check if results are already SQL-grouped (content/metadata are arrays)
+	// This happens when SelectColumns contains list() aggregates
+	if len(jsonSafeRows) > 0 {
+		firstRow := jsonSafeRows[0]
+		// Check if content and metadata are arrays (from list() aggregates)
+		contentIsArray := isArray(firstRow["content"])
+		metadataIsArray := isArray(firstRow["metadata"])
+
+		if contentIsArray && metadataIsArray {
+			// SQL-level grouping: transform grouped rows into kanban structure
+			return transformSQLGroupedResults(jsonSafeRows)
+		}
+	}
+
+	// App-level grouping: group ungrouped rows by GroupBy field
+	grouped := make(map[string][]map[string]interface{})
+	for _, row := range jsonSafeRows {
+		// Get the group key from the row
+		groupKeyValue := row[view.Query.GroupBy]
+
+		// If field not found directly, try to extract from metadata
+		if groupKeyValue == nil && view.Query.GroupBy == "status" {
+			// Try to extract from metadata string if it exists
+			if metadata, ok := row["metadata"].(string); ok {
+				// Parse simple key:value pairs from metadata string
+				// Format is: "map[key1:value1 key2:value2 ...]"
+				if strings.Contains(metadata, "status:") {
+					start := strings.Index(metadata, "status:") + 7
+					end := strings.IndexAny(metadata[start:], " ]")
+					if end == -1 {
+						end = len(metadata[start:])
+					}
+					groupKeyValue = metadata[start : start+end]
+				}
+			}
+		}
+
+		if groupKeyValue == nil {
+			groupKeyValue = "null"
+		}
+
+		// Convert group key to string
+		var groupKey string
+		switch v := groupKeyValue.(type) {
+		case string:
+			groupKey = v
+		case int, int32, int64:
+			groupKey = fmt.Sprintf("%d", v)
+		case float32, float64:
+			groupKey = fmt.Sprintf("%v", v)
+		case bool:
+			groupKey = fmt.Sprintf("%v", v)
+		default:
+			groupKey = fmt.Sprintf("%v", v)
+		}
+
+		// Add row to the appropriate group
+		grouped[groupKey] = append(grouped[groupKey], row)
+	}
+
+	return grouped
+}
+
+// isArray checks if a value is an array/slice
+func isArray(val interface{}) bool {
+	if val == nil {
+		return false
+	}
+	switch val.(type) {
+	case []interface{}, []string, []map[string]interface{}:
+		return true
+	default:
+		return false
+	}
+}
+
+// transformSQLGroupedResults transforms SQL-grouped results (with list() aggregates)
+// into kanban structure: map[statusKey] -> []noteRows
+func transformSQLGroupedResults(rows []map[string]interface{}) map[string][]map[string]interface{} {
+	result := make(map[string][]map[string]interface{})
+
+	for _, row := range rows {
+		// Extract status key
+		statusKey := fmt.Sprintf("%v", row["status"])
+		if statusKey == "<nil>" || statusKey == "null" {
+			statusKey = "null"
+		}
+
+		// Extract content and metadata arrays
+		contentArray, okContent := row["content"].([]interface{})
+		metadataArray, okMetadata := row["metadata"].([]interface{})
+
+		if okContent && okMetadata && len(contentArray) == len(metadataArray) {
+			// Build individual note maps from the parallel arrays
+			notes := make([]map[string]interface{}, len(contentArray))
+			for i := 0; i < len(contentArray); i++ {
+				notes[i] = map[string]interface{}{
+					"content":  contentArray[i],
+					"metadata": metadataArray[i],
+				}
+			}
+			result[statusKey] = notes
+		}
+	}
+
+	return result
 }
 
 // ListAllViews returns all available views across all sources (built-in, global, notebook)

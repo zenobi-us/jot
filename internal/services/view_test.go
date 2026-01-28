@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -829,4 +830,974 @@ func TestViewService_GenerateSQL_WithUserParameters(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Contains(t, sql, "WHERE data.status IN (?,?)")
 	assert.Equal(t, []interface{}{"backlog", "in-progress"}, args)
+}
+
+// Phase 1: GROUP BY Implementation Tests
+
+func TestViewService_GenerateSQL_GroupBy_ValidField(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "count-by-status",
+		Query: core.ViewQuery{
+			GroupBy: "metadata->>'status'",
+		},
+	}
+
+	sql, _, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "GROUP BY metadata->>'status'")
+}
+
+func TestViewService_GenerateSQL_GroupBy_InvalidField(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "invalid-groupby",
+		Query: core.ViewQuery{
+			GroupBy: "'; DROP TABLE notes; --",
+		},
+	}
+
+	sql, args, err := vs.GenerateSQL(view, map[string]string{})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid group by field")
+	assert.Equal(t, "", sql)
+	assert.Nil(t, args)
+}
+
+func TestViewService_GenerateSQL_GroupBy_WithOrderBy(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "grouped-and-ordered",
+		Query: core.ViewQuery{
+			GroupBy: "metadata->>'status'",
+			OrderBy: "metadata->>'status' ASC",
+		},
+	}
+
+	sql, _, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "GROUP BY metadata->>'status'")
+	assert.Contains(t, sql, "ORDER BY metadata->>'status' ASC")
+	// Verify ORDER is after GROUP BY in SQL
+	groupByPos := strings.Index(sql, "GROUP BY")
+	orderByPos := strings.Index(sql, "ORDER BY")
+	assert.True(t, groupByPos > 0 && orderByPos > groupByPos, "ORDER BY should come after GROUP BY")
+}
+
+// Phase 1: DISTINCT Support Tests
+
+func TestViewService_GenerateSQL_Distinct_Basic(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "unique-notes",
+		Query: core.ViewQuery{
+			Distinct: true,
+		},
+	}
+
+	sql, _, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "SELECT DISTINCT *")
+}
+
+func TestViewService_GenerateSQL_Distinct_WithWhere(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "unique-by-status",
+		Query: core.ViewQuery{
+			Distinct: true,
+			Conditions: []core.ViewCondition{
+				{
+					Field:    "metadata->>'status'",
+					Operator: "=",
+					Value:    "done",
+				},
+			},
+		},
+	}
+
+	sql, args, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "SELECT DISTINCT *")
+	assert.Contains(t, sql, "WHERE metadata->>'status' = ?")
+	assert.Equal(t, []interface{}{"done"}, args)
+}
+
+// Phase 1: OFFSET Support Tests
+
+func TestViewService_GenerateSQL_Offset_WithLimit(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "paginated",
+		Query: core.ViewQuery{
+			Limit:  10,
+			Offset: 20,
+		},
+	}
+
+	sql, _, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "LIMIT 10")
+	assert.Contains(t, sql, "OFFSET 20")
+	// Verify OFFSET comes after LIMIT
+	limitPos := strings.Index(sql, "LIMIT")
+	offsetPos := strings.Index(sql, "OFFSET")
+	assert.True(t, limitPos > 0 && offsetPos > limitPos, "OFFSET should come after LIMIT")
+}
+
+func TestViewService_GenerateSQL_Offset_Alone(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "skipped-results",
+		Query: core.ViewQuery{
+			Offset: 50,
+		},
+	}
+
+	sql, _, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "OFFSET 50")
+	assert.NotContains(t, sql, "LIMIT")
+}
+
+func TestViewService_GenerateSQL_Pagination_Calculation(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+
+	// Simulate pagination: Page 3 with 10 items per page = OFFSET 20, LIMIT 10
+	pageSize := 10
+	pageNum := 3
+	offset := (pageNum - 1) * pageSize
+
+	view := &core.ViewDefinition{
+		Name: "page-3",
+		Query: core.ViewQuery{
+			Limit:  pageSize,
+			Offset: offset,
+		},
+	}
+
+	sql, _, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "LIMIT 10")
+	assert.Contains(t, sql, "OFFSET 20")
+}
+
+// Phase 2: HAVING Clause Tests
+
+func TestViewService_GenerateSQL_Having_WithCountAggregate(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "status-count-filter",
+		Query: core.ViewQuery{
+			GroupBy: "metadata->>'status'",
+			Having: []core.ViewCondition{
+				{
+					Field:    "COUNT(*)",
+					Operator: ">",
+					Value:    "5",
+				},
+			},
+		},
+	}
+
+	sql, args, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "GROUP BY metadata->>'status'")
+	assert.Contains(t, sql, "HAVING COUNT(*) > ?")
+	assert.Equal(t, []interface{}{"5"}, args)
+}
+
+func TestViewService_GenerateSQL_Having_WithSumAggregate(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "sum-filter",
+		Query: core.ViewQuery{
+			GroupBy: "metadata->>'category'",
+			Having: []core.ViewCondition{
+				{
+					Field:    "SUM(metadata->>'priority')",
+					Operator: ">=",
+					Value:    "100",
+				},
+			},
+		},
+	}
+
+	sql, args, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "GROUP BY metadata->>'category'")
+	assert.Contains(t, sql, "HAVING SUM(metadata->>'priority') >= ?")
+	assert.Equal(t, []interface{}{"100"}, args)
+}
+
+func TestViewService_GenerateSQL_Having_WithMultipleConditions(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "multi-condition-having",
+		Query: core.ViewQuery{
+			GroupBy: "metadata->>'status'",
+			Having: []core.ViewCondition{
+				{
+					Field:    "COUNT(*)",
+					Operator: ">",
+					Value:    "3",
+				},
+				{
+					Field:    "AVG(metadata->>'priority')",
+					Operator: "<",
+					Value:    "7",
+				},
+			},
+		},
+	}
+
+	sql, args, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "GROUP BY metadata->>'status'")
+	assert.Contains(t, sql, "HAVING COUNT(*) > ?")
+	assert.Contains(t, sql, "AVG(metadata->>'priority') < ?")
+	assert.Equal(t, []interface{}{"3", "7"}, args)
+	// Verify conditions are joined with AND
+	assert.Contains(t, sql, "HAVING COUNT(*) > ? AND AVG(metadata->>'priority') < ?")
+}
+
+func TestViewService_GenerateSQL_Having_InvalidCondition(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "invalid-having",
+		Query: core.ViewQuery{
+			GroupBy: "metadata->>'status'",
+			Having: []core.ViewCondition{
+				{
+					Field:    "'; DROP TABLE notes; --",
+					Operator: ">",
+					Value:    "5",
+				},
+			},
+		},
+	}
+
+	sql, args, err := vs.GenerateSQL(view, map[string]string{})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid having condition")
+	assert.Equal(t, "", sql)
+	assert.Nil(t, args)
+}
+
+// Phase 2: Aggregate Functions Tests
+
+func TestViewService_GenerateSQL_SelectColumns_Explicit(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "select-explicit",
+		Query: core.ViewQuery{
+			SelectColumns: []string{
+				"metadata->>'title'",
+				"metadata->>'status'",
+			},
+		},
+	}
+
+	sql, _, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "SELECT metadata->>'title', metadata->>'status'")
+}
+
+func TestViewService_GenerateSQL_AggregateColumns_Count(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "count-aggregate",
+		Query: core.ViewQuery{
+			AggregateColumns: map[string]string{
+				"total_notes": "COUNT(*)",
+			},
+		},
+	}
+
+	sql, _, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "SELECT COUNT(*) AS total_notes")
+}
+
+func TestViewService_GenerateSQL_AggregateColumns_Sum(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "sum-aggregate",
+		Query: core.ViewQuery{
+			AggregateColumns: map[string]string{
+				"total_priority": "SUM(metadata->>'priority')",
+			},
+		},
+	}
+
+	sql, _, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "SELECT SUM(metadata->>'priority') AS total_priority")
+}
+
+func TestViewService_GenerateSQL_AggregateColumns_AvgWithCasting(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "avg-aggregate",
+		Query: core.ViewQuery{
+			AggregateColumns: map[string]string{
+				"avg_priority": "AVG((metadata->>'priority')::INTEGER)",
+			},
+		},
+	}
+
+	sql, _, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "SELECT AVG((metadata->>'priority')::INTEGER) AS avg_priority")
+}
+
+func TestViewService_GenerateSQL_MixingSelectAndAggregate(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "mixed-select",
+		Query: core.ViewQuery{
+			SelectColumns: []string{
+				"metadata->>'status'",
+			},
+			AggregateColumns: map[string]string{
+				"count":        "COUNT(*)",
+				"avg_priority": "AVG((metadata->>'priority')::INTEGER)",
+			},
+		},
+	}
+
+	sql, _, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "SELECT")
+	assert.Contains(t, sql, "metadata->>'status'")
+	assert.Contains(t, sql, "COUNT(*) AS count")
+	assert.Contains(t, sql, "AVG((metadata->>'priority')::INTEGER) AS avg_priority")
+}
+
+func TestViewService_GenerateSQL_AggregateColumns_InvalidFunction(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "invalid-aggregate",
+		Query: core.ViewQuery{
+			AggregateColumns: map[string]string{
+				"malicious": "'; DROP TABLE notes; --",
+			},
+		},
+	}
+
+	sql, args, err := vs.GenerateSQL(view, map[string]string{})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid aggregate function")
+	assert.Equal(t, "", sql)
+	assert.Nil(t, args)
+}
+
+// Phase 2: Integration Tests
+
+func TestViewService_GenerateSQL_Having_WithOrderBy(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "having-with-order",
+		Query: core.ViewQuery{
+			GroupBy: "metadata->>'status'",
+			Having: []core.ViewCondition{
+				{
+					Field:    "COUNT(*)",
+					Operator: ">",
+					Value:    "2",
+				},
+			},
+			OrderBy: "COUNT(*) DESC",
+		},
+	}
+
+	sql, _, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	// Verify clause order: GROUP BY before HAVING before ORDER BY
+	groupByPos := strings.Index(sql, "GROUP BY")
+	havingPos := strings.Index(sql, "HAVING")
+	orderByPos := strings.Index(sql, "ORDER BY")
+	assert.True(t, groupByPos > 0 && havingPos > groupByPos && orderByPos > havingPos,
+		"Clause order should be: GROUP BY, HAVING, ORDER BY")
+}
+
+func TestViewService_GenerateSQL_HavingWithLimitAndOffset(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "complete-aggregation",
+		Query: core.ViewQuery{
+			GroupBy: "metadata->>'status'",
+			Having: []core.ViewCondition{
+				{
+					Field:    "COUNT(*)",
+					Operator: ">=",
+					Value:    "1",
+				},
+			},
+			Limit:  5,
+			Offset: 10,
+		},
+	}
+
+	sql, _, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+	assert.Contains(t, sql, "GROUP BY metadata->>'status'")
+	assert.Contains(t, sql, "HAVING COUNT(*) >= ?")
+	assert.Contains(t, sql, "LIMIT 5")
+	assert.Contains(t, sql, "OFFSET 10")
+	// Verify order: HAVING before LIMIT before OFFSET
+	havingPos := strings.Index(sql, "HAVING")
+	limitPos := strings.Index(sql, "LIMIT")
+	offsetPos := strings.Index(sql, "OFFSET")
+	assert.True(t, havingPos > 0 && limitPos > havingPos && offsetPos > limitPos,
+		"Clause order should be: HAVING, LIMIT, OFFSET")
+}
+
+func TestViewService_GenerateSQL_AggregateWithGroupByAndHaving(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	view := &core.ViewDefinition{
+		Name: "full-aggregation",
+		Query: core.ViewQuery{
+			SelectColumns: []string{
+				"metadata->>'status'",
+			},
+			AggregateColumns: map[string]string{
+				"count":        "COUNT(*)",
+				"max_priority": "MAX((metadata->>'priority')::INTEGER)",
+			},
+			GroupBy: "metadata->>'status'",
+			Having: []core.ViewCondition{
+				{
+					Field:    "COUNT(*)",
+					Operator: ">",
+					Value:    "0",
+				},
+			},
+			OrderBy: "count DESC",
+			Limit:   10,
+		},
+	}
+
+	sql, args, err := vs.GenerateSQL(view, map[string]string{})
+	assert.NoError(t, err)
+
+	// Verify SELECT clause has all columns
+	assert.Contains(t, sql, "SELECT")
+	assert.Contains(t, sql, "metadata->>'status'")
+	assert.Contains(t, sql, "COUNT(*) AS count")
+	assert.Contains(t, sql, "MAX((metadata->>'priority')::INTEGER) AS max_priority")
+
+	// Verify GROUP BY
+	assert.Contains(t, sql, "GROUP BY metadata->>'status'")
+
+	// Verify HAVING
+	assert.Contains(t, sql, "HAVING COUNT(*) > ?")
+
+	// Verify ORDER BY and LIMIT
+	assert.Contains(t, sql, "ORDER BY count DESC")
+	assert.Contains(t, sql, "LIMIT 10")
+
+	// Verify argument values
+	assert.Equal(t, []interface{}{"0"}, args)
+}
+
+// Phase 3: Time Arithmetic Tests
+
+func TestViewService_ResolveTemplateVariables_TodayPlusN(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	now := time.Now()
+	expected := now.AddDate(0, 0, 7).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("{{today+7}}")
+	assert.Equal(t, expected, result)
+}
+
+func TestViewService_ResolveTemplateVariables_TodayMinusN(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	now := time.Now()
+	expected := now.AddDate(0, 0, -30).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("{{today-30}}")
+	assert.Equal(t, expected, result)
+}
+
+func TestViewService_ResolveTemplateVariables_ThisWeekPlusN(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	now := time.Now()
+	targetDate := now.AddDate(0, 0, 14)
+	expected := getStartOfWeek(targetDate).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("{{this_week+2}}")
+	assert.Equal(t, expected, result)
+}
+
+func TestViewService_ResolveTemplateVariables_ThisMonthPlusN(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	now := time.Now()
+	targetDate := now.AddDate(0, 3, 0)
+	expected := getFirstOfMonth(targetDate).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("{{this_month+3}}")
+	assert.Equal(t, expected, result)
+}
+
+func TestViewService_ResolveTemplateVariables_EndOfMonth(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	now := time.Now()
+	expected := getEndOfMonth(now).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("{{end_of_month}}")
+	assert.Equal(t, expected, result)
+}
+
+func TestViewService_ResolveTemplateVariables_StartOfMonth(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	now := time.Now()
+	expected := getFirstOfMonth(now).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("{{start_of_month}}")
+	assert.Equal(t, expected, result)
+}
+
+func TestViewService_ResolveTemplateVariables_NextWeek(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	now := time.Now()
+	nextWeekDate := now.AddDate(0, 0, 7)
+	expected := getStartOfWeek(nextWeekDate).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("{{next_week}}")
+	assert.Equal(t, expected, result)
+}
+
+func TestViewService_ResolveTemplateVariables_NextMonth(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	now := time.Now()
+	nextMonthDate := now.AddDate(0, 1, 0)
+	expected := getFirstOfMonth(nextMonthDate).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("{{next_month}}")
+	assert.Equal(t, expected, result)
+}
+
+func TestViewService_ResolveTemplateVariables_LastWeek(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	now := time.Now()
+	lastWeekDate := now.AddDate(0, 0, -7)
+	expected := getStartOfWeek(lastWeekDate).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("{{last_week}}")
+	assert.Equal(t, expected, result)
+}
+
+func TestViewService_ResolveTemplateVariables_LastMonth(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	now := time.Now()
+	lastMonthDate := now.AddDate(0, -1, 0)
+	expected := getFirstOfMonth(lastMonthDate).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("{{last_month}}")
+	assert.Equal(t, expected, result)
+}
+
+func TestViewService_ResolveTemplateVariables_Quarter(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	result := vs.ResolveTemplateVariables("{{quarter}}")
+
+	// Should be Q1, Q2, Q3, or Q4
+	assert.True(t, strings.HasPrefix(result, "Q"), "Quarter should start with Q")
+	assert.True(t, len(result) == 2, "Quarter should be 2 characters (e.g., Q1)")
+}
+
+func TestViewService_ResolveTemplateVariables_Year(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	result := vs.ResolveTemplateVariables("{{year}}")
+	expected := time.Now().Format("2006")
+
+	assert.Equal(t, expected, result)
+}
+
+func TestViewService_ResolveTemplateVariables_StartOfQuarter(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	expected := getStartOfQuarter(time.Now()).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("{{start_of_quarter}}")
+	assert.Equal(t, expected, result)
+}
+
+func TestViewService_ResolveTemplateVariables_EndOfQuarter(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	expected := getEndOfQuarter(time.Now()).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("{{end_of_quarter}}")
+	assert.Equal(t, expected, result)
+}
+
+// Phase 3: Environment Variables Tests
+
+func TestViewService_ResolveTemplateVariables_EnvironmentVariable(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+
+	// Set an environment variable for this test
+	envVar := "TEST_OPENNOTES_VAR"
+	envValue := "test_value_123"
+	t.Setenv(envVar, envValue)
+
+	result := vs.ResolveTemplateVariables("{{env:TEST_OPENNOTES_VAR}}")
+	assert.Equal(t, envValue, result)
+}
+
+func TestViewService_ResolveTemplateVariables_EnvironmentVariableWithDefault(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+
+	// Don't set the env var, should use default
+	result := vs.ResolveTemplateVariables("{{env:default_value:NONEXISTENT_VAR_XYZ}}")
+	assert.Equal(t, "default_value", result)
+}
+
+func TestViewService_ResolveTemplateVariables_EnvironmentVariableNotSet(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+
+	// Don't set env var, should return empty string (but log warning)
+	result := vs.ResolveTemplateVariables("{{env:NONEXISTENT_VAR_ABC}}")
+	assert.Equal(t, "", result)
+}
+
+func TestViewService_ResolveTemplateVariables_EnvironmentVariableWithDefaultOverride(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+
+	// Set the env var, should override default
+	envVar := "TEST_OVERRIDE_VAR"
+	envValue := "actual_value"
+	t.Setenv(envVar, envValue)
+
+	result := vs.ResolveTemplateVariables("{{env:default_value:TEST_OVERRIDE_VAR}}")
+	assert.Equal(t, envValue, result)
+}
+
+// Phase 3: Integration Tests (Multiple Patterns)
+
+func TestViewService_ResolveTemplateVariables_TimeArithmeticMonthBoundary(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	now := time.Now()
+
+	// Test month arithmetic crossing year boundary (Dec -> Jan)
+	targetDate := now.AddDate(0, 6, 0) // 6 months forward
+	expected := getFirstOfMonth(targetDate).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("{{this_month+6}}")
+	assert.Equal(t, expected, result)
+}
+
+func TestViewService_ResolveTemplateVariables_MultiplePatterns(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+	now := time.Now()
+
+	// Test multiple patterns in one string
+	today := now.Format("2006-01-02")
+	tomorrow := now.AddDate(0, 0, 1).Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("From {{today}} to {{today+1}}")
+	assert.Contains(t, result, today)
+	assert.Contains(t, result, tomorrow)
+	assert.NotContains(t, result, "{{")
+}
+
+func TestViewService_ResolveTemplateVariables_EnvironmentAndTimePatterns(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+
+	t.Setenv("TEST_STATUS", "active")
+	now := time.Now()
+	today := now.Format("2006-01-02")
+
+	result := vs.ResolveTemplateVariables("status={{env:TEST_STATUS}} since={{today}}")
+	assert.Contains(t, result, "status=active")
+	assert.Contains(t, result, "since="+today)
+	assert.NotContains(t, result, "{{")
+}
+
+// Phase 4: GroupResults Tests
+
+func TestViewService_GroupResults_FlatResults(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+
+	// Create a view without GROUP BY
+	view := &core.ViewDefinition{
+		Name:  "test",
+		Query: core.ViewQuery{
+			// No GroupBy set
+		},
+	}
+
+	// Create test data
+	rows := []map[string]interface{}{
+		{"id": "1", "title": "Note 1", "status": "todo"},
+		{"id": "2", "title": "Note 2", "status": "done"},
+	}
+
+	// Group results - returns []map[string]interface{}
+	result := vs.GroupResults(view, rows)
+
+	// Verify flat results
+	flatResults, ok := result.([]map[string]interface{})
+	require.True(t, ok, "result should be []map[string]interface{}")
+	assert.Equal(t, 2, len(flatResults))
+	assert.Equal(t, "Note 1", flatResults[0]["title"])
+	assert.Equal(t, "Note 2", flatResults[1]["title"])
+}
+
+func TestViewService_GroupResults_GroupedByString(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+
+	// Create a view with GROUP BY status
+	view := &core.ViewDefinition{
+		Name: "kanban",
+		Query: core.ViewQuery{
+			GroupBy: "status",
+		},
+	}
+
+	// Create test data
+	rows := []map[string]interface{}{
+		{"id": "1", "title": "Note 1", "status": "todo"},
+		{"id": "2", "title": "Note 2", "status": "done"},
+		{"id": "3", "title": "Note 3", "status": "todo"},
+	}
+
+	// Group results - returns map[string][]map[string]interface{}
+	result := vs.GroupResults(view, rows)
+
+	// Verify grouped results
+	grouped, ok := result.(map[string][]map[string]interface{})
+	require.True(t, ok, "result should be map[string][]map[string]interface{}")
+
+	// Check groups
+	assert.Equal(t, 2, len(grouped))
+	assert.Equal(t, 2, len(grouped["todo"]))
+	assert.Equal(t, 1, len(grouped["done"]))
+	assert.Equal(t, "Note 1", grouped["todo"][0]["title"])
+	assert.Equal(t, "Note 3", grouped["todo"][1]["title"])
+}
+
+func TestViewService_GroupResults_GroupedByNumber(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+
+	// Create a view with GROUP BY priority (numeric)
+	view := &core.ViewDefinition{
+		Name: "priority-dashboard",
+		Query: core.ViewQuery{
+			GroupBy: "priority",
+		},
+	}
+
+	// Create test data with numeric priority
+	rows := []map[string]interface{}{
+		{"id": "1", "title": "Note 1", "priority": int64(1)},
+		{"id": "2", "title": "Note 2", "priority": int64(2)},
+		{"id": "3", "title": "Note 3", "priority": int64(1)},
+	}
+
+	// Group results - returns map[string][]map[string]interface{}
+	result := vs.GroupResults(view, rows)
+
+	// Verify grouped results
+	grouped, ok := result.(map[string][]map[string]interface{})
+	require.True(t, ok, "result should be map[string][]map[string]interface{}")
+
+	// Check numeric groups are converted to strings
+	assert.Equal(t, 2, len(grouped))
+	assert.Equal(t, 2, len(grouped["1"]))
+	assert.Equal(t, 1, len(grouped["2"]))
+}
+
+func TestViewService_GroupResults_EmptyResults(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+
+	// Create a view with GROUP BY
+	view := &core.ViewDefinition{
+		Name: "kanban",
+		Query: core.ViewQuery{
+			GroupBy: "status",
+		},
+	}
+
+	// Empty rows
+	rows := []map[string]interface{}{}
+
+	// Group results - returns map[string][]map[string]interface{}
+	result := vs.GroupResults(view, rows)
+
+	// Verify empty results are handled correctly
+	grouped, ok := result.(map[string][]map[string]interface{})
+	require.True(t, ok, "result should be map[string][]map[string]interface{}")
+	assert.Equal(t, 0, len(grouped))
+}
+
+func TestViewService_GroupResults_NullValues(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+
+	// Create a view with GROUP BY status
+	view := &core.ViewDefinition{
+		Name: "kanban",
+		Query: core.ViewQuery{
+			GroupBy: "status",
+		},
+	}
+
+	// Create test data with nil/null value
+	rows := []map[string]interface{}{
+		{"id": "1", "title": "Note 1", "status": "todo"},
+		{"id": "2", "title": "Note 2", "status": nil},
+		{"id": "3", "title": "Note 3", "status": "todo"},
+	}
+
+	// Group results - returns map[string][]map[string]interface{}
+	result := vs.GroupResults(view, rows)
+
+	// Verify null values are handled as "null" string
+	grouped, ok := result.(map[string][]map[string]interface{})
+	require.True(t, ok, "result should be map[string][]map[string]interface{}")
+	assert.Equal(t, 2, len(grouped))
+	assert.Equal(t, 2, len(grouped["todo"]))
+	assert.Equal(t, 1, len(grouped["null"]))
 }
