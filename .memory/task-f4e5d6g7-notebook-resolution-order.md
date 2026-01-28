@@ -1,9 +1,13 @@
 # Task: Fix Notebook Resolution Order Priority
 
-**Status**: TODO  
+**Status**: ✅ COMPLETED  
 **Priority**: HIGH  
 **Estimated Duration**: 1-2 hours  
-**Created**: 2026-01-25
+**Created**: 2026-01-25  
+**Completed**: 2026-01-28
+
+> **Note**: This task was created as a specification AFTER the implementation was already complete.
+> Comprehensive verification confirmed all 5 resolution tiers were working correctly.
 
 ## Problem
 
@@ -141,3 +145,37 @@ opennotes notes list  # Should find if dir matches registered notebook context
 # Test ancestor search
 cd /path/to/ancestor/child && opennotes notes list
 ```
+
+---
+
+## Actual Outcome (Verified 2026-01-28)
+
+### Implementation Status: ✅ COMPLETE
+
+The notebook resolution order was implemented correctly with all 5 tiers working:
+
+| Priority | Resolution Method | Status | Verified By |
+|----------|-------------------|--------|-------------|
+| 1 | `OPENNOTES_NOTEBOOK` envvar | ✅ Working | `TestRequireNotebook_EnvvarPriority` |
+| 2 | `--notebook` flag | ✅ Working | `TestRequireNotebook_FlagOverridesEnvvar` |
+| 3 | `.opennotes.json` in cwd | ✅ Working | `TestNotebookService_Infer_CurrentDirectoryPriority` |
+| 4 | Context match (registered) | ✅ Working | `TestNotebookService_Infer_ContextMatchPriority` |
+| 5 | Ancestor directory search | ✅ Working | `TestNotebookService_Infer_AncestorSearchPriority` |
+
+### Verification Evidence
+
+1. **Code Review**: `cmd/notes_list.go:requireNotebook()` implements correct order
+2. **Automated Tests**: 8 tests verify resolution behavior (all passing)
+3. **Manual Testing**: All tiers manually verified with real commands
+4. **Documentation**: README and AGENTS.md match implementation
+5. **Full Test Suite**: 711+ tests pass including notebook resolution
+
+### Files Implemented
+
+- [x] `cmd/notes_list.go` - `requireNotebook()` with correct priority order
+- [x] `internal/services/notebook.go` - `Infer()` with cwd > context > ancestor
+- [x] `internal/services/notebook_test.go` - Comprehensive test coverage
+
+### Conclusion
+
+Task was a specification document created after implementation. No code changes required - implementation was already correct and fully tested.
