@@ -714,9 +714,10 @@ func validateField(field string) error {
 			depth := 1
 			pos := funcStart
 			for pos < len(cleanField) && depth > 0 {
-				if cleanField[pos] == '(' {
+				switch cleanField[pos] {
+				case '(':
 					depth++
-				} else if cleanField[pos] == ')' {
+				case ')':
 					depth--
 				}
 				pos++
