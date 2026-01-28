@@ -2,8 +2,8 @@
 id: 3d477ab8
 title: Implement Missing View System Features (GROUP BY, DISTINCT, OFFSET, HAVING, Aggregations, Kanban Display)
 created_at: 2026-01-27T22:46:00+10:30
-updated_at: 2026-01-28T11:55:00+10:30
-status: active
+updated_at: 2026-01-28T22:52:00+10:30
+status: completed
 epic_id: null
 phase_id: null
 assigned_to: null
@@ -349,96 +349,110 @@ feat(view): implement phase 3 enhanced templates and environment variables
 
 8. **Environment Variable Fallbacks**: Providing default values and graceful fallbacks (log warning, return empty string) ensures templates don't fail on missing env vars - important for production reliability.
 
-## Phase 4: Kanban View Return Structure (2 hours) - ACTIVE
+## Phase 4: Kanban View Return Structure (2 hours) - ✅ COMPLETE
 
-**Status**: Design phase complete, ready for implementation
+**Status**: Implementation complete, tests passing, Option 2 delivered
 **Related Documents**:
-- `research-e5f6g7h8-kanban-group-by-return-structure.md` (Full analysis + implementation plan)
-- `research-a1b2c3d4-kanban-return-structure-comparison.md` (Visual comparison)
+- `research-e5f6g7h8-kanban-group-by-return-structure.md` (Full analysis + recommendation)
+- `completed-option2-refactor.md` (Completion details)
 
 **Problem**: How should `GenerateSQL()` + grouped queries return data?
 
-**Decision**: Option 2 (Grouped Structure) ✅ CHOSEN
-- Returns: `map[groupValue][]Note` (e.g., `{"in-progress": [...], "done": [...]}`)
-- Matches kanban semantic intent (columns per group value)
+**Decision**: Option 2 (Grouped Structure) ✅ CHOSEN AND IMPLEMENTED
+- Returns: `map[groupValue][]map[string]interface{}` for grouped views
+- Returns: `[]map[string]interface{}` for flat views
+- Pure data structure, no metadata wrapper
+- Matches kanban semantic intent exactly
 - Extensible for timeline, dashboard, analytics views
-- Type-safe: display layer knows exactly what to expect
-- Backward compatible: views without GroupBy stay flat
+- Backward compatible: views without GroupBy return flat arrays
 
-**Implementation Tasks**:
+**Implementation Complete**:
 
-**Task 1: Define ViewResults Type (15 mins)**
-- File: `internal/core/view.go`
-- Add new type:
-  ```go
-  type ViewResults struct {
-      IsGrouped bool
-      GroupBy   string                     // "status", "priority", etc.
-      Grouped   map[string][]Note         // {groupValue: notes}
-      Flat      []Note                     // for non-grouped views
-  }
-  ```
-- Tests: 0 (type definition only)
-
-**Task 2: Create ExecuteView() Method (1 hour)**
+**Task 1: Return Type Design** ✅
+- Signature: `func GroupResults(...) interface{}`
+- No ViewResults type (removed Option 3 hybrid wrapper)
+- Returns pure data: grouped map or flat array
 - File: `internal/services/view.go`
-- Implement new method: `ExecuteView(view *ViewDefinition, params map[string]string) (*ViewResults, error)`
+
+**Task 2: GroupResults() Method** ✅
+- File: `internal/services/view.go` (lines 1006-1052)
 - Logic:
-  1. Generate SQL using existing `GenerateSQL()`
-  2. Execute query
-  3. If `view.Query.GroupBy != ""`: group results by field value
-  4. Return `ViewResults` with `IsGrouped=true` and grouped data
-  5. Otherwise: return flat `ViewResults`
-- Tests: 6 new test cases
-  - Grouped results (GROUP BY status)
-  - Grouped with multiple values
+  1. Convert rows to JSON-safe types
+  2. If `view.Query.GroupBy != ""`: return `map[string][]map[string]interface{}`
+  3. Otherwise: return `[]map[string]interface{}`
+- Tests: 5 test cases, all passing
   - Flat results (no GROUP BY)
-  - Grouped + ORDER BY verification
-  - Grouped + LIMIT verification
-  - Integration: GROUP BY + HAVING + ORDER BY
+  - Grouped by string field
+  - Grouped by numeric field
+  - Empty results
+  - Null value handling
 
-**Task 3: Update notes_view Command (30 mins)**
+**Task 3: Command Handler** ✅
 - File: `cmd/notes_view.go`
-- Refactor `notesViewCmd.RunE()` to use new `ExecuteView()` method
-- Return JSON representation of ViewResults:
-  ```go
-  results, err := vs.ExecuteView(view, userParams)
-  if err != nil { return err }
-  
-  // Return as JSON - clients handle formatting
-  jsonBytes, _ := json.Marshal(results)
-  fmt.Println(string(jsonBytes))
-  ```
-- Tests: Covered by ExecuteView tests
-- Benefit: Decoupled from display logic, any client can format as needed
+- Already integrated: calls `GroupResults()` and marshals to JSON
+- No changes needed (handler was already compatible)
 
-**Task 4: JSON Serialization (Automatic)**
-- ViewResults uses standard Go JSON struct tags
-- Go's json.Marshal() handles serialization automatically
-- No explicit serialization code needed
-- Tests: Covered by ExecuteView tests
-- Benefit: 
-  - Decoupled from presentation layer
-  - API-ready (REST services can use directly)
-  - TUI/CLI/Web clients all get same data, format independently
+**Task 4: JSON Serialization** ✅
+- Automatic via Go's `json.Marshal()`
+- Handles both map and array types
+- No custom serialization needed
+- Output structure:
+  - Grouped: `{"status": [...], "priority": [...]}`
+  - Flat: `[{...}, {...}, ...]`
 
 **Phase 4 Summary**:
-- Total Effort: ~1.5 hours
-- New Tests: 6 test cases (all passing)
-- Code Changes: 2 files (80-100 lines total)
-- Breaking Changes: None (backward compatible)
-- Impact: Kanban view returns structured JSON, clients format as needed
-- Complexity: Low (no display coupling, data-centric approach)
-- Architecture: JSON-first, composable, format-agnostic
+- Duration: ~45 minutes (estimated 2 hours)
+- Tests Added: 5 new test cases
+- Code Changes: 1 file (47 lines)
+- Breaking Changes: None
+- Impact: Pure Option 2 structure, cleaner JSON
+- Tests: All passing (5/5)
+- Total tests: 716+ (711 existing + 5 new)
 
-**Expected Outcome After Phase 4**:
-✅ ViewResults type defined
-✅ ExecuteView() method working
-✅ Notes command uses ExecuteView()
-✅ Returns structured JSON for grouped views
-✅ 6 new passing test cases
-✅ All 717+ tests passing (711 existing + 6 new)
-✅ Kanban view: RETURNS STRUCTURED DATA (clients format as needed)
+**Actual Deliverable**:
+✅ GroupResults() returns interface{} with pure structure
+✅ Grouped views return map[string][]map[string]interface{}
+✅ Flat views return []map[string]interface{}
+✅ Command handler serializes to JSON
+✅ 5 new passing test cases
+✅ All 716+ tests passing (zero regressions)
+✅ **Kanban view: RETURNS PURE GROUPED MAP (Option 2)** ✅
+
+**JSON Output Examples**:
+
+Grouped (GROUP BY status):
+```json
+{
+  "backlog": [{...}, {...}],
+  "in-progress": [{...}],
+  "done": [{...}]
+}
+```
+
+Flat (no GROUP BY):
+```json
+[
+  {...},
+  {...},
+  {...}
+]
+```
+
+**Git Commit**:
+```
+commit 52c7210
+refactor: switch GroupResults to Option 2 (pure grouped/flat structure)
+
+Changes:
+- Remove ViewResults type wrapper
+- GroupResults() returns interface{} with pure structure
+- Grouped views: map[string][]map[string]interface{}
+- Flat views: []map[string]interface{}
+- Matches research Option 2 exactly
+
+Tests: 5 GroupResults tests all passing
+All 716+ tests passing, zero regressions
+```
 
 ---
 
@@ -481,8 +495,24 @@ feat(view): implement phase 3 enhanced templates and environment variables
 - No breaking changes - all features are optional
 - Full backward compatibility maintained
 - **Phase 1-3 VERIFIED**: All 9 features implemented and tested
-- Comprehensive 45+ test suite validates all edge cases
+- **Phase 4 COMPLETE**: Option 2 structure delivered, tests passing
+- Comprehensive 50+ test suite validates all edge cases
 - **Security validated**: SQL injection protection, safe env var handling
-- **Phase 4 ready**: Kanban return structure design complete, implementation plan documented
-- **All 4 phases planned**: SQL completeness (1)✅, aggregations (2)✅, templates (3)✅, kanban display (4)🔄
-- Total test coverage: 711+ existing (verified) + 8 Phase 4 = 719+ total expected
+- **All 4 phases complete**: SQL completeness (1)✅, aggregations (2)✅, templates (3)✅, kanban display (4)✅
+- Total test coverage: 711+ existing + 5 Phase 4 = 716+ tests all passing
+
+## Outcome Summary
+
+**All 4 Phases Successfully Completed** ✅
+
+| Phase | Focus | Status | Tests | Duration |
+|-------|-------|--------|-------|----------|
+| 1 | SQL Completeness (GROUP BY, DISTINCT, OFFSET) | ✅ Complete | 8 | 45 min |
+| 2 | Aggregations (HAVING, aggregate functions) | ✅ Complete | 13 | 60 min |
+| 3 | Enhanced Templates (time, env vars, periods) | ✅ Complete | 27 | 45 min |
+| 4 | Kanban Return Structure (Option 2) | ✅ Complete | 5 | 45 min |
+| **TOTAL** | **View System Features** | **✅ ALL DONE** | **53** | **3.5 hrs** |
+
+**Test Results**: 716+ tests passing (711 existing + 5 Phase 4)
+**Regressions**: Zero
+**Code Quality**: All linting passing, no warnings
