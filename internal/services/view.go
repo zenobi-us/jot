@@ -75,9 +75,10 @@ func (vs *ViewService) initializeBuiltinViews() {
 	}
 
 	// Kanban view: Notes grouped by status
-	// Kanban view - Groups notes by status column (app-level grouping, not SQL)
-	// Note: Uses app-level GroupResults() for grouping, not SQL GROUP BY
-	// This allows SELECT * without requiring all columns in GROUP BY clause
+	// Kanban view - Groups notes by status using SQL GROUP BY with array aggregation
+	// Uses DuckDB's list() aggregate to group content and metadata by status
+	// Returns structured data: one "row" per status with arrays of content and metadata
+	// Note: SQL-level grouping means each result represents one status group
 	vs.builtinViews["kanban"] = &core.ViewDefinition{
 		Name:        "kanban",
 		Description: "Notes grouped by status column",
@@ -99,8 +100,13 @@ func (vs *ViewService) initializeBuiltinViews() {
 					Value:    "{{status}}",
 				},
 			},
-			GroupBy: "status",
-			OrderBy: "metadata->>'status' ASC, (metadata->>'priority')::INTEGER ASC, metadata->>'updated_at' DESC",
+			SelectColumns: []string{
+				"metadata->>'status' AS status",
+				"list(content ORDER BY (metadata->>'priority')::INTEGER ASC, metadata->>'updated_at' DESC) AS content",
+				"list(metadata ORDER BY (metadata->>'priority')::INTEGER ASC, metadata->>'updated_at' DESC) AS metadata",
+			},
+			GroupBy: "metadata->>'status'",
+			OrderBy: "metadata->>'status' ASC",
 		},
 	}
 
@@ -691,8 +697,50 @@ func validateField(field string) error {
 		"created_at", // App-level grouping field (extracted from metadata)
 	}
 
+	// Allowed SQL aggregate functions
+	allowedFunctions := []string{
+		"list(", // DuckDB list aggregate for array grouping
+	}
+
 	// Remove quotes if present
 	cleanField := strings.Trim(field, "\"'")
+
+	// Allow function calls (e.g., list(...) AS alias)
+	for _, fn := range allowedFunctions {
+		if strings.HasPrefix(cleanField, fn) {
+			// Extract the function argument and validate it
+			funcStart := strings.Index(cleanField, fn) + len(fn)
+			// Find matching closing paren
+			depth := 1
+			pos := funcStart
+			for pos < len(cleanField) && depth > 0 {
+				if cleanField[pos] == '(' {
+					depth++
+				} else if cleanField[pos] == ')' {
+					depth--
+				}
+				pos++
+			}
+			if depth == 0 {
+				// Function is properly closed, validate the content inside
+				innerContent := cleanField[funcStart : pos-1]
+				// Remove ORDER BY clause for validation
+				if idx := strings.Index(innerContent, " ORDER BY "); idx != -1 {
+					innerContent = innerContent[:idx]
+				}
+				innerContent = strings.TrimSpace(innerContent)
+				// For bare "metadata" without operator, allow it
+				if innerContent == "metadata" || innerContent == "content" {
+					return nil
+				}
+				// Recursively validate the inner field
+				if innerContent != "" {
+					return validateField(innerContent)
+				}
+				return nil
+			}
+		}
+	}
 
 	// Special case: allow casting syntax like (metadata->>'priority')::INTEGER
 	if strings.Contains(cleanField, "::") {
@@ -1016,6 +1064,10 @@ func convertToJSONSafe(value interface{}) interface{} {
 // GroupResults transforms query results into grouped or flat structure
 // Returns map[string][]map[string]interface{} if grouped, or []map[string]interface{} if flat
 // This enables Option 2 pattern: pure grouped map or pure flat array
+//
+// Handles two cases:
+// 1. App-level grouping: GroupBy field exists, rows are ungrouped, function groups them
+// 2. SQL-level grouping: SelectColumns contain list() aggregates, rows are already grouped by SQL
 func (vs *ViewService) GroupResults(view *core.ViewDefinition, rows []map[string]interface{}) interface{} {
 	// Convert all rows to JSON-safe types
 	jsonSafeRows := make([]map[string]interface{}, len(rows))
@@ -1032,7 +1084,21 @@ func (vs *ViewService) GroupResults(view *core.ViewDefinition, rows []map[string
 		return jsonSafeRows
 	}
 
-	// Group results by GroupBy field value
+	// Check if results are already SQL-grouped (content/metadata are arrays)
+	// This happens when SelectColumns contains list() aggregates
+	if len(jsonSafeRows) > 0 {
+		firstRow := jsonSafeRows[0]
+		// Check if content and metadata are arrays (from list() aggregates)
+		contentIsArray := isArray(firstRow["content"])
+		metadataIsArray := isArray(firstRow["metadata"])
+
+		if contentIsArray && metadataIsArray {
+			// SQL-level grouping: transform grouped rows into kanban structure
+			return transformSQLGroupedResults(jsonSafeRows)
+		}
+	}
+
+	// App-level grouping: group ungrouped rows by GroupBy field
 	grouped := make(map[string][]map[string]interface{})
 	for _, row := range jsonSafeRows {
 		// Get the group key from the row
@@ -1079,6 +1145,51 @@ func (vs *ViewService) GroupResults(view *core.ViewDefinition, rows []map[string
 	}
 
 	return grouped
+}
+
+// isArray checks if a value is an array/slice
+func isArray(val interface{}) bool {
+	if val == nil {
+		return false
+	}
+	switch val.(type) {
+	case []interface{}, []string, []map[string]interface{}:
+		return true
+	default:
+		return false
+	}
+}
+
+// transformSQLGroupedResults transforms SQL-grouped results (with list() aggregates)
+// into kanban structure: map[statusKey] -> []noteRows
+func transformSQLGroupedResults(rows []map[string]interface{}) map[string][]map[string]interface{} {
+	result := make(map[string][]map[string]interface{})
+
+	for _, row := range rows {
+		// Extract status key
+		statusKey := fmt.Sprintf("%v", row["status"])
+		if statusKey == "<nil>" || statusKey == "null" {
+			statusKey = "null"
+		}
+
+		// Extract content and metadata arrays
+		contentArray, okContent := row["content"].([]interface{})
+		metadataArray, okMetadata := row["metadata"].([]interface{})
+
+		if okContent && okMetadata && len(contentArray) == len(metadataArray) {
+			// Build individual note maps from the parallel arrays
+			notes := make([]map[string]interface{}, len(contentArray))
+			for i := 0; i < len(contentArray); i++ {
+				notes[i] = map[string]interface{}{
+					"content":  contentArray[i],
+					"metadata": metadataArray[i],
+				}
+			}
+			result[statusKey] = notes
+		}
+	}
+
+	return result
 }
 
 // ListAllViews returns all available views across all sources (built-in, global, notebook)
