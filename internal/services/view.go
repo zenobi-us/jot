@@ -75,6 +75,9 @@ func (vs *ViewService) initializeBuiltinViews() {
 	}
 
 	// Kanban view: Notes grouped by status
+	// Kanban view - Groups notes by status column (app-level grouping, not SQL)
+	// Note: Uses app-level GroupResults() for grouping, not SQL GROUP BY
+	// This allows SELECT * without requiring all columns in GROUP BY clause
 	vs.builtinViews["kanban"] = &core.ViewDefinition{
 		Name:        "kanban",
 		Description: "Notes grouped by status column",
@@ -96,7 +99,8 @@ func (vs *ViewService) initializeBuiltinViews() {
 					Value:    "{{status}}",
 				},
 			},
-			OrderBy: "(metadata->>'priority')::INTEGER DESC, metadata->>'updated_at' DESC",
+			GroupBy: "status",
+			OrderBy: "metadata->>'status' ASC, (metadata->>'priority')::INTEGER ASC, metadata->>'updated_at' DESC",
 		},
 	}
 
@@ -673,7 +677,7 @@ func isValidViewName(name string) bool {
 
 // validateField checks if a field name is whitelisted
 func validateField(field string) error {
-	// Whitelist of allowed field prefixes
+	// Whitelist of allowed field prefixes and simple fields
 	allowedPrefixes := []string{
 		"metadata->>", // JSON field extraction (primary access pattern)
 		"metadata->",  // JSON object access
@@ -682,6 +686,9 @@ func validateField(field string) error {
 		"content",
 		"stats->", // File statistics JSON
 		"stats->>",
+		"status",     // App-level grouping field (extracted from metadata)
+		"priority",   // App-level grouping field (extracted from metadata)
+		"created_at", // App-level grouping field (extracted from metadata)
 	}
 
 	// Remove quotes if present
@@ -913,7 +920,12 @@ func (vs *ViewService) GenerateSQL(view *core.ViewDefinition, params map[string]
 		if err := validateField(view.Query.GroupBy); err != nil {
 			return "", nil, fmt.Errorf("invalid group by field: %w", err)
 		}
-		query += " GROUP BY " + view.Query.GroupBy
+		// Only add GROUP BY to SQL if it's a column expression (contains >> or ->)
+		// Simple field names like "status" are handled by app-level GroupResults()
+		if strings.Contains(view.Query.GroupBy, ">>") || strings.Contains(view.Query.GroupBy, "->") {
+			query += " GROUP BY " + view.Query.GroupBy
+		}
+		// If it's a simple field name, skip SQL GROUP BY and rely on app-level grouping
 	}
 
 	// Build HAVING clause if conditions exist
@@ -1025,6 +1037,24 @@ func (vs *ViewService) GroupResults(view *core.ViewDefinition, rows []map[string
 	for _, row := range jsonSafeRows {
 		// Get the group key from the row
 		groupKeyValue := row[view.Query.GroupBy]
+
+		// If field not found directly, try to extract from metadata
+		if groupKeyValue == nil && view.Query.GroupBy == "status" {
+			// Try to extract from metadata string if it exists
+			if metadata, ok := row["metadata"].(string); ok {
+				// Parse simple key:value pairs from metadata string
+				// Format is: "map[key1:value1 key2:value2 ...]"
+				if strings.Contains(metadata, "status:") {
+					start := strings.Index(metadata, "status:") + 7
+					end := strings.IndexAny(metadata[start:], " ]")
+					if end == -1 {
+						end = len(metadata[start:])
+					}
+					groupKeyValue = metadata[start : start+end]
+				}
+			}
+		}
+
 		if groupKeyValue == nil {
 			groupKeyValue = "null"
 		}
