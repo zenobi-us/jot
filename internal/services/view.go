@@ -968,6 +968,89 @@ func (vs *ViewService) GenerateSQL(view *core.ViewDefinition, params map[string]
 	return query, args, nil
 }
 
+// convertToJSONSafe converts duckdb types and other non-JSON-serializable types to JSON-safe types
+func convertToJSONSafe(value interface{}) interface{} {
+	if value == nil {
+		return nil
+	}
+
+	// Handle basic types
+	switch v := value.(type) {
+	case string, int, int32, int64, float32, float64, bool:
+		return v
+	case []interface{}:
+		// Convert array elements
+		result := make([]interface{}, len(v))
+		for i, elem := range v {
+			result[i] = convertToJSONSafe(elem)
+		}
+		return result
+	case map[string]interface{}:
+		// Convert map values
+		result := make(map[string]interface{})
+		for k, val := range v {
+			result[k] = convertToJSONSafe(val)
+		}
+		return result
+	}
+
+	// For any other type (including duckdb.Map), convert to string
+	return fmt.Sprintf("%v", value)
+}
+
+// GroupResults takes raw query results and groups them by the GroupBy field if specified
+// If no GroupBy is specified, returns results as a flat list wrapped in ViewResults
+// Converts all values to JSON-safe types
+// GroupResults transforms query results into grouped or flat structure
+// Returns map[string][]map[string]interface{} if grouped, or []map[string]interface{} if flat
+// This enables Option 2 pattern: pure grouped map or pure flat array
+func (vs *ViewService) GroupResults(view *core.ViewDefinition, rows []map[string]interface{}) interface{} {
+	// Convert all rows to JSON-safe types
+	jsonSafeRows := make([]map[string]interface{}, len(rows))
+	for i, row := range rows {
+		jsonSafeRow := make(map[string]interface{})
+		for key, val := range row {
+			jsonSafeRow[key] = convertToJSONSafe(val)
+		}
+		jsonSafeRows[i] = jsonSafeRow
+	}
+
+	// If no GroupBy, return flat results
+	if view.Query.GroupBy == "" {
+		return jsonSafeRows
+	}
+
+	// Group results by GroupBy field value
+	grouped := make(map[string][]map[string]interface{})
+	for _, row := range jsonSafeRows {
+		// Get the group key from the row
+		groupKeyValue := row[view.Query.GroupBy]
+		if groupKeyValue == nil {
+			groupKeyValue = "null"
+		}
+
+		// Convert group key to string
+		var groupKey string
+		switch v := groupKeyValue.(type) {
+		case string:
+			groupKey = v
+		case int, int32, int64:
+			groupKey = fmt.Sprintf("%d", v)
+		case float32, float64:
+			groupKey = fmt.Sprintf("%v", v)
+		case bool:
+			groupKey = fmt.Sprintf("%v", v)
+		default:
+			groupKey = fmt.Sprintf("%v", v)
+		}
+
+		// Add row to the appropriate group
+		grouped[groupKey] = append(grouped[groupKey], row)
+	}
+
+	return grouped
+}
+
 // ListAllViews returns all available views across all sources (built-in, global, notebook)
 // sorted by origin: built-in first, then global, then notebook
 func (vs *ViewService) ListAllViews() ([]core.ViewInfo, error) {

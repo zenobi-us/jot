@@ -1640,3 +1640,164 @@ func TestViewService_ResolveTemplateVariables_EnvironmentAndTimePatterns(t *test
 	assert.Contains(t, result, "since="+today)
 	assert.NotContains(t, result, "{{")
 }
+
+// Phase 4: GroupResults Tests
+
+func TestViewService_GroupResults_FlatResults(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+
+	// Create a view without GROUP BY
+	view := &core.ViewDefinition{
+		Name:  "test",
+		Query: core.ViewQuery{
+			// No GroupBy set
+		},
+	}
+
+	// Create test data
+	rows := []map[string]interface{}{
+		{"id": "1", "title": "Note 1", "status": "todo"},
+		{"id": "2", "title": "Note 2", "status": "done"},
+	}
+
+	// Group results - returns []map[string]interface{}
+	result := vs.GroupResults(view, rows)
+
+	// Verify flat results
+	flatResults, ok := result.([]map[string]interface{})
+	require.True(t, ok, "result should be []map[string]interface{}")
+	assert.Equal(t, 2, len(flatResults))
+	assert.Equal(t, "Note 1", flatResults[0]["title"])
+	assert.Equal(t, "Note 2", flatResults[1]["title"])
+}
+
+func TestViewService_GroupResults_GroupedByString(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+
+	// Create a view with GROUP BY status
+	view := &core.ViewDefinition{
+		Name: "kanban",
+		Query: core.ViewQuery{
+			GroupBy: "status",
+		},
+	}
+
+	// Create test data
+	rows := []map[string]interface{}{
+		{"id": "1", "title": "Note 1", "status": "todo"},
+		{"id": "2", "title": "Note 2", "status": "done"},
+		{"id": "3", "title": "Note 3", "status": "todo"},
+	}
+
+	// Group results - returns map[string][]map[string]interface{}
+	result := vs.GroupResults(view, rows)
+
+	// Verify grouped results
+	grouped, ok := result.(map[string][]map[string]interface{})
+	require.True(t, ok, "result should be map[string][]map[string]interface{}")
+
+	// Check groups
+	assert.Equal(t, 2, len(grouped))
+	assert.Equal(t, 2, len(grouped["todo"]))
+	assert.Equal(t, 1, len(grouped["done"]))
+	assert.Equal(t, "Note 1", grouped["todo"][0]["title"])
+	assert.Equal(t, "Note 3", grouped["todo"][1]["title"])
+}
+
+func TestViewService_GroupResults_GroupedByNumber(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+
+	// Create a view with GROUP BY priority (numeric)
+	view := &core.ViewDefinition{
+		Name: "priority-dashboard",
+		Query: core.ViewQuery{
+			GroupBy: "priority",
+		},
+	}
+
+	// Create test data with numeric priority
+	rows := []map[string]interface{}{
+		{"id": "1", "title": "Note 1", "priority": int64(1)},
+		{"id": "2", "title": "Note 2", "priority": int64(2)},
+		{"id": "3", "title": "Note 3", "priority": int64(1)},
+	}
+
+	// Group results - returns map[string][]map[string]interface{}
+	result := vs.GroupResults(view, rows)
+
+	// Verify grouped results
+	grouped, ok := result.(map[string][]map[string]interface{})
+	require.True(t, ok, "result should be map[string][]map[string]interface{}")
+
+	// Check numeric groups are converted to strings
+	assert.Equal(t, 2, len(grouped))
+	assert.Equal(t, 2, len(grouped["1"]))
+	assert.Equal(t, 1, len(grouped["2"]))
+}
+
+func TestViewService_GroupResults_EmptyResults(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+
+	// Create a view with GROUP BY
+	view := &core.ViewDefinition{
+		Name: "kanban",
+		Query: core.ViewQuery{
+			GroupBy: "status",
+		},
+	}
+
+	// Empty rows
+	rows := []map[string]interface{}{}
+
+	// Group results - returns map[string][]map[string]interface{}
+	result := vs.GroupResults(view, rows)
+
+	// Verify empty results are handled correctly
+	grouped, ok := result.(map[string][]map[string]interface{})
+	require.True(t, ok, "result should be map[string][]map[string]interface{}")
+	assert.Equal(t, 0, len(grouped))
+}
+
+func TestViewService_GroupResults_NullValues(t *testing.T) {
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, "")
+
+	// Create a view with GROUP BY status
+	view := &core.ViewDefinition{
+		Name: "kanban",
+		Query: core.ViewQuery{
+			GroupBy: "status",
+		},
+	}
+
+	// Create test data with nil/null value
+	rows := []map[string]interface{}{
+		{"id": "1", "title": "Note 1", "status": "todo"},
+		{"id": "2", "title": "Note 2", "status": nil},
+		{"id": "3", "title": "Note 3", "status": "todo"},
+	}
+
+	// Group results - returns map[string][]map[string]interface{}
+	result := vs.GroupResults(view, rows)
+
+	// Verify null values are handled as "null" string
+	grouped, ok := result.(map[string][]map[string]interface{})
+	require.True(t, ok, "result should be map[string][]map[string]interface{}")
+	assert.Equal(t, 2, len(grouped))
+	assert.Equal(t, 2, len(grouped["todo"]))
+	assert.Equal(t, 1, len(grouped["null"]))
+}
