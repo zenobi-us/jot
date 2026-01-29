@@ -79,6 +79,16 @@ After review, these tasks will be created:
 
 ---
 
+## 🔧 Infrastructure Tasks
+
+### CI/CD Improvements
+- [ ] [task-9c4a2f8d-github-actions-moonrepo-releases.md](task-9c4a2f8d-github-actions-moonrepo-releases.md) - GitHub Actions with moonrepo + release-please
+  - Integrate moonrepo affected command in CI
+  - Setup release-please manifest mode
+  - Independent package releases with dependency graph safety
+
+---
+
 ## Notes
 
 - **Blocked**: Phase 2 cannot start until Phase 1 is reviewed

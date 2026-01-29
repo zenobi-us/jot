@@ -92,6 +92,26 @@ A pi extension that integrates OpenNotes into the pi coding agent, enabling AI a
 
 ---
 
+## Active Infrastructure Work
+
+### CI/CD Improvements
+**Task**: [task-9c4a2f8d-github-actions-moonrepo-releases.md](task-9c4a2f8d-github-actions-moonrepo-releases.md)  
+**Status**: Todo - Ready for implementation
+
+Modernize GitHub Actions workflows with:
+- moonrepo affected command for dependency-aware testing
+- release-please manifest mode for independent package releases
+- Combined "implicit detection + graph enforcement" strategy
+- Supports Go and TypeScript/Bun packages in monorepo
+
+**Key Benefits**:
+- Only test/build affected packages based on changes
+- Prevent releases if dependent packages break
+- Clean, independent version bumps per package
+- Automatic changelog generation
+
+---
+
 ## Quick Links
 
 - **Extension Package**: [pkgs/pi-opennotes/](../pkgs/pi-opennotes/)
