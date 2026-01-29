@@ -2,7 +2,7 @@
 id: 9c4a2f8d
 title: GitHub Actions CI/CD with moonrepo, release-please, and GoReleaser
 created_at: 2026-01-29T17:33:00+10:30
-updated_at: 2026-01-29T18:12:00+10:30
+updated_at: 2026-01-29T18:54:00+10:30
 status: todo
 epic_id: null
 phase_id: null
@@ -703,30 +703,136 @@ jobs:
 
 **Action**: Update `.github/workflows/publish.yml` with new structure
 
+**CRITICAL: Extract Inline Logic to Testable Script**
+
+The moonrepo query and jq filtering logic should NOT be embedded directly in the YAML workflow. Instead, create a testable bash script.
+
+**Why Extract to Script**:
+- ✅ Testable locally without pushing to GitHub
+- ✅ Easier to debug (add echo statements, test standalone)
+- ✅ Can add unit tests for filtering logic
+- ✅ Reusable across multiple workflows
+- ✅ Clear separation of concerns
+- ✅ Iterate quickly on filtering logic
+
 Checklist:
-- [ ] Add quality gate job (runs moonrepo tests on affected packages)
-- [ ] Add detect-affected job to query moonrepo for changed packages
-- [ ] Filter affected packages by type (node vs go)
-- [ ] Add publish-node job that calls `mise run node:publish` with variadic package names
-- [ ] Add publish-go job triggered by tag creation (for GoReleaser)
+- [ ] **Create `.github/scripts/` directory**:
+  ```bash
+  mkdir -p .github/scripts
+  ```
+
+- [ ] **Create `.github/scripts/get-affected-pkgs.sh`** script:
+  ```bash
+  #!/usr/bin/env bash
+  # .github/scripts/get-affected-pkgs.sh
+  # Purpose: Get affected packages from moonrepo for CI/CD pipelines
+  # Usage: ./get-affected-pkgs.sh [base-branch] [package-type]
+  # Example: ./get-affected-pkgs.sh main node
+  #          ./get-affected-pkgs.sh main go
+  
+  set -euo pipefail
+  
+  # Accept arguments with defaults
+  BASE_BRANCH="${1:-main}"
+  PKG_TYPE="${2:-node}"
+  DRY_RUN="${DRY_RUN:-false}"
+  
+  # Debug output if dry-run mode
+  if [[ "$DRY_RUN" == "true" ]]; then
+    echo "DEBUG: Base branch: $BASE_BRANCH" >&2
+    echo "DEBUG: Package type: $PKG_TYPE" >&2
+  fi
+  
+  # Get affected projects from moonrepo
+  AFFECTED=$(moon query projects --affected --json --base "$BASE_BRANCH")
+  
+  # Debug: Show raw moonrepo output
+  if [[ "$DRY_RUN" == "true" ]]; then
+    echo "DEBUG: Affected projects JSON:" >&2
+    echo "$AFFECTED" | jq '.' >&2
+  fi
+  
+  # Filter by package type and extract package names
+  # Note: Adjust jq filter based on your moonrepo project structure
+  # Common patterns:
+  #   - .language == "node" or .language == "go"
+  #   - .tags[] | contains("node") or .tags[] | contains("go")
+  #   - .type == "application" or .type == "library"
+  PACKAGES=$(echo "$AFFECTED" | jq -r \
+    --arg type "$PKG_TYPE" \
+    '.[] | select(.language == $type) | .id' | tr '\n' ' ')
+  
+  # Trim trailing whitespace
+  PACKAGES=$(echo "$PACKAGES" | xargs)
+  
+  # Debug: Show filtered packages
+  if [[ "$DRY_RUN" == "true" ]]; then
+    echo "DEBUG: Filtered packages: $PACKAGES" >&2
+  fi
+  
+  # Output space-separated package names (for mise to consume)
+  echo "$PACKAGES"
+  ```
+
+- [ ] **Make script executable**:
+  ```bash
+  chmod +x .github/scripts/get-affected-pkgs.sh
+  ```
+
+- [ ] **Test script locally before committing**:
+  ```bash
+  # Test with dry-run mode to see debug output
+  DRY_RUN=true bash .github/scripts/get-affected-pkgs.sh main node
+  
+  # Test actual output (what CI will receive)
+  bash .github/scripts/get-affected-pkgs.sh main node
+  
+  # Test with different base branches
+  bash .github/scripts/get-affected-pkgs.sh develop node
+  
+  # Test go package detection
+  bash .github/scripts/get-affected-pkgs.sh main go
+  
+  # Test with explicit environment variable
+  DRY_RUN=false bash .github/scripts/get-affected-pkgs.sh main node
+  ```
+
+- [ ] **Update workflow to use the script** (in `.github/workflows/publish.yml`):
+  ```yaml
+  - name: Get affected Node packages
+    id: affected-node
+    run: |
+      PKGS=$(.github/scripts/get-affected-pkgs.sh ${{ github.base_ref || 'main' }} node)
+      echo "packages=$PKGS" >> $GITHUB_OUTPUT
+  
+  - name: Get affected Go packages
+    id: affected-go
+    run: |
+      PKGS=$(.github/scripts/get-affected-pkgs.sh ${{ github.base_ref || 'main' }} go)
+      echo "packages=$PKGS" >> $GITHUB_OUTPUT
+  ```
+
+- [ ] **Add quality gate job** (runs moonrepo tests on affected packages)
+- [ ] **Add publish-node job** that calls `mise run node:publish` with script output:
+  ```yaml
+  - name: Publish affected Node packages
+    if: steps.affected-node.outputs.packages != ''
+    run: mise run node:publish ${{ steps.affected-node.outputs.packages }}
+  ```
+- [ ] **Add publish-go job** triggered by tag creation (for GoReleaser)
 - [ ] Ensure jobs have proper dependencies (quality-gate → detect → publish)
 - [ ] Add conditional execution (`if:` checks) to prevent unnecessary runs
 - [ ] Configure npm authentication for Node package publishing
 - [ ] Test workflow with dry-run before actual publishing
 
-**Integration with moonrepo**:
-```yaml
-- name: Get affected packages
-  id: affected
-  run: |
-    AFFECTED=$(moon query projects --affected --json)
-    NODE_PKGS=$(echo "$AFFECTED" | jq -r '.[] | select(.tags[] | contains("node")) | .id' | tr '\n' ' ')
-    echo "node_packages=$NODE_PKGS" >> $GITHUB_OUTPUT
-
-- name: Publish affected Node packages
-  if: steps.affected.outputs.node_packages != ''
-  run: mise run node:publish ${{ steps.affected.outputs.node_packages }}
-```
+**Script Benefits**:
+1. **Local Testing**: Run `bash .github/scripts/get-affected-pkgs.sh main node` to test filtering
+2. **Debugging**: Set `DRY_RUN=true` to see verbose output
+3. **Iteration**: Modify jq filter and test immediately
+4. **Reusability**: Other workflows can use the same script
+5. **Clarity**: Logic is in one place, not scattered across YAML
+6. **Testability**: Can write unit tests for the script
+7. **Version Control**: Script changes are clearly visible in git history
 
 **5.3 Release-Please Integration (Already Complete)**
 
@@ -864,6 +970,154 @@ else
   done
 fi
 ```
+
+### 8. Implementation Checklist
+
+**Complete Workflow Implementation Checklist**:
+
+#### Scripts and Tooling
+- [ ] Create `.github/scripts/` directory
+- [ ] Create `.github/scripts/get-affected-pkgs.sh` script
+- [ ] Add script header with usage documentation
+- [ ] Implement moonrepo query logic (`moon query projects --affected --json`)
+- [ ] Implement jq filtering by package type (node, go, etc.)
+- [ ] Add DRY_RUN mode for debugging
+- [ ] Make script executable (`chmod +x .github/scripts/get-affected-pkgs.sh`)
+- [ ] Test script locally with `DRY_RUN=true`
+- [ ] Test script with different base branches
+- [ ] Test script with different package types
+- [ ] Verify script output format (space-separated package names)
+
+#### Workflow Updates
+- [ ] Update `.github/workflows/publish.yml` to call get-affected-pkgs.sh
+- [ ] Replace inline bash logic with script invocation
+- [ ] Add quality gate job using moonrepo CI
+- [ ] Add conditional execution based on script output
+- [ ] Test workflow with sample PR (dry-run)
+- [ ] Verify GitHub Actions can execute the script
+- [ ] Confirm script outputs are correctly captured in workflow
+
+#### Documentation
+- [ ] Document script usage in comments
+- [ ] Update CONTRIBUTING.md with testing instructions
+- [ ] Add examples of local testing commands
+- [ ] Document DRY_RUN mode for debugging
+- [ ] Explain integration with mise tasks
+- [ ] Add troubleshooting section for common issues
+
+#### Validation
+- [ ] Verify script works with no affected packages (empty output)
+- [ ] Verify script works with single affected package
+- [ ] Verify script works with multiple affected packages
+- [ ] Verify script filters by package type correctly
+- [ ] Confirm script output integrates with `mise run node:publish`
+- [ ] Test complete pipeline: commit → detect → publish
+
+## Testing Scripts Locally
+
+**Purpose**: Validate CI/CD scripts before pushing to GitHub to avoid trial-and-error debugging in Actions
+
+### Testing `get-affected-pkgs.sh`
+
+**Location**: `.github/scripts/get-affected-pkgs.sh`
+
+**Basic Testing**:
+```bash
+# 1. Test with dry-run mode (verbose debug output)
+DRY_RUN=true bash .github/scripts/get-affected-pkgs.sh main node
+
+# Expected output (stderr):
+# DEBUG: Base branch: main
+# DEBUG: Package type: node
+# DEBUG: Affected projects JSON: [...]
+# DEBUG: Filtered packages: @zenobi-us/pkg1 @zenobi-us/pkg2
+
+# 2. Test actual output (what CI receives)
+bash .github/scripts/get-affected-pkgs.sh main node
+
+# Expected output (stdout): @zenobi-us/pkg1 @zenobi-us/pkg2
+```
+
+**Testing Different Scenarios**:
+
+```bash
+# Test with no changes (should output empty string)
+git checkout main
+bash .github/scripts/get-affected-pkgs.sh main node
+# Expected: "" (empty)
+
+# Test with changes to a Node package
+git checkout -b test-branch
+# Make changes to a node package
+touch pkgs/pi-opennotes/test-file.ts
+git add .
+git commit -m "test: trigger affected detection"
+bash .github/scripts/get-affected-pkgs.sh main node
+# Expected: "pkgs/pi-opennotes" or "@zenobi-us/pi-opennotes"
+
+# Test with changes to a Go package
+touch services/go-api/test.go
+git add .
+git commit -m "test: trigger go affected"
+bash .github/scripts/get-affected-pkgs.sh main go
+# Expected: "services/go-api" or "go-api"
+
+# Test with multiple affected packages
+# Make changes to multiple packages, test output
+
+# Clean up test branch
+git checkout main
+git branch -D test-branch
+```
+
+**Testing jq Filter Logic**:
+
+```bash
+# Test the jq filter independently
+AFFECTED=$(moon query projects --affected --json --base main)
+
+# Test Node package filter
+echo "$AFFECTED" | jq -r '.[] | select(.language == "node") | .id'
+
+# Test Go package filter  
+echo "$AFFECTED" | jq -r '.[] | select(.language == "go") | .id'
+
+# Test with tags instead of language (if your project uses tags)
+echo "$AFFECTED" | jq -r '.[] | select(.tags[] | contains("node")) | .id'
+```
+
+**Integration Testing with Mise**:
+
+```bash
+# Test the full pipeline locally
+PACKAGES=$(bash .github/scripts/get-affected-pkgs.sh main node)
+echo "Affected packages: $PACKAGES"
+
+# Test mise task invocation
+mise run node:publish --dry-run $PACKAGES
+
+# Or test with explicit package names
+mise run node:publish @zenobi-us/pkg1 @zenobi-us/pkg2
+```
+
+**Common Issues and Debugging**:
+
+| Issue | Symptom | Solution |
+|-------|---------|----------|
+| Empty output | Script returns nothing | Set `DRY_RUN=true` to see debug output |
+| Wrong packages detected | Script returns unexpected packages | Check jq filter logic matches moonrepo structure |
+| Script errors | Bash errors or jq errors | Check `set -euo pipefail`, verify moonrepo installed |
+| Trailing whitespace | Extra spaces in output | Script uses `xargs` to trim, verify it's working |
+
+**Best Practices**:
+
+1. **Always test locally first**: Don't push untested scripts to CI
+2. **Use DRY_RUN mode**: Enables verbose debugging without modifying script
+3. **Test edge cases**: No changes, single package, multiple packages, all packages
+4. **Verify output format**: Ensure output matches what mise tasks expect
+5. **Test with different branches**: Verify `--base` parameter works correctly
+6. **Validate jq filters**: Test jq logic independently before embedding in script
+7. **Check script permissions**: Ensure script is executable (`chmod +x`)
 
 ## Expected Outcome
 
