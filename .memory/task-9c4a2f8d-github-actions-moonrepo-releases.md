@@ -2,7 +2,7 @@
 id: 9c4a2f8d
 title: GitHub Actions CI/CD with moonrepo, release-please, and GoReleaser
 created_at: 2026-01-29T17:33:00+10:30
-updated_at: 2026-01-29T17:49:00+10:30
+updated_at: 2026-01-29T17:56:00+10:30
 status: todo
 epic_id: null
 phase_id: null
@@ -21,7 +21,58 @@ Update GitHub Actions workflows to integrate moonrepo's affected command detecti
 
 **CRITICAL**: We are modifying `.github/workflows/publish.yml`, **NOT** `.github/workflows/release.yml`.
 
-The `release.yml` file is used by moonrepo's own release process and should not be modified for our CI/CD integration.
+| Workflow File | Purpose | Action |
+|--------------|---------|--------|
+| `publish.yml` | **Our package publishing workflow** | ✅ MODIFY |
+| `release.yml` | Moonrepo's own release process | ❌ DO NOT TOUCH |
+| `pr.yml` | PR quality gate (optional) | ✅ CREATE/MODIFY |
+| `release-please.yml` | Release automation (optional) | ✅ CREATE IF NEEDED |
+
+**Why this matters**: 
+- `release.yml` is for moonrepo toolchain releases, not our packages
+- `publish.yml` is our custom workflow for publishing packages via mise + moonrepo
+- Modifying `release.yml` would break moonrepo's own release process
+
+### What publish.yml Actually Does
+
+**Current Understanding** (needs implementation):
+
+```yaml
+# .github/workflows/publish.yml
+name: Publish Packages
+
+# Triggered by:
+on:
+  push:
+    branches: [main]  # After release-please PR merge
+  push:
+    tags:
+      - 'go-api-v*'   # For GoReleaser
+
+# What it does:
+jobs:
+  # 1. Test affected packages using moonrepo
+  affected-tests:
+    run: moon ci --base main
+  
+  # 2. Detect which packages changed
+  detect-affected:
+    run: moon query projects --affected --json
+  
+  # 3. Publish Node/Bun packages via mise
+  publish-node:
+    run: mise run node:publish ${{ affected_packages }}
+  
+  # 4. Publish Go binaries via GoReleaser (if tag)
+  publish-go:
+    uses: goreleaser/goreleaser-action@v5
+```
+
+**Key Integration Points**:
+1. **moonrepo affected detection** → determines what to test/publish
+2. **mise variadic tasks** → publish specific packages
+3. **release-please** → creates version bump PRs (separate workflow or integrated)
+4. **GoReleaser** → builds Go binaries on tag creation
 
 ### Mise Task Reorganization
 
@@ -147,42 +198,192 @@ dependsOn:
   - Node/Bun: `package.json`
   - Go: `version.go` or similar (needs setup)
 
-### CI Workflow Structure
+### Workflow Architecture
 
-**Recommended Flow**:
+**CRITICAL**: Understanding which workflows we modify vs which we leave alone:
 
+#### 1. `.github/workflows/publish.yml` - MODIFY THIS
+
+**Purpose**: Package publishing using moonrepo + mise + release-please
+
+**What it does**:
+- Detects affected packages using `moon query projects --affected`
+- Runs quality gates (tests for affected packages)
+- Calls `mise run node:publish` with variadic package arguments
+- Publishes only packages that have changes and pass tests
+
+**Triggers**:
+- On push to main (after release-please PR is merged)
+- On successful tag creation (for Go binaries via GoReleaser)
+
+**Key Integration**:
 ```yaml
+- name: Get affected packages
+  id: affected
+  run: moon query projects --affected --json
+
+- name: Publish affected Node packages
+  if: steps.affected.outputs.node_packages != ''
+  run: mise run node:publish ${{ steps.affected.outputs.node_packages }}
+```
+
+#### 2. `.github/workflows/release.yml` - DO NOT TOUCH
+
+**Purpose**: Moonrepo's own release process
+
+**What it does**: Manages moonrepo toolchain releases
+
+**Why we don't modify it**: This is moonrepo's internal workflow, unrelated to our package publishing
+
+#### 3. `.github/workflows/pr.yml` - Optional Quality Gate
+
+**Purpose**: PR validation before merge
+
+**What it does**:
+- Runs `moon ci --base main` to test affected packages
+- Ensures dependent packages don't break
+- Blocks merge if tests fail
+
+**Integration**:
+```yaml
+- name: Run affected tests
+  run: moon ci --base ${{ github.base_ref }}
+```
+
+#### 4. Release-Please Workflow - May need separate file
+
+**Options**:
+
+**Option A: Integrated into publish.yml** (Recommended)
+```yaml
+# In publish.yml
 jobs:
-  quality-gate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Need full history for moonrepo
-      
-      - name: Setup moonrepo
-        uses: moonrepo/setup-toolchain@v0
-      
-      - name: Run affected tests
-        run: moon ci --base main
-  
-  release:
-    needs: quality-gate
-    if: github.ref == 'refs/heads/main'
+  create-release-prs:
     runs-on: ubuntu-latest
     steps:
       - uses: google-github-actions/release-please-action@v4
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+  
+  publish:
+    needs: create-release-prs
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # ... publish steps
+```
+
+**Option B: Separate `.github/workflows/release-please.yml`**
+- Dedicated workflow for release-please PR creation
+- Cleaner separation of concerns
+- `publish.yml` only handles actual publishing
+
+**Decision Point**: Choose during implementation based on workflow complexity
+
+### CI Workflow Structure (publish.yml)
+
+**Recommended Flow**:
+
+```yaml
+name: Publish Packages
+
+on:
+  push:
+    branches: [main]
+  push:
+    tags:
+      - 'go-api-v*'
+
+jobs:
+  # Step 1: Quality Gate - Test affected packages
+  affected-tests:
+    name: Run Affected Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for moonrepo
+      
+      - uses: moonrepo/setup-toolchain@v0
+      
+      - name: Run tests for affected projects
+        run: moon ci --base main
+  
+  # Step 2: Detect affected packages
+  detect-affected:
+    name: Detect Affected Packages
+    needs: affected-tests
+    runs-on: ubuntu-latest
+    outputs:
+      node_packages: ${{ steps.affected.outputs.node_packages }}
+      go_packages: ${{ steps.affected.outputs.go_packages }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - uses: moonrepo/setup-toolchain@v0
+      
+      - name: Query affected projects
+        id: affected
+        run: |
+          # Get affected projects as JSON
+          AFFECTED=$(moon query projects --affected --json)
+          
+          # Filter by project type/tags
+          NODE_PKGS=$(echo "$AFFECTED" | jq -r '.[] | select(.tags[] | contains("node")) | .id' | tr '\n' ' ')
+          GO_PKGS=$(echo "$AFFECTED" | jq -r '.[] | select(.tags[] | contains("go")) | .id' | tr '\n' ' ')
+          
+          echo "node_packages=$NODE_PKGS" >> $GITHUB_OUTPUT
+          echo "go_packages=$GO_PKGS" >> $GITHUB_OUTPUT
+  
+  # Step 3: Publish Node/Bun packages
+  publish-node:
+    name: Publish Node Packages
+    needs: detect-affected
+    if: needs.detect-affected.outputs.node_packages != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup mise
+        uses: jdx/mise-action@v2
+      
+      - name: Publish packages via mise
+        run: mise run node:publish ${{ needs.detect-affected.outputs.node_packages }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  
+  # Step 4: Publish Go binaries (triggered by tag)
+  publish-go:
+    name: Publish Go Binaries
+    needs: affected-tests
+    if: startsWith(github.ref, 'refs/tags/go-api-v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - uses: actions/setup-go@v5
+      
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+          workdir: ./services/go-api
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 **Key Points**:
-1. Quality gate runs first using moonrepo
-2. Release job only runs after tests pass
-3. Release job only triggers on main branch
-4. release-please creates PRs for version bumps
-5. Merging the release PR triggers actual release creation
+1. **Quality gate runs first** using moonrepo to test affected packages
+2. **Detect affected packages** using moonrepo query (filters by tags: node/go)
+3. **Conditional publishing** - only publishes packages with changes
+4. **Mise integration** - calls `mise run node:publish` with variadic package names
+5. **GoReleaser integration** - triggered by tag creation for Go binaries
+6. **Separation of concerns** - Node packages via npm, Go binaries via GitHub releases
 
 ## Steps
 
@@ -258,49 +459,40 @@ For Go packages, release-please needs a version file to update:
 
 ### 5. Update GitHub Actions Workflows
 
+**CRITICAL FILE MAPPING**:
+
+| File | Purpose | Action |
+|------|---------|--------|
+| `.github/workflows/publish.yml` | Package publishing (our custom workflow) | **MODIFY** |
+| `.github/workflows/pr.yml` | PR quality gate (optional) | **CREATE/MODIFY** |
+| `.github/workflows/release.yml` | Moonrepo's own releases | **DO NOT TOUCH** |
+| `.github/workflows/release-please.yml` | Release-please automation (optional) | **CREATE IF NEEDED** |
+
 **5.1 Update or Create `pr.yml` (PR Quality Gate)**
 
+**Purpose**: Validate PRs before merge using moonrepo affected detection
+
+**Action**: Create or modify `.github/workflows/pr.yml`
+
+Checklist:
 - [ ] Add moonrepo setup step
 - [ ] Replace test commands with `moon ci --base ${{ github.base_ref }}`
 - [ ] Ensure full git history is fetched (`fetch-depth: 0`)
 - [ ] Add Go toolchain setup for Go packages
 - [ ] Add Bun setup for TypeScript packages
+- [ ] Test with sample PR to verify affected detection works
 
-**5.2 Modify `publish.yml` (Release Workflow)**
-
-**IMPORTANT**: Modify `.github/workflows/publish.yml`, NOT `release.yml`
-
-- [ ] Add quality gate job (runs moonrepo tests)
-- [ ] Add release job that depends on quality gate
-- [ ] Use `google-github-actions/release-please-action@v4`
-- [ ] Configure with `release-please-config.json`
-- [ ] Add publish steps for each package type:
-  - Node: Call `mise run node:publish` with variadic package arguments
-  - Go: GitHub releases with binaries (future: `mise run go:publish`)
-- [ ] Integrate with moonrepo affected detection to determine which packages to publish:
-  ```yaml
-  - name: Get affected packages
-    id: affected
-    run: moon query projects --affected --json
-  
-  - name: Publish affected Node packages
-    if: steps.affected.outputs.packages != ''
-    run: mise run node:publish ${{ steps.affected.outputs.packages }}
-  ```
-
-**5.3 Test Workflow Structure**
-
+**Example Structure**:
 ```yaml
-name: CI/CD
+name: PR Quality Gate
 
 on:
   pull_request:
-  push:
     branches: [main]
 
 jobs:
-  affected-tests:
-    name: Run Affected Tests
+  test-affected:
+    name: Test Affected Packages
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -310,19 +502,77 @@ jobs:
       - uses: moonrepo/setup-toolchain@v0
       
       - name: Run tests for affected projects
-        run: moon ci --base main
-  
-  release-please:
-    name: Create Releases
-    needs: affected-tests
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: google-github-actions/release-please-action@v4
-        with:
-          config-file: release-please-config.json
-          manifest-file: .release-please-manifest.json
+        run: moon ci --base ${{ github.base_ref }}
 ```
+
+**5.2 Modify `publish.yml` (Package Publishing Workflow)**
+
+**IMPORTANT**: Modify `.github/workflows/publish.yml`, NOT `release.yml`
+
+**Purpose**: Publish packages using moonrepo affected detection + mise tasks
+
+**Action**: Update `.github/workflows/publish.yml` with new structure
+
+Checklist:
+- [ ] Add quality gate job (runs moonrepo tests on affected packages)
+- [ ] Add detect-affected job to query moonrepo for changed packages
+- [ ] Filter affected packages by type (node vs go)
+- [ ] Add publish-node job that calls `mise run node:publish` with variadic package names
+- [ ] Add publish-go job triggered by tag creation (for GoReleaser)
+- [ ] Ensure jobs have proper dependencies (quality-gate → detect → publish)
+- [ ] Add conditional execution (`if:` checks) to prevent unnecessary runs
+- [ ] Configure npm authentication for Node package publishing
+- [ ] Test workflow with dry-run before actual publishing
+
+**Integration with moonrepo**:
+```yaml
+- name: Get affected packages
+  id: affected
+  run: |
+    AFFECTED=$(moon query projects --affected --json)
+    NODE_PKGS=$(echo "$AFFECTED" | jq -r '.[] | select(.tags[] | contains("node")) | .id' | tr '\n' ' ')
+    echo "node_packages=$NODE_PKGS" >> $GITHUB_OUTPUT
+
+- name: Publish affected Node packages
+  if: steps.affected.outputs.node_packages != ''
+  run: mise run node:publish ${{ steps.affected.outputs.node_packages }}
+```
+
+**5.3 Decision: Release-Please Integration**
+
+**Question**: Should release-please be integrated into `publish.yml` or separate?
+
+**Option A: Integrated into publish.yml**
+- ✅ Single workflow file
+- ✅ Simpler configuration
+- ⚠️ More complex job dependencies
+
+**Option B: Separate `release-please.yml`**
+- ✅ Clean separation of concerns
+- ✅ Easier to understand workflow logic
+- ✅ Release-please runs independently
+- ⚠️ One more file to maintain
+
+**Decision Checklist**:
+- [ ] Evaluate workflow complexity
+- [ ] Choose Option A or Option B
+- [ ] If Option B, create `.github/workflows/release-please.yml`
+- [ ] Configure release-please action
+- [ ] Test release PR creation
+- [ ] Verify tag creation triggers publish workflow
+
+**5.4 Do NOT Modify `release.yml`**
+
+**File**: `.github/workflows/release.yml`
+
+**Purpose**: Moonrepo's own release workflow
+
+**Action**: NONE - This file is for moonrepo toolchain releases only
+
+**Verification Checklist**:
+- [ ] Confirm `release.yml` exists and is NOT modified
+- [ ] Verify all changes are in `publish.yml` (or `release-please.yml`)
+- [ ] Double-check PR diff doesn't include `release.yml` changes
 
 ### 6. Documentation
 
@@ -406,12 +656,58 @@ Each namespace follows the same pattern:
 
 After completion:
 
-1. **Automated Testing**: PRs automatically run tests for affected packages based on dependency graph
-2. **Safe Releases**: Cannot release if dependent packages have test failures
-3. **Independent Versions**: Each package gets its own version bump when it has changes
-4. **Clean Changelogs**: Automatic changelog generation per package
-5. **Reduced CI Time**: Only affected projects are tested/built
-6. **Developer Experience**: Clear feedback on what's being tested and why
+### Workflow Architecture
+
+1. **PR Validation** (`.github/workflows/pr.yml`)
+   - ✅ PRs automatically run tests for affected packages only
+   - ✅ Moonrepo detects affected packages based on git diff
+   - ✅ Dependent packages are tested to prevent breaking changes
+   - ✅ Tests must pass before merge allowed
+
+2. **Package Publishing** (`.github/workflows/publish.yml`)
+   - ✅ Quality gate runs first (tests affected packages)
+   - ✅ Detects affected packages using `moon query projects --affected`
+   - ✅ Filters packages by type (node vs go)
+   - ✅ Calls `mise run node:publish` with variadic package arguments
+   - ✅ Only publishes packages that have changes and pass tests
+   - ✅ GoReleaser integration for Go binaries (triggered by tags)
+
+3. **Version Management** (release-please)
+   - ✅ Automatic version bumps using Conventional Commits
+   - ✅ Independent versions per package (no linked versions)
+   - ✅ Automatic changelog generation per package
+   - ✅ Creates release PRs that, when merged, trigger publishing
+
+4. **Mise Task Structure**
+   - ✅ Namespaced tasks: `.mise/tasks/node/publish`, `.mise/tasks/go/publish`
+   - ✅ Variadic arguments: `mise run node:publish pkg1 pkg2`
+   - ✅ Integration with moonrepo affected detection
+   - ✅ Scalable for future runtimes (rust, python, etc.)
+
+### Concrete Benefits
+
+1. **Safety**: Cannot release if dependent packages have test failures
+2. **Efficiency**: Only affected projects are tested/built (reduced CI time)
+3. **Independence**: Each package versions independently when it has changes
+4. **Clarity**: Clear feedback on what's being tested and why
+5. **Automation**: Release process driven by commit messages (Conventional Commits)
+6. **Consistency**: Unified publish interface across runtimes via mise tasks
+
+### Developer Experience
+
+**Before this work**:
+- Manual version bumps
+- Unclear what needs testing
+- Risk of breaking dependent packages
+- Manual changelog maintenance
+- Single publish task for all package types
+
+**After this work**:
+- Automatic version bumps via commit messages
+- Clear indication of affected packages
+- Impossible to release with broken dependencies
+- Automatic changelogs
+- Runtime-specific publish tasks with clear interface
 
 ## Actual Outcome
 
