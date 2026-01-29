@@ -2,7 +2,7 @@
 id: 9c4a2f8d
 title: GitHub Actions CI/CD with moonrepo, release-please, and GoReleaser
 created_at: 2026-01-29T17:33:00+10:30
-updated_at: 2026-01-29T18:10:00+10:30
+updated_at: 2026-01-29T18:12:00+10:30
 status: todo
 epic_id: null
 phase_id: null
@@ -19,19 +19,19 @@ Update GitHub Actions workflows to integrate moonrepo's affected command detecti
 
 ### Workflow File Targets
 
-**CRITICAL**: We are modifying `.github/workflows/publish.yml`, **NOT** `.github/workflows/release.yml`.
+**CRITICAL CORRECTION**: We ARE modifying `.github/workflows/release.yml` - it's OUR release workflow, not moonrepo's
 
 | Workflow File | Purpose | Action |
 |--------------|---------|--------|
-| `publish.yml` | **Our package publishing workflow** | ✅ MODIFY |
-| `release.yml` | Moonrepo's own release process | ❌ DO NOT TOUCH |
-| `pr.yml` | PR quality gate (optional) | ✅ CREATE/MODIFY |
-| `release-please.yml` | Release automation (optional) | ✅ CREATE IF NEEDED |
+| `release.yml` | **Our release-please automation** | ✅ MODIFY (remove hardcoded release-type) |
+| `publish.yml` | **Our package publishing workflow** | ✅ MODIFY (add moonrepo integration) |
+| `pr.yml` | PR quality gate (optional) | ✅ CREATE |
 
 **Why this matters**: 
-- `release.yml` is for moonrepo toolchain releases, not our packages
-- `publish.yml` is our custom workflow for publishing packages via mise + moonrepo
-- Modifying `release.yml` would break moonrepo's own release process
+- `release.yml` already exists and uses release-please-action@v4
+- It's OUR workflow for automated releases, NOT moonrepo's internal tooling
+- No need to create a separate `release-please.yml` - we already have `release.yml`
+- `publish.yml` handles actual package publishing (triggered by release.yml)
 
 ### What publish.yml Actually Does
 
@@ -219,7 +219,35 @@ dependsOn:
 
 **CRITICAL**: Understanding which workflows we modify vs which we leave alone:
 
-#### 1. `.github/workflows/publish.yml` - MODIFY THIS
+#### 1. `.github/workflows/release.yml` - ALREADY EXISTS (Uses release-please)
+
+**Purpose**: Automated release management with release-please
+
+**Current State**: ✅ Already configured and working
+
+**What it does**:
+- Runs release-please-action on push to main
+- Creates release PRs with version bumps and changelog
+- Creates GitHub releases when release PRs are merged
+- Dispatches publish events to trigger package publishing
+
+**Existing Configuration**:
+```yaml
+- uses: google-github-actions/release-please-action@v4
+  id: release-please
+  with:
+    token: ${{ secrets.GITHUB_TOKEN }}
+    release-type: go  # ⚠️ NEEDS UPDATE (see Step 3)
+    skip-github-pull-request: false
+```
+
+**What Needs Fixing**:
+- Remove hardcoded `release-type: go` (conflicts with per-package config)
+- Let `release-please-config.json` control release types per package
+
+**Why This File Exists**: This is OUR workflow for release automation, NOT moonrepo's internal releases
+
+#### 2. `.github/workflows/publish.yml` - MODIFY THIS
 
 **Purpose**: Package publishing using moonrepo + mise + release-please
 
@@ -230,7 +258,7 @@ dependsOn:
 - Publishes only packages that have changes and pass tests
 
 **Triggers**:
-- On push to main (after release-please PR is merged)
+- On repository_dispatch (triggered by release.yml after release creation)
 - On successful tag creation (for Go binaries via GoReleaser)
 
 **Key Integration**:
@@ -243,14 +271,6 @@ dependsOn:
   if: steps.affected.outputs.node_packages != ''
   run: mise run node:publish ${{ steps.affected.outputs.node_packages }}
 ```
-
-#### 2. `.github/workflows/release.yml` - DO NOT TOUCH
-
-**Purpose**: Moonrepo's own release process
-
-**What it does**: Manages moonrepo toolchain releases
-
-**Why we don't modify it**: This is moonrepo's internal workflow, unrelated to our package publishing
 
 #### 3. `.github/workflows/pr.yml` - Optional Quality Gate
 
@@ -272,13 +292,46 @@ dependsOn:
 
 Before starting implementation, here's what already exists:
 
+### Version Tracking (Go Package)
+
+**Version Variables Location**: `cmd/root.go` (lines 12-16)
+```go
+var (
+	Version   string
+	BuildDate string
+	GitCommit string
+	GitBranch string
+)
+```
+
+**Version Command**: `cmd/version.go` (already complete)
+- Displays version, build date, git commit, and branch
+- Integrated with cobra CLI via `opennotes version`
+- Uses the Version variables from cmd/root.go
+
+**Current release-please Configuration**:
+```json
+{
+  "packages": {
+    ".": {
+      "extra-files": ["main.go"]  // ⚠️ Missing "cmd/root.go"
+    }
+  }
+}
+```
+
+**What's Missing**:
+- `cmd/root.go` not listed in extra-files (needs to be added)
+- release-please cannot currently update the Version variable
+- Single-package mode (needs conversion to monorepo mode)
+
 ### Existing Files
 
 1. **release-please-config.json**
    - Status: ✅ Exists, needs conversion
    - Current mode: Single-package (root ".")
    - Release type: "simple"
-   - Extra files: ["main.go"]
+   - Extra files: ["main.go"] ⚠️ Missing "cmd/root.go"
 
 2. **.release-please-manifest.json**
    - Status: ✅ Exists, needs update
@@ -302,22 +355,28 @@ Before starting implementation, here's what already exists:
 ### Files That Don't Exist Yet
 
 1. **.github/workflows/pr.yml** - PR quality gate (to be created)
-2. **.github/workflows/publish.yml** - Package publishing workflow (to be created)
-3. **.mise/tasks/node/publish** - Namespaced publish task (needs migration from `.mise/tasks/publish`)
-4. **services/go-api/version.go** - Version constant for Go packages (to be created)
-5. **moon.yml** - moonrepo configuration (needs verification/creation)
-6. **Package-level moon.yml files** - Dependency declarations (to be created)
+2. **.mise/tasks/node/publish** - Namespaced publish task (needs migration from `.mise/tasks/publish`)
+3. **moon.yml** - moonrepo configuration (needs verification/creation)
+4. **Package-level moon.yml files** - Dependency declarations (to be created)
+
+### Files That Already Exist
+
+1. **.github/workflows/release.yml** - ✅ Uses release-please-action@v4 (needs config update)
+2. **.github/workflows/publish.yml** - ✅ Exists (needs moonrepo integration)
+3. **cmd/root.go** - ✅ Contains Version, BuildDate, GitCommit, GitBranch variables
+4. **cmd/version.go** - ✅ Complete version command implementation
 
 ### What Needs to Change
 
 | Component | Current State | Target State | Action Required |
 |-----------|---------------|--------------|-----------------|
-| release-please-config.json | Single-package mode | Multi-package monorepo | Convert configuration |
+| release-please-config.json | Single-package mode (".") | Multi-package monorepo | Convert configuration |
 | .release-please-manifest.json | Single entry (".": "0.1.0") | Multiple package entries | Update manifest |
-| .github/workflows/release.yml | Hardcoded release-type | Config-driven | Remove hardcoded type |
+| .github/workflows/release.yml | Hardcoded `release-type: go` | Config-driven per-package | Remove hardcoded type |
+| cmd/root.go extra-files | Not listed in config | Included in extra-files | Add "cmd/root.go" to config |
 | .mise/tasks/publish | Single flat file | Namespaced (node/publish) | Reorganize structure |
-| Version management | No version file | version.go for Go packages | Create version file |
-| CI/CD | Basic release workflow | Full moonrepo integration | Create pr.yml and publish.yml |
+| .github/workflows/publish.yml | Basic structure | Full moonrepo integration | Add affected detection |
+| .github/workflows/pr.yml | Doesn't exist | Moonrepo quality gate | Create new workflow |
 
 ## Steps
 
@@ -446,7 +505,7 @@ This is a **conversion from single-package to multi-package monorepo mode**, not
         "component": "go-api",
         "release-type": "go",
         "changelog-path": "CHANGELOG.md",
-        "extra-files": ["main.go", "version.go"]
+        "extra-files": ["cmd/root.go"]
       },
       "apps/web-app": {
         "component": "web-app",
@@ -531,19 +590,62 @@ This is a **conversion from single-package to multi-package monorepo mode**, not
 - Creates component-specific tags (e.g., `go-api-v1.0.0` instead of just `v1.0.0`)
 - Supports Conventional Commits scoped to packages: `feat(go-api): ...`
 
-### 4. Setup Version Files for Go Packages
+### 4. Configure Go Version Tracking
 
-For Go packages, release-please needs a version file to update:
+**CURRENT STATE**: Version variables already exist in `cmd/root.go`
 
-- [ ] Create `services/go-api/version.go`:
-  ```go
-  package main
-  
-  // Version is the current version of go-api
-  const Version = "1.0.0"
+**Existing Implementation**:
+```go
+// cmd/root.go lines 12-16
+var (
+	Version   string
+	BuildDate string
+	GitCommit string
+	GitBranch string
+)
+```
+
+**Version Command**: Already implemented in `cmd/version.go`
+```go
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Print version information",
+	Long:  "Print detailed version information for OpenNotes including build metadata",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Printf("OpenNotes %s\n", Version)
+		if BuildDate != "unknown" {
+			fmt.Printf("Built: %s\n", BuildDate)
+		}
+		if GitCommit != "unknown" {
+			fmt.Printf("Commit: %s\n", GitCommit)
+		}
+		if GitBranch != "unknown" {
+			fmt.Printf("Branch: %s\n", GitBranch)
+		}
+	},
+}
+```
+
+**What Needs to Be Done**:
+- [ ] Verify `cmd/root.go` contains Version variable declaration (✅ Confirmed above)
+- [ ] Update `release-please-config.json` to include `cmd/root.go` in extra-files for go-api package:
+  ```json
+  "services/go-api": {
+    "component": "go-api",
+    "release-type": "go",
+    "changelog-path": "CHANGELOG.md",
+    "extra-files": ["cmd/root.go"]
+  }
   ```
-- [ ] Update build process to use this version
-- [ ] Add version flag to CLI: `opennotes --version`
+  Note: This will be part of the monorepo conversion in Step 3
+- [ ] Ensure release-please can detect and update the Version string in cmd/root.go
+- [ ] Test version update workflow with a test commit
+- [ ] Verify `opennotes version` command displays updated version after release
+
+**Why cmd/root.go Instead of version.go**:
+- Version variables are declared in `cmd/root.go`, not `cmd/version.go`
+- `cmd/version.go` only contains the command definition that *uses* the variables
+- release-please needs to update the file where variables are *declared*
 
 ### 5. Update GitHub Actions Workflows
 
@@ -626,28 +728,24 @@ Checklist:
   run: mise run node:publish ${{ steps.affected.outputs.node_packages }}
 ```
 
-**5.3 Decision: Release-Please Integration**
+**5.3 Release-Please Integration (Already Complete)**
 
-**Question**: Should release-please be integrated into `publish.yml` or separate?
+**CURRENT STATE**: ✅ Release-please already integrated in `.github/workflows/release.yml`
 
-**Option A: Integrated into publish.yml**
-- ✅ Single workflow file
-- ✅ Simpler configuration
-- ⚠️ More complex job dependencies
+**Existing Architecture**:
+- **release.yml** - Runs release-please-action on push to main
+- **publish.yml** - Triggered by repository_dispatch events from release.yml
 
-**Option B: Separate `release-please.yml`**
+This is **Option B** (separate workflows) and is already implemented:
 - ✅ Clean separation of concerns
-- ✅ Easier to understand workflow logic
+- ✅ Easier to understand workflow logic  
 - ✅ Release-please runs independently
-- ⚠️ One more file to maintain
+- ✅ File already exists and works
 
-**Decision Checklist**:
-- [ ] Evaluate workflow complexity
-- [ ] Choose Option A or Option B
-- [ ] If Option B, create `.github/workflows/release-please.yml`
-- [ ] Configure release-please action
-- [ ] Test release PR creation
-- [ ] Verify tag creation triggers publish workflow
+**What Just Needs Fixing**:
+- [ ] Remove hardcoded `release-type: go` from release.yml (Step 3)
+- [ ] Let per-package configuration in `release-please-config.json` control release types
+- [ ] Verify repository_dispatch integration between release.yml and publish.yml works correctly
 
 **5.4 Do NOT Modify `release.yml`**
 
