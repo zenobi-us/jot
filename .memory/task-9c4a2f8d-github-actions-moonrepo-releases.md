@@ -2,7 +2,7 @@
 id: 9c4a2f8d
 title: GitHub Actions CI/CD with moonrepo, release-please, and GoReleaser
 created_at: 2026-01-29T17:33:00+10:30
-updated_at: 2026-01-29T18:08:00+10:30
+updated_at: 2026-01-29T18:10:00+10:30
 status: todo
 epic_id: null
 phase_id: null
@@ -268,6 +268,57 @@ dependsOn:
 ```
 
 
+## Current Repository State
+
+Before starting implementation, here's what already exists:
+
+### Existing Files
+
+1. **release-please-config.json**
+   - Status: ✅ Exists, needs conversion
+   - Current mode: Single-package (root ".")
+   - Release type: "simple"
+   - Extra files: ["main.go"]
+
+2. **.release-please-manifest.json**
+   - Status: ✅ Exists, needs update
+   - Current version: "0.1.0" for root package
+   - Needs: Multiple package entries with separate versions
+
+3. **.github/workflows/release.yml**
+   - Status: ✅ Exists, needs modification
+   - Purpose: Runs release-please on push to main
+   - Current issue: Hardcoded `release-type: go` overrides per-package config
+   - Action needed: Remove hardcoded release-type, let config control it
+   - Jobs:
+     - `process`: Runs release-please-action@v4
+     - `dispatch-publish`: Dispatches publish-package events
+
+4. **.goreleaser.yaml**
+   - Status: ✅ Exists
+   - Purpose: GoReleaser configuration for Go binary builds
+   - Integration: Triggered by tag creation from release-please
+
+### Files That Don't Exist Yet
+
+1. **.github/workflows/pr.yml** - PR quality gate (to be created)
+2. **.github/workflows/publish.yml** - Package publishing workflow (to be created)
+3. **.mise/tasks/node/publish** - Namespaced publish task (needs migration from `.mise/tasks/publish`)
+4. **services/go-api/version.go** - Version constant for Go packages (to be created)
+5. **moon.yml** - moonrepo configuration (needs verification/creation)
+6. **Package-level moon.yml files** - Dependency declarations (to be created)
+
+### What Needs to Change
+
+| Component | Current State | Target State | Action Required |
+|-----------|---------------|--------------|-----------------|
+| release-please-config.json | Single-package mode | Multi-package monorepo | Convert configuration |
+| .release-please-manifest.json | Single entry (".": "0.1.0") | Multiple package entries | Update manifest |
+| .github/workflows/release.yml | Hardcoded release-type | Config-driven | Remove hardcoded type |
+| .mise/tasks/publish | Single flat file | Namespaced (node/publish) | Reorganize structure |
+| Version management | No version file | version.go for Go packages | Create version file |
+| CI/CD | Basic release workflow | Full moonrepo integration | Create pr.yml and publish.yml |
+
 ## Steps
 
 ### 1. Reorganize Mise Tasks
@@ -343,15 +394,142 @@ dependsOn:
   ```
 - [ ] Test locally: `moon ci --base main`
 
-### 3. Setup release-please Configuration
+### 3. Convert release-please to Monorepo Mode
 
-- [ ] Create `release-please-config.json` in project root
-- [ ] Define packages with appropriate release types:
-  - `services/go-api` → `release-type: "go"`
-  - `apps/web-app` → `release-type: "node"`
-  - `pkgs/pi-opennotes` → `release-type: "node"`
-- [ ] Create initial `.release-please-manifest.json` with current versions
-- [ ] Verify Conventional Commits usage in project
+**CURRENT STATE**: release-please is already configured, but in **single-package mode**
+
+**Existing Files**:
+- ✅ `release-please-config.json` - Currently configured for single root package
+- ✅ `.release-please-manifest.json` - Current version: "0.1.0"
+- ✅ `.github/workflows/release.yml` - Already uses release-please-action@v4
+
+**Current Configuration** (`release-please-config.json`):
+```json
+{
+  "packages": {
+    ".": {
+      "extra-files": ["main.go"]
+    }
+  },
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "include-v-in-tag": true,
+  "include-component-in-tag": false,
+  "versioning": "prerelease",
+  "prerelease": true,
+  "bump-minor-pre-major": true,
+  "release-type": "simple"
+}
+```
+
+**What This Means**:
+- Single package at root (".") - treats entire repo as one package
+- `release-type: "simple"` - basic versioning without language-specific features
+- Only updates `main.go` as extra file
+- NOT configured for monorepo with multiple independent packages
+
+**What Needs to Change**:
+This is a **conversion from single-package to multi-package monorepo mode**, not a setup from scratch.
+
+**Conversion Steps**:
+
+- [ ] Backup current configuration:
+  ```bash
+  cp release-please-config.json release-please-config.json.bak
+  cp .release-please-manifest.json .release-please-manifest.json.bak
+  ```
+
+- [ ] Convert `release-please-config.json` to multi-package manifest mode:
+  ```json
+  {
+    "packages": {
+      "services/go-api": {
+        "component": "go-api",
+        "release-type": "go",
+        "changelog-path": "CHANGELOG.md",
+        "extra-files": ["main.go", "version.go"]
+      },
+      "apps/web-app": {
+        "component": "web-app",
+        "release-type": "node",
+        "changelog-path": "CHANGELOG.md"
+      },
+      "pkgs/pi-opennotes": {
+        "component": "pi-opennotes",
+        "release-type": "node",
+        "changelog-path": "CHANGELOG.md"
+      }
+    },
+    "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+    "include-v-in-tag": true,
+    "include-component-in-tag": true,
+    "bump-minor-pre-major": true
+  }
+  ```
+
+- [ ] Update `.release-please-manifest.json` with entries for each package:
+  ```json
+  {
+    "services/go-api": "0.1.0",
+    "apps/web-app": "0.1.0",
+    "pkgs/pi-opennotes": "0.1.0"
+  }
+  ```
+
+- [ ] **CRITICAL**: Update `.github/workflows/release.yml` to remove hardcoded `release-type`:
+  - Current: `release-type: go` (hardcoded at workflow level)
+  - Problem: This overrides per-package release types in config
+  - Fix: Remove `release-type` from workflow, let config file control it
+  
+  **Change from**:
+  ```yaml
+  - uses: google-github-actions/release-please-action@v4
+    id: release-please
+    with:
+      token: ${{ secrets.GITHUB_TOKEN }}
+      release-type: go  # ❌ REMOVE THIS LINE
+      skip-github-pull-request: false
+  ```
+  
+  **To**:
+  ```yaml
+  - uses: google-github-actions/release-please-action@v4
+    id: release-please
+    with:
+      token: ${{ secrets.GITHUB_TOKEN }}
+      # release-type controlled by release-please-config.json per-package
+      skip-github-pull-request: false
+  ```
+
+- [ ] Test conversion with dry-run (if release-please CLI supports it):
+  ```bash
+  # Install release-please CLI
+  npm install -g release-please
+  
+  # Validate new configuration
+  release-please manifest-pr --dry-run
+  ```
+
+- [ ] Create test commit with conventional commit format to verify detection:
+  ```bash
+  git commit -m "feat(go-api): test monorepo detection"
+  ```
+
+- [ ] Push and verify release-please creates PR with correct package detection
+
+- [ ] Verify Conventional Commits usage across project (existing requirement)
+
+**Key Changes**:
+1. **Single root package** → **Multiple packages with paths**
+2. **`release-type: "simple"`** → **Per-package release types** (`go`, `node`)
+3. **`include-component-in-tag: false`** → **`include-component-in-tag: true`** (enables tags like `go-api-v1.0.0`)
+4. **Single manifest entry** → **Multiple package entries** with independent versions
+5. **Workflow hardcoded release-type** → **Config-driven per-package types**
+
+**Why This Conversion Matters**:
+- Enables independent versioning per package (not all packages bump together)
+- Allows different release strategies per package (Go vs Node)
+- Creates component-specific tags (e.g., `go-api-v1.0.0` instead of just `v1.0.0`)
+- Supports Conventional Commits scoped to packages: `feat(go-api): ...`
 
 ### 4. Setup Version Files for Go Packages
 
