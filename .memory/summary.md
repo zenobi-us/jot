@@ -2,7 +2,7 @@
 
 ## Project Status: Active Development
 
-**Current Focus**: pi-opennotes Extension (Phase 1 COMPLETE)
+**Current Focus**: pi-opennotes Extension (Phase 2 COMPLETE)
 
 ---
 
@@ -10,27 +10,33 @@
 
 ### Pi-OpenNotes Extension
 **Epic**: [epic-1f41631e-pi-opennotes-extension.md](epic-1f41631e-pi-opennotes-extension.md)  
-**Status**: Phase 1 Complete - Awaiting Review
+**Status**: Phase 2 Complete - Ready for Phase 3
 
 A pi extension that integrates OpenNotes into the pi coding agent, enabling AI assistants to search, query, and manage markdown notes.
 
 | Phase | Status | Notes |
 |-------|--------|-------|
 | Phase 1: Research & Design | ✅ **Complete** | All 6 design tasks done |
-| Phase 2: Implementation | ⏳ Pending Review | Ready to start |
-| Phase 3: Testing & Distribution | 🔜 Planned | - |
+| Phase 2: Implementation | ✅ **Complete** | 72 tests passing |
+| Phase 3: Testing & Distribution | 🔜 Ready to Start | E2E tests + npm publish |
 
-#### Phase 1 Deliverables
-- CLI Interface Documentation
-- TypeBox Schemas (all 6 tools)
-- Package Structure with Service Layer
-- Service Architecture (SOLID principles)
-- Error Handling Strategy
-- Test Strategy (98 tests planned)
+#### Phase 2 Deliverables
+- Full package implementation in `pkgs/pi-opennotes/`
+- 6 LLM-callable tools (search, list, get, create, notebooks, views)
+- Service-based architecture with dependency injection
+- TypeBox schemas for all parameters
+- Comprehensive error handling with installation hints
+- 72 unit/integration tests passing
 
 ---
 
 ## Recent Completions
+
+### Pi-OpenNotes Phase 2 (2026-01-29)
+- Implemented complete extension at `pkgs/pi-opennotes/`
+- Services: CliAdapter, PaginationService, SearchService, ListService, NoteService, NotebookService, ViewsService
+- Tools: opennotes_search, opennotes_list, opennotes_get, opennotes_create, opennotes_notebooks, opennotes_views
+- 72 tests passing (unit + integration)
 
 ### Pi-OpenNotes Phase 1 (2026-01-29)
 - Documented OpenNotes CLI interface
@@ -44,11 +50,6 @@ A pi extension that integrates OpenNotes into the pi coding agent, enabling AI a
 - Security validation (SELECT/WITH only)
 - 30-second query timeout
 - Path traversal protection
-
-### Test Improvement Epic (2026-01-18)
-- Increased test coverage to 60%+
-- Added table-driven tests
-- Fixed flaky tests
 
 ---
 
@@ -73,11 +74,13 @@ A pi extension that integrates OpenNotes into the pi coding agent, enabling AI a
 
 ### Learnings
 - [learning-f9a8b7c6-phase1-design-insights.md](learning-f9a8b7c6-phase1-design-insights.md) - Phase 1 key decisions
+- [learning-p2i8m7k5-phase2-implementation.md](learning-p2i8m7k5-phase2-implementation.md) - Phase 2 implementation insights
 
 ---
 
 ## Quick Links
 
+- **Extension Package**: [pkgs/pi-opennotes/](../pkgs/pi-opennotes/)
 - **Main Docs**: [docs/](../docs/)
 - **CI Config**: [.github/workflows/](../.github/workflows/)
 - **Archive**: [archive/](archive/) - Completed work from previous phases

@@ -48,7 +48,7 @@ This extension will be written in **Bun/TypeScript** and stored in `pkgs/pi-open
 | Phase | Title | Status | File |
 |-------|-------|--------|------|
 | 1 | Research & Design | ✅ `complete` | [phase-43842f12-research-design.md](phase-43842f12-research-design.md) |
-| 2 | Implementation | ⏳ `pending-review` | [phase-5e1ddedc-implementation.md](phase-5e1ddedc-implementation.md) |
+| 2 | Implementation | ✅ `complete` | [phase-5e1ddedc-implementation.md](phase-5e1ddedc-implementation.md) |
 | 3 | Testing & Distribution | 🔜 `proposed` | [phase-16d937de-testing-distribution.md](phase-16d937de-testing-distribution.md) |
 
 ## Dependencies
