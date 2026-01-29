@@ -52,7 +52,9 @@
     "@sinclair/typebox": "^0.32.0"
   },
   "pi": {
-    "extensions": ["./src/index.ts"],
+    "extensions": [
+      "./src/index.ts"
+    ],
     "config": {
       "toolPrefix": {
         "type": "string",
