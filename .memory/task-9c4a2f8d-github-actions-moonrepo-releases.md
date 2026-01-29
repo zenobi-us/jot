@@ -2,7 +2,7 @@
 id: 9c4a2f8d
 title: GitHub Actions CI/CD with moonrepo, release-please, and GoReleaser
 created_at: 2026-01-29T17:33:00+10:30
-updated_at: 2026-01-29T17:56:00+10:30
+updated_at: 2026-01-29T18:08:00+10:30
 status: todo
 epic_id: null
 phase_id: null
@@ -100,20 +100,37 @@ As part of this work, we need to reorganize mise tasks to support multiple packa
 
 **Mise Variadic Arguments**:
 
-According to [mise documentation on task arguments](https://mise.jdx.dev/tasks/task-arguments.html#variadic-arguments), tasks can accept variadic arguments using the `...` suffix:
+Mise tasks can be implemented as **bash scripts** that accept variadic arguments using standard bash `$@`:
 
-```toml
+```bash
+#!/usr/bin/env bash
 # .mise/tasks/node/publish
-[tasks.publish]
-run = "npm publish {{arg(name='packages', var=true)...}}"
+
+PACKAGES=("$@")
+
+if [ ${#PACKAGES[@]} -eq 0 ]; then
+  # Publish all packages when no arguments provided
+  pnpm publish -r
+else
+  # Publish specific packages
+  for pkg in "${PACKAGES[@]}"; do
+    pnpm publish --filter "$pkg"
+  done
+fi
 ```
 
 This enables:
-- `mise run node:publish` - Publish all packages
+- `mise run node:publish` - Publish all packages (no args)
 - `mise run node:publish @zenobi-us/opennotes` - Publish specific package
 - `mise run node:publish pkg1 pkg2` - Publish multiple packages
 
 This variadic capability integrates with moonrepo's affected detection, allowing selective publishing based on what changed.
+
+**Why bash scripts instead of TOML**:
+- Simpler syntax for conditionals and loops
+- Direct access to bash features (`$@`, arrays, etc.)
+- No templating syntax needed
+- Mise executes bash scripts as tasks automatically
 
 ## Context
 
@@ -250,146 +267,14 @@ dependsOn:
   run: moon ci --base ${{ github.base_ref }}
 ```
 
-#### 4. Release-Please Workflow - May need separate file
-
-**Options**:
-
-**Option A: Integrated into publish.yml** (Recommended)
-```yaml
-# In publish.yml
-jobs:
-  create-release-prs:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: google-github-actions/release-please-action@v4
-        with:
-          config-file: release-please-config.json
-          manifest-file: .release-please-manifest.json
-  
-  publish:
-    needs: create-release-prs
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    # ... publish steps
-```
-
-**Option B: Separate `.github/workflows/release-please.yml`**
-- Dedicated workflow for release-please PR creation
-- Cleaner separation of concerns
-- `publish.yml` only handles actual publishing
-
-**Decision Point**: Choose during implementation based on workflow complexity
-
-### CI Workflow Structure (publish.yml)
-
-**Recommended Flow**:
-
-```yaml
-name: Publish Packages
-
-on:
-  push:
-    branches: [main]
-  push:
-    tags:
-      - 'go-api-v*'
-
-jobs:
-  # Step 1: Quality Gate - Test affected packages
-  affected-tests:
-    name: Run Affected Tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Need full history for moonrepo
-      
-      - uses: moonrepo/setup-toolchain@v0
-      
-      - name: Run tests for affected projects
-        run: moon ci --base main
-  
-  # Step 2: Detect affected packages
-  detect-affected:
-    name: Detect Affected Packages
-    needs: affected-tests
-    runs-on: ubuntu-latest
-    outputs:
-      node_packages: ${{ steps.affected.outputs.node_packages }}
-      go_packages: ${{ steps.affected.outputs.go_packages }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      
-      - uses: moonrepo/setup-toolchain@v0
-      
-      - name: Query affected projects
-        id: affected
-        run: |
-          # Get affected projects as JSON
-          AFFECTED=$(moon query projects --affected --json)
-          
-          # Filter by project type/tags
-          NODE_PKGS=$(echo "$AFFECTED" | jq -r '.[] | select(.tags[] | contains("node")) | .id' | tr '\n' ' ')
-          GO_PKGS=$(echo "$AFFECTED" | jq -r '.[] | select(.tags[] | contains("go")) | .id' | tr '\n' ' ')
-          
-          echo "node_packages=$NODE_PKGS" >> $GITHUB_OUTPUT
-          echo "go_packages=$GO_PKGS" >> $GITHUB_OUTPUT
-  
-  # Step 3: Publish Node/Bun packages
-  publish-node:
-    name: Publish Node Packages
-    needs: detect-affected
-    if: needs.detect-affected.outputs.node_packages != ''
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup mise
-        uses: jdx/mise-action@v2
-      
-      - name: Publish packages via mise
-        run: mise run node:publish ${{ needs.detect-affected.outputs.node_packages }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-  
-  # Step 4: Publish Go binaries (triggered by tag)
-  publish-go:
-    name: Publish Go Binaries
-    needs: affected-tests
-    if: startsWith(github.ref, 'refs/tags/go-api-v')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      
-      - uses: actions/setup-go@v5
-      
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v5
-        with:
-          distribution: goreleaser
-          version: latest
-          args: release --clean
-          workdir: ./services/go-api
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-```
-
-**Key Points**:
-1. **Quality gate runs first** using moonrepo to test affected packages
-2. **Detect affected packages** using moonrepo query (filters by tags: node/go)
-3. **Conditional publishing** - only publishes packages with changes
-4. **Mise integration** - calls `mise run node:publish` with variadic package names
-5. **GoReleaser integration** - triggered by tag creation for Go binaries
-6. **Separation of concerns** - Node packages via npm, Go binaries via GitHub releases
 
 ## Steps
 
 ### 1. Reorganize Mise Tasks
 
 **Goal**: Create namespaced task structure for different package types
+
+**IMPORTANT**: Mise tasks should remain as **bash scripts**, NOT TOML files. Mise can execute bash scripts directly as tasks.
 
 - [ ] Create directory structure:
   ```bash
@@ -400,27 +285,52 @@ jobs:
   ```bash
   git mv .mise/tasks/publish .mise/tasks/node/publish
   ```
-- [ ] Update `.mise/tasks/node/publish` to accept variadic arguments:
-  ```toml
-  # Example structure for variadic package arguments
-  [tasks.publish]
-  description = "Publish Node/Bun packages"
-  run = """
-  # Accept variadic package names as arguments
+- [ ] Update `.mise/tasks/node/publish` to accept variadic arguments (keep as bash script):
+  ```bash
+  #!/usr/bin/env bash
+  # .mise/tasks/node/publish
+  # Description: Publish Node/Bun packages
   # Usage: mise run node:publish [@zenobi-us/pkg1] [@zenobi-us/pkg2]
-  npm publish {{arg(name='packages', var=true)...}}
-  """
+  
+  # Accept package names as arguments using $@
+  PACKAGES=("$@")
+  
+  # If no packages specified, publish all
+  if [ ${#PACKAGES[@]} -eq 0 ]; then
+    echo "Publishing all packages..."
+    pnpm publish -r
+  else
+    # Publish only specified packages
+    echo "Publishing specific packages: ${PACKAGES[*]}"
+    for pkg in "${PACKAGES[@]}"; do
+      echo "Publishing $pkg..."
+      pnpm publish --filter "$pkg"
+    done
+  fi
+  ```
+- [ ] Ensure the bash script is executable:
+  ```bash
+  chmod +x .mise/tasks/node/publish
   ```
 - [ ] Test task invocation:
   ```bash
   mise run node:publish --help
   mise run node:publish --dry-run
+  mise run node:publish @zenobi-us/opennotes
+  mise run node:publish @zenobi-us/pkg1 @zenobi-us/pkg2
   ```
 - [ ] Document new task structure in project docs
 
+**Why Bash Scripts Instead of TOML**:
+- ✅ Simpler syntax for shell operations
+- ✅ Direct use of bash features (`$@`, arrays, conditionals)
+- ✅ No need for templating syntax
+- ✅ Mise executes bash scripts as tasks automatically
+- ✅ More flexible for complex logic
+
 **References**:
-- [Mise Task Arguments Documentation](https://mise.jdx.dev/tasks/task-arguments.html#variadic-arguments)
-- Variadic args enable selective publishing: `mise run node:publish pkg1 pkg2`
+- [Mise Tasks Documentation](https://mise.jdx.dev/tasks/)
+- Bash variadic arguments via `$@` enable selective publishing: `mise run node:publish pkg1 pkg2`
 
 ### 2. Setup moonrepo Configuration
 
@@ -604,26 +514,32 @@ Checklist:
 
 ### Go Package Publishing
 
-When Go packages need automated publishing, create `.mise/tasks/go/publish`:
+When Go packages need automated publishing, create `.mise/tasks/go/publish` as a **bash script**:
 
-```toml
-[tasks.publish]
-description = "Build and publish Go binaries"
-run = """
-# Accept variadic package names as arguments
+```bash
+#!/usr/bin/env bash
+# .mise/tasks/go/publish
+# Description: Build and publish Go binaries
 # Usage: mise run go:publish [service-name] [another-service]
-PACKAGES={{arg(name='packages', var=true, default='all')...}}
 
-if [ "$PACKAGES" = "all" ]; then
-  # Build all Go services
+# Accept variadic package names as arguments
+PACKAGES=("$@")
+
+if [ ${#PACKAGES[@]} -eq 0 ]; then
+  echo "Building all Go services..."
   goreleaser release --clean
 else
-  # Build specific services
-  for pkg in $PACKAGES; do
-    goreleaser release --clean --single-target --id=$pkg
+  echo "Building specific services: ${PACKAGES[*]}"
+  for pkg in "${PACKAGES[@]}"; do
+    echo "Building $pkg..."
+    goreleaser release --clean --single-target --id="$pkg"
   done
 fi
-"""
+```
+
+**Setup**:
+```bash
+chmod +x .mise/tasks/go/publish
 ```
 
 **Benefits**:
@@ -631,6 +547,7 @@ fi
 - Selective building based on affected packages
 - Integration with GoReleaser for cross-compilation
 - Variadic arguments for multiple services
+- Simple bash syntax (no templating needed)
 
 **Integration with CI**:
 ```yaml
@@ -641,16 +558,36 @@ fi
 
 ### Other Runtime Tasks
 
-As the monorepo grows, additional task namespaces can be created:
+As the monorepo grows, additional task namespaces can be created as **bash scripts**:
 
 - `.mise/tasks/rust/publish` - Rust crate publishing
 - `.mise/tasks/python/publish` - Python package publishing  
 - `.mise/tasks/docker/publish` - Container image publishing
 
 Each namespace follows the same pattern:
-1. Variadic argument support for selective operations
-2. Integration with moonrepo affected detection
-3. Consistent naming and interface across runtimes
+1. **Bash script format** (executable, no TOML wrapper)
+2. **Variadic argument support** using `$@` for selective operations
+3. **Integration with moonrepo** affected detection
+4. **Consistent naming** and interface across runtimes
+
+**Example Template**:
+```bash
+#!/usr/bin/env bash
+# .mise/tasks/{runtime}/publish
+
+PACKAGES=("$@")
+
+if [ ${#PACKAGES[@]} -eq 0 ]; then
+  echo "Publishing all {runtime} packages..."
+  # Publish all logic here
+else
+  echo "Publishing specific packages: ${PACKAGES[*]}"
+  for pkg in "${PACKAGES[@]}"; do
+    echo "Publishing $pkg..."
+    # Publish specific package logic here
+  done
+fi
+```
 
 ## Expected Outcome
 
@@ -893,15 +830,21 @@ Moving from `.mise/tasks/publish` to `.mise/tasks/node/publish`:
 1. **Namespace Clarity**: Tasks grouped by runtime/language
 2. **Scalability**: Easy to add `go/publish`, `rust/publish`, etc.
 3. **Selective Invocation**: `mise run node:publish` vs `mise run go:publish`
-4. **Variadic Arguments**: Pass specific packages to publish
+4. **Variadic Arguments**: Pass specific packages to publish using bash `$@`
 5. **Integration**: Works seamlessly with moonrepo affected detection
+6. **Bash Script Format**: Simple, direct bash scripts (no TOML wrapper needed)
+
+**File Format**:
+- **Keep as bash scripts**: `.mise/tasks/node/publish` (executable bash file, no extension)
+- **NOT TOML files**: Mise executes bash scripts directly as tasks
+- **Variadic args in bash**: Use `$@` to accept multiple package arguments
 
 **Migration Path**:
 ```bash
 # Old way
 mise run publish
 
-# New way  
+# New way (bash script with variadic args)
 mise run node:publish
 mise run node:publish @zenobi-us/pkg1 @zenobi-us/pkg2
 ```
