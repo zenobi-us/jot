@@ -1,8 +1,8 @@
 ---
 id: 9c4a2f8d
-title: GitHub Actions CI/CD with moonrepo and release-please
+title: GitHub Actions CI/CD with moonrepo, release-please, and GoReleaser
 created_at: 2026-01-29T17:33:00+10:30
-updated_at: 2026-01-29T17:33:00+10:30
+updated_at: 2026-01-29T17:37:50+10:30
 status: todo
 epic_id: null
 phase_id: null
@@ -263,12 +263,154 @@ _To be filled after implementation_
 
 _To be filled after implementation_
 
+## GoReleaser Integration for Go Packages
+
+### Overview
+
+GoReleaser provides native monorepo support that can work alongside our release-please + moonrepo strategy. This is particularly relevant for our Go packages, enabling automated binary builds, cross-compilation, and distribution.
+
+### Key GoReleaser Monorepo Features
+
+1. **Path-based filtering**: Can build/release only changed Go modules
+2. **Multiple .goreleaser.yml files**: Support for per-package configuration
+3. **Integration with tag patterns**: Works with tags like `service-name/v1.2.3`
+4. **Build matrix support**: Can handle multiple Go modules in one release workflow
+
+### Integration Points with release-please
+
+**Potential Workflow**:
+1. release-please creates version bump PR with Conventional Commits
+2. Merging PR triggers release-please to create tags (e.g., `go-api-v1.2.3`)
+3. Tag creation triggers GoReleaser workflow
+4. GoReleaser builds binaries, creates GitHub release, attaches artifacts
+
+**Benefits**:
+- release-please handles version management and changelogs
+- GoReleaser handles binary compilation and distribution
+- Clean separation of concerns
+- Both tools play to their strengths
+
+### Research Questions
+
+These questions need to be answered during implementation:
+
+1. **Tag Pattern Compatibility**: How does GoReleaser fit with release-please's tag creation?
+   - Does release-please create tags in a format GoReleaser expects?
+   - Do we need custom tag patterns for monorepo packages?
+
+2. **Tool Division of Labor**: Should we use GoReleaser for Go packages and release-please for version management?
+   - Or does release-please handle everything (version + release creation)?
+   - What's the cleanest workflow separation?
+
+3. **Tag Consumption**: Can GoReleaser consume the tags that release-please creates?
+   - Do tag patterns need alignment (e.g., `go-api/v1.2.3` vs `go-api-v1.2.3`)?
+   - Does GoReleaser need configuration to match release-please's tag format?
+
+4. **Workflow Separation**: Do we need separate release workflows for Go vs Bun/Node packages?
+   - Go packages → release-please (version) + GoReleaser (build/publish)
+   - Node packages → release-please (version + npm publish)
+   - Or unified workflow with conditional steps?
+
+5. **Multiple .goreleaser.yml Files**: Should each Go package have its own GoReleaser config?
+   - Pro: Package-specific build configurations
+   - Con: Configuration duplication
+   - Alternative: Single config with monorepo filtering
+
+### Implementation Considerations
+
+**Recommended Approach** (to be validated):
+
+```yaml
+# Workflow triggered by tag creation
+on:
+  push:
+    tags:
+      - 'go-api-v*'
+      - 'other-go-package-v*'
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - uses: actions/setup-go@v5
+      
+      - uses: goreleaser/goreleaser-action@v5
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+          workdir: ./services/go-api  # Path-based filtering
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+**GoReleaser Configuration** (`.goreleaser.yml` in package directory):
+
+```yaml
+# services/go-api/.goreleaser.yml
+project_name: opennotes
+
+builds:
+  - main: ./main.go
+    binary: opennotes
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+release:
+  github:
+    owner: zenobi-us
+    name: opennotes
+  name_template: "go-api v{{ .Version }}"
+```
+
+### Decision Points
+
+Before implementing, decide:
+
+1. **Tag Format**: Align release-please and GoReleaser on tag patterns
+   - Recommended: `go-api-v1.2.3` (works with both tools)
+
+2. **Workflow Trigger**: When should GoReleaser run?
+   - Option A: On tag creation (after release-please creates tag)
+   - Option B: After release-please creates release (duplicate effort?)
+
+3. **Binary Distribution**: Where should Go binaries be published?
+   - GitHub Releases (GoReleaser default)
+   - Package registries (Homebrew, apt, etc.)
+   - Docker images
+
+4. **Monorepo Strategy**: Single or multiple GoReleaser configs?
+   - Recommendation: Per-package configs for flexibility
+
+### Action Items for Implementation
+
+- [ ] Review GoReleaser monorepo documentation thoroughly
+- [ ] Align tag patterns between release-please and GoReleaser
+- [ ] Create `.goreleaser.yml` for `services/go-api`
+- [ ] Add GoReleaser workflow triggered by tag creation
+- [ ] Test workflow with test tag
+- [ ] Document GoReleaser + release-please integration
+
 ## References
 
 - [moonrepo Documentation](https://moonrepo.dev/)
 - [release-please Documentation](https://github.com/googleapis/release-please)
 - [Conventional Commits](https://www.conventionalcommits.org/)
 - [Google release-please Action](https://github.com/google-github-actions/release-please-action)
+- [GoReleaser Monorepo Support](https://goreleaser.com/customization/monorepo/)
 
 ## Notes
 
