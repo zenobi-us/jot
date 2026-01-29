@@ -159,3 +159,45 @@ Test Structure (tests/)
 - **Performance**: Sub-100ms for typical operations
 - **Architecture**: Clean separation of concerns
 - **Status**: Production-ready, enterprise-validated
+
+### Planned: Pi-OpenNotes Extension
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                     PI-OPENNOTES EXTENSION (Planned)                   │
+│                         pkgs/pi-opennotes/                             │
+└────────────────────────────────────────────────────────────────────────┘
+
+                              [Pi Agent]
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│              pi-opennotes Extension (Bun/TS)               │
+│                                                             │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────────┐    │
+│  │ search_notes │ │ list_notes   │ │ get_note         │    │
+│  └──────┬───────┘ └──────┬───────┘ └────────┬─────────┘    │
+│         │                │                   │              │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────────┐    │
+│  │ create_note  │ │ notebooks    │ │ views            │    │
+│  └──────┬───────┘ └──────┬───────┘ └────────┬─────────┘    │
+│         │                │                   │              │
+│         └────────────────┼───────────────────┘              │
+│                          ▼                                  │
+│                 ┌─────────────────┐                         │
+│                 │   CLI Adapter   │ ← Executes via shell    │
+│                 └────────┬────────┘                         │
+└──────────────────────────┼──────────────────────────────────┘
+                           │
+                           ▼
+                  ┌─────────────────┐
+                  │  opennotes CLI  │ ← Go binary
+                  │  (dist/opennotes)│
+                  └────────┬────────┘
+                           │
+                           ▼
+                  ┌─────────────────┐
+                  │   DuckDB +      │
+                  │   Markdown Ext  │
+                  └─────────────────┘
+```
