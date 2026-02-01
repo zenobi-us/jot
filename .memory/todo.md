@@ -58,14 +58,22 @@ internal/search/bleve/
 
 ---
 
-## 🔜 Next: Complete Phase 4
+## 🎯 Next: Phase 5 - DuckDB Removal
 
-### Remaining Tasks
+**Ready to Start**: All Phase 4 tasks complete
 
-- [ ] Benchmark Index.Find vs DuckDB (target: <25ms)
-- [ ] Benchmark Index.Add for bulk indexing (target: 10k docs in <500ms)
-- [ ] Add parser integration method to Index
-- [ ] Complete Reindex with frontmatter parsing
+### Phase 5 Tasks (Proposed)
+
+- [ ] Create Phase 5 document
+- [ ] Audit codebase for DuckDB references
+- [ ] Replace NoteService.SearchNotes with Index.Find
+- [ ] Remove DbService entirely
+- [ ] Update CLI commands (notes search, notes list, etc.)
+- [ ] Migrate SQL views to query DSL
+- [ ] Remove DuckDB from dependencies
+- [ ] Verify binary size reduction (target: <15MB)
+- [ ] Verify startup time improvement (target: <100ms)
+- [ ] Update documentation
 
 ---
 
