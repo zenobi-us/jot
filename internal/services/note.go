@@ -44,6 +44,41 @@ func (n *Note) DisplayName() string {
 	return core.Slugify(filename)
 }
 
+// documentToNote converts a search.Document to a Note.
+// Preserves the Note struct format for backward compatibility.
+func documentToNote(doc search.Document) Note {
+	note := Note{
+		Content:  doc.Body,
+		Metadata: make(map[string]any),
+	}
+
+	note.File.Relative = doc.Path
+	note.File.Filepath = doc.Path // Note: In index, Path is already relative
+
+	// Map Document metadata back to Note metadata
+	if doc.Title != "" {
+		note.Metadata["title"] = doc.Title
+	}
+	if len(doc.Tags) > 0 {
+		note.Metadata["tags"] = doc.Tags
+	}
+	if !doc.Created.IsZero() {
+		note.Metadata["created"] = doc.Created
+	}
+	if !doc.Modified.IsZero() {
+		note.Metadata["modified"] = doc.Modified
+	}
+
+	// Preserve any custom metadata
+	if doc.Metadata != nil {
+		for k, v := range doc.Metadata {
+			note.Metadata[k] = v
+		}
+	}
+
+	return note
+}
+
 // NoteService provides note query operations.
 type NoteService struct {
 	configService *ConfigService
@@ -89,97 +124,27 @@ func (s *NoteService) SearchNotes(ctx context.Context, query string, fuzzy bool)
 }
 
 // getAllNotes retrieves all notes from the notebook without filtering.
+// Uses the Bleve Index to retrieve all indexed documents and converts them to Notes.
 func (s *NoteService) getAllNotes(ctx context.Context) ([]Note, error) {
-	db, err := s.dbService.GetDB(ctx)
+	if s.index == nil {
+		return nil, fmt.Errorf("index not initialized")
+	}
+
+	s.log.Debug().Msg("loading notes from index")
+
+	// Query index for all documents (empty query matches all)
+	results, err := s.index.Find(ctx, search.FindOpts{})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("index query failed: %w", err)
 	}
 
-	glob := filepath.Join(s.notebookPath, "**", "*.md")
-	s.log.Debug().Str("glob", glob).Msg("loading notes")
-
-	// Use DuckDB's read_markdown function with filepath included
-	sqlQuery := `SELECT * FROM read_markdown(?, include_filepath:=true)`
-	rows, err := db.QueryContext(ctx, sqlQuery, glob)
-	if err != nil {
-		return nil, fmt.Errorf("query failed: %w", err)
-	}
-	defer func() {
-		if err := rows.Close(); err != nil {
-			s.log.Warn().Err(err).Msg("failed to close rows")
-		}
-	}()
-
-	var notes []Note
-	columns, err := rows.Columns()
-	if err != nil {
-		return nil, err
+	// Convert search.Document results to Note objects
+	notes := make([]Note, len(results.Items))
+	for i, result := range results.Items {
+		notes[i] = documentToNote(result.Document)
 	}
 
-	for rows.Next() {
-		// Create slice of interface{} to hold values
-		values := make([]interface{}, len(columns))
-		valuePtrs := make([]interface{}, len(columns))
-		for i := range values {
-			valuePtrs[i] = &values[i]
-		}
-
-		if err := rows.Scan(valuePtrs...); err != nil {
-			s.log.Warn().Err(err).Msg("failed to scan row")
-			continue
-		}
-
-		// Map columns to Note struct
-		note := Note{
-			Metadata: make(map[string]any),
-		}
-
-		for i, col := range columns {
-			val := values[i]
-			switch col {
-			case "filepath", "file_path", "filename":
-				if v, ok := val.(string); ok {
-					note.File.Filepath = v
-					note.File.Relative = strings.TrimPrefix(v, s.notebookPath+"/")
-				}
-			case "content", "body":
-				if v, ok := val.(string); ok {
-					note.Content = v
-				}
-			case "metadata":
-				// metadata column contains a DuckDB MAP with frontmatter data
-				// The type might be duckdb.Map or map[any]any
-				// Try to handle it as a map type by using reflection if needed
-				rv := reflect.ValueOf(val)
-				if rv.Kind() == reflect.Map {
-					// It's some kind of map - iterate over it
-					for _, key := range rv.MapKeys() {
-						if keyStr, ok := key.Interface().(string); ok {
-							note.Metadata[keyStr] = rv.MapIndex(key).Interface()
-						}
-					}
-				} else if v, ok := val.(map[any]any); ok {
-					for k, val := range v {
-						if keyStr, ok := k.(string); ok {
-							note.Metadata[keyStr] = val
-						}
-					}
-				} else if v, ok := val.(map[string]any); ok {
-					note.Metadata = v
-				}
-			default:
-				note.Metadata[col] = val
-			}
-		}
-
-		notes = append(notes, note)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	s.log.Debug().Int("count", len(notes)).Msg("notes loaded")
+	s.log.Debug().Int("count", len(notes)).Msg("notes loaded from index")
 	return notes, nil
 }
 
@@ -189,20 +154,16 @@ func (s *NoteService) Count(ctx context.Context) (int, error) {
 		return 0, nil
 	}
 
-	db, err := s.dbService.GetDB(ctx)
+	if s.index == nil {
+		return 0, fmt.Errorf("index not initialized")
+	}
+
+	count, err := s.index.Count(ctx, search.FindOpts{})
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("index count failed: %w", err)
 	}
 
-	glob := filepath.Join(s.notebookPath, "**", "*.md")
-
-	var count int
-	row := db.QueryRowContext(ctx, `SELECT COUNT(*) FROM read_markdown(?)`, glob)
-	if err := row.Scan(&count); err != nil {
-		return 0, err
-	}
-
-	return count, nil
+	return int(count), nil
 }
 
 // ValidateSQL validates a user-provided SQL query for safety.

@@ -162,7 +162,7 @@ func (idx *Index) Find(ctx context.Context, opts search.FindOpts) (search.Result
 
 	// Request stored fields
 	req.Fields = []string{
-		FieldPath, FieldTitle, FieldLead, FieldTags,
+		FieldPath, FieldTitle, FieldBody, FieldLead, FieldTags,
 		FieldCreated, FieldModified, FieldChecksum,
 	}
 
@@ -401,6 +401,9 @@ func extractDocument(hit *bsearch.DocumentMatch) search.Document {
 	}
 	if v, ok := hit.Fields[FieldLead].(string); ok {
 		doc.Lead = v
+	}
+	if v, ok := hit.Fields[FieldBody].(string); ok {
+		doc.Body = v
 	}
 	if v, ok := hit.Fields[FieldChecksum].(string); ok {
 		doc.Checksum = v

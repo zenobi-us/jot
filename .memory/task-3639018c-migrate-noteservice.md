@@ -39,22 +39,30 @@ Replace all DuckDB dependencies in NoteService with the new Bleve-based search i
 
 **Commit**: c9318b7
 
-### Phase 2.2: Migrate getAllNotes()
+### Phase 2.2: Migrate getAllNotes() ✅ COMPLETE
 
-**Current**: Uses `read_markdown()` DuckDB function
+**Implementation Complete (2026-02-01 23:35)**:
+- [x] Use `index.Find()` with empty query (match all) ✅
+- [x] Return []Note from search.Document results ✅
+- [x] Handle relative path calculation ✅
+- [x] documentToNote() converter function ✅
+- [x] Update test suite (171/172 tests passing) ✅
+- [x] Fixed Bleve: Store Body field in index ✅
+- [x] Fixed Find(): Include FieldBody in results ✅
+
+**Implementation**:
 ```go
-sqlQuery := `SELECT * FROM read_markdown(?, include_filepath:=true)`
-rows, err := db.QueryContext(ctx, sqlQuery, glob)
+func (s *NoteService) getAllNotes(ctx context.Context) ([]Note, error) {
+    results, err := s.index.Find(ctx, search.FindOpts{})
+    notes := make([]Note, len(results.Items))
+    for i, result := range results.Items {
+        notes[i] = documentToNote(result.Document)
+    }
+    return notes, nil
+}
 ```
 
-**New Implementation**:
-- [ ] Use `index.Find()` with empty query (match all)
-- [ ] Or: Walk filesystem + parse markdown directly
-- [ ] Return []Note from search.Document results
-- [ ] Handle relative path calculation
-- [ ] Test with existing test suite
-
-**Decision**: Use Index.Find() - it already has all notes indexed
+**Commit**: 0bcf294 - Phase 5.2.2 complete
 
 ### Phase 2.3: Migrate Count()
 

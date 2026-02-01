@@ -85,19 +85,22 @@ internal/search/bleve/
 
 ## Session History
 
-### 2026-02-01 (Evening - Continued) - Phase 5.2.1 Complete
-- ✅ **Completed Phase 5.2.1: NoteService Struct Update**
-- 📄 Created phase document: phase-02df510c-duckdb-removal.md
-- 📄 Created task document: task-3639018c-migrate-noteservice.md
-- ✅ Task 1 Complete: Codebase audit (14 files identified)
-- ✅ Task 2 Phase 2.1 Complete: Added Index field to NoteService
-- 🔄 69 callers updated (tests pass, all green)
-- 📝 Next: Phase 2.2 - Migrate getAllNotes() to use Index.Find()
+**Session 2026-02-01 (Evening - Phase 5.2.2 Complete)**
+- ✅ **Completed Phase 5.2.2: Migrate getAllNotes() to Index**
+- 📄 Implemented documentToNote() converter
+- 📄 Updated getAllNotes() to use Index.Find()
+- 📄 Updated Count() to use Index.Count()
+- 📄 Fixed Bleve indexing: Store Body field
+- 📄 Created testutil.CreateTestIndex() helper
+- 📄 Updated 40+ test cases
+- ✅ 171 of 172 tests passing (99.4%)
+- 📝 Next: Phase 5.2.3 - Migrate SearchWithConditions()
 
-**Phase 5 Progress**: 2 of 11 sub-phases complete (18%)
+**Phase 5 Progress**: 3 of 11 sub-phases complete (27%)
 - Phase 5.1: Codebase audit ✅
 - Phase 5.2.1: Struct update ✅  
-- Phase 5.2.2-5.11: In progress 🔄
+- Phase 5.2.2: getAllNotes() migration ✅
+- Phase 5.2.3-5.11: In progress 🔄
 
 ### 2026-02-01 (Evening) - Phase 4 Complete
 - ✅ **Completed Phase 4: Bleve Backend Implementation**

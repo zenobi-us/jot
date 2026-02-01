@@ -59,7 +59,7 @@ func BuildDocumentMapping() mapping.IndexMapping {
 	// Body field - standard analyzer, baseline weight
 	bodyField := bleve.NewTextFieldMapping()
 	bodyField.Analyzer = standard.Name
-	bodyField.Store = false // Don't store body in index, retrieve from file
+	bodyField.Store = true // Store body for retrieval (needed during migration)
 	bodyField.IncludeInAll = true
 	noteMapping.AddFieldMappingsAt(FieldBody, bodyField)
 

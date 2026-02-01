@@ -49,7 +49,9 @@ func TestNoteService_SearchNotes_FindsAllNotes(t *testing.T) {
 	testutil.CreateTestNote(t, notebookDir, "note2.md", "# Note 2\n\nSecond note content.")
 	testutil.CreateTestNote(t, notebookDir, "note3.md", "# Note 3\n\nThird note content.")
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
@@ -75,7 +77,9 @@ func TestNoteService_SearchNotes_FiltersByQuery(t *testing.T) {
 	testutil.CreateTestNote(t, notebookDir, "banana.md", "# Banana\n\nThis is about bananas.")
 	testutil.CreateTestNote(t, notebookDir, "cherry.md", "# Cherry\n\nThis is about cherries.")
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	// Search for "apple"
 	notes, err := svc.SearchNotes(ctx, "apple", false)
@@ -100,7 +104,9 @@ func TestNoteService_SearchNotes_FiltersByQueryCaseInsensitive(t *testing.T) {
 	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
 	testutil.CreateTestNote(t, notebookDir, "mixed.md", "# UPPERCASE content\n\nSome text.")
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	// Search with lowercase should match uppercase content
 	notes, err := svc.SearchNotes(ctx, "uppercase", false)
@@ -125,7 +131,9 @@ func TestNoteService_SearchNotes_FiltersByFilepath(t *testing.T) {
 	testutil.CreateTestNote(t, notebookDir, "project-ideas.md", "# Ideas\n\nSome ideas.")
 	testutil.CreateTestNote(t, notebookDir, "daily-notes.md", "# Daily\n\nDaily notes.")
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	// Search by filename pattern
 	notes, err := svc.SearchNotes(ctx, "project", false)
@@ -150,14 +158,14 @@ func TestNoteService_SearchNotes_EmptyNotebook(t *testing.T) {
 	// Create empty notebook (no notes)
 	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "empty-notebook")
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
 
-	// Note: DuckDB's read_markdown errors when no files match the glob.
-	// This tests the current behavior - the service returns an error for empty notebooks.
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
+
+	// Empty notebook should return empty list without error
 	notes, err := svc.SearchNotes(ctx, "", false)
-	assert.Error(t, err)
-	assert.Nil(t, notes)
-	assert.Contains(t, err.Error(), "File or directory does not exist")
+	require.NoError(t, err)
+	assert.Empty(t, notes)
 }
 
 func TestNoteService_SearchNotes_ExtractsMetadata(t *testing.T) {
@@ -183,7 +191,8 @@ func TestNoteService_SearchNotes_ExtractsMetadata(t *testing.T) {
 		"# Test Note\n\nThis is content with frontmatter.",
 	)
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
@@ -208,7 +217,9 @@ func TestNoteService_SearchNotes_SetsRelativePath(t *testing.T) {
 	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
 	testutil.CreateTestNote(t, notebookDir, "my-note.md", "# My Note\n\nContent here.")
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
@@ -254,7 +265,8 @@ func TestNoteService_Count_ReturnsCorrectCount(t *testing.T) {
 	testutil.CreateTestNote(t, notebookDir, "note4.md", "# Note 4")
 	testutil.CreateTestNote(t, notebookDir, "note5.md", "# Note 5")
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	count, err := svc.Count(ctx)
 	require.NoError(t, err)
@@ -275,14 +287,13 @@ func TestNoteService_Count_EmptyNotebook(t *testing.T) {
 
 	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "empty-notebook")
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
-	// Note: DuckDB's read_markdown errors when no files match the glob.
-	// This tests the current behavior - Count returns an error for empty notebooks.
+	// Empty notebook should return 0 without error
 	count, err := svc.Count(ctx)
-	assert.Error(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, 0, count)
-	assert.Contains(t, err.Error(), "File or directory does not exist")
 }
 
 func TestNoteService_Query_ExecutesSQL(t *testing.T) {
@@ -320,7 +331,9 @@ func TestNoteService_Query_ReturnsResults(t *testing.T) {
 	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
 	testutil.CreateTestNote(t, notebookDir, "test.md", "# Test\n\nTest content.")
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	// Use raw SQL to query notes - use fmt.Sprintf since Query doesn't take args
 	glob := notebookDir + "/**/*.md"
@@ -349,7 +362,9 @@ func TestNoteService_SearchNotes_MultipleQueryMatches(t *testing.T) {
 	testutil.CreateTestNote(t, notebookDir, "note2.md", "# Second Note\n\nAlso mentions golang here.")
 	testutil.CreateTestNote(t, notebookDir, "note3.md", "# Third Note\n\nNo match in this one.")
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	notes, err := svc.SearchNotes(ctx, "golang", false)
 	require.NoError(t, err)
@@ -373,7 +388,8 @@ func TestNoteService_SearchNotes_ContentHasText(t *testing.T) {
 	expectedContent := "# My Note Title\n\nThis is the body content."
 	testutil.CreateTestNote(t, notebookDir, "note.md", expectedContent)
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
@@ -645,7 +661,9 @@ func TestNoteService_ExecuteSQLSafe_ValidSelect(t *testing.T) {
 	testutil.CreateTestNote(t, notebookDir, "note1.md", "# Note 1\n\nContent with numbers 42 and 100.")
 	testutil.CreateTestNote(t, notebookDir, "note2.md", "# Note 2\n\nAnother note.")
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	results, err := svc.ExecuteSQLSafe(ctx, "SELECT 1 as value, 'test' as message")
 	require.NoError(t, err)
@@ -668,7 +686,9 @@ func TestNoteService_ExecuteSQLSafe_InvalidQuery(t *testing.T) {
 	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
 	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	// Try to execute DROP query
 	_, err := svc.ExecuteSQLSafe(ctx, "DROP TABLE markdown")
@@ -689,7 +709,9 @@ func TestNoteService_ExecuteSQLSafe_EmptyResult(t *testing.T) {
 	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
 	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	// Query that returns no results
 	results, err := svc.ExecuteSQLSafe(ctx, "SELECT 1 WHERE 1=0")
@@ -712,7 +734,9 @@ func TestNoteService_ExecuteSQLSafe_MultipleRows(t *testing.T) {
 	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
 	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	// Query that returns multiple rows
 	results, err := svc.ExecuteSQLSafe(ctx, `
@@ -744,7 +768,9 @@ func TestNoteService_ExecuteSQLSafe_WithClause(t *testing.T) {
 	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
 	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	// WITH (CTE) query
 	results, err := svc.ExecuteSQLSafe(ctx, `
@@ -775,7 +801,9 @@ func TestNoteService_ExecuteSQLSafe_InvalidSyntax(t *testing.T) {
 	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
 	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	// Invalid SQL syntax
 	_, err := svc.ExecuteSQLSafe(ctx, "SELECT * INVALID SYNTAX HERE")
@@ -795,7 +823,9 @@ func TestNoteService_ExecuteSQLSafe_ContextCancellation(t *testing.T) {
 	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
 	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	// Create cancelled context
 	cancelledCtx, cancel := context.WithCancel(context.Background())
@@ -819,7 +849,9 @@ func TestNoteService_ExecuteSQLSafe_TypeConversions(t *testing.T) {
 	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
 	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	// Query with various types
 	results, err := svc.ExecuteSQLSafe(ctx, `
@@ -855,7 +887,9 @@ func TestNoteService_ExecuteSQLSafe_ComplexQuery(t *testing.T) {
 	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
 	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	// Complex query with joins, aggregation, filtering
 	results, err := svc.ExecuteSQLSafe(ctx, `
@@ -899,7 +933,9 @@ func TestNoteService_ExecuteSQLSafe_ReadOnlyEnforcement(t *testing.T) {
 	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
 	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	ctx := context.Background()
 
@@ -936,7 +972,8 @@ func TestNoteService_SearchNotes_DisplayNameWithTitle(t *testing.T) {
 		"# Note\n\nContent here.",
 	)
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
@@ -962,7 +999,8 @@ func TestNoteService_SearchNotes_DisplayNameSlugifyFilename(t *testing.T) {
 	// Create note without title - should slugify filename
 	testutil.CreateTestNote(t, notebookDir, "Hello World.md", "# Hello\n\nContent here.")
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
@@ -996,7 +1034,8 @@ func TestNoteService_SearchNotes_DisplayNameMultipleNotes(t *testing.T) {
 		"Content",
 	)
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
@@ -1038,7 +1077,8 @@ func TestNoteService_SearchNotes_ComplexQueries(t *testing.T) {
 	testutil.CreateTestNote(t, notebookDir, "python-guide.md", "# Python Guide\n\nPython programming fundamentals.")
 	testutil.CreateTestNote(t, notebookDir, "mixed-content.md", "# Mixed Content\n\nThis mentions golang, python, and javascript.")
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	tests := []struct {
 		name          string
@@ -1115,7 +1155,8 @@ func TestNoteService_SearchNotes_SpecialCharacters(t *testing.T) {
 	testutil.CreateTestNote(t, notebookDir, "quotes.md", "# Quotes\n\n\"Double quotes\" and 'single quotes'")
 	testutil.CreateTestNote(t, notebookDir, "math.md", "# Math\n\n2 + 2 = 4, x² + y² = z²")
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	tests := []struct {
 		name          string
@@ -1202,7 +1243,8 @@ func TestNoteService_SearchNotes_LargeResultSets(t *testing.T) {
 		testutil.CreateTestNote(t, notebookDir, fmt.Sprintf("different%03d.md", i), content)
 	}
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	// Test large result set
 	notes, err := svc.SearchNotes(ctx, commonWord, false)
@@ -1279,7 +1321,8 @@ tags: [unclosed list
 Content despite frontmatter issues.`
 	testutil.CreateTestNote(t, notebookDir, "malformed-frontmatter.md", malformedFrontmatter)
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	// Test that all notes are found regardless of frontmatter quality
 	allNotes, err := svc.SearchNotes(ctx, "", false)
@@ -1382,7 +1425,8 @@ status: active
 Team meeting.
 `)
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	// Single AND condition
 	conditions := []services.QueryCondition{
@@ -1435,7 +1479,8 @@ status: active
 # Active Meeting
 `)
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	// Multiple AND conditions - both must match
 	conditions := []services.QueryCondition{
@@ -1486,7 +1531,8 @@ priority: low
 # Low Priority
 `)
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	// OR conditions - any can match
 	conditions := []services.QueryCondition{
@@ -1538,7 +1584,8 @@ status: done
 # Epic 3
 `)
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	// NOT condition - exclude archived
 	conditions := []services.QueryCondition{
@@ -1589,7 +1636,8 @@ title: Task 1
 # Task 1
 `)
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	// Path glob pattern matching "epic*.md" files
 	conditions := []services.QueryCondition{
@@ -1626,7 +1674,8 @@ tag: meeting
 # Meeting
 `)
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	// Search for non-existent tag
 	conditions := []services.QueryCondition{
@@ -1707,7 +1756,8 @@ priority: high
 # Wrong Tag
 `)
 
-	svc := services.NewNoteService(cfg, db, nil, notebookDir)
+	idx := testutil.CreateTestIndex(t, notebookDir)
+	svc := services.NewNoteService(cfg, db, idx, notebookDir)
 
 	// Complex query: AND + OR
 	conditions := []services.QueryCondition{
