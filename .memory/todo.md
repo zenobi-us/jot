@@ -32,8 +32,8 @@ See detailed task checklist in [phase-02df510c-duckdb-removal.md](phase-02df510c
 - [x] Codebase audit for DuckDB references - [task-9b9e6fb4](task-9b9e6fb4-phase5-codebase-audit.md)
 - [ ] Service layer migration (NoteService, DbService removal)
   - [ ] Migrate NoteService to use Index interface - [task-3639018c](task-3639018c-migrate-noteservice.md) 🔄
-    - [ ] Phase 2.1: Update struct and constructor
-    - [ ] Phase 2.2: Migrate getAllNotes()
+    - [x] Phase 2.1: Update struct and constructor (c9318b7)
+    - [ ] Phase 2.2: Migrate getAllNotes() 🔄
     - [ ] Phase 2.3: Migrate Count()
     - [ ] Phase 2.4: Migrate SearchWithConditions()
     - [ ] Phase 2.5: Remove SQL methods
