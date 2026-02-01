@@ -3,6 +3,7 @@ module github.com/zenobi-us/opennotes
 go 1.24.7
 
 require (
+	github.com/alecthomas/participle/v2 v2.1.4
 	github.com/charmbracelet/glamour v0.10.0
 	github.com/duckdb/duckdb-go/v2 v2.5.4
 	github.com/knadh/koanf/parsers/json v1.0.0
