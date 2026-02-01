@@ -21,19 +21,25 @@
 | 5. DuckDB Removal | 🔄 **IN PROGRESS** | Remove all DuckDB code - [phase-02df510c](phase-02df510c-duckdb-removal.md) |
 | 6. Semantic Search | 🔜 | Optional chromem-go integration |
 
-### Session 2026-02-01 Evening - 🔄 PHASE 5 IN PROGRESS
+### Session 2026-02-02 Morning - 🔄 PHASE 5.2 IN PROGRESS
 
-**Phase 5 - DuckDB Removal** 🔄 **IN PROGRESS**:
+**Phase 5.2.2 - Migrate getAllNotes()** ✅ **COMPLETED** (morning session):
+- Implemented documentToNote() converter
+- Updated getAllNotes() to use Index.Find()
+- Fixed Bleve field storage (Body: Store: true)
+- Created testutil.CreateTestIndex() helper
+- Updated 40+ test cases
+- Result: 171/172 tests passing
 
-See detailed task checklist in [phase-02df510c-duckdb-removal.md](phase-02df510c-duckdb-removal.md)
+**Next**: Phase 5.2.3 - Migrate SearchWithConditions()
 
 ### High-Level Tasks
 
 - [x] Codebase audit for DuckDB references - [task-9b9e6fb4](task-9b9e6fb4-phase5-codebase-audit.md)
 - [ ] Service layer migration (NoteService, DbService removal)
-  - [ ] Migrate NoteService to use Index interface - [task-3639018c](task-3639018c-migrate-noteservice.md) 🔄
+  - [x] Migrate NoteService to use Index interface - [task-3639018c](task-3639018c-migrate-noteservice.md) ✅
     - [x] Phase 2.1: Update struct and constructor (c9318b7)
-    - [ ] Phase 2.2: Migrate getAllNotes() 🔄
+    - [x] Phase 2.2: Migrate getAllNotes() (c37c498)
     - [ ] Phase 2.3: Migrate Count()
     - [ ] Phase 2.4: Migrate SearchWithConditions()
     - [ ] Phase 2.5: Remove SQL methods

@@ -2,7 +2,7 @@
 id: 02df510c
 title: Phase 5 - DuckDB Removal & Cleanup
 created_at: 2026-02-01T21:17:00+10:30
-updated_at: 2026-02-01T21:17:00+10:30
+updated_at: 2026-02-02T07:39:00+10:30
 status: in-progress
 epic_id: f661c068
 start_criteria: Phase 4 (Bleve Backend) complete with all tests passing

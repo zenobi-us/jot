@@ -85,6 +85,17 @@ internal/search/bleve/
 
 ## Session History
 
+**Session 2026-02-02 (Morning - Phase 5.2.2 Complete)**
+- ✅ **Completed Phase 5.2.2: Migrate getAllNotes() to Index**
+- 📄 Implemented documentToNote() converter
+- 📄 Updated getAllNotes() to use Index.Find()
+- 📄 Fixed Bleve: Body field must Store: true
+- 📄 Created testutil.CreateTestIndex() helper
+- 📄 Updated 40+ test cases
+- ✅ 171 of 172 tests passing (99.4%)
+- 📝 Next: Phase 5.2.3 - Migrate SearchWithConditions()
+- Commits: c9318b7, c37c498
+
 **Session 2026-02-01 (Evening - Phase 5.2.2 Complete)**
 - ✅ **Completed Phase 5.2.2: Migrate getAllNotes() to Index**
 - 📄 Implemented documentToNote() converter
@@ -96,11 +107,12 @@ internal/search/bleve/
 - ✅ 171 of 172 tests passing (99.4%)
 - 📝 Next: Phase 5.2.3 - Migrate SearchWithConditions()
 
-**Phase 5 Progress**: 3 of 11 sub-phases complete (27%)
+**Phase 5 Progress**: 4 of 11 sub-phases complete (36%)
 - Phase 5.1: Codebase audit ✅
 - Phase 5.2.1: Struct update ✅  
 - Phase 5.2.2: getAllNotes() migration ✅
-- Phase 5.2.3-5.11: In progress 🔄
+- Phase 5.2.3: SearchWithConditions() migration 🔜 NEXT
+- Phase 5.2.4-5.11: In progress 🔄
 
 ### 2026-02-01 (Evening) - Phase 4 Complete
 - ✅ **Completed Phase 4: Bleve Backend Implementation**
