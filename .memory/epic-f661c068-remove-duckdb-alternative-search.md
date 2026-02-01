@@ -2,7 +2,7 @@
 id: f661c068
 title: Remove DuckDB - Pure Go Search Implementation
 created_at: 2026-02-01T14:39:00+10:30
-updated_at: 2026-02-01T21:40:00+10:30
+updated_at: 2026-02-01T21:17:00+10:30
 status: in-progress
 ---
 
@@ -70,8 +70,8 @@ status: in-progress
 | 1 | Research & Analysis | ✅ `complete` | [research-f410e3ba-search-replacement-synthesis.md](research-f410e3ba-search-replacement-synthesis.md) |
 | 2 | Interface Design | ✅ `complete` | [phase-ed57f7e9-interface-design.md](phase-ed57f7e9-interface-design.md) |
 | 3 | Query Parser | ✅ `complete` | [phase-f29cef1b-query-parser.md](phase-f29cef1b-query-parser.md) |
-| 4 | Bleve Search Backend | 🔄 `in-progress` | [phase-3a5e0381-bleve-backend.md](phase-3a5e0381-bleve-backend.md) |
-| 5 | DuckDB Removal & Cleanup | 🔜 `proposed` | TBD |
+| 4 | Bleve Search Backend | ✅ `complete` | [phase-3a5e0381-bleve-backend.md](phase-3a5e0381-bleve-backend.md) |
+| 5 | DuckDB Removal & Cleanup | 🔄 `in-progress` | [phase-02df510c-duckdb-removal.md](phase-02df510c-duckdb-removal.md) |
 | 6 | Semantic Search (Optional) | 🔜 `proposed` | TBD |
 
 ## Research Findings Summary
