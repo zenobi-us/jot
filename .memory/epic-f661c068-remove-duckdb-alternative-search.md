@@ -1,23 +1,24 @@
 ---
 id: f661c068
-title: Remove DuckDB - Alternative Search Implementation
+title: Remove DuckDB - Pure Go Search Implementation
 created_at: 2026-02-01T14:39:00+10:30
-updated_at: 2026-02-01T14:39:00+10:30
-status: proposed
+updated_at: 2026-02-01T15:59:00+10:30
+status: planning
 ---
 
-# Remove DuckDB - Alternative Search Implementation
+# Remove DuckDB - Pure Go Search Implementation
 
 ## Vision/Goal
 
-Replace OpenNotes' current DuckDB-based search backend with a native Go search implementation inspired by **zk-org/zk**, enabling:
+**Complete removal of DuckDB** from OpenNotes, replacing it with a pure Go search implementation. This is a clean break, not a migration:
 
-1. **Filesystem abstraction** with `spf13/afero` for mockable file system access
-2. **Removal of DuckDB dependency** to eliminate compilation complexity and enable full VFS control
-3. **Expressive search DSL** with capabilities comparable or superior to current SQL-based search
-4. **Preserved user experience** for views and templates - no breaking changes to user-facing features
+1. **No DuckDB at all** - complete removal of the dependency
+2. **Pure Go search** using Bleve for full-text indexing
+3. **Gmail-style DSL** for intuitive query syntax
+4. **Filesystem abstraction** with `spf13/afero` throughout
+5. **Optional semantic search** with chromem-go (future enhancement)
 
-This epic represents a fundamental architectural shift from database-backed search to native Go file system indexing and query execution.
+> **Note**: This is NOT a migration. We are completely replacing DuckDB. There is no dual-support period, no feature flags to toggle between implementations. DuckDB is being removed entirely.
 
 ## Success Criteria
 
@@ -30,181 +31,162 @@ This epic represents a fundamental architectural shift from database-backed sear
   
 - [ ] **Concept 2**: Complete removal of DuckDB dependency
   - No DuckDB imports in codebase
-  - Markdown extension no longer required
-  - Simplified binary build (no C++ dependencies)
-  - Smaller binary size
+  - No markdown extension
+  - No CGO dependencies for search
+  - Smaller binary size (target: <15MB from 64MB)
+  - Faster startup (target: <100ms from 500ms)
   
-- [ ] **Concept 3**: Expressive search DSL implementation
-  - Parse and execute complex search queries
-  - Support for: text search, field filters, boolean logic, sorting, pagination
-  - Performance comparable to current DuckDB implementation
-  - Extensible for future query capabilities
+- [ ] **Concept 3**: Pure Go search implementation
+  - Bleve for full-text indexing with BM25 ranking
+  - Gmail-style DSL: `tag:work`, `title:meeting`, `-archived`
+  - Participle parser for query parsing
+  - afero-compatible persistence
   
-- [ ] **Concept 4**: Zero user-facing functional regression
-  - Views work identically from user perspective
-  - Templates render the same output
-  - All existing commands produce same results
-  - Query syntax may differ, but capabilities must match or exceed
+- [ ] **Concept 4**: Feature parity with current search
+  - Full-text search across note content
+  - Frontmatter field filtering
+  - Tag filtering
+  - Date range queries
+  - Path prefix filtering
+  - Sorting and pagination
 
-### Functional Requirements
+### Performance Targets
 
-- [ ] Search supports: full-text, frontmatter fields, tags, dates, paths
-- [ ] Boolean operators: AND, OR, NOT
-- [ ] Sorting by: modified, created, title, path
-- [ ] Pagination with offset/limit
-- [ ] View system unchanged (same view definitions work)
-- [ ] Template system unchanged (same templates work)
-- [ ] Performance: sub-100ms for typical queries on <10,000 notes
-
-### Quality Requirements
-
-- [ ] 100% afero abstraction - no direct `os.` or `ioutil.` calls
-- [ ] Comprehensive test coverage with in-memory filesystem
-- [ ] Zero flaky tests (deterministic file system access)
-- [ ] Migration guide for users (query syntax changes documented)
-- [ ] Benchmark suite proving comparable performance
-
-### Technical Requirements
-
-- [ ] Parser for new query DSL
-- [ ] Indexer for note metadata and content
-- [ ] Query executor with filtering and sorting
-- [ ] Afero-based file operations throughout codebase
-- [ ] Backward compatibility layer for existing views (if needed)
+| Metric | Current (DuckDB) | Target (Pure Go) | Improvement |
+|--------|------------------|------------------|-------------|
+| Binary size | 64 MB | <15 MB | -78% |
+| Startup time | 500ms | <100ms | -80% |
+| Search latency | 29.9ms | <25ms | -16% |
+| Index build 10k | N/A | <500ms | New capability |
 
 ## Phases
 
 | Phase | Title | Status | File |
 |-------|-------|--------|------|
-| 1 | Research & Analysis | 🔜 `proposed` | TBD |
-| 2 | Query DSL Design | 🔜 `proposed` | TBD |
-| 3 | Indexer Implementation | 🔜 `proposed` | TBD |
-| 4 | Query Executor | 🔜 `proposed` | TBD |
-| 5 | Afero Migration | 🔜 `proposed` | TBD |
-| 6 | DuckDB Removal | 🔜 `proposed` | TBD |
-| 7 | Testing & Validation | 🔜 `proposed` | TBD |
+| 1 | Research & Analysis | ✅ `complete` | [research-f410e3ba-search-replacement-synthesis.md](research-f410e3ba-search-replacement-synthesis.md) |
+| 2 | Interface Design | ✅ `complete` | [phase-ed57f7e9-interface-design.md](phase-ed57f7e9-interface-design.md) |
+| 3 | Query Parser | ✅ `complete` | [phase-f29cef1b-query-parser.md](phase-f29cef1b-query-parser.md) |
+| 4 | Bleve Search Backend | 🔜 `proposed` | TBD |
+| 5 | DuckDB Removal & Cleanup | 🔜 `proposed` | TBD |
+| 6 | Semantic Search (Optional) | 🔜 `proposed` | TBD |
 
-## Dependencies
+## Research Findings Summary
 
-### Technical Dependencies
+**Completed Research**: [research-f410e3ba-search-replacement-synthesis.md](research-f410e3ba-search-replacement-synthesis.md)
 
-- **spf13/afero** (v1.11.0+) - Filesystem abstraction layer
-- **zk-org/zk** (reference implementation) - Search architecture inspiration
-- **Existing OpenNotes codebase** - Current DuckDB integration points
+### Key Decisions
 
-### Knowledge Dependencies
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Full-text search | **Bleve** | Pure Go, BM25 ranking, 9+ years mature |
+| Query syntax | **Gmail-style DSL** | `tag:work -archived` - familiar, safe, concise |
+| Parser | **Participle** | Go-idiomatic, type-safe AST |
+| Semantic search | **chromem-go** | Optional, progressive enhancement |
+| Filesystem | **afero** | Testable, mockable, VFS ready |
 
-- [research-dbb5cdc8-zk-search-analysis.md](research-dbb5cdc8-zk-search-analysis.md) - zk search implementation analysis
-- [research-45af3ec0-golang-vector-rag-search.md](research-45af3ec0-golang-vector-rag-search.md) - Go-based vector RAG search exploration
-- Current DuckDB integration points (to be documented)
-- View and template system architecture (to be documented)
+### What We're NOT Doing
 
-### Blocking Dependencies
+- ❌ No "migration period" with dual support
+- ❌ No feature flags to toggle between DuckDB and new search
+- ❌ No SQL query compatibility layer
+- ❌ No keeping DuckDB "just in case"
 
-- Must complete research phase before designing new DSL
-- Cannot remove DuckDB until replacement is feature-complete
-- Afero migration can proceed in parallel with search work
+### What We ARE Doing
 
-## Architecture Overview
+- ✅ Complete DuckDB removal
+- ✅ New Gmail-style query syntax (different from SQL)
+- ✅ Pure Go implementation (no CGO)
+- ✅ Clean, fresh search architecture
+
+## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    OpenNotes (Current)                      │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  ┌──────────┐       ┌──────────┐       ┌────────────┐      │
-│  │  Search  │──────▶│  DuckDB  │──────▶│  Markdown  │      │
-│  │ Service  │       │  + Ext   │       │   Files    │      │
-│  └──────────┘       └──────────┘       └────────────┘      │
-│                           │                                 │
-│                           ▼                                 │
-│                    ┌─────────────┐                          │
-│                    │   Direct    │                          │
-│                    │  os.File    │                          │
-│                    └─────────────┘                          │
-└─────────────────────────────────────────────────────────────┘
-
 ┌─────────────────────────────────────────────────────────────┐
 │                    OpenNotes (Target)                       │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  ┌──────────┐       ┌──────────┐       ┌────────────┐      │
-│  │  Search  │──────▶│  Query   │──────▶│   Afero    │      │
-│  │ Service  │       │ Executor │       │    Fs      │      │
-│  └──────────┘       └──────────┘       └─────┬──────┘      │
-│       │                   ▲                   │             │
-│       │                   │                   ▼             │
-│       │            ┌──────────────┐    ┌────────────┐      │
-│       └───────────▶│   Indexer    │    │  Markdown  │      │
-│                    │  (in-memory) │    │   Files    │      │
-│                    └──────────────┘    └────────────┘      │
-│                                                             │
-│  Features:                                                  │
-│  • Mockable filesystem (afero.MemMapFs)                    │
-│  • No C++ dependencies (pure Go)                           │
-│  • Fast in-memory indexing                                 │
-│  • Flexible query DSL                                      │
+│  │   CLI    │──────▶│  Query   │──────▶│   Afero    │      │
+│  │ (Cobra)  │       │  Parser  │       │    Fs      │      │
+│  └──────────┘       │(Participle│      └─────┬──────┘      │
+│                     └──────────┘             │              │
+│                          │                   ▼              │
+│                          ▼            ┌────────────┐       │
+│                   ┌──────────────┐    │  Markdown  │       │
+│                   │   Bleve      │◄───│   Files    │       │
+│                   │ (full-text)  │    └────────────┘       │
+│                   └──────────────┘                          │
+│                          │                                  │
+│                          ▼                                  │
+│                   ┌──────────────┐                          │
+│                   │  chromem-go  │ (optional, Phase 6)      │
+│                   │  (vectors)   │                          │
+│                   └──────────────┘                          │
 └─────────────────────────────────────────────────────────────┘
+
+REMOVED:
+  ❌ DuckDB
+  ❌ Markdown extension
+  ❌ CGO dependencies
+  ❌ SQL query interface
 ```
 
-## Migration Strategy
+## Implementation Approach
 
-### Phase Approach
+### No Migration - Clean Replacement
 
-1. **Research**: Analyze zk-org/zk search architecture (current task)
-2. **Design**: Define new query DSL and indexer architecture
-3. **Parallel Implementation**: Build new search alongside DuckDB
-4. **Feature Flag**: Allow toggling between implementations
-5. **Validation**: Comprehensive testing with both systems
-6. **Cutover**: Make new search default, deprecate DuckDB
-7. **Cleanup**: Remove DuckDB code and dependencies
+This is a clean break:
 
-### Backward Compatibility
+1. **Design new interfaces** - Based on zk patterns, adapted for our needs
+2. **Implement Bleve backend** - Complete search functionality
+3. **Build query parser** - Gmail-style DSL
+4. **Remove DuckDB entirely** - Delete all DuckDB code
+5. **Update commands** - Use new search throughout
 
-- Views: Keep same view definition format, translate queries if needed
-- Templates: No changes required (data structure stays same)
-- CLI flags: Maintain existing flags, add new DSL syntax options
-- Migration script: Convert existing SQL queries to new DSL (if applicable)
+### Query Syntax Change
+
+Users will use new syntax. Examples:
+
+| Old (SQL) | New (DSL) |
+|-----------|-----------|
+| `SELECT * FROM notes WHERE tag='work'` | `tag:work` |
+| `SELECT * FROM notes WHERE title LIKE '%meeting%'` | `title:meeting` |
+| `SELECT * FROM notes WHERE NOT archived` | `-archived` |
+| `SELECT * FROM notes WHERE created > '2024-01-01'` | `created:>2024-01-01` |
+| Complex SQL joins | Not needed - simpler model |
+
+## Dependencies
+
+### New Dependencies
+
+- **blevesearch/bleve** - Full-text search engine
+- **alecthomas/participle** - Parser combinator
+- **spf13/afero** - Filesystem abstraction
+- **philippgille/chromem-go** - Vector search (optional, Phase 6)
+
+### Removed Dependencies
+
+- ~~marcboeker/go-duckdb~~ - Removed
+- ~~DuckDB markdown extension~~ - Removed
+- ~~CGO for DuckDB~~ - Removed
 
 ## Risk Assessment
 
 | Risk | Impact | Likelihood | Mitigation |
 |------|--------|------------|------------|
-| Query DSL not expressive enough | High | Medium | Research zk + other tools thoroughly; design with extensibility |
-| Performance regression | High | Medium | Benchmark suite; optimize indexer; consider caching |
-| Breaking user workflows | High | Low | Feature flag; extensive testing; migration guide |
-| Afero abstraction leaks | Medium | Medium | Strict code review; 100% test coverage with MemMapFs |
-| Implementation complexity | Medium | High | Start with MVP DSL; iterate based on real usage |
-| Timeline longer than expected | Low | High | Phased approach; can ship partial improvements |
-
-## Success Metrics
-
-### Performance Benchmarks
-
-- **Search latency**: <100ms for 10k notes (match or beat DuckDB)
-- **Index build time**: <500ms for 10k notes
-- **Memory usage**: <100MB index size for 10k notes
-- **Binary size**: Reduce by >10MB (removing DuckDB)
-
-### Quality Metrics
-
-- **Test coverage**: >90% for new search code
-- **Zero test flakes**: All tests deterministic with afero.MemMapFs
-- **Migration success**: 100% of existing queries translatable
-- **User satisfaction**: No regression in usability or capability
+| Missing features in new search | Medium | Low | Feature parity checklist before removal |
+| Performance regression | Medium | Low | Benchmark gates before completion |
+| Learning curve for new syntax | Low | Medium | Clear documentation, intuitive DSL |
+| Binary size not reaching target | Low | Low | Profile and optimize |
 
 ## Notes
 
-- This epic is independent of the pi-opennotes extension (epic-1f41631e)
-- Research phase must complete before implementation design begins
-- Consider creating a feature flag for gradual rollout
-- Document lessons learned from DuckDB experience (both pros and cons)
-- Explore zk's indexing strategy, query parser, and result ranking
-- Investigate vector/semantic search as potential complementary feature (inspired by qmd tool)
+- This epic completely removes DuckDB - no legacy code remains
+- SQL queries will no longer work after implementation
+- Views need updating to use new query syntax
+- Documentation will need full rewrite for query syntax
 
 ## Related Work
 
-- **Epic**: [epic-1f41631e-pi-opennotes-extension.md](epic-1f41631e-pi-opennotes-extension.md) - Pi extension (uses current OpenNotes)
-- **Research**: [research-4e873bd0-vfs-summary.md](research-4e873bd0-vfs-summary.md) - VFS integration research
-- **Research**: [research-7f4c2e1a-afero-vfs-integration.md](research-7f4c2e1a-afero-vfs-integration.md) - Afero exploration
-- **Research**: [research-8a9b0c1d-duckdb-filesystem-findings.md](research-8a9b0c1d-duckdb-filesystem-findings.md) - DuckDB limitations
+- **Research**: [research-f410e3ba-search-replacement-synthesis.md](research-f410e3ba-search-replacement-synthesis.md)
+- **Research Details**: `.memory/research-parallel/subtopic-*/`

@@ -3,153 +3,110 @@
 ## Project Status: Active Development
 
 **Current Focus**: Two Active Epics
-1. Pi-OpenNotes Extension (Phase 3 COMPLETE - Ready for Distribution)
-2. Remove DuckDB - Alternative Search (NEW - Research Phase)
+1. **Remove DuckDB** - Phases 2 & 3 Complete, Ready for Phase 4 (Bleve Backend)
+2. **Pi-OpenNotes Extension** - Phase 3 Complete, Ready for Distribution
 
 ---
 
 ## Active Work
 
-### Remove DuckDB - Alternative Search Implementation
+### Remove DuckDB - Pure Go Search Implementation
 **Epic**: [epic-f661c068-remove-duckdb-alternative-search.md](epic-f661c068-remove-duckdb-alternative-search.md)  
-**Status**: 🆕 Proposed - Research Starting
+**Status**: ✅ Phases 1-3 Complete - Ready for Phase 4
 
-A fundamental architectural shift to replace DuckDB with native Go search implementation inspired by zk-org/zk.
+> **This is NOT a migration.** DuckDB is being completely removed and replaced with pure Go alternatives. No dual-support period, no feature flags.
 
-**Prime Concepts**:
-1. Filesystem abstraction via `spf13/afero` for mockable FS access
-2. Complete DuckDB removal (no C++ dependencies, smaller binary)
-3. Expressive search DSL (comparable/superior to current SQL)
-4. Zero user-facing functional regression (views/templates unchanged)
+**Completed Phases**:
 
-**Current Phase**: Research & Analysis
-- [research-dbb5cdc8-zk-search-analysis.md](research-dbb5cdc8-zk-search-analysis.md) - Analyze zk search architecture
-- [research-45af3ec0-golang-vector-rag-search.md](research-45af3ec0-golang-vector-rag-search.md) - 🆕 Go-based vector RAG search exploration
+| Phase | Status | Deliverable |
+|-------|--------|-------------|
+| 1. Research | ✅ Complete | Strategic decisions, synthesis document |
+| 2. Interface Design | ✅ Complete | `internal/search/` package (8 files) |
+| 3. Query Parser | ✅ Complete | `internal/search/parser/` (5 files, 10 tests) |
 
-**Why This Matters**:
-- Enables full VFS mocking for testing (DuckDB blocks afero integration)
-- Simplifies build process (removes C++ compilation complexity)
-- Smaller binary size and faster startup
-- More flexible query capabilities
-- Better alignment with Go ecosystem
+**New Code Created (Session 2026-02-01)**:
+```
+internal/search/
+├── doc.go           # Package documentation
+├── errors.go        # Error types
+├── index.go         # Index interface + Document type
+├── options.go       # FindOpts with functional options
+├── parser.go        # Parser interface
+├── query.go         # Query AST types
+├── result.go        # Results, Snippet types
+├── storage.go       # Storage interface (afero-compatible)
+└── parser/          # Participle-based parser
+    ├── doc.go
+    ├── grammar.go   # Lexer + grammar
+    ├── convert.go   # AST conversion
+    ├── parser.go    # Implementation
+    └── parser_test.go
+```
 
-**Next Steps**:
-1. Clone and analyze zk-org/zk codebase
-2. Create state machine diagrams of search code paths
-3. Design new query DSL
-4. Plan phased migration strategy
+**Query Syntax Implemented**:
+- Simple terms: `meeting`, `"exact phrase"`
+- Field qualifiers: `tag:work`, `title:meeting`, `path:projects/`
+- Date filters: `created:>2024-01-01`, `modified:<2024-06-30`
+- Negation: `-archived`, `-tag:done`
+- Implicit AND: `tag:work status:todo`
+
+**Next Phase**: Phase 4 - Bleve Backend (in next session)
+
+**Implementation Phases**:
+| Phase | Timeline | Focus | Status |
+|-------|----------|-------|--------|
+| Research | Week 0 | Research synthesis | ✅ Complete |
+| Interface Design | Week 1 | Search interfaces, query AST | ✅ Complete |
+| Query Parser | Week 1 | Participle-based Gmail-style DSL | ✅ Complete |
+| Bleve Backend | Week 2-3 | Full-text indexing with BM25 | 🔜 Next Session |
+| DuckDB Removal | Week 3-4 | Remove all DuckDB code, cleanup | 🔜 |
+| Semantic Search | Week 5+ | Optional chromem-go integration | 🔜 |
+
+**Performance Targets**:
+- Binary size: 64MB → <15MB (**-78%**)
+- Startup: 500ms → <100ms (**-80%**)
+- Search: 29.9ms → <25ms (**-16%**)
 
 ### Pi-OpenNotes Extension
 **Epic**: [epic-1f41631e-pi-opennotes-extension.md](epic-1f41631e-pi-opennotes-extension.md)  
-**Status**: Phase 2 Complete - Ready for Phase 3
+**Status**: Phase 3 Complete - Ready for Distribution
 
-A pi extension that integrates OpenNotes into the pi coding agent, enabling AI assistants to search, query, and manage markdown notes.
-
-| Phase | Status | Notes |
-|-------|--------|-------|
-| Phase 1: Research & Design | ✅ **Complete** | All 6 design tasks done |
-| Phase 2: Implementation | ✅ **Complete** | 72 tests passing |
-| Phase 3: Testing & Documentation | ✅ **Complete** | Comprehensive docs + E2E tests |
-| Phase 4: Distribution | 🔜 Next | npm publishing |
-
-#### Phase 2 Deliverables
-- Full package implementation in `pkgs/pi-opennotes/`
-- 6 LLM-callable tools (search, list, get, create, notebooks, views)
-- Service-based architecture with dependency injection
-- TypeBox schemas for all parameters
-- Comprehensive error handling with installation hints
-- 72 unit/integration tests passing
+| Phase | Status |
+|-------|--------|
+| Phase 1: Research & Design | ✅ Complete |
+| Phase 2: Implementation | ✅ Complete (72 tests) |
+| Phase 3: Testing & Documentation | ✅ Complete |
+| Phase 4: Distribution | 🔜 Next |
 
 ---
 
-## Recent Completions
+## Session History
 
-### Pi-OpenNotes Phase 3 (2026-01-29)
-- Created comprehensive documentation suite
-  - Tool Usage Guide - detailed examples for all 6 tools
-  - Integration Guide - complete setup for pi users
-  - Troubleshooting Guide - common issues and solutions
-  - Configuration Reference - all options documented
-- E2E test infrastructure with TypeScript + BATS
-  - 72 unit/integration tests passing
-  - BATS smoke tests passing (4/4 core tests)
-  - TypeScript E2E tests ready for CLI JSON output support
-- Validated performance and pagination
-- Budget management ensures 75% context fit
-
-### Pi-OpenNotes Phase 2 (2026-01-29)
-- Implemented complete extension at `pkgs/pi-opennotes/`
-- Services: CliAdapter, PaginationService, SearchService, ListService, NoteService, NotebookService, ViewsService
-- Tools: opennotes_search, opennotes_list, opennotes_get, opennotes_create, opennotes_notebooks, opennotes_views
-- 72 tests passing (unit + integration)
-
-### Pi-OpenNotes Phase 1 (2026-01-29)
-- Documented OpenNotes CLI interface
-- Designed tool APIs with TypeBox schemas
-- Defined service-based package structure
-- Designed error handling with installation hints
-- Created comprehensive test strategy
-
-### SQL Flag Epic (2026-01-18)
-- Full `--sql` support for notes search
-- Security validation (SELECT/WITH only)
-- 30-second query timeout
-- Path traversal protection
+### 2026-02-01 (Late Afternoon)
+- ✅ Completed Phase 2: Interface Design
+- ✅ Completed Phase 3: Query Parser
+- Created 13 new Go files
+- Added Participle dependency
+- All tests passing (10 new parser tests)
 
 ---
 
 ## Knowledge Base
 
+### Current Research
+- [research-f410e3ba-search-replacement-synthesis.md](research-f410e3ba-search-replacement-synthesis.md) - **Unified synthesis**
+- [research-parallel/](research-parallel/) - Detailed research subtopics
+
 ### Architecture
-- [learning-5e4c3f2a-codebase-architecture.md](learning-5e4c3f2a-codebase-architecture.md) - Core architecture overview
+- [learning-5e4c3f2a-codebase-architecture.md](learning-5e4c3f2a-codebase-architecture.md) - Core architecture
 - [knowledge-codemap.md](knowledge-codemap.md) - AST-based code analysis
 - [knowledge-data-flow.md](knowledge-data-flow.md) - Data flow documentation
-
-### Research
-- [research-aee7f336-pi-extension-patterns.md](research-aee7f336-pi-extension-patterns.md) - Pi extension API patterns
-- [research-4e873bd0-vfs-summary.md](research-4e873bd0-vfs-summary.md) - VFS integration research
-- [research-dbb5cdc8-zk-search-analysis.md](research-dbb5cdc8-zk-search-analysis.md) - 🆕 ZK search implementation analysis
-- [research-45af3ec0-golang-vector-rag-search.md](research-45af3ec0-golang-vector-rag-search.md) - 🆕 Go-based vector RAG search exploration
-- [research-7f4c2e1a-afero-vfs-integration.md](research-7f4c2e1a-afero-vfs-integration.md) - Afero VFS exploration
-- [research-8a9b0c1d-duckdb-filesystem-findings.md](research-8a9b0c1d-duckdb-filesystem-findings.md) - DuckDB filesystem limitations
-
-### Phase 1 Design Documents
-- [task-a0236e7c-document-opennotes-cli.md](task-a0236e7c-document-opennotes-cli.md) - CLI interface reference
-- [task-4b6f9ebd-design-tool-api.md](task-4b6f9ebd-design-tool-api.md) - Tool API specifications
-- [task-f8bb9c5d-define-package-structure.md](task-f8bb9c5d-define-package-structure.md) - Package structure
-- [task-e1x1x1x1-design-service-architecture.md](task-e1x1x1x1-design-service-architecture.md) - Service layer design
-- [task-e2x2x2x2-design-error-handling.md](task-e2x2x2x2-design-error-handling.md) - Error handling strategy
-- [task-e3x3x3x3-design-test-strategy.md](task-e3x3x3x3-design-test-strategy.md) - Test approach
-
-### Learnings
-- [learning-f9a8b7c6-phase1-design-insights.md](learning-f9a8b7c6-phase1-design-insights.md) - Phase 1 key decisions
-- [learning-p2i8m7k5-phase2-implementation.md](learning-p2i8m7k5-phase2-implementation.md) - Phase 2 implementation insights
-
----
-
-## Active Infrastructure Work
-
-### CI/CD Improvements
-**Task**: [task-9c4a2f8d-github-actions-moonrepo-releases.md](task-9c4a2f8d-github-actions-moonrepo-releases.md)  
-**Status**: Todo - Ready for implementation
-
-Modernize GitHub Actions workflows with:
-- moonrepo affected command for dependency-aware testing
-- release-please manifest mode for independent package releases
-- Combined "implicit detection + graph enforcement" strategy
-- Supports Go and TypeScript/Bun packages in monorepo
-
-**Key Benefits**:
-- Only test/build affected packages based on changes
-- Prevent releases if dependent packages break
-- Clean, independent version bumps per package
-- Automatic changelog generation
 
 ---
 
 ## Quick Links
 
+- **New Search Package**: [internal/search/](../internal/search/)
 - **Extension Package**: [pkgs/pi-opennotes/](../pkgs/pi-opennotes/)
 - **Main Docs**: [docs/](../docs/)
-- **CI Config**: [.github/workflows/](../.github/workflows/)
 - **Archive**: [archive/](archive/) - Completed work from previous phases

@@ -3,136 +3,81 @@
 ## Current Status
 
 **Active Epics**: 2
-1. **Pi-OpenNotes Extension** - Phase 3 Complete, Ready for Phase 4 (Distribution)
-2. **Remove DuckDB Epic** - 🆕 Research Phase Starting
+1. **Remove DuckDB** - Phases 1-3 Complete, Phase 4 Next Session
+2. **Pi-OpenNotes Extension** - Phase 3 Complete, Ready for Phase 4
 
 ---
 
-## 🆕 Remove DuckDB - Alternative Search
+## 🔍 Remove DuckDB - Pure Go Search
 
-### Epic f661c068 - Research Phase
+### Epic f661c068 - Progress Summary
 
-**Current Tasks**: 
-1. [research-dbb5cdc8-zk-search-analysis.md](research-dbb5cdc8-zk-search-analysis.md) - ZK search analysis
-2. [research-45af3ec0-golang-vector-rag-search.md](research-45af3ec0-golang-vector-rag-search.md) - 🆕 Go vector RAG exploration
+| Phase | Status | Description |
+|-------|--------|-------------|
+| 1. Research | ✅ Complete | Research synthesis, strategic decisions |
+| 2. Interface Design | ✅ Complete | `internal/search/` package (8 files) |
+| 3. Query Parser | ✅ Complete | Participle-based parser (5 files, 10 tests) |
+| 4. Bleve Backend | 🔜 **NEXT SESSION** | Full-text indexing implementation |
+| 5. DuckDB Removal | 🔜 | Remove all DuckDB code |
+| 6. Semantic Search | 🔜 | Optional chromem-go integration |
 
-**Research Checklist - ZK Search Analysis**:
-- [ ] Clone zk-org/zk repository to /tmp/zk-analysis
-- [ ] Run CodeMapper analysis (`cm stats`, `cm query`, `cm trace`)
-- [ ] Use LSP tools to understand key types and interfaces
-- [ ] Map query parsing code path
-- [ ] Map indexing code path  
-- [ ] Map search execution code path
-- [ ] Create ASCII state machine diagrams for:
-  - [ ] Query parsing flow
-  - [ ] Indexing flow
-  - [ ] Search execution flow
-- [ ] Document integration opportunities with afero
-- [ ] Write recommendations for OpenNotes implementation
-- [ ] Update epic with refined phase definitions
+### Session 2026-02-01 Completed
 
-**Goal**: Understand how zk implements search without DuckDB, identify code paths, create state machine diagrams to guide our implementation.
+**Phase 2 - Interface Design** ✅:
+- `internal/search/` package with 8 files
+- Index, Query AST, FindOpts, Storage, Parser interfaces
+- All files compile, lint passes
 
-**Research Checklist - Go Vector RAG Search**:
-- [ ] Survey Go vector database/search libraries (Chroma-go, Milvus, Weaviate, pure-Go)
-- [ ] Identify embedding generation options (local ONNX, API-based)
-- [ ] Document RAG architecture patterns in Go
-- [ ] Prototype minimal RAG example with sample markdown notes
-- [ ] Measure performance (indexing time, query latency, memory)
-- [ ] Compare vector search vs traditional text search
-- [ ] Evaluate hybrid search strategy (combining both approaches)
-- [ ] Check afero filesystem compatibility
-- [ ] Recommend: include in epic, defer to future, or skip
-- [ ] Update epic-f661c068 with decision and findings
+**Phase 3 - Query Parser** ✅:
+- `internal/search/parser/` with 5 files
+- Participle-based Gmail-style syntax
+- 10 test cases, all passing
 
-**Goal**: Explore semantic/vector search capabilities in Go as complementary or alternative to traditional text search. Inspired by qmd (Node.js tool we can't use), find Go equivalents for RAG patterns.
+**Commits**:
+- `5e1205d` - feat(search): add core interfaces for pure Go search implementation
+- `d888253` - feat(search): implement Gmail-style query parser with Participle
 
 ---
 
-## ⏳ Awaiting Review
+## 🔜 Next Session: Phase 4 - Bleve Backend
 
-### Pi-OpenNotes Extension - Phase 1 Complete
+### Tasks for Phase 4
 
-**Request**: Please review Phase 1 design documents before proceeding to implementation.
+- [ ] Add Bleve dependency: `go get github.com/blevesearch/bleve/v2`
+- [ ] Create `internal/search/bleve/` package
+- [ ] Implement `Index` interface with Bleve
+- [ ] Define document mapping (field weights for BM25)
+- [ ] Implement incremental indexing
+- [ ] Add afero-based persistence
+- [ ] Write comprehensive tests
+- [ ] Benchmark performance
 
-**Documents to Review**:
-1. [task-a0236e7c-document-opennotes-cli.md](task-a0236e7c-document-opennotes-cli.md) - CLI interface reference
-2. [task-4b6f9ebd-design-tool-api.md](task-4b6f9ebd-design-tool-api.md) - Tool API specifications
-3. [task-f8bb9c5d-define-package-structure.md](task-f8bb9c5d-define-package-structure.md) - Package structure
-4. [task-e1x1x1x1-design-service-architecture.md](task-e1x1x1x1-design-service-architecture.md) - Service architecture
-5. [task-e2x2x2x2-design-error-handling.md](task-e2x2x2x2-design-error-handling.md) - Error handling
-6. [task-e3x3x3x3-design-test-strategy.md](task-e3x3x3x3-design-test-strategy.md) - Test strategy
+### Key Design Decisions
 
-**Key Decisions for Review**:
-- [ ] Tool naming prefix: `opennotes_` (configurable)
-- [ ] Pagination: 75% budget + metadata
-- [ ] Service architecture: fat services, thin tools
-- [ ] Error hints: full installation guide for CLI_NOT_FOUND
-- [ ] Test pyramid: 70/25/5 (unit/integration/e2e)
-
----
-
-## 🔜 Phase 2: Implementation (Pending Approval)
-
-After review, these tasks will be created:
-
-### Core Infrastructure
-- [ ] Create `pkgs/pi-opennotes/` directory structure
-- [ ] Initialize package.json with pi manifest
-- [ ] Implement `CliAdapter` service
-- [ ] Implement `PaginationService`
-- [ ] Implement error utilities
-
-### Services
-- [ ] Implement `SearchService`
-- [ ] Implement `ListService`
-- [ ] Implement `NoteService`
-- [ ] Implement `NotebookService`
-- [ ] Implement `ViewsService`
-
-### Tools
-- [ ] Implement `opennotes_search` tool
-- [ ] Implement `opennotes_list` tool
-- [ ] Implement `opennotes_get` tool
-- [ ] Implement `opennotes_create` tool
-- [ ] Implement `opennotes_notebooks` tool
-- [ ] Implement `opennotes_views` tool
-
-### Tests
-- [ ] Unit tests for all services (62 tests)
-- [ ] Integration tests for all tools (27 tests)
-- [ ] E2E tests with real CLI (9 tests)
-
-### Documentation
-- [ ] Write README.md
-- [ ] Write CHANGELOG.md
-- [ ] Create examples
+From research:
+- Use Bleve's BM25 ranking with field weights (path=1000, title=500, body=1)
+- Store index in `.opennotes/index/` directory
+- Support incremental updates (checksum-based change detection)
+- Use afero for testability (in-memory filesystem for tests)
 
 ---
 
-## 📋 Future Phases
+## 📦 Pi-OpenNotes Extension
 
-### Phase 3: Testing & Distribution
-- [ ] Final test coverage validation
-- [ ] npm publish setup
-- [ ] Beta release
-- [ ] Documentation review
-- [ ] GA release
+**Epic**: [epic-1f41631e-pi-opennotes-extension.md](epic-1f41631e-pi-opennotes-extension.md)
 
----
-
-## 🔧 Infrastructure Tasks
-
-### CI/CD Improvements
-- [ ] [task-9c4a2f8d-github-actions-moonrepo-releases.md](task-9c4a2f8d-github-actions-moonrepo-releases.md) - GitHub Actions with moonrepo + release-please
-  - Integrate moonrepo affected command in CI
-  - Setup release-please manifest mode
-  - Independent package releases with dependency graph safety
+| Phase | Status |
+|-------|--------|
+| Phase 1: Research & Design | ✅ Complete |
+| Phase 2: Implementation | ✅ Complete (72 tests) |
+| Phase 3: Testing & Documentation | ✅ Complete |
+| Phase 4: Distribution | 🔜 Next |
 
 ---
 
 ## Notes
 
-- **Blocked**: Phase 2 cannot start until Phase 1 is reviewed
-- **Recommendation**: Review service interfaces first (task-e1x1x1x1)
-- **Time Estimate**: Phase 2 implementation ~4-6 hours
+- **Next Priority**: Phase 4 (Bleve Backend) in next session
+- **Timeline**: ~2-3 weeks remaining for full DuckDB removal
+- **Tests**: All tests passing, 10 new parser tests added
+- **No Push**: Changes committed but not pushed (awaiting human review)
