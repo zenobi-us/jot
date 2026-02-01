@@ -29,8 +29,11 @@ See detailed task checklist in [phase-02df510c-duckdb-removal.md](phase-02df510c
 
 ### High-Level Tasks
 
-- [ ] Codebase audit for DuckDB references
+- [x] Codebase audit for DuckDB references - [task-9b9e6fb4](task-9b9e6fb4-phase5-codebase-audit.md)
 - [ ] Service layer migration (NoteService, DbService removal)
+  - [ ] Migrate NoteService to use Index interface
+  - [ ] Update NotebookService constructor
+  - [ ] Remove DbService entirely
 - [ ] CLI command migration (notes search, notes list)
 - [ ] Dependency cleanup (remove from go.mod)
 - [ ] Integration & testing (full test suite)
