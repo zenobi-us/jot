@@ -4,23 +4,41 @@
 
 | Role | Assignment | Epic | Phase |
 |------|------------|------|-------|
-| AI Agent | Planning pi-opennotes extension | epic-1f41631e | phase-43842f12 |
+| AI Agent | Research DuckDB removal | epic-f661c068 | Research Phase |
+| AI Agent | Pi-opennotes extension | epic-1f41631e | phase-16d937de (Distribution) |
 
 ---
 
-## Active Epic
+## Active Epics
 
-**Epic**: Pi-OpenNotes Extension  
+### Epic 1: Remove DuckDB - Alternative Search
+**Epic ID**: `f661c068`  
+**Status**: `proposed` (Research Starting)
+
+### Epic 2: Pi-OpenNotes Extension  
 **Epic ID**: `1f41631e`  
-**Status**: `planning`
+**Status**: `in-progress` (Ready for Distribution)
 
-### Phase Assignments
+### Phase Assignments - Epic f661c068 (DuckDB Removal)
 
 | Phase | ID | Status | Assigned |
 |-------|---|--------|----------|
-| Research & Design | `43842f12` | `proposed` | AI Agent (planning) |
-| Implementation | `5e1ddedc` | `proposed` | Unassigned |
-| Testing & Distribution | `16d937de` | `proposed` | Unassigned |
+| Research & Analysis | TBD | `todo` | AI Agent |
+| Query DSL Design | TBD | `proposed` | Unassigned |
+| Indexer Implementation | TBD | `proposed` | Unassigned |
+| Query Executor | TBD | `proposed` | Unassigned |
+| Afero Migration | TBD | `proposed` | Unassigned |
+| DuckDB Removal | TBD | `proposed` | Unassigned |
+| Testing & Validation | TBD | `proposed` | Unassigned |
+
+### Phase Assignments - Epic 1f41631e (Pi Extension)
+
+| Phase | ID | Status | Assigned |
+|-------|---|--------|----------|
+| Research & Design | `43842f12` | `complete` | Completed |
+| Implementation | `5e1ddedc` | `complete` | Completed |
+| Testing & Documentation | `16d937de` | `complete` | Completed |
+| Distribution | TBD | `proposed` | Unassigned |
 
 ---
 

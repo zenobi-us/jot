@@ -2,8 +2,34 @@
 
 ## Current Status
 
-**Phase 1: Research & Design** - ✅ COMPLETE  
-**Next**: Human review, then Phase 2 (Implementation)
+**Active Epics**: 2
+1. **Pi-OpenNotes Extension** - Phase 3 Complete, Ready for Phase 4 (Distribution)
+2. **Remove DuckDB Epic** - 🆕 Research Phase Starting
+
+---
+
+## 🆕 Remove DuckDB - Alternative Search
+
+### Epic f661c068 - Research Phase
+
+**Current Task**: [research-dbb5cdc8-zk-search-analysis.md](research-dbb5cdc8-zk-search-analysis.md)
+
+**Research Checklist**:
+- [ ] Clone zk-org/zk repository to /tmp/zk-analysis
+- [ ] Run CodeMapper analysis (`cm stats`, `cm query`, `cm trace`)
+- [ ] Use LSP tools to understand key types and interfaces
+- [ ] Map query parsing code path
+- [ ] Map indexing code path  
+- [ ] Map search execution code path
+- [ ] Create ASCII state machine diagrams for:
+  - [ ] Query parsing flow
+  - [ ] Indexing flow
+  - [ ] Search execution flow
+- [ ] Document integration opportunities with afero
+- [ ] Write recommendations for OpenNotes implementation
+- [ ] Update epic with refined phase definitions
+
+**Goal**: Understand how zk implements search without DuckDB, identify code paths, create state machine diagrams to guide our implementation.
 
 ---
 

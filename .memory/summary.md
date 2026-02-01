@@ -2,11 +2,41 @@
 
 ## Project Status: Active Development
 
-**Current Focus**: pi-opennotes Extension (Phase 2 COMPLETE)
+**Current Focus**: Two Active Epics
+1. Pi-OpenNotes Extension (Phase 3 COMPLETE - Ready for Distribution)
+2. Remove DuckDB - Alternative Search (NEW - Research Phase)
 
 ---
 
 ## Active Work
+
+### Remove DuckDB - Alternative Search Implementation
+**Epic**: [epic-f661c068-remove-duckdb-alternative-search.md](epic-f661c068-remove-duckdb-alternative-search.md)  
+**Status**: 🆕 Proposed - Research Starting
+
+A fundamental architectural shift to replace DuckDB with native Go search implementation inspired by zk-org/zk.
+
+**Prime Concepts**:
+1. Filesystem abstraction via `spf13/afero` for mockable FS access
+2. Complete DuckDB removal (no C++ dependencies, smaller binary)
+3. Expressive search DSL (comparable/superior to current SQL)
+4. Zero user-facing functional regression (views/templates unchanged)
+
+**Current Phase**: Research & Analysis
+- [research-dbb5cdc8-zk-search-analysis.md](research-dbb5cdc8-zk-search-analysis.md) - Analyze zk search architecture
+
+**Why This Matters**:
+- Enables full VFS mocking for testing (DuckDB blocks afero integration)
+- Simplifies build process (removes C++ compilation complexity)
+- Smaller binary size and faster startup
+- More flexible query capabilities
+- Better alignment with Go ecosystem
+
+**Next Steps**:
+1. Clone and analyze zk-org/zk codebase
+2. Create state machine diagrams of search code paths
+3. Design new query DSL
+4. Plan phased migration strategy
 
 ### Pi-OpenNotes Extension
 **Epic**: [epic-1f41631e-pi-opennotes-extension.md](epic-1f41631e-pi-opennotes-extension.md)  
@@ -77,6 +107,9 @@ A pi extension that integrates OpenNotes into the pi coding agent, enabling AI a
 ### Research
 - [research-aee7f336-pi-extension-patterns.md](research-aee7f336-pi-extension-patterns.md) - Pi extension API patterns
 - [research-4e873bd0-vfs-summary.md](research-4e873bd0-vfs-summary.md) - VFS integration research
+- [research-dbb5cdc8-zk-search-analysis.md](research-dbb5cdc8-zk-search-analysis.md) - 🆕 ZK search implementation analysis
+- [research-7f4c2e1a-afero-vfs-integration.md](research-7f4c2e1a-afero-vfs-integration.md) - Afero VFS exploration
+- [research-8a9b0c1d-duckdb-filesystem-findings.md](research-8a9b0c1d-duckdb-filesystem-findings.md) - DuckDB filesystem limitations
 
 ### Phase 1 Design Documents
 - [task-a0236e7c-document-opennotes-cli.md](task-a0236e7c-document-opennotes-cli.md) - CLI interface reference
