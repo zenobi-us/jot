@@ -66,7 +66,7 @@ status: planning
 | 1 | Research & Analysis | ✅ `complete` | [research-f410e3ba-search-replacement-synthesis.md](research-f410e3ba-search-replacement-synthesis.md) |
 | 2 | Interface Design | ✅ `complete` | [phase-ed57f7e9-interface-design.md](phase-ed57f7e9-interface-design.md) |
 | 3 | Query Parser | ✅ `complete` | [phase-f29cef1b-query-parser.md](phase-f29cef1b-query-parser.md) |
-| 4 | Bleve Search Backend | 🔜 `proposed` | TBD |
+| 4 | Bleve Search Backend | 🔄 `in-progress` | [phase-3a5e0381-bleve-backend.md](phase-3a5e0381-bleve-backend.md) |
 | 5 | DuckDB Removal & Cleanup | 🔜 `proposed` | TBD |
 | 6 | Semantic Search (Optional) | 🔜 `proposed` | TBD |
 

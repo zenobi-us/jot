@@ -13,6 +13,7 @@ import (
 	bindex "github.com/blevesearch/bleve_index_api"
 
 	"github.com/zenobi-us/opennotes/internal/search"
+	"github.com/zenobi-us/opennotes/internal/search/parser"
 )
 
 // Index implements search.Index using Bleve full-text search.
@@ -346,6 +347,19 @@ func (idx *Index) Close() error {
 	idx.index = nil
 	idx.status = search.IndexStatusUnopened
 	return err
+}
+
+// FindByQueryString parses a query string and executes a search.
+// This is a convenience method that combines parser.Parse with Find.
+func (idx *Index) FindByQueryString(ctx context.Context, queryString string, opts search.FindOpts) (search.Results, error) {
+	p := parser.New()
+	query, err := p.Parse(queryString)
+	if err != nil {
+		return search.Results{}, fmt.Errorf("failed to parse query: %w", err)
+	}
+
+	opts.Query = query
+	return idx.Find(ctx, opts)
 }
 
 // translateSort converts search.SortSpec to Bleve sort fields.

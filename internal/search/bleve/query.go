@@ -292,19 +292,19 @@ func TranslateFindOpts(opts search.FindOpts) (bquery.Query, error) {
 		queries = append(queries, q)
 	}
 
-	// Add tag filters
+	// Add tag filters - use MatchQuery for analyzed fields
 	for _, tag := range opts.Tags {
-		tq := bquery.NewTermQuery(strings.ToLower(tag))
-		tq.SetField(FieldTags)
-		queries = append(queries, tq)
+		mq := bquery.NewMatchQuery(tag)
+		mq.SetField(FieldTags)
+		queries = append(queries, mq)
 	}
 
-	// Add exclude tag filters
+	// Add exclude tag filters - use MatchQuery for analyzed fields
 	for _, tag := range opts.ExcludeTags {
-		tq := bquery.NewTermQuery(strings.ToLower(tag))
-		tq.SetField(FieldTags)
+		mq := bquery.NewMatchQuery(tag)
+		mq.SetField(FieldTags)
 		must := []bquery.Query{bquery.NewMatchAllQuery()}
-		mustNot := []bquery.Query{tq}
+		mustNot := []bquery.Query{mq}
 		queries = append(queries, bquery.NewBooleanQuery(must, nil, mustNot))
 	}
 

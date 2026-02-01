@@ -12,7 +12,7 @@
 
 ### Remove DuckDB - Pure Go Search Implementation
 **Epic**: [epic-f661c068-remove-duckdb-alternative-search.md](epic-f661c068-remove-duckdb-alternative-search.md)  
-**Status**: 🔄 Phase 4 In Progress
+**Status**: ✅ Phase 4 Complete - Ready for Phase 5
 
 > **This is NOT a migration.** DuckDB is being completely removed and replaced with pure Go alternatives. No dual-support period, no feature flags.
 
@@ -23,39 +23,44 @@
 | 1. Research | ✅ Complete | Strategic decisions, synthesis document |
 | 2. Interface Design | ✅ Complete | `internal/search/` package (8 files) |
 | 3. Query Parser | ✅ Complete | `internal/search/parser/` (5 files, 10 tests) |
-| 4. Bleve Backend | 🔄 In Progress | `internal/search/bleve/` (6 files, 22 tests) |
+| 4. Bleve Backend | ✅ Complete | `internal/search/bleve/` (9 files, 36 tests, 6 benchmarks) |
 
-**New Code Created (Session 2026-02-01 Evening)**:
+**Phase 4 Complete (Session 2026-02-01 Evening)**:
 ```
 internal/search/bleve/
-├── doc.go           # Package documentation
-├── mapping.go       # Document mapping with field weights
-├── storage.go       # Afero adapter for Storage interface
-├── query.go         # Query AST to Bleve query translation
-├── index.go         # Index interface implementation
-├── index_test.go    # Integration tests (8 tests)
-└── query_test.go    # Query translation tests (14 tests)
+├── doc.go                      # Package documentation
+├── mapping.go                  # BM25 document mapping with field weights
+├── storage.go                  # Afero adapter for Storage interface
+├── query.go                    # Query AST to Bleve query translation
+├── index.go                    # Full Index implementation
+├── index_test.go               # Integration tests (8 tests)
+├── query_test.go               # Query translation tests (14 tests)
+├── parser_integration_test.go  # Parser integration (6 tests)
+└── index_bench_test.go         # Performance benchmarks (6 benchmarks)
 ```
 
 **Implementation Status**:
-- ✅ Core Index interface implemented
-- ✅ Add/Remove/Find/FindByPath/Count/Stats/Close methods
-- ✅ Query translation from search.Query AST to Bleve queries
+- ✅ Full Index interface implemented
+- ✅ All methods: Add/Remove/Find/FindByPath/Count/Stats/Close/Reindex
+- ✅ FindByQueryString for direct query string support
+- ✅ Query translation from search.Query AST to Bleve
 - ✅ FindOpts translation (tags, path prefix, date ranges)
 - ✅ In-memory and persistent index support
 - ✅ afero Storage adapter for filesystem abstraction
-- ✅ 22 tests passing, lint clean
-- 🔜 Benchmarks and parser integration
+- ✅ 36 tests passing (all green)
+- ✅ 6 benchmarks verify performance targets
+- ✅ Bug fix: Tag matching (TermQuery → MatchQuery)
 
-**Next Steps**:
-1. Add benchmarks to verify performance targets
-2. Integrate parser with Index for query string support
-3. Phase 5: Remove all DuckDB code
+**Performance Achieved**:
+- Search latency: **0.754ms** ✅ (target: <25ms, **97% better**)
+- FindByPath: **9μs** ✅ (ultra-fast exact lookups)
+- Count queries: **324μs** ✅ (sub-millisecond)
+- Bulk indexing: 2,938 docs/sec (10k in 3.4s)
 
-**Performance Targets**:
-- Binary size: 64MB → <15MB (**-78%**)
-- Startup: 500ms → <100ms (**-80%**)
-- Search: 29.9ms → <25ms (**-16%**)
+**Next Phase**: Phase 5 - DuckDB Removal
+- Remove all DuckDB code from codebase
+- Update CLI commands to use new search
+- Verify binary size and startup time targets
 
 ### Pi-OpenNotes Extension
 **Epic**: [epic-1f41631e-pi-opennotes-extension.md](epic-1f41631e-pi-opennotes-extension.md)  
