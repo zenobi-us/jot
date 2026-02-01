@@ -95,6 +95,7 @@ This epic represents a fundamental architectural shift from database-backed sear
 ### Knowledge Dependencies
 
 - [research-dbb5cdc8-zk-search-analysis.md](research-dbb5cdc8-zk-search-analysis.md) - zk search implementation analysis
+- [research-45af3ec0-golang-vector-rag-search.md](research-45af3ec0-golang-vector-rag-search.md) - Go-based vector RAG search exploration
 - Current DuckDB integration points (to be documented)
 - View and template system architecture (to be documented)
 
@@ -199,6 +200,7 @@ This epic represents a fundamental architectural shift from database-backed sear
 - Consider creating a feature flag for gradual rollout
 - Document lessons learned from DuckDB experience (both pros and cons)
 - Explore zk's indexing strategy, query parser, and result ranking
+- Investigate vector/semantic search as potential complementary feature (inspired by qmd tool)
 
 ## Related Work
 

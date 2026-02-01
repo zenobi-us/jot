@@ -12,9 +12,11 @@
 
 ### Epic f661c068 - Research Phase
 
-**Current Task**: [research-dbb5cdc8-zk-search-analysis.md](research-dbb5cdc8-zk-search-analysis.md)
+**Current Tasks**: 
+1. [research-dbb5cdc8-zk-search-analysis.md](research-dbb5cdc8-zk-search-analysis.md) - ZK search analysis
+2. [research-45af3ec0-golang-vector-rag-search.md](research-45af3ec0-golang-vector-rag-search.md) - 🆕 Go vector RAG exploration
 
-**Research Checklist**:
+**Research Checklist - ZK Search Analysis**:
 - [ ] Clone zk-org/zk repository to /tmp/zk-analysis
 - [ ] Run CodeMapper analysis (`cm stats`, `cm query`, `cm trace`)
 - [ ] Use LSP tools to understand key types and interfaces
@@ -30,6 +32,20 @@
 - [ ] Update epic with refined phase definitions
 
 **Goal**: Understand how zk implements search without DuckDB, identify code paths, create state machine diagrams to guide our implementation.
+
+**Research Checklist - Go Vector RAG Search**:
+- [ ] Survey Go vector database/search libraries (Chroma-go, Milvus, Weaviate, pure-Go)
+- [ ] Identify embedding generation options (local ONNX, API-based)
+- [ ] Document RAG architecture patterns in Go
+- [ ] Prototype minimal RAG example with sample markdown notes
+- [ ] Measure performance (indexing time, query latency, memory)
+- [ ] Compare vector search vs traditional text search
+- [ ] Evaluate hybrid search strategy (combining both approaches)
+- [ ] Check afero filesystem compatibility
+- [ ] Recommend: include in epic, defer to future, or skip
+- [ ] Update epic-f661c068 with decision and findings
+
+**Goal**: Explore semantic/vector search capabilities in Go as complementary or alternative to traditional text search. Inspired by qmd (Node.js tool we can't use), find Go equivalents for RAG patterns.
 
 ---
 

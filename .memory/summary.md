@@ -24,6 +24,7 @@ A fundamental architectural shift to replace DuckDB with native Go search implem
 
 **Current Phase**: Research & Analysis
 - [research-dbb5cdc8-zk-search-analysis.md](research-dbb5cdc8-zk-search-analysis.md) - Analyze zk search architecture
+- [research-45af3ec0-golang-vector-rag-search.md](research-45af3ec0-golang-vector-rag-search.md) - 🆕 Go-based vector RAG search exploration
 
 **Why This Matters**:
 - Enables full VFS mocking for testing (DuckDB blocks afero integration)
@@ -108,6 +109,7 @@ A pi extension that integrates OpenNotes into the pi coding agent, enabling AI a
 - [research-aee7f336-pi-extension-patterns.md](research-aee7f336-pi-extension-patterns.md) - Pi extension API patterns
 - [research-4e873bd0-vfs-summary.md](research-4e873bd0-vfs-summary.md) - VFS integration research
 - [research-dbb5cdc8-zk-search-analysis.md](research-dbb5cdc8-zk-search-analysis.md) - 🆕 ZK search implementation analysis
+- [research-45af3ec0-golang-vector-rag-search.md](research-45af3ec0-golang-vector-rag-search.md) - 🆕 Go-based vector RAG search exploration
 - [research-7f4c2e1a-afero-vfs-integration.md](research-7f4c2e1a-afero-vfs-integration.md) - Afero VFS exploration
 - [research-8a9b0c1d-duckdb-filesystem-findings.md](research-8a9b0c1d-duckdb-filesystem-findings.md) - DuckDB filesystem limitations
 

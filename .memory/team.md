@@ -4,7 +4,7 @@
 
 | Role | Assignment | Epic | Phase |
 |------|------------|------|-------|
-| AI Agent | Research DuckDB removal | epic-f661c068 | Research Phase |
+| AI Agent | Research DuckDB removal (zk-search + vector RAG) | epic-f661c068 | Research Phase |
 | AI Agent | Pi-opennotes extension | epic-1f41631e | phase-16d937de (Distribution) |
 
 ---
