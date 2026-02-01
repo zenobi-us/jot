@@ -3,7 +3,7 @@
 ## Project Status: Active Development
 
 **Current Focus**: Two Active Epics
-1. **Remove DuckDB** - Phases 2 & 3 Complete, Ready for Phase 4 (Bleve Backend)
+1. **Remove DuckDB** - Phase 4 (Bleve Backend) in progress
 2. **Pi-OpenNotes Extension** - Phase 3 Complete, Ready for Distribution
 
 ---
@@ -12,7 +12,7 @@
 
 ### Remove DuckDB - Pure Go Search Implementation
 **Epic**: [epic-f661c068-remove-duckdb-alternative-search.md](epic-f661c068-remove-duckdb-alternative-search.md)  
-**Status**: ✅ Phases 1-3 Complete - Ready for Phase 4
+**Status**: 🔄 Phase 4 In Progress
 
 > **This is NOT a migration.** DuckDB is being completely removed and replaced with pure Go alternatives. No dual-support period, no feature flags.
 
@@ -23,44 +23,34 @@
 | 1. Research | ✅ Complete | Strategic decisions, synthesis document |
 | 2. Interface Design | ✅ Complete | `internal/search/` package (8 files) |
 | 3. Query Parser | ✅ Complete | `internal/search/parser/` (5 files, 10 tests) |
+| 4. Bleve Backend | 🔄 In Progress | `internal/search/bleve/` (6 files, 22 tests) |
 
-**New Code Created (Session 2026-02-01)**:
+**New Code Created (Session 2026-02-01 Evening)**:
 ```
-internal/search/
+internal/search/bleve/
 ├── doc.go           # Package documentation
-├── errors.go        # Error types
-├── index.go         # Index interface + Document type
-├── options.go       # FindOpts with functional options
-├── parser.go        # Parser interface
-├── query.go         # Query AST types
-├── result.go        # Results, Snippet types
-├── storage.go       # Storage interface (afero-compatible)
-└── parser/          # Participle-based parser
-    ├── doc.go
-    ├── grammar.go   # Lexer + grammar
-    ├── convert.go   # AST conversion
-    ├── parser.go    # Implementation
-    └── parser_test.go
+├── mapping.go       # Document mapping with field weights
+├── storage.go       # Afero adapter for Storage interface
+├── query.go         # Query AST to Bleve query translation
+├── index.go         # Index interface implementation
+├── index_test.go    # Integration tests (8 tests)
+└── query_test.go    # Query translation tests (14 tests)
 ```
 
-**Query Syntax Implemented**:
-- Simple terms: `meeting`, `"exact phrase"`
-- Field qualifiers: `tag:work`, `title:meeting`, `path:projects/`
-- Date filters: `created:>2024-01-01`, `modified:<2024-06-30`
-- Negation: `-archived`, `-tag:done`
-- Implicit AND: `tag:work status:todo`
+**Implementation Status**:
+- ✅ Core Index interface implemented
+- ✅ Add/Remove/Find/FindByPath/Count/Stats/Close methods
+- ✅ Query translation from search.Query AST to Bleve queries
+- ✅ FindOpts translation (tags, path prefix, date ranges)
+- ✅ In-memory and persistent index support
+- ✅ afero Storage adapter for filesystem abstraction
+- ✅ 22 tests passing, lint clean
+- 🔜 Benchmarks and parser integration
 
-**Next Phase**: Phase 4 - Bleve Backend (in next session)
-
-**Implementation Phases**:
-| Phase | Timeline | Focus | Status |
-|-------|----------|-------|--------|
-| Research | Week 0 | Research synthesis | ✅ Complete |
-| Interface Design | Week 1 | Search interfaces, query AST | ✅ Complete |
-| Query Parser | Week 1 | Participle-based Gmail-style DSL | ✅ Complete |
-| Bleve Backend | Week 2-3 | Full-text indexing with BM25 | 🔜 Next Session |
-| DuckDB Removal | Week 3-4 | Remove all DuckDB code, cleanup | 🔜 |
-| Semantic Search | Week 5+ | Optional chromem-go integration | 🔜 |
+**Next Steps**:
+1. Add benchmarks to verify performance targets
+2. Integrate parser with Index for query string support
+3. Phase 5: Remove all DuckDB code
 
 **Performance Targets**:
 - Binary size: 64MB → <15MB (**-78%**)
@@ -81,6 +71,13 @@ internal/search/
 ---
 
 ## Session History
+
+### 2026-02-01 (Evening)
+- 🔄 Started Phase 4: Bleve Backend Implementation
+- ✅ Added Bleve and afero dependencies
+- ✅ Created 6 new files in `internal/search/bleve/`
+- ✅ Implemented full Index interface
+- ✅ 22 tests passing, lint clean
 
 ### 2026-02-01 (Late Afternoon)
 - ✅ Completed Phase 2: Interface Design
@@ -107,6 +104,7 @@ internal/search/
 ## Quick Links
 
 - **New Search Package**: [internal/search/](../internal/search/)
+- **Bleve Implementation**: [internal/search/bleve/](../internal/search/bleve/)
 - **Extension Package**: [pkgs/pi-opennotes/](../pkgs/pi-opennotes/)
 - **Main Docs**: [docs/](../docs/)
 - **Archive**: [archive/](archive/) - Completed work from previous phases

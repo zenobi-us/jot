@@ -4,9 +4,9 @@
 
 | Role | Assignment | Epic | Phase |
 |------|------------|------|-------|
-| - | Session ended | epic-f661c068 | Phases 2-3 Complete |
+| Agent | Active | epic-f661c068 | Phase 4 - Bleve Backend |
 
-**Session ID**: 2026-02-01-late-afternoon (ended)
+**Session ID**: 2026-02-01-evening
 
 ---
 
@@ -14,11 +14,10 @@
 
 ### Epic 1: Remove DuckDB - Alternative Search
 **Epic ID**: `f661c068`  
-**Status**: `phases-1-3-complete` - Ready for Phase 4
+**Status**: `phase-4-in-progress`
 
-**Completed This Session**:
-- ✅ Phase 2: Interface Design
-- ✅ Phase 3: Query Parser
+**Current Work**:
+- 🔄 Phase 4: Bleve Backend Implementation
 
 ### Epic 2: Pi-OpenNotes Extension  
 **Epic ID**: `1f41631e`  
@@ -31,7 +30,7 @@
 | Research & Analysis | N/A | ✅ `complete` | Completed 2026-02-01 |
 | Interface Design | `ed57f7e9` | ✅ `complete` | Completed 2026-02-01 |
 | Query Parser | `f29cef1b` | ✅ `complete` | Completed 2026-02-01 |
-| Bleve Backend | TBD | `proposed` | **Next Session** |
+| Bleve Backend | `3a5e0381` | 🔄 `in-progress` | **This Session** |
 | DuckDB Removal | TBD | `proposed` | Unassigned |
 | Semantic Search | TBD | `proposed` | Unassigned |
 
@@ -50,25 +49,7 @@
 
 | Date | Session | Epic | Phase | Outcome |
 |------|---------|------|-------|---------|
-| 2026-02-01 | Late afternoon | epic-f661c068 | Phase 2 & 3 | ✅ Both phases complete, 13 new files, 10 tests |
-| 2026-02-01 | Afternoon | epic-f661c068 | Research | ✅ Research complete, synthesis created |
-| 2026-02-01 | Previous | epic-f661c068 | Research | 4 parallel subtopics completed |
+| 2026-02-01 | Evening | epic-f661c068 | Phase 4 | 🔄 In progress |
+| 2026-02-01 | Late afternoon | epic-f661c068 | Phase 2 & 3 | ✅ Both phases complete |
+| 2026-02-01 | Afternoon | epic-f661c068 | Research | ✅ Research complete |
 | 2026-01-29 | - | epic-1f41631e | Phase 3 | Testing & docs complete |
-| 2026-01-29 | - | epic-1f41631e | Phase 2 | Implementation complete |
-
----
-
-## Next Session Instructions
-
-When resuming work on Phase 4 (Bleve Backend):
-
-1. Read this file and `.memory/summary.md`
-2. Read `.memory/phase-f29cef1b-query-parser.md` for context
-3. Read `.memory/research-f410e3ba-search-replacement-synthesis.md` for Bleve decisions
-4. Create Phase 4 file: `phase-<hash>-bleve-backend.md`
-5. Start implementation in `internal/search/bleve/`
-
-Key dependencies for Phase 4:
-- `github.com/blevesearch/bleve/v2`
-- Existing interfaces in `internal/search/`
-- Parser in `internal/search/parser/`

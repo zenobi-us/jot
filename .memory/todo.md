@@ -3,7 +3,7 @@
 ## Current Status
 
 **Active Epics**: 2
-1. **Remove DuckDB** - Phases 1-3 Complete, Phase 4 Next Session
+1. **Remove DuckDB** - Phase 4 (Bleve Backend) In Progress
 2. **Pi-OpenNotes Extension** - Phase 3 Complete, Ready for Phase 4
 
 ---
@@ -17,48 +17,54 @@
 | 1. Research | ✅ Complete | Research synthesis, strategic decisions |
 | 2. Interface Design | ✅ Complete | `internal/search/` package (8 files) |
 | 3. Query Parser | ✅ Complete | Participle-based parser (5 files, 10 tests) |
-| 4. Bleve Backend | 🔜 **NEXT SESSION** | Full-text indexing implementation |
+| 4. Bleve Backend | 🔄 **IN PROGRESS** | Full-text indexing implementation |
 | 5. DuckDB Removal | 🔜 | Remove all DuckDB code |
 | 6. Semantic Search | 🔜 | Optional chromem-go integration |
 
-### Session 2026-02-01 Completed
+### Session 2026-02-01 Evening - In Progress
 
-**Phase 2 - Interface Design** ✅:
-- `internal/search/` package with 8 files
-- Index, Query AST, FindOpts, Storage, Parser interfaces
-- All files compile, lint passes
+**Phase 4 - Bleve Backend** 🔄:
 
-**Phase 3 - Query Parser** ✅:
-- `internal/search/parser/` with 5 files
-- Participle-based Gmail-style syntax
-- 10 test cases, all passing
+Completed:
+- [x] Add Bleve dependency: `go get github.com/blevesearch/bleve/v2`
+- [x] Add afero dependency: `go get github.com/spf13/afero`
+- [x] Create `internal/search/bleve/doc.go`
+- [x] Create `internal/search/bleve/mapping.go` - document mapping with field weights
+- [x] Create `internal/search/bleve/storage.go` - afero adapter
+- [x] Create `internal/search/bleve/query.go` - query AST translation
+- [x] Create `internal/search/bleve/index.go` - full Index implementation
+- [x] Write query translation tests (14 tests)
+- [x] Write index integration tests (8 tests)
+- [x] Lint passes, all 22 tests pass
 
-**Commits**:
-- `5e1205d` - feat(search): add core interfaces for pure Go search implementation
-- `d888253` - feat(search): implement Gmail-style query parser with Participle
+Remaining:
+- [ ] Add benchmarks for performance verification
+- [ ] Integrate parser with Index for query string support
+- [ ] Add frontmatter parsing in Reindex method
+
+### Files Created This Session
+
+```
+internal/search/bleve/
+├── doc.go           # Package documentation
+├── mapping.go       # Document mapping (field weights: path=1000, title=500, etc.)
+├── storage.go       # AferoStorage adapter
+├── query.go         # TranslateQuery, TranslateFindOpts
+├── index.go         # Index implementation
+├── index_test.go    # 8 integration tests
+└── query_test.go    # 14 query translation tests
+```
 
 ---
 
-## 🔜 Next Session: Phase 4 - Bleve Backend
+## 🔜 Next: Complete Phase 4
 
-### Tasks for Phase 4
+### Remaining Tasks
 
-- [ ] Add Bleve dependency: `go get github.com/blevesearch/bleve/v2`
-- [ ] Create `internal/search/bleve/` package
-- [ ] Implement `Index` interface with Bleve
-- [ ] Define document mapping (field weights for BM25)
-- [ ] Implement incremental indexing
-- [ ] Add afero-based persistence
-- [ ] Write comprehensive tests
-- [ ] Benchmark performance
-
-### Key Design Decisions
-
-From research:
-- Use Bleve's BM25 ranking with field weights (path=1000, title=500, body=1)
-- Store index in `.opennotes/index/` directory
-- Support incremental updates (checksum-based change detection)
-- Use afero for testability (in-memory filesystem for tests)
+- [ ] Benchmark Index.Find vs DuckDB (target: <25ms)
+- [ ] Benchmark Index.Add for bulk indexing (target: 10k docs in <500ms)
+- [ ] Add parser integration method to Index
+- [ ] Complete Reindex with frontmatter parsing
 
 ---
 
@@ -77,7 +83,7 @@ From research:
 
 ## Notes
 
-- **Next Priority**: Phase 4 (Bleve Backend) in next session
-- **Timeline**: ~2-3 weeks remaining for full DuckDB removal
-- **Tests**: All tests passing, 10 new parser tests added
-- **No Push**: Changes committed but not pushed (awaiting human review)
+- **Current Work**: Phase 4 (Bleve Backend) implementation
+- **Tests**: All passing (22 new bleve tests + existing tests)
+- **Lint**: Clean, no issues
+- **No Push**: Changes not pushed (awaiting human review)
