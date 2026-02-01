@@ -309,9 +309,175 @@ Tests for SearchWithConditions():
 - Helps users catch typos early
 - Consistent with strict typing philosophy
 
-## Actual Outcome
+## Assessment Complete ✅
 
-*To be filled upon completion*
+**Date**: 2026-02-02T07:54:00+10:30  
+**Status**: Ready for implementation  
+**Full Assessment**: `.memory/assessment-phase523-migration.md`
+
+### Key Findings
+
+**✅ FEASIBLE** - Migration can proceed with limitations.
+
+**Supported Fields** (11/13):
+- ✅ All metadata fields (`data.tag`, `data.status`, etc.) - Direct mapping
+- ✅ `path` field - Prefix queries + wildcard fallback
+- ✅ `title` field - Direct mapping
+- ✅ AND/OR/NOT boolean logic - Full support via BooleanQuery
+
+**⚠️ NOT SUPPORTED** (2/13):
+- ❌ `links-to` - Requires link graph index (Phase 5.3)
+- ❌ `linked-by` - Requires link graph index (Phase 5.3)
+
+### Migration Strategy
+
+**Approach**: Migrate core functionality, return clear error for link queries.
+
+**Query Building**:
+- Add `SearchService.BuildQuery(conditions) -> search.Query`
+- Convert QueryCondition structs to search.Expr AST
+- Mirrors current `BuildWhereClauseWithGlob()` pattern
+
+**NoteService Changes**:
+- Replace SQL building with `BuildQuery()`
+- Replace `db.QueryContext()` with `index.Find()`
+- Reuse `documentToNote()` converter (from Phase 5.2.2)
+- Maintain sort order (ORDER BY file_path)
+
+### Risk Mitigation
+
+**High Risk - Link Queries**:
+- Return actionable error message with Phase 5.3 reference
+- Document breaking change in CHANGELOG.md
+- Provide SQL workaround in error message
+
+**Medium Risk - Path Globs**:
+- Optimize prefix patterns (`projects/*` → PrefixQuery)
+- Fallback to wildcard for complex patterns (`**/tasks/*.md`)
+- Document performance characteristics
+
+### Test Plan
+
+**Unit Tests** (15 new):
+- Field mapping (tag, status, path, title)
+- Boolean logic (AND, OR, NOT, mixed)
+- Path globbing (prefix, wildcard, doublestar)
+- Error cases (unknown fields, link queries)
+
+**Integration Tests** (40 existing):
+- Update all SearchWithConditions() tests
+- Replace DuckDB with testutil.CreateTestIndex()
+- Mark link query tests as TODO Phase 5.3
+
+**Manual CLI Testing**:
+- Basic queries, OR conditions, NOT conditions
+- Path queries, complex combinations
+- Link queries (verify error message)
+
+### Implementation Phases
+
+**Phase 1**: Implement BuildQuery() (2-3h)
+**Phase 2**: Update SearchWithConditions() (1h)  
+**Phase 3**: Update Tests (3-4h)
+**Phase 4**: Documentation (1-2h)
+**Phase 5**: Integration & Verification (1h)
+
+**Total**: 8-11 hours
+
+### Breaking Changes
+
+**Link Queries**:
+```bash
+# Will error after migration
+opennotes notes search query --and links-to=docs/*.md
+opennotes notes search query --and linked-by=plan.md
+```
+
+**Error Message**:
+```
+Error: link queries are not yet supported
+
+Field 'links-to' requires a dedicated link graph index, 
+which is planned for Phase 5.3.
+
+Temporary workaround: Use SQL query interface
+Track progress: github.com/zenobi-us/opennotes/issues/XXX
+
+Supported fields: data.tag, data.status, path, title, ...
+```
+
+### Success Criteria
+
+- ✅ All metadata/path/title queries work
+- ✅ AND/OR/NOT logic correct
+- ✅ 171/172 tests passing (1 link test expects error)
+- ✅ Clear error for link queries
+- ✅ Documentation updated
+- ✅ Performance maintained
+
+### Next Steps
+
+**Ready to Proceed**: Yes ✅  
+**Blockers**: None  
+**Dependencies**: Phase 5.2.2 complete ✅
+
+**Recommended Action**: Begin implementation following 5-phase plan.
+
+## Actual Outcome - Phase 1 Complete
+
+**Date Completed**: 2026-02-02  
+**Time Taken**: ~1 hour (estimated 2-3 hours)  
+**Tests**: 189/190 passing (1 pre-existing failure in TestSpecialViewExecutor_BrokenLinks)  
+**Status**: ✅ Phase 1 Complete
+
+### Phase 1 Implementation Summary
+
+**Files Modified**:
+- `internal/services/search.go` - Added BuildQuery() method and 5 helper functions
+- `internal/services/search_test.go` - Created with 18 unit tests (27 total including subtests)
+
+**New Methods**:
+- `BuildQuery(ctx, conditions) -> (*search.Query, error)` - Main conversion method
+- `conditionToExpr(cond) -> (search.Expr, error)` - Convert single condition to expression
+- `buildMetadataExpr(cond) -> (search.Expr, error)` - Handle metadata fields (data.*)
+- `buildPathExpr(cond) -> (search.Expr, error)` - Handle path with glob optimization
+- `detectWildcardType(pattern) -> search.WildcardType` - Classify wildcard patterns
+- `buildLinkQueryError(field) -> error` - Generate helpful error for link queries
+
+**Test Coverage**:
+- ✅ Single tag condition
+- ✅ Multiple AND conditions
+- ✅ Multiple OR conditions (nested OrExpr)
+- ✅ Single OR condition (unwrapped)
+- ✅ NOT conditions (NotExpr wrapper)
+- ✅ Path prefix optimization (projects/* → OpPrefix)
+- ✅ Path with trailing slash (projects/ → OpPrefix)
+- ✅ Complex wildcards (**/tasks/*.md → WildcardExpr)
+- ✅ Exact path match (OpEquals)
+- ✅ Title field queries
+- ✅ Empty conditions (returns empty Query)
+- ✅ Link queries return clear error (links-to, linked-by)
+- ✅ Unknown fields return error
+- ✅ Mixed AND/OR/NOT conditions
+- ✅ Tags alias (data.tags → metadata.tag)
+- ✅ All 9 metadata fields tested
+- ✅ Invalid condition type error
+
+### What Went Well
+
+1. **Test-Driven Development**: Wrote all 18 tests first, then implemented BuildQuery()
+2. **Clean Implementation**: Code follows existing patterns and Go conventions
+3. **Performance Optimization**: Prefix queries optimized for simple globs (projects/*)
+4. **Error Messages**: Clear, actionable error for unsupported link queries
+5. **No Regressions**: All existing tests still passing (189/190)
+
+### Challenges
+
+None - implementation went smoothly following the detailed plan.
+
+### Deviations from Plan
+
+None - followed the plan exactly as specified.
 
 ## Lessons Learned
 
@@ -323,3 +489,4 @@ Tests for SearchWithConditions():
 - Once complete, only Count() and SQL methods remain
 - Performance should match or exceed current (Bleve is fast)
 - This is last complex migration before cleanup phases
+- **Link queries deferred to Phase 5.3** (separate link graph index needed)
