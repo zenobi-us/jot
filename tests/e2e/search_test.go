@@ -278,29 +278,9 @@ func TestE2E_ErrorHandling_NoConditions(t *testing.T) {
 // Security E2E Tests
 // ============================================================================
 
-func TestE2E_Security_SQLInjectionPrevention(t *testing.T) {
-	env := newTestEnv(t)
-	nbDir := setupSearchNotebook(t, env)
-
-	// Attempt SQL injection via value
-	maliciousValues := []string{
-		"'; DROP TABLE notes; --",
-		"1' OR '1'='1",
-		"admin'--",
-	}
-
-	for _, value := range maliciousValues {
-		t.Run(value, func(t *testing.T) {
-			// Should not crash or execute malicious SQL
-			_, _, code := env.runInDir(nbDir, "notes", "search", "query",
-				"--and", "data.tag="+value)
-
-			// Should complete (code 0) or fail safely with no results
-			// The important thing is it doesn't crash or corrupt data
-			assert.True(t, code == 0, "should handle safely, code: %d", code)
-		})
-	}
-}
+// NOTE: TestE2E_Security_SQLInjectionPrevention removed as part of Phase 5.
+// SQL injection is no longer possible because we use Bleve (not SQL) for search.
+// Query parameters are validated at the parser level, not SQL level.
 
 // ============================================================================
 // CLI Help Text E2E Tests
@@ -314,8 +294,8 @@ func TestE2E_HelpText_SearchCommand(t *testing.T) {
 	assert.Equal(t, 0, code, "help should succeed")
 	// Verify help text includes key sections
 	assert.Contains(t, stdout, "fuzzy", "should mention fuzzy search")
-	assert.Contains(t, stdout, "Boolean", "should mention boolean queries")
-	assert.Contains(t, stdout, "SQL", "should mention SQL queries")
+	assert.Contains(t, stdout, "query", "should mention query subcommand")
+	assert.Contains(t, stdout, "Search notes", "should have search description")
 }
 
 func TestE2E_HelpText_QuerySubcommand(t *testing.T) {

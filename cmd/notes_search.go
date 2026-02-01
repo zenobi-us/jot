@@ -5,13 +5,12 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/zenobi-us/opennotes/internal/services"
 )
 
 var notesSearchCmd = &cobra.Command{
 	Use:   "search [query]",
-	Short: "Search notes with text, fuzzy matching, boolean queries, or SQL",
-	Long: `Search notes using multiple methods: text search, fuzzy matching, boolean queries, or SQL.
+	Short: "Search notes with text, fuzzy matching, or boolean queries",
+	Long: `Search notes using multiple methods: text search, fuzzy matching, or boolean queries.
 
 SEARCH METHODS:
 
@@ -23,9 +22,6 @@ SEARCH METHODS:
 
   3. Boolean Queries: Structured AND/OR/NOT filtering (see 'query' subcommand)
      opennotes notes search query --and data.tag=workflow
-
-  4. SQL Queries: Full DuckDB SQL power
-     opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md') LIMIT 10"
 
 TEXT SEARCH EXAMPLES:
   opennotes notes search "meeting"              # Search for "meeting"
@@ -58,47 +54,10 @@ BOOLEAN QUERY SUBCOMMAND:
   - links-to (find notes linking TO target)
   - linked-by (find notes linked FROM source)
 
-SQL QUERY EXAMPLES:
-  opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md') LIMIT 10"
-  opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) WHERE content LIKE '%todo%'"
-
-SQL SECURITY:
-  - Only SELECT and WITH queries allowed (read-only)
-  - 30-second timeout per query
-  - Path traversal (../) blocked
-  - File access restricted to notebook directory
-
 DOCUMENTATION:
-  📖 Command Reference: docs/commands/notes-search.md
-  🔍 SQL Guide: docs/sql-guide.md
-  📚 Functions: docs/sql-functions-reference.md`,
+  📖 Command Reference: docs/commands/notes-search.md`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Get --sql flag if provided
-		sqlQuery, _ := cmd.Flags().GetString("sql")
-
-		// If --sql flag is provided, run SQL mode
-		if sqlQuery != "" {
-			nb, err := requireNotebook(cmd)
-			if err != nil {
-				return err
-			}
-
-			// Execute the SQL query using NoteService
-			results, err := nb.Notes.ExecuteSQLSafe(context.Background(), sqlQuery)
-			if err != nil {
-				return fmt.Errorf("SQL query failed: %w", err)
-			}
-
-			// Create display service and render results
-			display, err := services.NewDisplay()
-			if err != nil {
-				return fmt.Errorf("failed to create display: %w", err)
-			}
-
-			return display.RenderSQLResults(results)
-		}
-
 		// Get --fuzzy flag
 		fuzzyFlag, _ := cmd.Flags().GetBool("fuzzy")
 
@@ -143,13 +102,6 @@ DOCUMENTATION:
 
 func init() {
 	notesCmd.AddCommand(notesSearchCmd)
-
-	// Add --sql flag for custom SQL queries
-	notesSearchCmd.Flags().String(
-		"sql",
-		"",
-		"Execute custom SQL query against notes (read-only, 30s timeout, SELECT/WITH only). File patterns (*.md, **/*.md) are resolved relative to notebook root directory for consistent behavior. Path traversal (../) is blocked for security. Examples: --sql \"SELECT * FROM read_markdown('**/*.md') LIMIT 5\"",
-	)
 
 	// Add --fuzzy flag for fuzzy matching
 	notesSearchCmd.Flags().Bool(

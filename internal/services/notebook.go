@@ -362,8 +362,13 @@ func (s *NotebookService) Create(name, path string, register bool) (*Notebook, e
 		return nil, err
 	}
 
-	// TODO: Initialize proper index instead of nil
-	noteService := NewNoteService(s.configService, s.dbService, nil, notesDir)
+	// Create Bleve index for this notebook
+	idx, err := s.createIndex(notesDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create search index: %w", err)
+	}
+
+	noteService := NewNoteService(s.configService, s.dbService, idx, notesDir)
 	notebook := &Notebook{
 		Config: config,
 		Notes:  noteService,

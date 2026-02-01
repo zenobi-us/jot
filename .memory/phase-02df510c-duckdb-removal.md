@@ -89,14 +89,26 @@ Complete removal of DuckDB from the OpenNotes codebase. This phase replaces all 
 - `internal/testutil/index.go` - Added frontmatter parsing
 - `internal/search/bleve/index.go` - Fixed metadata extraction
 
-#### Phase 5.2.4 - Count() Migration 🔜 PENDING
-- [ ] Update `Count()` to use query-based counting if needed
-- [ ] Verify existing Count() implementation from Phase 5.2.2
+#### Phase 5.2.4 - Count() Migration ✅ COMPLETE
+- [x] Update `Count()` to use query-based counting
+- [x] Verify existing Count() implementation from Phase 5.2.2
+- **Note**: Completed as part of Phase 5.2.2 (commit c37c498)
 
-#### Phase 5.2.5 - Remove SQL Methods 🔜 PENDING
-- [ ] Remove `ExecuteSQLSafe()`
-- [ ] Remove `Query()`
-- [ ] Remove DuckDB from NoteService
+#### Phase 5.2.5 - CLI Command Migration 🔄 IN PROGRESS
+- [ ] **Audit CLI commands for DuckDB usage**
+  - `cmd/notes_search.go` - Uses ExecuteSQLSafe() for --sql flag
+  - `cmd/notes_list.go` - Already uses SearchNotes(), no DuckDB
+- [ ] **Migrate `notes search --sql` command**
+  - Remove --sql flag (breaking change)
+  - Update help text to remove SQL examples
+  - Guide users to new query DSL
+- [ ] **Update requireNotebook() helper**
+  - Ensure index is created automatically
+  - Already done via NotebookService.createIndex() in Phase 5.2.3
+- [ ] **Remove SQL Methods from NoteService**
+  - Remove `ExecuteSQLSafe()`
+  - Remove `Query()`
+  - Clean up SQL-related imports
 
 ### 3. Link Graph Index (Phase 5.3) 🔜 PENDING
 
