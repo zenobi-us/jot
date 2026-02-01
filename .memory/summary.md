@@ -59,10 +59,16 @@ internal/search/bleve/
 - Bulk indexing: 2,938 docs/sec (10k in 3.4s)
 
 **Current Phase**: Phase 5 - DuckDB Removal ([phase-02df510c](.memory/phase-02df510c-duckdb-removal.md))
-- 🔄 Remove all DuckDB code from codebase
-- 🔄 Update CLI commands to use new search
-- 🔄 Verify binary size and startup time targets
+- ✅ Task 1: Codebase audit complete (14 files identified)
+- 🔄 Task 2: NoteService migration (Phase 2.1 complete, 69 callers updated)
+- 🔜 Next: Phase 2.2 - Migrate getAllNotes() to use Index.Find()
 - Started: 2026-02-01 21:17
+- Last Update: 2026-02-01 21:50
+
+**Progress**: 2 of 11 sub-phases complete (18%)
+- 5.1: Codebase audit ✅
+- 5.2.1: NoteService struct update ✅
+- 5.2.2: getAllNotes() migration 🔜 NEXT
 
 ### Pi-OpenNotes Extension
 **Epic**: [epic-1f41631e-pi-opennotes-extension.md](epic-1f41631e-pi-opennotes-extension.md)  
@@ -79,12 +85,19 @@ internal/search/bleve/
 
 ## Session History
 
-### 2026-02-01 (Evening - Continued) - Phase 5 Started
-- 🔄 **Started Phase 5: DuckDB Removal**
+### 2026-02-01 (Evening - Continued) - Phase 5.2.1 Complete
+- ✅ **Completed Phase 5.2.1: NoteService Struct Update**
 - 📄 Created phase document: phase-02df510c-duckdb-removal.md
-- 📋 7 major task categories defined (41+ subtasks)
-- 🎯 Goals: Zero DuckDB, <15MB binary, <100ms startup
-- ⏳ Ready to begin codebase audit
+- 📄 Created task document: task-3639018c-migrate-noteservice.md
+- ✅ Task 1 Complete: Codebase audit (14 files identified)
+- ✅ Task 2 Phase 2.1 Complete: Added Index field to NoteService
+- 🔄 69 callers updated (tests pass, all green)
+- 📝 Next: Phase 2.2 - Migrate getAllNotes() to use Index.Find()
+
+**Phase 5 Progress**: 2 of 11 sub-phases complete (18%)
+- Phase 5.1: Codebase audit ✅
+- Phase 5.2.1: Struct update ✅  
+- Phase 5.2.2-5.11: In progress 🔄
 
 ### 2026-02-01 (Evening) - Phase 4 Complete
 - ✅ **Completed Phase 4: Bleve Backend Implementation**

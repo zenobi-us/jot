@@ -2,8 +2,9 @@
 id: 3639018c
 title: Phase 5 Task 2 - Migrate NoteService to Bleve Index
 created_at: 2026-02-01T21:35:00+10:30
-updated_at: 2026-02-01T21:35:00+10:30
+updated_at: 2026-02-01T21:50:00+10:30
 status: in-progress
+progress: phase-2.1-complete
 epic_id: f661c068
 phase_id: 02df510c
 assigned_to: 2026-02-01-evening
@@ -304,7 +305,28 @@ type QueryCondition struct {
 
 ## Actual Outcome
 
-*To be filled upon completion*
+### Phase 2.1 Complete (2026-02-01 21:50)
+
+**Commits**:
+- c9318b7 - "refactor(services): add Index to NoteService (Phase 5.2.1)"
+- 7f7cf55 - "docs(memory): complete phase 5.2.1 - struct update"
+
+**Changes**:
+- Added `index search.Index` field to NoteService
+- Updated constructor signature to accept index parameter
+- Kept `dbService` temporarily with TODO markers (gradual migration)
+- Updated 69 callers across 4 files (all passing nil temporarily)
+- All 161 tests passing
+
+**Files Modified**:
+- internal/services/note.go (struct + constructor)
+- internal/services/notebook.go (2 calls)
+- internal/services/note_test.go (61 calls)
+- internal/services/view_special_test.go (6 calls)
+
+**Strategy Used**: Gradual migration - added index alongside dbService rather than replacing immediately. This allows incremental method migration while keeping tests green.
+
+**Next Session**: Start Phase 2.2 - Implement getAllNotes() using Index.Find()
 
 ## Lessons Learned
 
