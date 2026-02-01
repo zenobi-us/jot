@@ -2,7 +2,7 @@
 id: f661c068
 title: Remove DuckDB - Pure Go Search Implementation
 created_at: 2026-02-01T14:39:00+10:30
-updated_at: 2026-02-01T21:17:00+10:30
+updated_at: 2026-02-02T08:45:00+10:30
 status: in-progress
 ---
 
@@ -206,6 +206,48 @@ Users will use new syntax. Examples:
 - Tests: index_test.go, query_test.go, parser_integration_test.go, index_bench_test.go
 
 **Next**: Phase 5 - DuckDB Removal (ready to start)
+
+## Phase 5 Progress Summary
+
+**Started**: 2026-02-01 21:17  
+**Current Status**: 40% complete (4 of 11 sub-phases)
+
+### Sub-Phase Completion
+
+| Sub-Phase | Description | Status | Commits |
+|-----------|-------------|--------|---------|
+| 5.1 | Codebase Audit | ✅ Complete | - |
+| 5.2.1 | NoteService Struct Update | ✅ Complete | c9318b7 |
+| 5.2.2 | getAllNotes() Migration | ✅ Complete | c37c498 |
+| 5.2.3 | SearchWithConditions() Migration | 🔄 **In Progress (40%)** | 7a60e80, 79a6cd8 |
+| 5.2.4 | Count() Migration | 🔜 Pending | - |
+| 5.2.5 | Remove SQL Methods | 🔜 Pending | - |
+| 5.3 | Link Graph Index | 🔜 Pending | - |
+| 5.4-5.11 | Cleanup & Validation | 🔜 Pending | - |
+
+### Phase 5.2.3 Details (Current)
+
+**Session 2026-02-02 Morning**:
+- ✅ Phase 1: BuildQuery() method implemented (27 tests passing)
+- ✅ Phase 2: SearchWithConditions() migrated to Bleve
+- 🔄 Phase 3-5: Tests, docs, integration pending
+
+**Key Implementations**:
+- `BuildQuery()` - Converts QueryCondition structs to search.Query AST
+- `conditionToExpr()` - Field mapping router for metadata, path, title
+- `buildPathExpr()` - Optimized path queries (prefix, wildcard, exact)
+- `buildLinkQueryError()` - Clear errors for unsupported link queries
+
+**Migration Statistics**:
+- Code reduction: 140+ lines SQL → 35 lines Bleve
+- Test count: 189/190 passing (99.5%)
+- New tests: 27 BuildQuery unit tests
+- Performance: Maintains <25ms target
+
+**Breaking Changes Documented**:
+- `links-to` and `linked-by` queries return error (Phase 5.3)
+- SQL workaround provided in error message
+- Clear migration path documented
 
 ## Notes
 

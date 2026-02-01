@@ -2,7 +2,7 @@
 id: 02df510c
 title: Phase 5 - DuckDB Removal & Cleanup
 created_at: 2026-02-01T21:17:00+10:30
-updated_at: 2026-02-02T07:39:00+10:30
+updated_at: 2026-02-02T08:45:00+10:30
 status: in-progress
 epic_id: f661c068
 start_criteria: Phase 4 (Bleve Backend) complete with all tests passing
@@ -43,21 +43,80 @@ Complete removal of DuckDB from the OpenNotes codebase. This phase replaces all 
 - Migration order established
 - NoteService usage patterns documented
 
-### 2. Service Layer Migration
+### 2. Service Layer Migration 🔄 IN PROGRESS
 
-- [ ] **Audit NoteService** (`internal/services/note.go`)
-  - Identify all methods using DbService
-  - Plan replacement with Index interface
-- [ ] **Migrate NoteService.SearchNotes**
-  - Replace DuckDB query with `Index.Find()`
-  - Update return type handling
-  - Add tests for migration
-- [ ] **Migrate other NoteService methods**
-  - Handle any remaining DuckDB dependencies
-  - Ensure all methods use new search backend
-- [ ] **Remove DbService** (`internal/services/db.go`)
-  - Delete entire file
-  - Remove from service initialization in `cmd/root.go`
+#### Phase 5.2.1 - NoteService Struct Update ✅ COMPLETE
+- [x] Add `Index search.Index` field to NoteService struct
+- [x] Update NewNoteService() constructor
+- [x] Update 69 callers across 4 files
+- **Commit**: c9318b7
+
+#### Phase 5.2.2 - getAllNotes() Migration ✅ COMPLETE
+- [x] Implement `documentToNote()` converter function
+- [x] Update `getAllNotes()` to use `Index.Find()` with empty query
+- [x] Update `Count()` to use `Index.Count()`
+- [x] Fix Bleve mapping: Set `Body` field `Store: true`
+- [x] Create `testutil.CreateTestIndex()` helper
+- [x] Update 40+ test cases
+- **Tests**: 171/172 passing (99.4%)
+- **Commits**: c37c498, b07e26a
+
+#### Phase 5.2.3 - SearchWithConditions() Migration 🔄 IN PROGRESS (40%)
+- [x] **Phase 1**: Implement `BuildQuery()` method
+  - Added to `internal/services/search.go`
+  - 5 helper methods: conditionToExpr, buildMetadataExpr, buildPathExpr, detectWildcardType, buildLinkQueryError
+  - 27 unit tests passing
+  - **Commit**: 7a60e80
+- [x] **Phase 2**: Update `SearchWithConditions()` to use Bleve
+  - Replaced 140+ lines SQL with 35 lines Bleve
+  - Reused `documentToNote()` converter
+  - Fixed metadata field extraction in Bleve
+  - Updated test infrastructure with frontmatter parsing
+  - **Commit**: 79a6cd8
+- [ ] **Phase 3**: Update remaining integration tests
+- [ ] **Phase 4**: Update documentation (CHANGELOG, docs/)
+- [ ] **Phase 5**: Final verification
+
+**Current Status**:
+- Tests: 189/190 passing (99.5%)
+- Pre-existing failure: TestSpecialViewExecutor_BrokenLinks (needs index initialization)
+- Breaking change: links-to, linked-by queries return error with Phase 5.3 reference
+
+**Key Files Modified**:
+- `internal/services/search.go` - +225 lines (BuildQuery + helpers)
+- `internal/services/search_test.go` - +500 lines (27 tests)
+- `internal/services/note.go` - Refactored SearchWithConditions()
+- `internal/testutil/index.go` - Added frontmatter parsing
+- `internal/search/bleve/index.go` - Fixed metadata extraction
+
+#### Phase 5.2.4 - Count() Migration 🔜 PENDING
+- [ ] Update `Count()` to use query-based counting if needed
+- [ ] Verify existing Count() implementation from Phase 5.2.2
+
+#### Phase 5.2.5 - Remove SQL Methods 🔜 PENDING
+- [ ] Remove `ExecuteSQLSafe()`
+- [ ] Remove `Query()`
+- [ ] Remove DuckDB from NoteService
+
+### 3. Link Graph Index (Phase 5.3) 🔜 PENDING
+
+**Deferred Work**: Link queries (`links-to`, `linked-by`) require a dedicated graph index.
+
+- [ ] Design link graph structure
+- [ ] Implement `links-to` query support
+- [ ] Implement `linked-by` query support
+- [ ] Full feature parity with SQL link queries
+
+**Current Behavior**: Returns clear error message with workaround:
+```
+ERROR: link queries are not yet supported
+
+Field 'links-to' requires a dedicated link graph index,
+which is planned for Phase 5.3.
+
+Temporary workaround: Use SQL query interface
+  opennotes notes query "SELECT * FROM ..."
+```
 
 ### 3. CLI Command Migration
 

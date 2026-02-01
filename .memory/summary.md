@@ -111,8 +111,15 @@ internal/search/bleve/
 - Phase 5.1: Codebase audit ✅
 - Phase 5.2.1: Struct update ✅  
 - Phase 5.2.2: getAllNotes() migration ✅
-- Phase 5.2.3: SearchWithConditions() migration 🔜 NEXT
-- Phase 5.2.4-5.11: In progress 🔄
+- Phase 5.2.3: SearchWithConditions() migration 🔄 **IN PROGRESS (40%)**
+  - ✅ Phase 1: BuildQuery() implemented (27 tests)
+  - ✅ Phase 2: SearchWithConditions() migrated
+  - 🔜 Phase 3-5: Tests, docs, verification
+- Phase 5.2.4-5.11: Pending 🔜
+
+**Current Tests**: 189/190 passing (99.5%)
+- Pre-existing failure: TestSpecialViewExecutor_BrokenLinks
+- New tests: +27 BuildQuery, +8 SearchWithConditions updated
 
 ### 2026-02-01 (Evening) - Phase 4 Complete
 - ✅ **Completed Phase 4: Bleve Backend Implementation**
