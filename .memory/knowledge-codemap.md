@@ -2,18 +2,18 @@
 id: a1b2c3d4
 title: OpenNotes Codebase Structure Map
 created_at: 2026-01-18T19:31:53+10:30
-updated_at: 2026-01-18T19:31:53+10:30
-status: in-progress
+updated_at: 2026-02-01T21:25:00+10:30
+status: active
 area: codebase-structure
-tags: [architecture, codebase, state-machine]
-learned_from: [test-improvement-epic, codebase-exploration, architecture-review]
+tags: [architecture, codebase, state-machine, bleve, search]
+learned_from: [test-improvement-epic, codebase-exploration, architecture-review, epic-f661c068]
 ---
 
 # OpenNotes Codebase Structure Map
 
 ## Overview
 
-OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks, using DuckDB for SQL-powered search and templates for display.
+OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks. **Currently transitioning from DuckDB to pure Go search** (Bleve + Parser). Templates used for display.
 
 ## Details
 
@@ -58,7 +58,7 @@ OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks
 
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │ Config Service  │    │ Notebook Svc    │    │  Note Service   │
-│                 │    │                 │    │                 │
+│                 │    │                 │    │ (LEGACY/DuckDB) │
 │ • LoadConfig    │◀───│ • Discover      │◀───│ • SearchNotes   │
 │ • SaveConfig    │    │ • LoadConfig    │    │ • GetNote       │
 │ • GetNotebooks  │    │ • Validate      │    │ • ExtractMeta   │
@@ -68,7 +68,7 @@ OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks
          ▼                       ▼                       ▼
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │  Database Svc   │    │  Display Svc    │    │  Logger Svc     │
-│                 │    │                 │    │                 │
+│ (LEGACY/DuckDB) │    │                 │    │                 │
 │ • GetReadDB     │    │ • TuiRender     │    │ • Info/Error    │
 │ • GetWriteDB    │    │ • RenderSQL     │    │ • Debug/Warn    │
 │ • CloseAll      │    │ • Templates     │    │ • WithField     │
@@ -76,7 +76,70 @@ OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                         DATA FLOW STATES                               │
+│                   NEW SEARCH SYSTEM (Phase 4 Complete)                 │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                   internal/search/                             │
+│                                                                 │
+│  ┌──────────────┐  ┌──────────────┐  ┌───────────────────┐    │
+│  │   Index      │  │   Query      │  │   FindOpts        │    │
+│  │ (interface)  │  │   (AST)      │  │ (functional opts) │    │
+│  └──────────────┘  └──────────────┘  └───────────────────┘    │
+│                                                                 │
+│  ┌──────────────┐  ┌──────────────┐  ┌───────────────────┐    │
+│  │  Document    │  │   Results    │  │   Storage         │    │
+│  │  (metadata)  │  │ (search res) │  │   (afero)         │    │
+│  └──────────────┘  └──────────────┘  └───────────────────┘    │
+└─────────────────────────────────────────────────────────────────┘
+           │                    │                    │
+           ▼                    ▼                    ▼
+┌────────────────────┐  ┌────────────────────┐  ┌────────────────┐
+│  internal/search/  │  │  internal/search/  │  │ spf13/afero    │
+│  parser/           │  │  bleve/            │  │ (filesystem)   │
+│                    │  │                    │  │                │
+│ • Parser           │  │ • Index impl       │  │ • MemMapFs     │
+│ • Grammar (EBNF)   │  │ • Mapping (BM25)   │  │ • OsFs         │
+│ • Convert (AST)    │  │ • Query translate  │  │ • Storage if   │
+│ • 10 tests         │  │ • 36 tests         │  │                │
+└────────────────────┘  └────────────────────┘  └────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    NEW SEARCH STATE MACHINE                            │
+└─────────────────────────────────────────────────────────────────────────┘
+
+Index Lifecycle:
+[Unopened] → [NewIndex()] → [Ready]
+     │              │           │
+     ▼              ▼           ▼
+[Error] ←─── [Init Failed] [Reindex()] → [Indexing] → [Ready]
+     │                          │              │
+     │                          ▼              ▼
+     └────────────────── [Walk Failed] ←── [Add Failed]
+
+Search Flow:
+[Query String] → [Parser.Parse()] → [Query AST] → [TranslateQuery()] → [Bleve Query]
+       │              │                  │               │                    │
+       ▼              ▼                  ▼               ▼                    ▼
+[Gmail DSL] → [Participle Grammar] → [Convert] → [FindOpts merge] → [Index.Search()]
+                                                                            │
+                                                                            ▼
+                                                                      [Extract Results]
+                                                                            │
+                                                                            ▼
+                                                                      [search.Results]
+
+Document Flow:
+[Note File] → [Read frontmatter] → [Document] → [BleveDocument] → [Index.Add()]
+     │              │                   │              │                │
+     ▼              ▼                   ▼              ▼                ▼
+[Markdown] → [Parse YAML] → [Field extraction] → [Apply weights] → [Bleve index]
+
+BM25 Weighting:
+Path: 1000 → Title: 500 → Tags: 300 → Lead: 50 → Body: 1
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    LEGACY DATA FLOW (TO BE REMOVED)                    │
 └─────────────────────────────────────────────────────────────────────────┘
 
 [Start] → [Find Notebook] → [Load Config] → [Initialize Services] → [Execute Command]
