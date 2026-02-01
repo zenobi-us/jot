@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"path"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"time"
 
@@ -307,121 +306,39 @@ func (s *NoteService) rowsToMaps(rows *sql.Rows) ([]map[string]any, error) {
 }
 
 // SearchWithConditions executes a boolean query with the given conditions.
-// Uses parameterized queries for security.
+// Uses Bleve Index for querying instead of DuckDB SQL.
 func (s *NoteService) SearchWithConditions(ctx context.Context, conditions []QueryCondition) ([]Note, error) {
 	if s.notebookPath == "" {
 		return nil, fmt.Errorf("no notebook selected")
 	}
 
-	db, err := s.dbService.GetDB(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	glob := filepath.Join(s.notebookPath, "**", "*.md")
-
-	// Build WHERE clause from conditions, passing glob for linked-by queries
-	whereClause, params, err := s.searchService.BuildWhereClauseWithGlob(conditions, glob)
+	// Build search.Query from conditions
+	query, err := s.searchService.BuildQuery(ctx, conditions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build query: %w", err)
 	}
 
-	// Build the SQL query with parameterized WHERE clause
-	// Start with base query including glob pattern
-	baseQuery := `SELECT * FROM read_markdown(?, include_filepath:=true)`
-
-	// Prepend the glob to params
-	allParams := append([]interface{}{glob}, params...)
-
-	// Add WHERE clause if we have conditions
-	query := baseQuery
-	if whereClause != "" {
-		query += " WHERE " + whereClause
-	}
-	query += " ORDER BY file_path"
-
 	s.log.Info().
-		Str("query", query).
-		Int("paramCount", len(allParams)).
 		Int("conditionCount", len(conditions)).
+		Bool("emptyQuery", query.IsEmpty()).
 		Msg("executing boolean query")
 
-	// Create context with timeout for safety
-	timeoutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-
-	rows, err := db.QueryContext(timeoutCtx, query, allParams...)
+	// Execute search using Index
+	results, err := s.index.Find(ctx, search.FindOpts{
+		Query: query,
+		Sort: search.SortSpec{
+			Field:     search.SortByPath,
+			Direction: search.SortAsc,
+		},
+	})
 	if err != nil {
-		return nil, fmt.Errorf("query failed: %w", err)
-	}
-	defer func() {
-		if err := rows.Close(); err != nil {
-			s.log.Warn().Err(err).Msg("failed to close rows")
-		}
-	}()
-
-	// Parse results into Note structs
-	var notes []Note
-	columns, err := rows.Columns()
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("search failed: %w", err)
 	}
 
-	for rows.Next() {
-		values := make([]interface{}, len(columns))
-		valuePtrs := make([]interface{}, len(columns))
-		for i := range values {
-			valuePtrs[i] = &values[i]
-		}
-
-		if err := rows.Scan(valuePtrs...); err != nil {
-			s.log.Warn().Err(err).Msg("failed to scan row")
-			continue
-		}
-
-		note := Note{
-			Metadata: make(map[string]any),
-		}
-
-		for i, col := range columns {
-			val := values[i]
-			switch col {
-			case "filepath", "file_path", "filename":
-				if v, ok := val.(string); ok {
-					note.File.Filepath = v
-					note.File.Relative = strings.TrimPrefix(v, s.notebookPath+"/")
-				}
-			case "content", "body":
-				if v, ok := val.(string); ok {
-					note.Content = v
-				}
-			case "metadata":
-				rv := reflect.ValueOf(val)
-				if rv.Kind() == reflect.Map {
-					for _, key := range rv.MapKeys() {
-						if keyStr, ok := key.Interface().(string); ok {
-							note.Metadata[keyStr] = rv.MapIndex(key).Interface()
-						}
-					}
-				} else if v, ok := val.(map[any]any); ok {
-					for k, val := range v {
-						if keyStr, ok := k.(string); ok {
-							note.Metadata[keyStr] = val
-						}
-					}
-				} else if v, ok := val.(map[string]any); ok {
-					note.Metadata = v
-				}
-			default:
-				note.Metadata[col] = val
-			}
-		}
-
-		notes = append(notes, note)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
+	// Convert results to Notes
+	notes := make([]Note, len(results.Items))
+	for i, result := range results.Items {
+		notes[i] = documentToNote(result.Document)
 	}
 
 	s.log.Debug().Int("count", len(notes)).Msg("boolean query completed")

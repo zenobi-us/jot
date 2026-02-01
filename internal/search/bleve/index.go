@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -160,11 +161,8 @@ func (idx *Index) Find(ctx context.Context, opts search.FindOpts) (search.Result
 	// Apply sorting
 	req.SortBy(translateSort(opts.Sort))
 
-	// Request stored fields
-	req.Fields = []string{
-		FieldPath, FieldTitle, FieldBody, FieldLead, FieldTags,
-		FieldCreated, FieldModified, FieldChecksum,
-	}
+	// Request all stored fields (including metadata.*)
+	req.Fields = []string{"*"}
 
 	// Include snippets for body
 	req.Highlight = bleve.NewHighlight()
@@ -393,7 +391,8 @@ func translateSort(spec search.SortSpec) []string {
 // extractDocument converts a Bleve search hit to a search.Document.
 func extractDocument(hit *bsearch.DocumentMatch) search.Document {
 	doc := search.Document{
-		Path: hit.ID,
+		Path:     hit.ID,
+		Metadata: make(map[string]any),
 	}
 
 	if v, ok := hit.Fields[FieldTitle].(string); ok {
@@ -433,6 +432,15 @@ func extractDocument(hit *bsearch.DocumentMatch) search.Document {
 	if v, ok := hit.Fields[FieldModified].(string); ok {
 		if t, err := time.Parse(TimeFormat, v); err == nil {
 			doc.Modified = t
+		}
+	}
+
+	// Extract metadata fields
+	// Bleve stores metadata.* fields flattened in the hit.Fields map
+	for fieldName, fieldValue := range hit.Fields {
+		if strings.HasPrefix(fieldName, "metadata.") {
+			metaKey := strings.TrimPrefix(fieldName, "metadata.")
+			doc.Metadata[metaKey] = fieldValue
 		}
 	}
 

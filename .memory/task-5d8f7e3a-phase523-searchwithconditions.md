@@ -479,9 +479,95 @@ None - implementation went smoothly following the detailed plan.
 
 None - followed the plan exactly as specified.
 
+## Actual Outcome - Phase 2 Complete
+
+**Date Completed**: 2026-02-02  
+**Time Taken**: ~2 hours (estimated 1 hour + additional fixes)  
+**Tests**: 189/190 passing (1 pre-existing failure in TestSpecialViewExecutor_BrokenLinks)  
+**Status**: ✅ Phase 2 Complete
+
+### Phase 2 Implementation Summary
+
+**Files Modified**:
+- `internal/services/note.go` - Updated SearchWithConditions() to use Bleve (removed ~120 lines of SQL code)
+- `internal/testutil/index.go` - Enhanced to parse frontmatter from markdown files
+- `internal/search/bleve/index.go` - Fixed metadata extraction in Find() results
+- `internal/services/note_test.go` - Removed debug logging
+
+**Key Changes**:
+
+1. **SearchWithConditions() Migration**:
+   - Replaced DuckDB SQL with `BuildQuery()` + `Index.Find()`
+   - Removed 120+ lines of SQL query building and result parsing
+   - Reused `documentToNote()` converter from Phase 5.2.2
+   - Maintained sort order (ORDER BY file_path → SortByPath)
+   - Reduced method from ~140 lines to ~35 lines
+
+2. **Test Infrastructure Improvements**:
+   - Enhanced `testutil.CreateTestIndex()` to parse YAML frontmatter
+   - Added `parseFrontmatter()`, `getTitle()`, `extractLead()` helpers
+   - Tests now properly populate metadata in index
+
+3. **Bleve Index Fixes**:
+   - Fixed `extractDocument()` to extract `metadata.*` fields from search results
+   - Changed `req.Fields` from specific list to `["*"]` wildcard
+   - Added `strings` import for metadata field processing
+
+### What Went Well
+
+1. **Clean Migration**: Removed significant amount of SQL code while maintaining functionality
+2. **Test Discovery**: Found and fixed metadata extraction bug in Bleve integration
+3. **Infrastructure Improvement**: Enhanced test helpers for better frontmatter support
+4. **Zero Regressions**: All 8 SearchWithConditions tests passing (plus 181 other tests)
+
+### Challenges
+
+1. **Metadata Not Extracted**: Initial implementation passed query tests but metadata was nil in results
+   - **Root Cause**: Bleve's `extractDocument()` didn't extract `metadata.*` fields
+   - **Solution**: Added metadata field extraction loop in `extractDocument()`
+   - **Bonus Fix**: Changed `req.Fields` to `["*"]` for future-proofing
+
+2. **Frontmatter Parsing Missing**: Test helper didn't parse YAML frontmatter
+   - **Root Cause**: `populateIndexFromNotebook()` treated entire file as body
+   - **Solution**: Added `parseFrontmatter()` to extract and parse YAML
+   - **Impact**: Now supports all metadata field queries in tests
+
+### Deviations from Plan
+
+**Additional Work Not in Plan**:
+- Enhanced `testutil/index.go` with frontmatter parsing (not originally scoped)
+- Fixed Bleve metadata extraction bug (discovered during testing)
+- Added 3 new helper functions to testutil
+
+**Justification**: These improvements were necessary for tests to work correctly and provide better test infrastructure for future migrations.
+
 ## Lessons Learned
 
-*To be filled upon completion*
+### Technical Insights
+
+1. **Test Infrastructure Quality Matters**: Initial test helper was too simplistic
+   - Lesson: Invest in realistic test data generation early
+   - Impact: Would have caught metadata bug sooner with proper fixtures
+
+2. **Bleve Field Retrieval**: Requesting specific fields can miss dynamic data
+   - Lesson: Use wildcard `["*"]` for fields with dynamic subdocuments
+   - Impact: Future-proofs against similar bugs with nested structures
+
+3. **Frontmatter Parsing**: Common pattern needed across tests
+   - Lesson: Centralize markdown parsing logic in test utilities
+   - Impact: Consistent test data across all test suites
+
+### Process Improvements
+
+1. **Test-First Development**: Writing tests first caught integration issues early
+2. **Incremental Testing**: Running tests after each change isolated bugs quickly
+3. **Code Simplification**: Migration reduced SearchWithConditions() complexity by 75%
+
+### Future Considerations
+
+1. **Link Queries**: Deferred to Phase 5.3 - requires dedicated graph index
+2. **Performance**: Bleve metadata queries may be faster than SQL JOINs (benchmark later)
+3. **Test Coverage**: Consider adding performance benchmarks for search operations
 
 ## Notes
 
