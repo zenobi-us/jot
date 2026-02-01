@@ -12,6 +12,7 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/zenobi-us/opennotes/internal/core"
+	"github.com/zenobi-us/opennotes/internal/search"
 )
 
 // Note represents a markdown note.
@@ -46,17 +47,20 @@ func (n *Note) DisplayName() string {
 // NoteService provides note query operations.
 type NoteService struct {
 	configService *ConfigService
-	dbService     *DbService
+	dbService     *DbService   // TODO: Remove after migration
+	index         search.Index // New: Bleve-based search
 	searchService *SearchService
 	notebookPath  string
 	log           zerolog.Logger
 }
 
 // NewNoteService creates a note service for a notebook.
-func NewNoteService(cfg *ConfigService, db *DbService, notebookPath string) *NoteService {
+// TODO: Remove db parameter after migration complete
+func NewNoteService(cfg *ConfigService, db *DbService, index search.Index, notebookPath string) *NoteService {
 	return &NoteService{
 		configService: cfg,
-		dbService:     db,
+		dbService:     db,    // TODO: Remove after migration
+		index:         index, // New: Bleve-based search
 		searchService: NewSearchService(),
 		notebookPath:  notebookPath,
 		log:           Log("NoteService"),

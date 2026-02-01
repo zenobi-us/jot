@@ -116,7 +116,8 @@ func (s *NotebookService) Open(notebookPath string) (*Notebook, error) {
 		return nil, err
 	}
 
-	noteService := NewNoteService(s.configService, s.dbService, config.Root)
+	// TODO: Initialize proper index instead of nil
+	noteService := NewNoteService(s.configService, s.dbService, nil, config.Root)
 
 	return &Notebook{
 		Config: *config,
@@ -169,7 +170,8 @@ func (s *NotebookService) Create(name, path string, register bool) (*Notebook, e
 		return nil, err
 	}
 
-	noteService := NewNoteService(s.configService, s.dbService, notesDir)
+	// TODO: Initialize proper index instead of nil
+	noteService := NewNoteService(s.configService, s.dbService, nil, notesDir)
 	notebook := &Notebook{
 		Config: config,
 		Notes:  noteService,

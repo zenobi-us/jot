@@ -39,7 +39,7 @@ Check out [this link](nonexistent.md) for more info.
 
 	// Setup
 	cfg, _ := NewConfigServiceWithPath(":memory:")
-	noteService := NewNoteService(cfg, NewDbService(), notebookPath)
+	noteService := NewNoteService(cfg, NewDbService(), nil, notebookPath)
 	executor := NewSpecialViewExecutor(noteService)
 
 	// Execute
@@ -72,7 +72,7 @@ See [[nonexistent-note]] for details.
 	createTestNote(t, notebookPath, "wiki.md", wikiContent)
 
 	cfg, _ := NewConfigServiceWithPath(":memory:")
-	noteService := NewNoteService(cfg, NewDbService(), notebookPath)
+	noteService := NewNoteService(cfg, NewDbService(), nil, notebookPath)
 	executor := NewSpecialViewExecutor(noteService)
 
 	results, err := executor.ExecuteBrokenLinksView(context.Background())
@@ -98,7 +98,7 @@ title: External links
 `)
 
 	cfg, _ := NewConfigServiceWithPath(":memory:")
-	noteService := NewNoteService(cfg, NewDbService(), notebookPath)
+	noteService := NewNoteService(cfg, NewDbService(), nil, notebookPath)
 	executor := NewSpecialViewExecutor(noteService)
 
 	results, err := executor.ExecuteBrokenLinksView(context.Background())
@@ -119,7 +119,7 @@ func TestSpecialViewExecutor_Orphans_FindsNoIncomingLinksNotes(t *testing.T) {
 	createTestNote(t, notebookPath, "orphan.md", "# Orphan\n\nNo one links to me.")
 
 	cfg, _ := NewConfigServiceWithPath(":memory:")
-	noteService := NewNoteService(cfg, NewDbService(), notebookPath)
+	noteService := NewNoteService(cfg, NewDbService(), nil, notebookPath)
 	executor := NewSpecialViewExecutor(noteService)
 
 	results, err := executor.ExecuteOrphansView(context.Background(), "no-incoming")
@@ -151,7 +151,7 @@ This note is tagged so it's not isolated.
 	createTestNote(t, notebookPath, "isolated.md", "# Isolated\n\nNo links, no tags.")
 
 	cfg, _ := NewConfigServiceWithPath(":memory:")
-	noteService := NewNoteService(cfg, NewDbService(), notebookPath)
+	noteService := NewNoteService(cfg, NewDbService(), nil, notebookPath)
 	executor := NewSpecialViewExecutor(noteService)
 
 	results, err := executor.ExecuteOrphansView(context.Background(), "isolated")
@@ -178,7 +178,7 @@ links: ["frontmatter-link.md"]
 `)
 
 	cfg, _ := NewConfigServiceWithPath(":memory:")
-	noteService := NewNoteService(cfg, NewDbService(), notebookPath)
+	noteService := NewNoteService(cfg, NewDbService(), nil, notebookPath)
 	executor := NewSpecialViewExecutor(noteService)
 
 	// Get all notes
