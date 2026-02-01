@@ -133,13 +133,14 @@ func parseFrontmatter(content []byte) (map[string]any, string) {
 	return metadata, string(bodyBytes)
 }
 
-// getTitle extracts title from metadata or uses filename
+// getTitle extracts title from metadata or returns empty string
+// (let DisplayName() handle filename slugification)
 func getTitle(metadata map[string]any, defaultTitle string) string {
 	if title, ok := metadata["title"].(string); ok && title != "" {
 		return title
 	}
-	// Remove .md extension for default title
-	return strings.TrimSuffix(defaultTitle, ".md")
+	// Don't use filename as title - let DisplayName() slugify it
+	return ""
 }
 
 // extractLead extracts the first paragraph from markdown content
