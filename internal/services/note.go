@@ -2,12 +2,10 @@ package services
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"path"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/zenobi-us/opennotes/internal/core"
@@ -165,145 +163,7 @@ func (s *NoteService) Count(ctx context.Context) (int, error) {
 	return int(count), nil
 }
 
-// ValidateSQL validates a user-provided SQL query for safety.
-// Only SELECT and WITH (CTE) queries are allowed.
-// Dangerous keywords (DROP, DELETE, UPDATE, etc.) are blocked.
-func ValidateSQL(query string) error {
-	// Trim and normalize to uppercase
-	normalized := strings.TrimSpace(strings.ToUpper(query))
 
-	if normalized == "" {
-		return fmt.Errorf("query cannot be empty")
-	}
-
-	// Check query type - only SELECT and WITH allowed
-	if !strings.HasPrefix(normalized, "SELECT") && !strings.HasPrefix(normalized, "WITH") {
-		return fmt.Errorf("only SELECT queries are allowed")
-	}
-
-	// Dangerous keywords blocklist - check with word boundaries
-	// Split query by spaces and other delimiters to find keywords
-	tokens := strings.FieldsFunc(normalized, func(r rune) bool {
-		return r == ' ' || r == '\t' || r == '\n' || r == '(' || r == ')' ||
-			r == ',' || r == ';' || r == '=' || r == '<' || r == '>'
-	})
-
-	dangerous := map[string]bool{
-		"DROP":     true,
-		"DELETE":   true,
-		"UPDATE":   true,
-		"INSERT":   true,
-		"ALTER":    true,
-		"CREATE":   true,
-		"TRUNCATE": true,
-		"REPLACE":  true,
-		"ATTACH":   true,
-		"DETACH":   true,
-		"PRAGMA":   true,
-	}
-
-	for _, token := range tokens {
-		if dangerous[token] {
-			return fmt.Errorf("keyword '%s' is not allowed", token)
-		}
-	}
-
-	return nil
-}
-
-// ExecuteSQLSafe executes a user-provided SQL query safely.
-// Validates the query, executes with a 30-second timeout on a read-only connection,
-// and returns results as maps.
-func (s *NoteService) ExecuteSQLSafe(ctx context.Context, query string) ([]map[string]any, error) {
-	// 1. Validate query
-	if err := ValidateSQL(query); err != nil {
-		s.log.Warn().Err(err).Msg("SQL query validation failed")
-		return nil, fmt.Errorf("invalid query: %w", err)
-	}
-
-	// 2. Preprocess query to resolve glob patterns relative to notebook root
-	processedQuery, err := s.dbService.preprocessSQL(query, s.notebookPath)
-	if err != nil {
-		s.log.Error().Err(err).Str("query", query).Msg("SQL query preprocessing failed")
-		return nil, fmt.Errorf("query preprocessing failed: %w", err)
-	}
-
-	// 3. Get read-only connection
-	db, err := s.dbService.GetReadOnlyDB(ctx)
-	if err != nil {
-		s.log.Error().Err(err).Msg("failed to get read-only database connection")
-		return nil, fmt.Errorf("database error: %w", err)
-	}
-
-	// 4. Create context with 30-second timeout
-	timeoutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-
-	s.log.Debug().Str("query", processedQuery).Msg("executing SQL query")
-
-	// 5. Execute query
-	rows, err := db.QueryContext(timeoutCtx, processedQuery)
-	if err != nil {
-		s.log.Error().Err(err).Str("query", processedQuery).Msg("query execution failed")
-		return nil, fmt.Errorf("query execution failed: %w", err)
-	}
-	defer func() {
-		if err := rows.Close(); err != nil {
-			s.log.Warn().Err(err).Msg("failed to close result rows")
-		}
-	}()
-
-	// 6. Convert rows to maps using local implementation
-	results, err := s.rowsToMaps(rows)
-	if err != nil {
-		s.log.Error().Err(err).Msg("failed to scan query results")
-		return nil, fmt.Errorf("failed to read results: %w", err)
-	}
-
-	s.log.Debug().Int("rows", len(results)).Msg("query executed successfully")
-	return results, nil
-}
-
-// Query executes a raw SQL query.
-func (s *NoteService) Query(ctx context.Context, sql string) ([]map[string]any, error) {
-	return s.dbService.Query(ctx, sql)
-}
-
-// rowsToMaps converts sql.Rows to a slice of maps.
-func (s *NoteService) rowsToMaps(rows *sql.Rows) ([]map[string]any, error) {
-	columns, err := rows.Columns()
-	if err != nil {
-		return nil, err
-	}
-
-	var results []map[string]any
-
-	for rows.Next() {
-		// Create slice of interface{} to hold values
-		values := make([]interface{}, len(columns))
-		valuePtrs := make([]interface{}, len(columns))
-		for i := range values {
-			valuePtrs[i] = &values[i]
-		}
-
-		if err := rows.Scan(valuePtrs...); err != nil {
-			return nil, err
-		}
-
-		// Create map for this row
-		row := make(map[string]any)
-		for i, col := range columns {
-			row[col] = values[i]
-		}
-		results = append(results, row)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return results, nil
-}
 
 // SearchWithConditions executes a boolean query with the given conditions.
 // Uses Bleve Index for querying instead of DuckDB SQL.
