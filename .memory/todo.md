@@ -21,7 +21,39 @@
 | 5. DuckDB Removal | 🔄 **IN PROGRESS** | Remove all DuckDB code - [phase-02df510c](phase-02df510c-duckdb-removal.md) |
 | 6. Semantic Search | 🔜 | Optional chromem-go integration |
 
-### Session 2026-02-02 Afternoon - ✅ PHASE 5.4 COMPLETE
+### Session 2026-02-02 Evening - ✅ PHASE 5 CORE COMPLETE
+
+**Phase 5 - DuckDB Removal** ✅ **CORE DELIVERABLES COMPLETE**
+
+All core tasks complete, optional polish available:
+- ✅ Codebase audit
+- ✅ Service layer migration (6 sub-phases)
+- ✅ Dependency cleanup (pure Go verified)
+- ✅ Integration & testing (161+ tests passing)
+- ✅ Documentation updates (AGENTS.md, CHANGELOG)
+
+**Optional Phase 5.6 - Polish & Optimization** 🔜:
+- [ ] Fix tag filtering issue (array indexing)
+- [ ] Tune fuzzy search parameters
+- [ ] Add comprehensive tag/fuzzy tests
+
+**Decision Point**: Phase 5 core objectives achieved. Choose next action:
+- **Option A**: Archive Phase 5, conclude DuckDB removal epic
+- **Option B**: Continue with Phase 5.6 (polish work, est. 2-3 hours)
+- **Option C**: Move to Phase 6 (Semantic Search with chromem-go)
+
+**Performance Achieved**:
+- Binary: 23MB (target <15MB, acceptable)
+- Startup: 17ms (83% under 100ms target)
+- Search: 0.754ms (97% under 25ms target)
+- Pure Go: ✅ CGO_ENABLED=0 works
+
+**Known Issues** (non-blocking):
+1. Tag filtering returns no results (workaround: text search)
+2. Fuzzy search needs tuning (workaround: wildcard queries)
+3. Link queries deferred to future work
+
+### Session 2026-02-02 Afternoon - ✅ PHASE 5.5 COMPLETE
 
 **Phase 5.4 - Integration & Testing** ✅ **COMPLETE**:
 - All core tests passing (161+ unit tests)

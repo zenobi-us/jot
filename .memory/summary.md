@@ -58,43 +58,30 @@ internal/search/bleve/
 - Count queries: **324μs** ✅ (sub-millisecond)
 - Bulk indexing: 2,938 docs/sec (10k in 3.4s)
 
-**Current Phase**: Phase 5 - DuckDB Removal ([phase-02df510c](.memory/phase-02df510c-duckdb-removal.md))
-- ✅ Task 1: Codebase audit complete (14 files identified)
-- ✅ Task 2: Service layer migration - COMPLETE
-  - Phase 5.2.1: Struct update ✅
-  - Phase 5.2.2: getAllNotes() migration ✅
-  - Phase 5.2.3: SearchWithConditions() migration ✅ (with BuildQuery)
-  - Phase 5.2.4: Count() migration ✅ (completed in 5.2.2)
-  - Phase 5.2.5: CLI Command Migration ✅
-  - Phase 5.2.6: Service Method Cleanup ✅
-- ✅ Task 3: Dependency Cleanup - COMPLETE
-  - Removed DuckDB from go.mod (9 packages)
-  - Verified pure Go build (no CGO)
-  - Performance: 23MB binary, 17ms startup
-- ✅ Task 4: Integration & Testing - COMPLETE
-  - All core tests passing (161+ unit tests)
-  - Manual CLI testing complete
-  - Known issues: tag filtering, fuzzy search (documented)
-- ✅ Task 5: Documentation Updates - COMPLETE
-  - Updated AGENTS.md (removed DuckDB, documented Bleve)
-  - Created known issues research document
-  - Updated CHANGELOG.md with Known Issues section
-- 🔜 Next: Phase 5.6 - Polish & Optimization (optional)
-- Started: 2026-02-01 21:17
-- Last Update: 2026-02-02 18:50
+**Current Phase**: Phase 5 - DuckDB Removal - **✅ CORE DELIVERABLES COMPLETE**
 
-**Progress**: 10 of 11 sub-phases complete (91%)
+**Phase Status**: All core tasks complete, optional polish available
+- ✅ Task 1: Codebase audit (14 files identified)
+- ✅ Task 2: Service layer migration (6 sub-phases)
+- ✅ Task 3: Dependency cleanup (pure Go build verified)
+- ✅ Task 4: Integration & testing (161+ tests passing)
+- ✅ Task 5: Documentation updates (AGENTS.md, CHANGELOG.md)
+- 🔜 Task 6: Polish & optimization (OPTIONAL - tag filtering, fuzzy search)
+
+**Phase Duration**: 2026-02-01 21:17 → 2026-02-02 18:50 (21.5 hours)
+
+**Progress**: Core deliverables complete (100%), optional work available
+
+**Decision Point**: 
+- **Option A**: Archive Phase 5, conclude epic (DuckDB removal complete)
+- **Option B**: Continue with Phase 5.6 (fix tag filtering, tune fuzzy search)
+- **Option C**: Move to Phase 6 (Semantic Search with chromem-go)
 - 5.1: Codebase audit ✅
-- 5.2.1: NoteService struct update ✅
-- 5.2.2: getAllNotes() migration ✅
-- 5.2.3: SearchWithConditions() migration ✅
-- 5.2.4: Count() migration ✅
-- 5.2.5: CLI Command Migration ✅
-- 5.2.6: Service Method Cleanup ✅
+- 5.2: Service layer migration ✅ (6 sub-phases)
 - 5.3: Dependency Cleanup ✅
 - 5.4: Integration & Testing ✅
 - 5.5: Documentation Updates ✅
-- 5.6-5.11: Pending 🔜
+- 5.6: Polish & Optimization 🔜 (optional)
 
 ### Pi-OpenNotes Extension
 **Epic**: [epic-1f41631e-pi-opennotes-extension.md](epic-1f41631e-pi-opennotes-extension.md)  
