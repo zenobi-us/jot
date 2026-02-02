@@ -71,11 +71,19 @@ internal/search/bleve/
   - Removed DuckDB from go.mod (9 packages)
   - Verified pure Go build (no CGO)
   - Performance: 23MB binary, 17ms startup
-- 🔜 Next: Phase 5.4 - Integration & Testing
+- ✅ Task 4: Integration & Testing - COMPLETE
+  - All core tests passing (161+ unit tests)
+  - Manual CLI testing complete
+  - Known issues: tag filtering, fuzzy search (documented)
+- ✅ Task 5: Documentation Updates - COMPLETE
+  - Updated AGENTS.md (removed DuckDB, documented Bleve)
+  - Created known issues research document
+  - Updated CHANGELOG.md with Known Issues section
+- 🔜 Next: Phase 5.6 - Polish & Optimization (optional)
 - Started: 2026-02-01 21:17
-- Last Update: 2026-02-02 14:20
+- Last Update: 2026-02-02 18:50
 
-**Progress**: 8 of 11 sub-phases complete (73%)
+**Progress**: 10 of 11 sub-phases complete (91%)
 - 5.1: Codebase audit ✅
 - 5.2.1: NoteService struct update ✅
 - 5.2.2: getAllNotes() migration ✅
@@ -83,7 +91,10 @@ internal/search/bleve/
 - 5.2.4: Count() migration ✅
 - 5.2.5: CLI Command Migration ✅
 - 5.2.6: Service Method Cleanup ✅
-- 5.3-5.11: Pending 🔜
+- 5.3: Dependency Cleanup ✅
+- 5.4: Integration & Testing ✅
+- 5.5: Documentation Updates ✅
+- 5.6-5.11: Pending 🔜
 
 ### Pi-OpenNotes Extension
 **Epic**: [epic-1f41631e-pi-opennotes-extension.md](epic-1f41631e-pi-opennotes-extension.md)  
@@ -99,6 +110,30 @@ internal/search/bleve/
 ---
 
 ## Session History
+
+**Session 2026-02-02 (Afternoon - Phase 5.4 Complete)**
+- ✅ **Completed Phase 5.4: Integration & Testing**
+- ✅ All core tests passing (161+ unit tests)
+- ✅ E2E tests passing (stress tests show expected behavior differences)
+- ✅ Manual CLI testing complete:
+  - ✅ List, simple search, path/title filtering working
+  - ⚠️ Tag filtering needs investigation (array indexing issue)
+  - ⚠️ Fuzzy search needs tuning
+- ✅ Performance validation:
+  - Binary: 23MB (64% smaller than DuckDB)
+  - Startup: 17ms (83% under target)
+  - Search: 0.754ms (97% under target)
+- 📝 Lesson: Manual testing reveals edge cases that unit tests miss
+- 📝 Task: [task-e4f7a1b3](task-e4f7a1b3-phase54-integration-testing.md)
+- Commits: None (testing only)
+
+**Session 2026-02-02 (Afternoon - Phase 5.3 Complete)**
+- ✅ **Completed Phase 5.3: Dependency Cleanup**
+- ✅ Removed DuckDB from go.mod (9 packages)
+- ✅ Verified pure Go build (CGO_ENABLED=0 works)
+- ✅ All lint checks pass
+- 📝 Lesson: Pure Go builds simplify deployment significantly
+- Commits: 7e1ecc0, 6173e33
 
 **Session 2026-02-02 (Afternoon - Phase 5.2.6 Complete)**
 - ✅ **Completed Phase 5.2.6: Service Method Cleanup**

@@ -56,6 +56,13 @@ opennotes notes search query --and data.tag=work --not data.status=archived
 
 See: Epic [epic-f661c068-remove-duckdb-alternative-search.md](.memory/epic-f661c068-remove-duckdb-alternative-search.md)
 
+**Known Issues**:
+- Tag filtering (`--and data.tag=value`) not working - under investigation (array indexing)
+- Fuzzy search needs tuning for optimal fuzziness distance
+- Link queries (`links-to`, `linked-by`) deferred to Phase 5.3 (requires graph index)
+
+See: [research-55e8a9f3-phase54-known-issues.md](.memory/research-55e8a9f3-phase54-known-issues.md)
+
 ### Features
 
 #### Views System ✨
