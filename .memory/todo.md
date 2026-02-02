@@ -21,7 +21,24 @@
 | 5. DuckDB Removal | 🔄 **IN PROGRESS** | Remove all DuckDB code - [phase-02df510c](phase-02df510c-duckdb-removal.md) |
 | 6. Semantic Search | 🔜 | Optional chromem-go integration |
 
-### Session 2026-02-02 Morning - ✅ PHASE 5.2.1-5.2.3 COMPLETE
+### Session 2026-02-02 Afternoon - 🔄 PHASE 5.2.5 STARTING
+
+**Phase 5.2.5 - CLI Command Migration** 🔄 **STARTING**:
+- [ ] Audit CLI commands for DuckDB usage
+  - cmd/notes_search.go (--sql flag uses ExecuteSQLSafe)
+  - cmd/notes_list.go (already uses SearchNotes)
+- [ ] Remove --sql flag from notes search (breaking change)
+- [ ] Remove ExecuteSQLSafe() and Query() methods from NoteService
+- [ ] Update help text to guide users to new query DSL
+- [ ] Verify requireNotebook() creates index automatically
+
+**Next Steps**: Remove SQL interface completely
+
+### Session 2026-02-02 Morning - ✅ PHASE 5.2.4 COMPLETE
+
+**Phase 5.2.4 - Count() Migration** ✅ **COMPLETED**:
+- Verified Count() implementation from Phase 5.2.2 (commit c37c498)
+- Already using Index.Count() - no additional work needed
 
 **Phase 5.2.3 - Migrate SearchWithConditions()** ✅ **COMPLETED**:
 - Implemented SearchService.BuildQuery() with 27 unit tests
@@ -30,8 +47,6 @@
 - Added NotebookService.createIndex() for automatic indexing
 - Skipped 6 link-related tests (TODO Phase 5.3)
 - Result: All core tests passing (100%)
-
-**Next**: CLI layer migration (cmd/notes_search.go, cmd/notes_list.go)
 
 ### High-Level Tasks
 

@@ -2,7 +2,7 @@
 id: 02df510c
 title: Phase 5 - DuckDB Removal & Cleanup
 created_at: 2026-02-01T21:17:00+10:30
-updated_at: 2026-02-02T08:45:00+10:30
+updated_at: 2026-02-02T13:32:00+10:30
 status: in-progress
 epic_id: f661c068
 start_criteria: Phase 4 (Bleve Backend) complete with all tests passing
@@ -94,7 +94,9 @@ Complete removal of DuckDB from the OpenNotes codebase. This phase replaces all 
 - [x] Verify existing Count() implementation from Phase 5.2.2
 - **Note**: Completed as part of Phase 5.2.2 (commit c37c498)
 
-#### Phase 5.2.5 - CLI Command Migration 🔄 IN PROGRESS
+#### Phase 5.2.5 - CLI Command Migration 🔄 STARTING
+**Status**: Ready to begin CLI layer migration
+**Started**: 2026-02-02 13:32
 - [ ] **Audit CLI commands for DuckDB usage**
   - `cmd/notes_search.go` - Uses ExecuteSQLSafe() for --sql flag
   - `cmd/notes_list.go` - Already uses SearchNotes(), no DuckDB

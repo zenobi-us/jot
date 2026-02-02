@@ -60,20 +60,23 @@ internal/search/bleve/
 
 **Current Phase**: Phase 5 - DuckDB Removal ([phase-02df510c](.memory/phase-02df510c-duckdb-removal.md))
 - ✅ Task 1: Codebase audit complete (14 files identified)
-- ✅ Task 2: NoteService migration - Phases 1-3 complete
+- ✅ Task 2: NoteService migration - Phases 1-4 complete
   - Phase 5.2.1: Struct update ✅
   - Phase 5.2.2: getAllNotes() migration ✅
   - Phase 5.2.3: SearchWithConditions() migration ✅ (with BuildQuery)
-- 🔜 Next: CLI layer migration (requires requireNotebook update)
+  - Phase 5.2.4: Count() migration ✅ (completed in 5.2.2)
+- 🔄 Current: Phase 5.2.5 - CLI Command Migration
 - Started: 2026-02-01 21:17
-- Last Update: 2026-02-02 08:53
+- Last Update: 2026-02-02 13:32
 
-**Progress**: 4 of 11 sub-phases complete (36%)
+**Progress**: 5 of 11 sub-phases complete (45%)
 - 5.1: Codebase audit ✅
 - 5.2.1: NoteService struct update ✅
 - 5.2.2: getAllNotes() migration ✅
-- 5.2.3: SearchWithConditions() migration ✅ 
-- 5.2.4-5.11: Pending 🔜
+- 5.2.3: SearchWithConditions() migration ✅
+- 5.2.4: Count() migration ✅
+- 5.2.5: CLI Command Migration 🔄 **STARTING**
+- 5.2.6-5.11: Pending 🔜
 
 ### Pi-OpenNotes Extension
 **Epic**: [epic-1f41631e-pi-opennotes-extension.md](epic-1f41631e-pi-opennotes-extension.md)  
@@ -90,15 +93,23 @@ internal/search/bleve/
 
 ## Session History
 
-**Session 2026-02-02 (Morning - Phase 5.2.3 Complete)**
-- ✅ **Completed Phase 5.2.3: Migrate SearchWithConditions()**
+**Session 2026-02-02 (Afternoon - Phase 5.2.5 Starting)**
+- 🔄 **Starting Phase 5.2.5: CLI Command Migration**
+- 📋 Audit CLI commands for DuckDB usage
+- 🎯 Target: Migrate `notes search --sql` and update requireNotebook()
+- 📝 Remove ExecuteSQLSafe() and Query() methods
+- ⚡ Goal: Pure Go search, no SQL interface
+
+**Session 2026-02-02 (Morning - Phase 5.2.4 Complete)**
+- ✅ **Completed Phase 5.2.4: Count() Migration**
+- ✅ Verified Count() implementation from Phase 5.2.2
+- ✅ Phase 5.2.3: Migrate SearchWithConditions() COMPLETE
 - 📄 Implemented SearchService.BuildQuery() with 27 tests
 - 📄 Updated SearchWithConditions() to use Bleve Index
 - 📄 Fixed testutil.getTitle() - don't use filename as title
 - 📄 Added NotebookService.createIndex() for automatic index creation
 - 📄 Skipped 6 link-related tests (TODO Phase 5.3: link graph index)
 - ✅ All core tests passing (100%)
-- 📝 Next: CLI layer migration
 - Commits: 48f054f
 
 **Session 2026-02-02 (Morning - Phase 5.2.2 Complete)**
