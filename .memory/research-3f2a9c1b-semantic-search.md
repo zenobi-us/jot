@@ -70,7 +70,7 @@ Date: 2026-02-03
 
 ### 5) Exclusions / Weighting Controls
 **User controls**:
-- **Exclude notebooks or tags**: e.g., “exclude Archive”, “exclude Personal”.
+- **Exclude notes based on frontmatter/tags/status**: e.g., "exclude archived", "exclude drafts".
 - **Weight recency**: combine semantic score with a recency boost.
 - **Weight fields**: boost title > headings > body.
 
@@ -126,11 +126,11 @@ Date: 2026-02-03
 
 ### Story 4: Exclusions and Boosting
 **As a** casual user
-**I want** to exclude archival or personal notebooks from results
+**I want** to exclude archived or draft notes from results
 **So that** I can focus on current work.
 
 **Acceptance Criteria**
-- CLI supports `--exclude-notebook <name>` and `--exclude-tag <tag>` filters.
+- CLI supports excluding notes by frontmatter status/tags (e.g., `status:archived` or `tag:archived`).
 - Exclusions apply to both keyword and semantic results.
 
 ### Story 5: “Keyword-Only” and “Semantic-Only” Modes
@@ -145,6 +145,7 @@ Date: 2026-02-03
 ---
 
 ## Recommendations (Summary)
+- No need to provide mechanisms for excluding certain notebooks, since opennotes is focused on one notebook at a time.
 - Use **hybrid retrieval** with **RRF** to merge results; label entries by match type.
 - Target **P95 ≤ 750 ms** for ≤ 50k notes.
 - Default to a **384‑dim Sentence-BERT/MiniLM** style model for balance.
