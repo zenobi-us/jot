@@ -12,7 +12,7 @@ status: proposed
 Introduce an optional semantic search capability that augments existing Bleve full-text search with vector-based relevance, improving recall for conceptual queries and paraphrases.
 
 ## Success Criteria
-- Semantic search query path implemented with clear opt-in behavior
+- Semantic search subcommand (dedicated mode) implemented with hybrid merged results (semantic + keyword)
 - Vector index lifecycle is reliable and testable
 - Documentation explains when to use semantic vs. full-text search
 - Benchmarks show acceptable latency for typical notebook sizes

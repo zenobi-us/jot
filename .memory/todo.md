@@ -38,7 +38,7 @@
 
 **Deferred to Future**:
 - Link Graph Index (separate epic)
-- Semantic Search Epic (optional) - [epic-7c9d2e1f-semantic-search.md](epic-7c9d2e1f-semantic-search.md)
+- Semantic Search Epic (optional, casual-user focus) - [epic-7c9d2e1f-semantic-search.md](epic-7c9d2e1f-semantic-search.md)
 - Fuzzy parser syntax `~term` (3-4 hours)
 
 **Learning**: [learning-f661c068-duckdb-removal-epic-complete.md](learning-f661c068-duckdb-removal-epic-complete.md)

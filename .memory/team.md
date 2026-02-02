@@ -4,7 +4,7 @@
 
 | Role | Assignment | Epic | Phase |
 |------|------------|------|-------|
-| Agent | Semantic Search epic planning | epic-7c9d2e1f | Phase 1 (Research & User Story Discovery) |
+| Agent | Semantic Search epic planning (casual-user focus) | epic-7c9d2e1f | Phase 1 (Research & User Story Discovery) |
 
 **Session ID**: 2026-02-02-semantic-epic-planning
 

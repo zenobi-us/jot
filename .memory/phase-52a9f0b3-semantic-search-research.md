@@ -12,10 +12,10 @@ end_criteria: Research synthesized into user story candidates with acceptance cr
 # Phase 1 - Research & User Story Discovery
 
 ## Overview
-Identify user problems that semantic search solves, evaluate feasible technical approaches, and translate findings into candidate user stories.
+Identify casual-user problems that semantic search solves (conceptual topic recall), evaluate feasible technical approaches, and translate findings into candidate user stories.
 
 ## Deliverables
-- Research synthesis on semantic search use cases and constraints
+- Research synthesis focused on casual-user conceptual search use cases
 - Recommended user story set with acceptance criteria drafts
 - Technical feasibility notes (index storage, embeddings, latency, privacy)
 
@@ -29,3 +29,4 @@ Identify user problems that semantic search solves, evaluate feasible technical 
 ## Next Steps
 - Define research questions and data sources
 - Align on target user personas and primary workflows
+- Confirm semantic search accessed via dedicated subcommand with merged hybrid results
