@@ -5,6 +5,8 @@
 **Current Focus**: One Active Epic
 1. **Pi-OpenNotes Extension** - Phase 3 Complete, Ready for Distribution
 
+**Proposed Epic**: Semantic Search (Optional Enhancement)
+
 **Recently Completed**:
 1. **Remove DuckDB Epic** - ✅ Complete (2026-02-02)
 
@@ -49,7 +51,7 @@
 
 **Deferred to Future**:
 - Phase 5.3: Link Graph Index (separate epic)
-- Phase 6: Semantic Search (optional enhancement) - [phase-7c9d2e1f-semantic-search.md](phase-7c9d2e1f-semantic-search.md)
+- Semantic Search Epic (optional enhancement) - [epic-7c9d2e1f-semantic-search.md](epic-7c9d2e1f-semantic-search.md)
 - Fuzzy parser syntax `~term` (3-4 hours)
 
 ### Pi-OpenNotes Extension
@@ -75,7 +77,7 @@
 - ✅ Epic duration: 29 hours total
 - 📝 Final status: All objectives achieved
 - 📝 Performance: 23MB binary, 17ms startup, 0.754ms search
-- 📝 Deferred: Link graph (Phase 5.3), semantic search (Phase 6)
+- 📝 Deferred: Link graph (Phase 5.3), semantic search (now epic 7c9d2e1f)
 
 ---
 
