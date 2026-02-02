@@ -276,23 +276,32 @@ After phase completion:
 
 ### 8. Polish & Optimization (Phase 5.6) - OPTIONAL 🔜
 
-**Status**: Phase 5.5 complete, ready for optional polish work
+**Status**: Investigation complete (2026-02-02 19:20)
 
-**Optional Improvements**:
-- [ ] Address tag filtering issue (array indexing in Bleve)
-- [ ] Tune fuzzy search parameters (fuzziness=1 or 2)
-- [ ] Add comprehensive tag search tests
-- [ ] Add fuzzy search integration tests
+**Investigation Results**:
+- [x] Tag filtering investigated - ✅ **NOT A BUG** (works correctly)
+  - Tested with real notes, tag filtering works via `notes search query --and data.tag=value`
+  - Original issue was syntax confusion / indexing delay
+  - No code changes needed
+- [x] Fuzzy search investigated - ⚠️ **FEATURE GAP** identified
+  - `--fuzzy` flag works correctly
+  - Parser syntax `~term` not supported (missing from grammar)
+  - Workaround: Use `--fuzzy` flag or wildcard queries
 
-**Known Issues** (documented in [research-55e8a9f3](research-55e8a9f3-phase54-known-issues.md)):
-1. Tag queries (`--and data.tag=work`) return no results
-   - Hypothesis: Array fields not indexing correctly
-   - Workaround: Use text search `"#work"`
-2. Fuzzy search needs tuning
-   - Default fuzziness may be too strict/loose
-   - Workaround: Use wildcard queries `"meet*"`
+**Optional Enhancement** (3-4 hours estimated):
+- [ ] Add fuzzy parser syntax (`~term` support)
+  - Add FuzzyExpr to query AST
+  - Update parser grammar for `~` prefix
+  - Implement Bleve query translation
+  - Add comprehensive tests
+- [ ] Document fuzzy query syntax
 
-**Decision Point**: Both issues are non-blocking. Phase 5 core deliverables are complete.
+**Decision Point**: 
+- **Option A**: Skip Phase 5.6 (no bugs found, only missing parser feature)
+- **Option B**: Implement fuzzy parser syntax (3-4 hours)
+- **Option C**: Move to Phase 6 (Semantic Search)
+
+**Recommendation**: Option A or C - Core functionality works, fuzzy flag available.
 
 ## Expected Outcome
 

@@ -14,17 +14,45 @@ phase_id: 02df510c
 
 During Phase 5.4 Integration & Testing (manual CLI testing), two issues were identified that need investigation and resolution in future phases.
 
-## Issue 1: Tag Filtering Returns No Results
+## Issue 1: Tag Filtering - RESOLVED ✅
 
-### Symptom
+### Status: **NOT A BUG** - Tag filtering works correctly
 
-Tag-based queries return no results even when tags are present in note frontmatter:
+### Original Symptom
 
+Tag-based queries were reported to return no results even when tags are present in note frontmatter.
+
+### Investigation Results (2026-02-02 19:20)
+
+**Test Setup**:
 ```bash
-opennotes notes search --and data.tag=work
-# Expected: Notes with tag "work"
-# Actual: No results
+# Created test notes with tags
+note1.md: tags: [work, urgent]
+note2.md: tags: [personal, planning]
 ```
+
+**Test Results**:
+```bash
+opennotes notes search query --and data.tag=work
+# ✅ WORKS: Found 1 note (note1.md)
+
+opennotes notes search query --and data.tag=personal
+# ✅ WORKS: Found 1 note (note2.md)
+```
+
+### Root Cause
+
+**False alarm** - Tag filtering works correctly. The original issue was likely:
+1. **Syntax confusion**: Need to use `notes search query --and` (not just `--and`)
+2. **Indexing delay**: Index might not have been created/updated
+3. **YAML format**: Tags must be YAML arrays: `tags: [work, personal]`
+
+### Resolution
+
+No code changes needed. Tag filtering is working as designed:
+- Bleve indexes tags using `SimpleAnalyzer` (lowercase, no stemming)
+- Query translation uses `MatchQuery` for tag fields
+- Array fields (tags) are properly handled by Bleve
 
 ### Expected Behavior
 
@@ -85,88 +113,141 @@ opennotes notes search "#work"
 
 ---
 
-## Issue 2: Fuzzy Search Needs Tuning
+## Issue 2: Fuzzy Search - Parser Support Missing
+
+### Status: **FEATURE GAP** - CLI flag works, parser syntax doesn't
 
 ### Symptom
 
-Fuzzy search results are less accurate than expected. Some obvious matches are missed, while unexpected results appear.
+The query parser syntax `~term` is not supported. Only the `--fuzzy` flag works.
+
+### Current Behavior
+
+**Works ✅**:
+```bash
+opennotes notes search "projct" --fuzzy
+# Successfully finds "project" with fuzzy matching
+```
+
+**Does NOT work ⚠️**:
+```bash
+opennotes notes search "~projct"
+# Returns no results - parser doesn't recognize ~ prefix
+```
+
+### Root Cause
+
+The query parser (`internal/search/parser/grammar.go`) does not include fuzzy query syntax:
+- No `~` prefix in lexer rules
+- No `FuzzyExpr` type in query AST
+- No translation from `~term` to Bleve FuzzyQuery
 
 ### Expected Behavior
 
-- `~term` should find close matches with spelling variations
+Gmail-style query syntax should support:
+- `~term` - Find close matches with spelling variations
 - Fuzziness distance should balance precision vs recall
 - Common typos should be caught (1-2 character edits)
 
-### Current Configuration
+### Implementation Plan
 
-From `internal/search/bleve/query.go`:
+**Phase 1: Add FuzzyExpr to query AST**
+1. Add `FuzzyExpr` type to `internal/search/query.go`:
 ```go
-// Fuzzy queries use default Bleve fuzziness (likely 1)
-case *search.FuzzyQuery:
-    return bleve.NewFuzzyQuery(expr.Term)
+type FuzzyExpr struct {
+    Field string // Optional field qualifier
+    Term  string // The term to fuzzy match
+    Fuzziness int // 0, 1, or 2 (default: 1)
+}
 ```
 
-### Investigation Notes
+**Phase 2: Update parser grammar**
+1. Add `~` prefix to lexer in `internal/search/parser/grammar.go`
+2. Add fuzzy expression parsing rule
+3. Convert grammar AST to FuzzyExpr
 
-**Parameter to Test**:
-- Fuzziness distance (0, 1, 2) - currently uses Bleve default
-- Prefix length (how many chars must match exactly)
-- Max expansions (limit number of fuzzy matches)
-
-**Comparison Needed**:
-- Test with known misspellings
-- Compare results at different fuzziness levels
-- Benchmark performance impact
+**Phase 3: Translate to Bleve**
+1. Add FuzzyExpr case to `translateExpr()` in `internal/search/bleve/query.go`
+2. Create Bleve FuzzyQuery with configurable fuzziness
+3. Default fuzziness=1 for single-char typos
 
 ### Test Cases to Add
 
 ```go
-// Test common typos (1-char distance)
-func TestFuzzySearch_SingleCharTypo(t *testing.T) {
-    // Index: "meeting", "important", "project"
-    // Query: ~meetng, ~importnt, ~projct
-    // Verify all found
+// Test ~term syntax parsing
+func TestParser_FuzzyQuery(t *testing.T) {
+    // Parse: "~project"
+    // Expected: FuzzyExpr{Term: "project", Fuzziness: 1}
 }
 
-// Test 2-char distance
-func TestFuzzySearch_TwoCharTypo(t *testing.T) {
-    // Index: "documentation"
-    // Query: ~documntation (missing 'e')
-    // Verify found
-}
-
-// Test performance with high fuzziness
-func BenchmarkFuzzySearch_Fuzziness2(b *testing.B) {
-    // Measure query time with fuzziness=2
+// Test fuzzy search execution
+func TestBleveIndex_FuzzySearch(t *testing.T) {
+    // Index: "meeting", "project"
+    // Query: ~meetng, ~projct
+    // Verify both found
 }
 ```
 
 ### Resolution Path
 
-1. **Phase 5.6**: Expose fuzziness parameter in FuzzyQuery
-2. Test with fuzziness values: 0, 1, 2
-3. Benchmark performance at each level
-4. Choose optimal default (likely fuzziness=1)
-5. Consider exposing as user-configurable option
-6. Add fuzzy search examples to docs
+**Phase 5.6 Work**:
+1. Add FuzzyExpr type to query AST
+2. Update parser to recognize `~term` syntax
+3. Implement Bleve query translation
+4. Add comprehensive fuzzy search tests
+5. Document fuzzy query syntax in user docs
+6. Consider exposing fuzziness level: `~1:term` or `~2:term`
 
-### Workaround (Until Tuned)
+**Estimated Effort**: 3-4 hours
+- Parser changes: 1 hour
+- Query translation: 30 mins
+- Tests: 1 hour
+- Documentation: 30 mins
+- Testing/verification: 1 hour
 
-Use wildcard queries for partial matching:
+### Current Workarounds
+
+**Option 1**: Use `--fuzzy` flag (works well)
 ```bash
-opennotes notes search "meet*"
+opennotes notes search "projct" --fuzzy
+```
+
+**Option 2**: Use wildcard queries for partial matching
+```bash
+opennotes notes search "proj*"
 ```
 
 ---
 
-## Priority
+## Priority Assessment
 
-Both issues are **non-blocking** for Phase 5 completion:
-- Core search functionality works (text, path, title)
-- Tag filtering is a convenience feature
-- Fuzzy search is an enhancement over exact matching
+**Issue 1: Tag Filtering** - ✅ **RESOLVED** (not a bug)
+- Status: Works correctly via `notes search query --and data.tag=value`
+- Priority: None (closed)
 
-**Recommended**: Address in Phase 5.6 (Polish & Optimization) after documentation is complete.
+**Issue 2: Fuzzy Parser Syntax** - ⚠️ **ENHANCEMENT**
+- Status: `--fuzzy` flag works, parser syntax `~term` missing
+- Impact: Low (workaround available)
+- Benefit: Medium (better UX for power users)
+- Effort: Medium (3-4 hours estimated)
+- Priority: **Optional for Phase 5.6**
+
+### Recommendation
+
+**Option A**: Skip Phase 5.6 entirely
+- Tag filtering works (false alarm)
+- Fuzzy flag works (parser syntax is nice-to-have)
+- Focus on Phase 6 (Semantic Search) instead
+
+**Option B**: Implement fuzzy parser syntax (3-4 hours)
+- Complete the query DSL with `~term` support
+- Provides feature parity with Gmail-style search
+- Minor improvement for power users
+
+**Option C**: Defer to future enhancement
+- Document `--fuzzy` flag usage
+- Create GitHub issue for `~term` parser support
+- Move directly to Phase 6
 
 ## References
 

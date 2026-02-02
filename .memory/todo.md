@@ -21,25 +21,25 @@
 | 5. DuckDB Removal | 🔄 **IN PROGRESS** | Remove all DuckDB code - [phase-02df510c](phase-02df510c-duckdb-removal.md) |
 | 6. Semantic Search | 🔜 | Optional chromem-go integration |
 
-### Session 2026-02-02 Evening - ✅ PHASE 5 CORE COMPLETE
+### Session 2026-02-02 Evening - ✅ PHASE 5.6 INVESTIGATION COMPLETE
 
-**Phase 5 - DuckDB Removal** ✅ **CORE DELIVERABLES COMPLETE**
+**Phase 5 - DuckDB Removal** ✅ **ALL TASKS COMPLETE**
 
-All core tasks complete, optional polish available:
-- ✅ Codebase audit
-- ✅ Service layer migration (6 sub-phases)
-- ✅ Dependency cleanup (pure Go verified)
-- ✅ Integration & testing (161+ tests passing)
-- ✅ Documentation updates (AGENTS.md, CHANGELOG)
+Phase 5.6 Investigation Results (19:20):
+- ✅ Tag filtering: NOT A BUG - Works correctly via `notes search query --and data.tag=value`
+- ⚠️ Fuzzy search: Parser syntax `~term` missing (feature gap, `--fuzzy` flag works)
+- ✅ Comprehensive tests written for tag array handling
+- ✅ Research document updated with findings
 
-**Optional Phase 5.6 - Polish & Optimization** 🔜:
-- [ ] Fix tag filtering issue (array indexing)
-- [ ] Tune fuzzy search parameters
-- [ ] Add comprehensive tag/fuzzy tests
+**Optional Enhancement** (3-4 hours):
+- [ ] Add fuzzy parser syntax (`~term` support)
+- [ ] Add FuzzyExpr to query AST
+- [ ] Update parser grammar for `~` prefix
+- [ ] Implement Bleve query translation
 
-**Decision Point**: Phase 5 core objectives achieved. Choose next action:
-- **Option A**: Archive Phase 5, conclude DuckDB removal epic
-- **Option B**: Continue with Phase 5.6 (polish work, est. 2-3 hours)
+**Decision Point**: No bugs found. Core functionality complete.
+- **Option A**: Archive Phase 5, conclude DuckDB removal epic (RECOMMENDED)
+- **Option B**: Implement fuzzy parser syntax (3-4 hours, optional)
 - **Option C**: Move to Phase 6 (Semantic Search with chromem-go)
 
 **Performance Achieved**:
