@@ -15,15 +15,11 @@ import (
 
 func TestNoteService_SearchNotes_NoNotebookSelected(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	cfg, _ := services.NewConfigServiceWithPath(t.TempDir() + "/config.json")
-	svc := services.NewNoteService(cfg, db, nil, "")
+	svc := services.NewNoteService(cfg, nil, "")
 
 	notes, err := svc.SearchNotes(ctx, "", false)
 	assert.Error(t, err)
@@ -33,11 +29,7 @@ func TestNoteService_SearchNotes_NoNotebookSelected(t *testing.T) {
 
 func TestNoteService_SearchNotes_FindsAllNotes(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	tmpDir := t.TempDir()
@@ -51,7 +43,7 @@ func TestNoteService_SearchNotes_FindsAllNotes(t *testing.T) {
 
 	idx := testutil.CreateTestIndex(t, notebookDir)
 
-	svc := services.NewNoteService(cfg, db, idx, notebookDir)
+	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
@@ -61,11 +53,7 @@ func TestNoteService_SearchNotes_FindsAllNotes(t *testing.T) {
 
 func TestNoteService_SearchNotes_FiltersByQuery(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	tmpDir := t.TempDir()
@@ -79,7 +67,7 @@ func TestNoteService_SearchNotes_FiltersByQuery(t *testing.T) {
 
 	idx := testutil.CreateTestIndex(t, notebookDir)
 
-	svc := services.NewNoteService(cfg, db, idx, notebookDir)
+	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	// Search for "apple"
 	notes, err := svc.SearchNotes(ctx, "apple", false)
@@ -91,11 +79,7 @@ func TestNoteService_SearchNotes_FiltersByQuery(t *testing.T) {
 
 func TestNoteService_SearchNotes_FiltersByQueryCaseInsensitive(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	tmpDir := t.TempDir()
@@ -106,7 +90,7 @@ func TestNoteService_SearchNotes_FiltersByQueryCaseInsensitive(t *testing.T) {
 
 	idx := testutil.CreateTestIndex(t, notebookDir)
 
-	svc := services.NewNoteService(cfg, db, idx, notebookDir)
+	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	// Search with lowercase should match uppercase content
 	notes, err := svc.SearchNotes(ctx, "uppercase", false)
@@ -117,11 +101,7 @@ func TestNoteService_SearchNotes_FiltersByQueryCaseInsensitive(t *testing.T) {
 
 func TestNoteService_SearchNotes_FiltersByFilepath(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	tmpDir := t.TempDir()
@@ -133,7 +113,7 @@ func TestNoteService_SearchNotes_FiltersByFilepath(t *testing.T) {
 
 	idx := testutil.CreateTestIndex(t, notebookDir)
 
-	svc := services.NewNoteService(cfg, db, idx, notebookDir)
+	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	// Search by filename pattern
 	notes, err := svc.SearchNotes(ctx, "project", false)
@@ -145,11 +125,7 @@ func TestNoteService_SearchNotes_FiltersByFilepath(t *testing.T) {
 
 func TestNoteService_SearchNotes_EmptyNotebook(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	tmpDir := t.TempDir()
@@ -160,7 +136,7 @@ func TestNoteService_SearchNotes_EmptyNotebook(t *testing.T) {
 
 	idx := testutil.CreateTestIndex(t, notebookDir)
 
-	svc := services.NewNoteService(cfg, db, idx, notebookDir)
+	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	// Empty notebook should return empty list without error
 	notes, err := svc.SearchNotes(ctx, "", false)
@@ -170,11 +146,7 @@ func TestNoteService_SearchNotes_EmptyNotebook(t *testing.T) {
 
 func TestNoteService_SearchNotes_ExtractsMetadata(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	tmpDir := t.TempDir()
@@ -192,7 +164,7 @@ func TestNoteService_SearchNotes_ExtractsMetadata(t *testing.T) {
 	)
 
 	idx := testutil.CreateTestIndex(t, notebookDir)
-	svc := services.NewNoteService(cfg, db, idx, notebookDir)
+	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
@@ -204,11 +176,7 @@ func TestNoteService_SearchNotes_ExtractsMetadata(t *testing.T) {
 
 func TestNoteService_SearchNotes_SetsRelativePath(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	tmpDir := t.TempDir()
@@ -219,7 +187,7 @@ func TestNoteService_SearchNotes_SetsRelativePath(t *testing.T) {
 
 	idx := testutil.CreateTestIndex(t, notebookDir)
 
-	svc := services.NewNoteService(cfg, db, idx, notebookDir)
+	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
@@ -230,15 +198,11 @@ func TestNoteService_SearchNotes_SetsRelativePath(t *testing.T) {
 
 func TestNoteService_Count_NoNotebookSelected(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	cfg, _ := services.NewConfigServiceWithPath(t.TempDir() + "/config.json")
-	svc := services.NewNoteService(cfg, db, nil, "")
+	svc := services.NewNoteService(cfg, nil, "")
 
 	// Count returns 0 when no notebook is selected (not an error)
 	count, err := svc.Count(ctx)
@@ -248,11 +212,7 @@ func TestNoteService_Count_NoNotebookSelected(t *testing.T) {
 
 func TestNoteService_Count_ReturnsCorrectCount(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	tmpDir := t.TempDir()
@@ -266,7 +226,7 @@ func TestNoteService_Count_ReturnsCorrectCount(t *testing.T) {
 	testutil.CreateTestNote(t, notebookDir, "note5.md", "# Note 5")
 
 	idx := testutil.CreateTestIndex(t, notebookDir)
-	svc := services.NewNoteService(cfg, db, idx, notebookDir)
+	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	count, err := svc.Count(ctx)
 	require.NoError(t, err)
@@ -275,11 +235,7 @@ func TestNoteService_Count_ReturnsCorrectCount(t *testing.T) {
 
 func TestNoteService_Count_EmptyNotebook(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	tmpDir := t.TempDir()
@@ -288,7 +244,7 @@ func TestNoteService_Count_EmptyNotebook(t *testing.T) {
 	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "empty-notebook")
 
 	idx := testutil.CreateTestIndex(t, notebookDir)
-	svc := services.NewNoteService(cfg, db, idx, notebookDir)
+	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	// Empty notebook should return 0 without error
 	count, err := svc.Count(ctx)
@@ -298,11 +254,7 @@ func TestNoteService_Count_EmptyNotebook(t *testing.T) {
 
 func TestNoteService_SearchNotes_MultipleQueryMatches(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	tmpDir := t.TempDir()
@@ -315,7 +267,7 @@ func TestNoteService_SearchNotes_MultipleQueryMatches(t *testing.T) {
 
 	idx := testutil.CreateTestIndex(t, notebookDir)
 
-	svc := services.NewNoteService(cfg, db, idx, notebookDir)
+	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	notes, err := svc.SearchNotes(ctx, "golang", false)
 	require.NoError(t, err)
@@ -325,11 +277,7 @@ func TestNoteService_SearchNotes_MultipleQueryMatches(t *testing.T) {
 
 func TestNoteService_SearchNotes_ContentHasText(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	tmpDir := t.TempDir()
@@ -340,7 +288,7 @@ func TestNoteService_SearchNotes_ContentHasText(t *testing.T) {
 	testutil.CreateTestNote(t, notebookDir, "note.md", expectedContent)
 
 	idx := testutil.CreateTestIndex(t, notebookDir)
-	svc := services.NewNoteService(cfg, db, idx, notebookDir)
+	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
@@ -351,27 +299,19 @@ func TestNoteService_SearchNotes_ContentHasText(t *testing.T) {
 }
 
 func TestNewNoteService(t *testing.T) {
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	cfg, _ := services.NewConfigServiceWithPath(t.TempDir() + "/config.json")
 
-	svc := services.NewNoteService(cfg, db, nil, "/test/notebook/path")
+	svc := services.NewNoteService(cfg, nil, "/test/notebook/path")
 
 	assert.NotNil(t, svc)
 }
 
 func TestNoteService_SearchNotes_DisplayNameWithTitle(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	tmpDir := t.TempDir()
@@ -388,7 +328,7 @@ func TestNoteService_SearchNotes_DisplayNameWithTitle(t *testing.T) {
 	)
 
 	idx := testutil.CreateTestIndex(t, notebookDir)
-	svc := services.NewNoteService(cfg, db, idx, notebookDir)
+	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
@@ -399,11 +339,7 @@ func TestNoteService_SearchNotes_DisplayNameWithTitle(t *testing.T) {
 
 func TestNoteService_SearchNotes_DisplayNameSlugifyFilename(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	tmpDir := t.TempDir()
@@ -415,7 +351,7 @@ func TestNoteService_SearchNotes_DisplayNameSlugifyFilename(t *testing.T) {
 	testutil.CreateTestNote(t, notebookDir, "Hello World.md", "# Hello\n\nContent here.")
 
 	idx := testutil.CreateTestIndex(t, notebookDir)
-	svc := services.NewNoteService(cfg, db, idx, notebookDir)
+	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
@@ -426,11 +362,7 @@ func TestNoteService_SearchNotes_DisplayNameSlugifyFilename(t *testing.T) {
 
 func TestNoteService_SearchNotes_DisplayNameMultipleNotes(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	tmpDir := t.TempDir()
@@ -450,7 +382,7 @@ func TestNoteService_SearchNotes_DisplayNameMultipleNotes(t *testing.T) {
 	)
 
 	idx := testutil.CreateTestIndex(t, notebookDir)
-	svc := services.NewNoteService(cfg, db, idx, notebookDir)
+	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	notes, err := svc.SearchNotes(ctx, "", false)
 	require.NoError(t, err)
@@ -473,11 +405,7 @@ func TestNoteService_SearchNotes_DisplayNameMultipleNotes(t *testing.T) {
 
 func TestNoteService_SearchNotes_ComplexQueries(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	tmpDir := t.TempDir()
@@ -493,7 +421,7 @@ func TestNoteService_SearchNotes_ComplexQueries(t *testing.T) {
 	testutil.CreateTestNote(t, notebookDir, "mixed-content.md", "# Mixed Content\n\nThis mentions golang, python, and javascript.")
 
 	idx := testutil.CreateTestIndex(t, notebookDir)
-	svc := services.NewNoteService(cfg, db, idx, notebookDir)
+	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	tests := []struct {
 		name          string
@@ -552,11 +480,7 @@ func TestNoteService_SearchNotes_ComplexQueries(t *testing.T) {
 
 func TestNoteService_SearchNotes_SpecialCharacters(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	tmpDir := t.TempDir()
@@ -571,7 +495,7 @@ func TestNoteService_SearchNotes_SpecialCharacters(t *testing.T) {
 	testutil.CreateTestNote(t, notebookDir, "math.md", "# Math\n\n2 + 2 = 4, x² + y² = z²")
 
 	idx := testutil.CreateTestIndex(t, notebookDir)
-	svc := services.NewNoteService(cfg, db, idx, notebookDir)
+	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	tests := []struct {
 		name          string
@@ -632,11 +556,7 @@ func TestNoteService_SearchNotes_SpecialCharacters(t *testing.T) {
 
 func TestNoteService_SearchNotes_LargeResultSets(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	tmpDir := t.TempDir()
@@ -659,7 +579,7 @@ func TestNoteService_SearchNotes_LargeResultSets(t *testing.T) {
 	}
 
 	idx := testutil.CreateTestIndex(t, notebookDir)
-	svc := services.NewNoteService(cfg, db, idx, notebookDir)
+	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	// Test large result set
 	notes, err := svc.SearchNotes(ctx, commonWord, false)
@@ -682,11 +602,7 @@ func TestNoteService_SearchNotes_LargeResultSets(t *testing.T) {
 
 func TestNoteService_SearchNotes_FrontmatterEdgeCases(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	tmpDir := t.TempDir()
@@ -737,7 +653,7 @@ Content despite frontmatter issues.`
 	testutil.CreateTestNote(t, notebookDir, "malformed-frontmatter.md", malformedFrontmatter)
 
 	idx := testutil.CreateTestIndex(t, notebookDir)
-	svc := services.NewNoteService(cfg, db, idx, notebookDir)
+	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	// Test that all notes are found regardless of frontmatter quality
 	allNotes, err := svc.SearchNotes(ctx, "", false)
@@ -767,18 +683,14 @@ Content despite frontmatter issues.`
 
 func TestNoteService_SearchNotes_ErrorConditions(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	tmpDir := t.TempDir()
 	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
 
 	// Test with empty/non-existent notebook
-	svc := services.NewNoteService(cfg, db, nil, "")
+	svc := services.NewNoteService(cfg, nil, "")
 
 	notes, err := svc.SearchNotes(ctx, "test", false)
 	assert.Error(t, err, "Should error when no notebook selected")
@@ -787,7 +699,7 @@ func TestNoteService_SearchNotes_ErrorConditions(t *testing.T) {
 
 	// Test with non-existent notebook path
 	nonExistentPath := filepath.Join(tmpDir, "nonexistent-notebook")
-	svc2 := services.NewNoteService(cfg, db, nil, nonExistentPath)
+	svc2 := services.NewNoteService(cfg, nil, nonExistentPath)
 
 	// This might not error immediately since DuckDB might handle empty globs gracefully
 	notes2, err := svc2.SearchNotes(ctx, "test", false)
@@ -806,11 +718,7 @@ func TestNoteService_SearchNotes_ErrorConditions(t *testing.T) {
 
 func TestNoteService_SearchWithConditions_SimpleAnd(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	tmpDir := t.TempDir()
@@ -841,7 +749,7 @@ Team meeting.
 `)
 
 	idx := testutil.CreateTestIndex(t, notebookDir)
-	svc := services.NewNoteService(cfg, db, idx, notebookDir)
+	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	// Single AND condition
 	conditions := []services.QueryCondition{
@@ -864,11 +772,7 @@ Team meeting.
 
 func TestNoteService_SearchWithConditions_MultipleAnd(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	tmpDir := t.TempDir()
@@ -895,7 +799,7 @@ status: active
 `)
 
 	idx := testutil.CreateTestIndex(t, notebookDir)
-	svc := services.NewNoteService(cfg, db, idx, notebookDir)
+	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	// Multiple AND conditions - both must match
 	conditions := []services.QueryCondition{
@@ -919,11 +823,7 @@ status: active
 
 func TestNoteService_SearchWithConditions_OrConditions(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	tmpDir := t.TempDir()
@@ -947,7 +847,7 @@ priority: low
 `)
 
 	idx := testutil.CreateTestIndex(t, notebookDir)
-	svc := services.NewNoteService(cfg, db, idx, notebookDir)
+	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	// OR conditions - any can match
 	conditions := []services.QueryCondition{
@@ -969,11 +869,7 @@ priority: low
 
 func TestNoteService_SearchWithConditions_NotCondition(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	tmpDir := t.TempDir()
@@ -1000,7 +896,7 @@ status: done
 `)
 
 	idx := testutil.CreateTestIndex(t, notebookDir)
-	svc := services.NewNoteService(cfg, db, idx, notebookDir)
+	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	// NOT condition - exclude archived
 	conditions := []services.QueryCondition{
@@ -1022,11 +918,7 @@ status: done
 
 func TestNoteService_SearchWithConditions_PathGlob(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	tmpDir := t.TempDir()
@@ -1052,7 +944,7 @@ title: Task 1
 `)
 
 	idx := testutil.CreateTestIndex(t, notebookDir)
-	svc := services.NewNoteService(cfg, db, idx, notebookDir)
+	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	// Path glob pattern matching "epic*.md" files
 	conditions := []services.QueryCondition{
@@ -1072,11 +964,7 @@ title: Task 1
 
 func TestNoteService_SearchWithConditions_NoResults(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	tmpDir := t.TempDir()
@@ -1090,7 +978,7 @@ tag: meeting
 `)
 
 	idx := testutil.CreateTestIndex(t, notebookDir)
-	svc := services.NewNoteService(cfg, db, idx, notebookDir)
+	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	// Search for non-existent tag
 	conditions := []services.QueryCondition{
@@ -1105,18 +993,14 @@ tag: meeting
 
 func TestNoteService_SearchWithConditions_NoNotebook(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	tmpDir := t.TempDir()
 	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
 
 	// Create service without notebook path
-	svc := services.NewNoteService(cfg, db, nil, "")
+	svc := services.NewNoteService(cfg, nil, "")
 
 	conditions := []services.QueryCondition{
 		{Type: "and", Field: "data.tag", Operator: "=", Value: "test"},
@@ -1131,11 +1015,7 @@ func TestNoteService_SearchWithConditions_NoNotebook(t *testing.T) {
 
 func TestNoteService_SearchWithConditions_ComplexQuery(t *testing.T) {
 	ctx := context.Background()
-	db := services.NewDbService()
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Logf("warning: failed to close db: %v", err)
-		}
 	})
 
 	tmpDir := t.TempDir()
@@ -1172,7 +1052,7 @@ priority: high
 `)
 
 	idx := testutil.CreateTestIndex(t, notebookDir)
-	svc := services.NewNoteService(cfg, db, idx, notebookDir)
+	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	// Complex query: AND + OR
 	conditions := []services.QueryCondition{

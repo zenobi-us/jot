@@ -79,20 +79,17 @@ func documentToNote(doc search.Document) Note {
 // NoteService provides note query operations.
 type NoteService struct {
 	configService *ConfigService
-	dbService     *DbService   // TODO: Remove after migration
-	index         search.Index // New: Bleve-based search
+	index         search.Index
 	searchService *SearchService
 	notebookPath  string
 	log           zerolog.Logger
 }
 
 // NewNoteService creates a note service for a notebook.
-// TODO: Remove db parameter after migration complete
-func NewNoteService(cfg *ConfigService, db *DbService, index search.Index, notebookPath string) *NoteService {
+func NewNoteService(cfg *ConfigService, index search.Index, notebookPath string) *NoteService {
 	return &NoteService{
 		configService: cfg,
-		dbService:     db,    // TODO: Remove after migration
-		index:         index, // New: Bleve-based search
+		index:         index,
 		searchService: NewSearchService(),
 		notebookPath:  notebookPath,
 		log:           Log("NoteService"),
@@ -162,8 +159,6 @@ func (s *NoteService) Count(ctx context.Context) (int, error) {
 
 	return int(count), nil
 }
-
-
 
 // SearchWithConditions executes a boolean query with the given conditions.
 // Uses Bleve Index for querying instead of DuckDB SQL.

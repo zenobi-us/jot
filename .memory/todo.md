@@ -21,22 +21,28 @@
 | 5. DuckDB Removal | 🔄 **IN PROGRESS** | Remove all DuckDB code - [phase-02df510c](phase-02df510c-duckdb-removal.md) |
 | 6. Semantic Search | 🔜 | Optional chromem-go integration |
 
-### Session 2026-02-02 Afternoon - 🔄 PHASE 5.2.5 IN PROGRESS
+### Session 2026-02-02 Afternoon - 🔄 PHASE 5.2.6 IN PROGRESS
 
-**Phase 5.2.5 - CLI Command Migration** 🔄 **IN PROGRESS**:
+**Phase 5.2.6 - Service Method Cleanup** 🔄 **IN PROGRESS**:
 
-See detailed task: [task-8c1171cb-cli-command-migration.md](.memory/task-8c1171cb-cli-command-migration.md)
+See detailed task: [task-a7b8c9d0-service-method-cleanup.md](.memory/task-a7b8c9d0-service-method-cleanup.md)
 
 Quick checklist:
-- [x] Audit CLI commands for DuckDB usage
-- [ ] Remove SQL methods (ExecuteSQLSafe, Query) from NoteService
-- [ ] Remove --sql flag from notes search
-- [ ] Update help text with new query DSL examples
-- [ ] Verify requireNotebook() creates index
-- [ ] Run tests and manual verification
-- [ ] Update CHANGELOG and migration guide
+- [ ] Remove DbService from NoteService
+- [ ] Remove DbService from NotebookService
+- [ ] Remove DbService from cmd/root.go
+- [ ] Handle cmd/notes_view.go (remove SQL view support)
+- [ ] Clean up internal/services/view.go
+- [ ] Delete internal/services/db.go
+- [ ] Run tests and verify
+- [ ] Update CHANGELOG and docs
 
-**Breaking Change**: Removing `--sql` flag completely
+**Breaking Change**: Removing SQL view support completely
+
+**Phase 5.2.5 - CLI Command Migration** ✅ **COMPLETE**:
+- All CLI commands verified to use Bleve only
+- SQL methods removed from NoteService
+- Documentation updated (README, CHANGELOG)
 
 ### Session 2026-02-02 Morning - ✅ PHASE 5.2.4 COMPLETE
 

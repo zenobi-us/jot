@@ -16,8 +16,7 @@ import (
 func TestNotebookService_ConcurrentDiscovery(t *testing.T) {
 	configService, err := services.NewConfigService()
 	require.NoError(t, err)
-	dbService := services.NewDbService()
-	notebookService := services.NewNotebookService(configService, dbService)
+	notebookService := services.NewNotebookService(configService)
 
 	const numGoroutines = 10
 	var wg sync.WaitGroup
@@ -59,7 +58,6 @@ func TestNotebookService_ConcurrentDiscovery(t *testing.T) {
 
 // TestDbService_ConnectionPoolStress tests database connection handling under concurrent load
 func TestDbService_ConnectionPoolStress(t *testing.T) {
-	dbService := services.NewDbService()
 	defer func() { _ = dbService.Close() }()
 
 	const numGoroutines = 20
@@ -118,7 +116,6 @@ func TestDbService_ConcurrentInitialization(t *testing.T) {
 		go func() {
 			defer wg.Done()
 
-			dbService := services.NewDbService()
 			defer func() { _ = dbService.Close() }()
 
 			ctx := context.Background()
@@ -204,7 +201,6 @@ func TestServices_ContextCancellation(t *testing.T) {
 		go func() {
 			defer wg.Done()
 
-			dbService := services.NewDbService()
 			defer func() { _ = dbService.Close() }()
 
 			// This should be cancelled by context timeout
@@ -252,10 +248,9 @@ func TestServices_MemoryGrowth(t *testing.T) {
 				return
 			}
 
-			dbService := services.NewDbService()
 			defer func() { _ = dbService.Close() }()
 
-			notebookService := services.NewNotebookService(configService, dbService)
+			notebookService := services.NewNotebookService(configService)
 			_, _ = notebookService.List("") // Trigger some operations
 		}()
 	}
@@ -281,10 +276,9 @@ func TestServices_RaceConditions(t *testing.T) {
 	configService, err := services.NewConfigService()
 	require.NoError(t, err)
 
-	dbService := services.NewDbService()
 	defer func() { _ = dbService.Close() }()
 
-	notebookService := services.NewNotebookService(configService, dbService)
+	notebookService := services.NewNotebookService(configService)
 
 	const numGoroutines = 30
 	var wg sync.WaitGroup
@@ -355,7 +349,6 @@ func TestServices_HighConcurrency(t *testing.T) {
 				return
 			}
 
-			dbService := services.NewDbService()
 			defer func() { _ = dbService.Close() }()
 
 			for j := 0; j < operationsPerWorker; j++ {

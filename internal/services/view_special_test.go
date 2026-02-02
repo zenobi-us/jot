@@ -52,7 +52,7 @@ Check out [this link](nonexistent.md) for more info.
 	// Setup
 	cfg, _ := NewConfigServiceWithPath(":memory:")
 	idx := createTestIndexLocal(t)
-	noteService := NewNoteService(cfg, NewDbService(), idx, notebookPath)
+	noteService := NewNoteService(cfg, idx, notebookPath)
 	executor := NewSpecialViewExecutor(noteService)
 
 	// Execute
@@ -87,7 +87,7 @@ See [[nonexistent-note]] for details.
 
 	cfg, _ := NewConfigServiceWithPath(":memory:")
 	idx := createTestIndexLocal(t)
-	noteService := NewNoteService(cfg, NewDbService(), idx, notebookPath)
+	noteService := NewNoteService(cfg, idx, notebookPath)
 	executor := NewSpecialViewExecutor(noteService)
 
 	results, err := executor.ExecuteBrokenLinksView(context.Background())
@@ -115,7 +115,7 @@ title: External links
 
 	cfg, _ := NewConfigServiceWithPath(":memory:")
 	idx := createTestIndexLocal(t)
-	noteService := NewNoteService(cfg, NewDbService(), idx, notebookPath)
+	noteService := NewNoteService(cfg, idx, notebookPath)
 	executor := NewSpecialViewExecutor(noteService)
 
 	results, err := executor.ExecuteBrokenLinksView(context.Background())
@@ -138,7 +138,7 @@ func TestSpecialViewExecutor_Orphans_FindsNoIncomingLinksNotes(t *testing.T) {
 
 	cfg, _ := NewConfigServiceWithPath(":memory:")
 	idx := createTestIndexLocal(t)
-	noteService := NewNoteService(cfg, NewDbService(), idx, notebookPath)
+	noteService := NewNoteService(cfg, idx, notebookPath)
 	executor := NewSpecialViewExecutor(noteService)
 
 	results, err := executor.ExecuteOrphansView(context.Background(), "no-incoming")
@@ -172,7 +172,7 @@ This note is tagged so it's not isolated.
 
 	cfg, _ := NewConfigServiceWithPath(":memory:")
 	idx := createTestIndexLocal(t)
-	noteService := NewNoteService(cfg, NewDbService(), idx, notebookPath)
+	noteService := NewNoteService(cfg, idx, notebookPath)
 	executor := NewSpecialViewExecutor(noteService)
 
 	results, err := executor.ExecuteOrphansView(context.Background(), "isolated")
@@ -201,7 +201,7 @@ links: ["frontmatter-link.md"]
 
 	cfg, _ := NewConfigServiceWithPath(":memory:")
 	idx := createTestIndexLocal(t)
-	noteService := NewNoteService(cfg, NewDbService(), idx, notebookPath)
+	noteService := NewNoteService(cfg, idx, notebookPath)
 	executor := NewSpecialViewExecutor(noteService)
 
 	// Get all notes

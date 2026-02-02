@@ -1,11 +1,9 @@
 package cmd
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/zenobi-us/opennotes/internal/core"
@@ -78,81 +76,36 @@ EXAMPLES:
 		// Initialize ViewService
 		vs := services.NewViewService(cfgService, notebookDir)
 
-		// Get the view definition
-		view, err := vs.GetView(viewName)
-		if err != nil {
-			return fmt.Errorf("failed to load view: %w", err)
-		}
-
 		// Parse user parameters
 		userParams, err := vs.ParseViewParameters(viewParams)
 		if err != nil {
 			return fmt.Errorf("failed to parse parameters: %w", err)
 		}
 
-		// Generate SQL query (note: returns read_markdown() query with placeholder for glob)
-		sqlQuery, sqlArgs, err := vs.GenerateSQL(view, userParams)
-		if err != nil {
-			return fmt.Errorf("failed to generate query: %w", err)
-		}
+		// SQL views are no longer supported after DuckDB removal
+		return fmt.Errorf(`SQL views are no longer supported
 
-		// Prepend glob pattern to args (read_markdown() requires it as first parameter)
-		glob := fmt.Sprintf("%s/**/*.md", notebookDir)
-		finalArgs := append([]interface{}{glob}, sqlArgs...)
+OpenNotes has removed DuckDB and SQL query support in favor of a pure Go
+full-text search implementation using Bleve.
 
-		// Execute the query using raw database access
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer cancel()
+MIGRATION OPTIONS:
 
-		db, err := dbService.GetDB(ctx)
-		if err != nil {
-			return fmt.Errorf("database connection failed: %w", err)
-		}
+1. Use query DSL for searches:
+   opennotes notes search "tag:work status:todo"
+   opennotes notes search "project AND (urgent OR high-priority)"
 
-		rows, err := db.QueryContext(ctx, sqlQuery, finalArgs...)
-		if err != nil {
-			return fmt.Errorf("query execution failed: %w", err)
-		}
-		defer func() {
-			_ = rows.Close()
-		}()
+2. Use 'notes list' with filtering:
+   opennotes notes list
 
-		// Convert rows to map format for display
-		columns, err := rows.Columns()
-		if err != nil {
-			return fmt.Errorf("failed to get columns: %w", err)
-		}
+3. For advanced filtering, use jq with JSON output:
+   opennotes notes list --format json | jq '.notes[] | select(.metadata.status == "todo")'
 
-		var results []map[string]interface{}
-		for rows.Next() {
-			values := make([]interface{}, len(columns))
-			for i := range columns {
-				values[i] = new(interface{})
-			}
-			if err := rows.Scan(values...); err != nil {
-				return fmt.Errorf("failed to scan row: %w", err)
-			}
-			row := make(map[string]interface{})
-			for i, col := range columns {
-				row[col] = *(values[i].(*interface{}))
-			}
-			results = append(results, row)
-		}
+BREAKING CHANGE: This is part of the DuckDB removal in version 0.1.0.
+Custom views using SQL queries must be migrated to use the query DSL or
+external tooling (jq, grep, etc.).
 
-		if err = rows.Err(); err != nil {
-			return fmt.Errorf("row iteration error: %w", err)
-		}
-
-		// Group results if needed
-		viewResults := vs.GroupResults(view, results)
-
-		// Return JSON output
-		jsonBytes, err := json.Marshal(viewResults)
-		if err != nil {
-			return fmt.Errorf("failed to marshal JSON: %w", err)
-		}
-		fmt.Println(string(jsonBytes))
-		return nil
+View name: %s
+Parameters: %v`, viewName, userParams)
 	},
 }
 

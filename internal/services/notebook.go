@@ -50,15 +50,13 @@ type Notebook struct {
 // NotebookService manages notebook operations.
 type NotebookService struct {
 	configService *ConfigService
-	dbService     *DbService
 	log           zerolog.Logger
 }
 
 // NewNotebookService creates a notebook service.
-func NewNotebookService(cfg *ConfigService, db *DbService) *NotebookService {
+func NewNotebookService(cfg *ConfigService) *NotebookService {
 	return &NotebookService{
 		configService: cfg,
-		dbService:     db,
 		log:           Log("NotebookService"),
 	}
 }
@@ -129,7 +127,7 @@ func (s *NotebookService) Open(notebookPath string) (*Notebook, error) {
 		return nil, fmt.Errorf("failed to create search index: %w", err)
 	}
 
-	noteService := NewNoteService(s.configService, s.dbService, idx, config.Root)
+	noteService := NewNoteService(s.configService, idx, config.Root)
 
 	return &Notebook{
 		Config: *config,
@@ -368,7 +366,7 @@ func (s *NotebookService) Create(name, path string, register bool) (*Notebook, e
 		return nil, fmt.Errorf("failed to create search index: %w", err)
 	}
 
-	noteService := NewNoteService(s.configService, s.dbService, idx, notesDir)
+	noteService := NewNoteService(s.configService, idx, notesDir)
 	notebook := &Notebook{
 		Config: config,
 		Notes:  noteService,

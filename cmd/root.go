@@ -19,7 +19,6 @@ var (
 var (
 	// Services initialized in PersistentPreRunE
 	cfgService      *services.ConfigService
-	dbService       *services.DbService
 	notebookService *services.NotebookService
 )
 
@@ -72,22 +71,10 @@ Examples:
 			return err
 		}
 
-		// Initialize database service
-		dbService = services.NewDbService()
-
 		// Initialize notebook service
-		notebookService = services.NewNotebookService(cfgService, dbService)
+		notebookService = services.NewNotebookService(cfgService)
 
 		return nil
-	},
-	PersistentPostRun: func(cmd *cobra.Command, args []string) {
-		// Cleanup database connection
-		if dbService != nil {
-			if err := dbService.Close(); err != nil {
-				log := services.Log("cleanup")
-				log.Warn().Err(err).Msg("failed to close database")
-			}
-		}
 	},
 }
 
