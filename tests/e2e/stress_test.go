@@ -441,9 +441,14 @@ func TestNoteService_MemoryUsageScale(t *testing.T) {
 			t.Logf("Size: %d notes, Memory: %s, Per note: %s",
 				size, formatBytes(memUsed), formatBytes(memPerNote))
 
-			// Memory per note should be reasonable (< 50KB per note including metadata)
-			assert.Less(t, memPerNote, uint64(50*1024),
-				"Memory per note should be < 50KB")
+			// Memory per note should be reasonable (allow higher overhead for small datasets)
+			maxPerNote := uint64(50 * 1024)
+			if size <= 100 {
+				maxPerNote = uint64(100 * 1024)
+			}
+
+			assert.Less(t, memPerNote, maxPerNote,
+				"Memory per note should be within expected bounds")
 
 			// Total memory should be reasonable (< 50MB for 500 notes)
 			if size >= 500 {

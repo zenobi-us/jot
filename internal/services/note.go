@@ -127,7 +127,16 @@ func (s *NoteService) getAllNotes(ctx context.Context) ([]Note, error) {
 	s.log.Debug().Msg("loading notes from index")
 
 	// Query index for all documents (empty query matches all)
-	results, err := s.index.Find(ctx, search.FindOpts{})
+	count, err := s.index.Count(ctx, search.FindOpts{})
+	if err != nil {
+		return nil, fmt.Errorf("index count failed: %w", err)
+	}
+
+	if count == 0 {
+		return []Note{}, nil
+	}
+
+	results, err := s.index.Find(ctx, search.FindOpts{Limit: int(count)})
 	if err != nil {
 		return nil, fmt.Errorf("index query failed: %w", err)
 	}

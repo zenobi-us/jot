@@ -16,7 +16,7 @@ When run without a subcommand, displays info about the current notebook.
 QUICK START WITH EXISTING MARKDOWN:
   1. Import: opennotes notebook create "My Notes" --path ~/my-notes
   2. Verify: opennotes notes list
-  3. Query: opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md') LIMIT 5"
+  3. Search: opennotes notes search "meeting" --fuzzy
 
 AUTO-DISCOVERY:
   - Notebooks are discovered by looking for .opennotes.json in current directory or ancestors

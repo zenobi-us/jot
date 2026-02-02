@@ -96,8 +96,11 @@ jobs:
             echo "✓ Using cached extension ($(du -h markdown.duckdb_extension | cut -f1))"
           fi
 
+      - name: Build
+        run: mise run build
+
       - name: Generate coverage
-        run: go test -v -coverprofile=coverage.out ./...
+        run: mise run test --coverage
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3

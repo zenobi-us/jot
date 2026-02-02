@@ -57,8 +57,8 @@ create_test_note() {
     [[ "$status" -eq 0 ]]
     [[ "$output" =~ "OpenNotes initialized" ]]
     
-    # Check config file exists in HOME directory (not test directory)
-    [[ -f "$HOME_BACKUP/.config/opennotes/config.json" ]]
+    # Check config file exists in configured path
+    [[ -f "$OPENNOTES_CONFIG" ]]
 }
 
 # Test 3: Create and list notebooks
@@ -116,44 +116,39 @@ create_test_note() {
     [[ ! "$output" =~ "note2.md" ]]
 }
 
-# Test 6: SQL querying functionality
-@test "SQL querying with DuckDB" {
+# Test 6: Boolean query functionality
+@test "Boolean query filtering" {
     # Setup
     opennotes init
-    notebook_dir=$(create_test_notebook "sql-test")
+    notebook_dir=$(create_test_notebook "query-test")
     
     # Create some notes
     create_test_note "$notebook_dir" "task1.md" "# Task 1\n\nPriority: High\nStatus: TODO"
     create_test_note "$notebook_dir" "task2.md" "# Task 2\n\nPriority: Low\nStatus: DONE"
     
-    # Test basic SQL query
-    run opennotes --notebook "$notebook_dir" notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)"
-    [[ "$status" -eq 0 ]]
-    [[ "$output" =~ "task1.md" ]]
-    [[ "$output" =~ "task2.md" ]]
-    
-    # Test markdown content querying
-    run opennotes --notebook "$notebook_dir" notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) WHERE content LIKE '%High%'"
+    # Exact path match
+    run opennotes --notebook "$notebook_dir" notes search query --and path=task1.md
     [[ "$status" -eq 0 ]]
     [[ "$output" =~ "task1.md" ]]
     [[ ! "$output" =~ "task2.md" ]]
+    
+    # Wildcard path match
+    run opennotes --notebook "$notebook_dir" notes search query --and path=task*.md
+    [[ "$status" -eq 0 ]]
+    [[ "$output" =~ "task1.md" ]]
+    [[ "$output" =~ "task2.md" ]]
 }
 
-# Test 7: SQL security (path traversal protection)
-@test "SQL security prevents path traversal" {
+# Test 7: Fuzzy search basics
+@test "Fuzzy search finds close matches" {
     # Setup
     opennotes init
-    notebook_dir=$(create_test_notebook "security-test")
-    create_test_note "$notebook_dir" "safe.md" "# Safe Note"
+    notebook_dir=$(create_test_notebook "fuzzy-test")
+    create_test_note "$notebook_dir" "meeting-notes.md" "# Meeting Notes\n\nDiscussed roadmap"
     
-    # These should be blocked by path traversal protection
-    run opennotes --notebook "$notebook_dir" notes search --sql "SELECT content FROM read_markdown('../../../etc/passwd')"
-    [[ "$status" -ne 0 ]]
-    [[ "$output" =~ "path traversal not allowed" ]]
-    
-    run opennotes --notebook "$notebook_dir" notes search --sql "SELECT content FROM read_markdown('/etc/passwd')"
-    [[ "$status" -ne 0 ]]
-    [[ "$output" =~ "path traversal not allowed" ]]
+    run opennotes --notebook "$notebook_dir" notes search --fuzzy "metng"
+    [[ "$status" -eq 0 ]]
+    [[ "$output" =~ "meeting-notes.md" ]]
 }
 
 # Test 8: Note removal
@@ -196,7 +191,7 @@ create_test_note() {
 # Test 10: Error handling
 @test "Proper error handling" {
     # Ensure clean state - remove any existing config
-    rm -rf "$HOME/.config/opennotes"
+    rm -rf "$(dirname "$OPENNOTES_CONFIG")"
     # Test without initialization
     run opennotes notebook list
     [[ "$status" -ne 0 ]]
@@ -208,51 +203,25 @@ create_test_note() {
     [[ "$status" -ne 0 ]]
     [[ "$output" =~ "notebook not found" || "$output" =~ "Error" || "$output" =~ "error" ]]
     
-    # Test invalid SQL
+    # Test invalid query field
     notebook_dir=$(create_test_notebook "error-test")
-    run opennotes --notebook "$notebook_dir" notes search --sql "SELECT * FROM table WHERE invalid syntax here"
+    run opennotes --notebook "$notebook_dir" notes search query --and data.unknown=oops
     [[ "$status" -ne 0 ]]
-    [[ "$output" =~ "Error" || "$output" =~ "syntax" ]]
+    [[ "$output" =~ "invalid field" || "$output" =~ "allowed" ]]
 }
 
-# Test 11: Complex SQL with Common Table Expressions (CTEs)
-@test "Advanced SQL features work correctly" {
+# Test 11: Advanced boolean queries
+@test "Advanced boolean queries work correctly" {
     # Setup
     opennotes init
-    notebook_dir=$(create_test_notebook "advanced-sql-test")
+    notebook_dir=$(create_test_notebook "advanced-query-test")
     
-    # Create notes with frontmatter
-    cat > "$notebook_dir/project1.md" << 'EOF'
----
-title: Project Alpha
-priority: high
-status: active
-tags: [work, important]
----
-# Project Alpha
-This is a high priority project.
-EOF
-
-    cat > "$notebook_dir/project2.md" << 'EOF'
----
-title: Project Beta
-priority: low
-status: completed
-tags: [work, archive]
----
-# Project Beta
-This project is now completed.
-EOF
-
-    # Test CTE query  
-    run opennotes --notebook "$notebook_dir" notes search --sql "
-    WITH high_priority AS (
-        SELECT file_path, content
-        FROM read_markdown('**/*.md', include_filepath:=true)
-        WHERE content LIKE '%priority: high%'
-    )
-    SELECT file_path FROM high_priority
-    "
+    # Create notes
+    create_test_note "$notebook_dir" "project1.md" "# Project Alpha\n\nHigh priority project."
+    create_test_note "$notebook_dir" "project2.md" "# Project Beta\n\nLow priority project."
+    
+    # Use AND + NOT to filter
+    run opennotes --notebook "$notebook_dir" notes search query --and path=project*.md --not path=project2.md
     [[ "$status" -eq 0 ]]
     [[ "$output" =~ "project1.md" ]]
     [[ ! "$output" =~ "project2.md" ]]
@@ -270,16 +239,16 @@ EOF
     
     # Add multiple notes
     notebook_dir="$TEST_DIR/workflow-test"
-    run opennotes --notebook "$notebook_dir" notes add "meeting-notes.md"
+    run opennotes --notebook "$notebook_dir" notes add "Meeting Notes" "meeting-notes.md"
     [[ "$status" -eq 0 ]]
-    run opennotes --notebook "$notebook_dir" notes add "project-plan.md"  
+    run opennotes --notebook "$notebook_dir" notes add "Project Plan" "project-plan.md"  
     [[ "$status" -eq 0 ]]
     
     # List all notes
     run opennotes --notebook "$notebook_dir" notes list
     [[ "$status" -eq 0 ]]
-    [[ "$output" =~ "meeting-notes.md" ]]
-    [[ "$output" =~ "project-plan.md" ]]
+    [[ "$output" =~ "Meeting Notes" ]]
+    [[ "$output" =~ "Project Plan" ]]
     
     # Search notes
     # Add content to one note first  
@@ -289,10 +258,10 @@ EOF
     [[ "$status" -eq 0 ]]
     [[ "$output" =~ "meeting-notes.md" ]]
     
-    # SQL query to count notes
-    run opennotes --notebook "$notebook_dir" notes search --sql "SELECT COUNT(*) as total FROM read_markdown('**/*.md')"
+    # List all notes via search output
+    run opennotes --notebook "$notebook_dir" notes search
     [[ "$status" -eq 0 ]]
-    [[ "$output" =~ "2" ]]
+    [[ "$output" =~ "Found 2 note(s)" ]]
     
     # Get notebook info
     run opennotes --notebook "$notebook_dir" notebook
