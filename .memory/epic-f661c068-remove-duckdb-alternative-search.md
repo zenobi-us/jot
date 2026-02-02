@@ -74,7 +74,7 @@ learning_doc: learning-f661c068-duckdb-removal-epic-complete.md
 | 3 | Query Parser | ✅ `complete` | [phase-f29cef1b-query-parser.md](archive/phase-f29cef1b-query-parser.md) |
 | 4 | Bleve Search Backend | ✅ `complete` | [phase-3a5e0381-bleve-backend.md](archive/phase-3a5e0381-bleve-backend.md) |
 | 5 | DuckDB Removal & Cleanup | ✅ `complete` | [phase-02df510c-duckdb-removal.md](archive/phase-02df510c-duckdb-removal.md) |
-| 6 | Semantic Search (Optional) | 🔜 `proposed` | TBD |
+| 6 | Semantic Search (Optional) | 🔜 `proposed` | [phase-7c9d2e1f-semantic-search.md](phase-7c9d2e1f-semantic-search.md) |
 
 ## Research Findings Summary
 

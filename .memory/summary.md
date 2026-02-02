@@ -49,7 +49,7 @@
 
 **Deferred to Future**:
 - Phase 5.3: Link Graph Index (separate epic)
-- Phase 6: Semantic Search (optional enhancement)
+- Phase 6: Semantic Search (optional enhancement) - [phase-7c9d2e1f-semantic-search.md](phase-7c9d2e1f-semantic-search.md)
 - Fuzzy parser syntax `~term` (3-4 hours)
 
 ### Pi-OpenNotes Extension
