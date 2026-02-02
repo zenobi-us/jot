@@ -65,17 +65,18 @@ internal/search/bleve/
   - Phase 5.2.2: getAllNotes() migration ✅
   - Phase 5.2.3: SearchWithConditions() migration ✅ (with BuildQuery)
   - Phase 5.2.4: Count() migration ✅ (completed in 5.2.2)
-- 🔄 Current: Phase 5.2.5 - CLI Command Migration
+- ✅ Phase 5.2.5: CLI Command Migration - COMPLETE
+- 🔜 Next: Phase 5.2.6 - Service Method Cleanup
 - Started: 2026-02-01 21:17
-- Last Update: 2026-02-02 13:32
+- Last Update: 2026-02-02 13:45
 
-**Progress**: 5 of 11 sub-phases complete (45%)
+**Progress**: 6 of 11 sub-phases complete (55%)
 - 5.1: Codebase audit ✅
 - 5.2.1: NoteService struct update ✅
 - 5.2.2: getAllNotes() migration ✅
 - 5.2.3: SearchWithConditions() migration ✅
 - 5.2.4: Count() migration ✅
-- 5.2.5: CLI Command Migration 🔄 **STARTING**
+- 5.2.5: CLI Command Migration ✅
 - 5.2.6-5.11: Pending 🔜
 
 ### Pi-OpenNotes Extension
@@ -93,12 +94,15 @@ internal/search/bleve/
 
 ## Session History
 
-**Session 2026-02-02 (Afternoon - Phase 5.2.5 Starting)**
-- 🔄 **Starting Phase 5.2.5: CLI Command Migration**
-- 📋 Audit CLI commands for DuckDB usage
-- 🎯 Target: Migrate `notes search --sql` and update requireNotebook()
-- 📝 Remove ExecuteSQLSafe() and Query() methods
-- ⚡ Goal: Pure Go search, no SQL interface
+**Session 2026-02-02 (Afternoon - Phase 5.2.5 Complete)**
+- ✅ **Completed Phase 5.2.5: CLI Command Migration**
+- ✅ Verified CLI commands have no SQL references (already migrated)
+- ✅ Confirmed requireNotebook() initializes Bleve index correctly
+- ✅ All 161+ core tests pass
+- ✅ Updated README.md: Removed DuckDB, added full-text search features
+- ✅ Updated CHANGELOG.md: Added BREAKING CHANGES section with migration guide
+- 📝 Lesson: CLI layer was already clean from previous phases
+- Commits: 8ec345d, d7e9120
 
 **Session 2026-02-02 (Morning - Phase 5.2.4 Complete)**
 - ✅ **Completed Phase 5.2.4: Count() Migration**
