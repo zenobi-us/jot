@@ -10,7 +10,7 @@ A simple, fast, and powerful CLI tool for managing your markdown notes. OpenNote
 - Create, list, search, and view notes from the command line.
 - Associate default metadata based on groups or folders.
 - Preset queries: Kanban, Daily Notes, Tags, and more
-- Advanced SQL search powered by DuckDB
+- Full-text search with fuzzy matching and boolean queries
 
 ## Installation
 
@@ -99,6 +99,6 @@ Global configuration is stored in:
 
 ## Advanced Usage
 
-OpenNotes is built on DuckDB, allowing for powerful SQL querying, automation, and complex data extraction for power users.
+OpenNotes provides powerful search capabilities with full-text search, fuzzy matching, and boolean query operators for complex filtering.
 
-For advanced features like SQL search, JSON output for automation, and multi-notebook management, please see our **[Advanced Documentation](docs/getting-started-power-users.md)**.
+For advanced features like boolean queries, JSON output for automation, and multi-notebook management, please see our **[Advanced Documentation](docs/getting-started-power-users.md)**.

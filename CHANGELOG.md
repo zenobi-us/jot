@@ -17,6 +17,45 @@
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+#### Search Engine Migration: DuckDB → Bleve
+
+**SQL interface removed from NoteService**
+
+OpenNotes now uses Bleve full-text search exclusively. The SQL interface methods have been removed:
+- `ExecuteSQLSafe()` - removed
+- `Query()` - removed
+- `--sql` flag in `notes search` command - removed
+
+**Migration Guide**:
+
+**Before** (SQL):
+```bash
+opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md') WHERE content LIKE '%meeting%'"
+```
+
+**After** (Bleve):
+```bash
+# Simple text search
+opennotes notes search "meeting"
+
+# Boolean query
+opennotes notes search query --and data.tag=work --not data.status=archived
+```
+
+**Why?**
+- Eliminates DuckDB dependency (32MB+ binary size reduction)
+- Faster indexing and search for typical use cases
+- Simpler deployment (no C++ dependencies)
+- Better cross-platform compatibility
+
+**Affected Users**:
+- Custom SQL queries no longer supported
+- Power users should wait for Phase 5.3 (link graph) or use external tools
+
+See: Epic [epic-f661c068-remove-duckdb-alternative-search.md](.memory/epic-f661c068-remove-duckdb-alternative-search.md)
+
 ### Features
 
 #### Views System ✨
