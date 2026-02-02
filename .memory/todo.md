@@ -21,28 +21,25 @@
 | 5. DuckDB Removal | 🔄 **IN PROGRESS** | Remove all DuckDB code - [phase-02df510c](phase-02df510c-duckdb-removal.md) |
 | 6. Semantic Search | 🔜 | Optional chromem-go integration |
 
-### Session 2026-02-02 Afternoon - 🔄 PHASE 5.2.6 IN PROGRESS
+### Session 2026-02-02 Afternoon - 🔜 PHASE 5.3 NEXT
 
-**Phase 5.2.6 - Service Method Cleanup** 🔄 **IN PROGRESS**:
-
-See detailed task: [task-a7b8c9d0-service-method-cleanup.md](.memory/task-a7b8c9d0-service-method-cleanup.md)
-
-Quick checklist:
-- [ ] Remove DbService from NoteService
-- [ ] Remove DbService from NotebookService
-- [ ] Remove DbService from cmd/root.go
-- [ ] Handle cmd/notes_view.go (remove SQL view support)
-- [ ] Clean up internal/services/view.go
-- [ ] Delete internal/services/db.go
-- [ ] Run tests and verify
-- [ ] Update CHANGELOG and docs
-
-**Breaking Change**: Removing SQL view support completely
+**Phase 5.2.6 - Service Method Cleanup** ✅ **COMPLETE**:
+- All DbService references removed from codebase
+- Deleted internal/services/db.go (373 lines) and db_test.go
+- Fixed all test files
+- Commit: 4416b2f
 
 **Phase 5.2.5 - CLI Command Migration** ✅ **COMPLETE**:
 - All CLI commands verified to use Bleve only
 - SQL methods removed from NoteService
 - Documentation updated (README, CHANGELOG)
+- Commits: ba6c36f, 8ec345d, d7e9120
+
+**Next: Phase 5.3 - Dependency Cleanup**:
+- [ ] Remove DuckDB from go.mod
+- [ ] Run go mod tidy
+- [ ] Verify no CGO dependencies for search
+- [ ] Check for unused imports
 
 ### Session 2026-02-02 Morning - ✅ PHASE 5.2.4 COMPLETE
 

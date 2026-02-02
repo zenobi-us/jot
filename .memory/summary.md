@@ -60,24 +60,26 @@ internal/search/bleve/
 
 **Current Phase**: Phase 5 - DuckDB Removal ([phase-02df510c](.memory/phase-02df510c-duckdb-removal.md))
 - ✅ Task 1: Codebase audit complete (14 files identified)
-- ✅ Task 2: NoteService migration - Phases 1-4 complete
+- ✅ Task 2: Service layer migration - COMPLETE
   - Phase 5.2.1: Struct update ✅
   - Phase 5.2.2: getAllNotes() migration ✅
   - Phase 5.2.3: SearchWithConditions() migration ✅ (with BuildQuery)
   - Phase 5.2.4: Count() migration ✅ (completed in 5.2.2)
-- ✅ Phase 5.2.5: CLI Command Migration - COMPLETE
-- 🔜 Next: Phase 5.2.6 - Service Method Cleanup
+  - Phase 5.2.5: CLI Command Migration ✅
+  - Phase 5.2.6: Service Method Cleanup ✅
+- 🔜 Next: Phase 5.3 - Dependency Cleanup (remove DuckDB from go.mod)
 - Started: 2026-02-01 21:17
-- Last Update: 2026-02-02 13:45
+- Last Update: 2026-02-02 14:10
 
-**Progress**: 6 of 11 sub-phases complete (55%)
+**Progress**: 7 of 11 sub-phases complete (64%)
 - 5.1: Codebase audit ✅
 - 5.2.1: NoteService struct update ✅
 - 5.2.2: getAllNotes() migration ✅
 - 5.2.3: SearchWithConditions() migration ✅
 - 5.2.4: Count() migration ✅
 - 5.2.5: CLI Command Migration ✅
-- 5.2.6-5.11: Pending 🔜
+- 5.2.6: Service Method Cleanup ✅
+- 5.3-5.11: Pending 🔜
 
 ### Pi-OpenNotes Extension
 **Epic**: [epic-1f41631e-pi-opennotes-extension.md](epic-1f41631e-pi-opennotes-extension.md)  
@@ -93,6 +95,18 @@ internal/search/bleve/
 ---
 
 ## Session History
+
+**Session 2026-02-02 (Afternoon - Phase 5.2.6 Complete)**
+- ✅ **Completed Phase 5.2.6: Service Method Cleanup**
+- ✅ Removed DbService completely from codebase
+- ✅ Deleted internal/services/db.go (373 lines) and db_test.go
+- ✅ Removed DbService from NoteService and NotebookService
+- ✅ Updated cmd/notes_view.go to show error for SQL views
+- ✅ Fixed all test files to remove DbService dependencies
+- ✅ Disabled concurrency_test.go (DuckDB-specific tests)
+- ✅ All core tests passing (161+ unit tests)
+- 📝 Lesson: Service removal requires comprehensive test updates
+- Commits: 4416b2f
 
 **Session 2026-02-02 (Afternoon - Phase 5.2.5 Complete)**
 - ✅ **Completed Phase 5.2.5: CLI Command Migration**
