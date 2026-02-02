@@ -19,6 +19,16 @@ Identify casual-user problems that semantic search solves (conceptual topic reca
 - Recommended user story set with acceptance criteria drafts
 - Technical feasibility notes (index storage, embeddings, latency, privacy)
 
+## Research Questions
+1. What common “conceptual” queries do casual users attempt where keyword search fails?
+2. What minimum recall/precision bar makes semantic results feel helpful (vs. confusing)?
+3. How should hybrid merged results be ranked and labeled to build trust?
+4. What latency is acceptable for a semantic subcommand on typical notebook sizes?
+5. What are the smallest viable embedding model and index size for local usage?
+6. What content should be excluded or weighted down (frontmatter, metadata, templates)?
+7. How should failures be handled (missing embeddings, cold index, partial results)?
+8. What documentation/examples best explain when to use semantic search?
+
 ## Tasks
 - TBD: create research tasks and story definition tasks
 
