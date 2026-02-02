@@ -21,18 +21,22 @@
 | 5. DuckDB Removal | 🔄 **IN PROGRESS** | Remove all DuckDB code - [phase-02df510c](phase-02df510c-duckdb-removal.md) |
 | 6. Semantic Search | 🔜 | Optional chromem-go integration |
 
-### Session 2026-02-02 Afternoon - 🔄 PHASE 5.2.5 STARTING
+### Session 2026-02-02 Afternoon - 🔄 PHASE 5.2.5 IN PROGRESS
 
-**Phase 5.2.5 - CLI Command Migration** 🔄 **STARTING**:
-- [ ] Audit CLI commands for DuckDB usage
-  - cmd/notes_search.go (--sql flag uses ExecuteSQLSafe)
-  - cmd/notes_list.go (already uses SearchNotes)
-- [ ] Remove --sql flag from notes search (breaking change)
-- [ ] Remove ExecuteSQLSafe() and Query() methods from NoteService
-- [ ] Update help text to guide users to new query DSL
-- [ ] Verify requireNotebook() creates index automatically
+**Phase 5.2.5 - CLI Command Migration** 🔄 **IN PROGRESS**:
 
-**Next Steps**: Remove SQL interface completely
+See detailed task: [task-8c1171cb-cli-command-migration.md](.memory/task-8c1171cb-cli-command-migration.md)
+
+Quick checklist:
+- [x] Audit CLI commands for DuckDB usage
+- [ ] Remove SQL methods (ExecuteSQLSafe, Query) from NoteService
+- [ ] Remove --sql flag from notes search
+- [ ] Update help text with new query DSL examples
+- [ ] Verify requireNotebook() creates index
+- [ ] Run tests and manual verification
+- [ ] Update CHANGELOG and migration guide
+
+**Breaking Change**: Removing `--sql` flag completely
 
 ### Session 2026-02-02 Morning - ✅ PHASE 5.2.4 COMPLETE
 
