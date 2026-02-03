@@ -27,7 +27,7 @@ Hybrid results can feel opaque; showing “why this matched” improves confiden
 - Full semantic attribution or model introspection.
 
 ## Tasks
-- TBD
+- [task-2b3c4d5e-explainability-spec.md](task-2b3c4d5e-explainability-spec.md)
 
 ## Notes
 - Consider a compact label in the result list (Exact match / Semantic match).

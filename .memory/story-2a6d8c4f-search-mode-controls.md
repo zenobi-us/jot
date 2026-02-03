@@ -26,7 +26,7 @@ Power users may want to compare retrieval modes during evaluation.
 - Persisted user preferences.
 
 ## Tasks
-- TBD
+- [task-5e6f7a8b-mode-controls.md](task-5e6f7a8b-mode-controls.md)
 
 ## Notes
 - Keep defaults optimized for casual users.

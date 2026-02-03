@@ -28,7 +28,7 @@ Casual users often remember the concept but not the exact phrasing used in a not
 - Tuning advanced ranking weights for power users.
 
 ## Tasks
-- TBD
+- [task-1a2b3c4d-define-hybrid-merge.md](task-1a2b3c4d-define-hybrid-merge.md)
 
 ## Notes
 - Recommend RRF-based merge for score robustness.

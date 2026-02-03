@@ -27,7 +27,7 @@ Latency spikes erode confidence in semantic search; target bounds guide implemen
 - Enterprise-scale (100k+ notes) optimization.
 
 ## Tasks
-- TBD
+- [task-3c4d5e6f-performance-benchmark-plan.md](task-3c4d5e6f-performance-benchmark-plan.md)
 
 ## Notes
 - Benchmark against baseline Bleve keyword search.

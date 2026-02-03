@@ -27,7 +27,7 @@ The query DSL already supports structured filters; semantic search should honor 
 - New or alternative DSL formats.
 
 ## Tasks
-- TBD
+- [task-4d5e6f7a-dsl-filter-integration.md](task-4d5e6f7a-dsl-filter-integration.md)
 
 ## Notes
 - Align with fields supported by `opennotes notes search query` (data.*, path, title, links-to, linked-by).
