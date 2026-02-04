@@ -59,7 +59,6 @@
 ---
 
 ## Tasks
-- [task-2b3c4d5e-explainability-spec.md](task-2b3c4d5e-explainability-spec.md)
 - [task-3c4d5e6f-performance-benchmark-plan.md](task-3c4d5e6f-performance-benchmark-plan.md)
 - [task-4d5e6f7a-dsl-filter-integration.md](task-4d5e6f7a-dsl-filter-integration.md)
 - [task-5e6f7a8b-mode-controls.md](task-5e6f7a8b-mode-controls.md)

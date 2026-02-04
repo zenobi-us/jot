@@ -2,8 +2,8 @@
 id: 2b3c4d5e
 title: Define Explainability Output for Semantic Search
 created_at: 2026-02-03T08:35:00+10:30
-updated_at: 2026-02-03T08:35:00+10:30
-status: todo
+updated_at: 2026-02-03T09:00:00+10:30
+status: completed
 epic_id: 7c9d2e1f
 phase_id: 52a9f0b3
 story_id: 3d7e9b2a
@@ -27,7 +27,10 @@ Specify how explainability is presented (snippet selection, highlighting, labels
 A spec for explainability output that can be implemented consistently.
 
 ## Actual Outcome
-- TBD
+- `--explain` prints a one-line reason + a snippet (default 160 chars, ellipsis trimmed).
+- Keyword hits: highlight matched terms in snippet (uppercase or bracketed markers).
+- Semantic hits: choose best-effort sentence containing highest semantic similarity; if unavailable, fallback to note title + first sentence.
+- Label included in result list: Exact match / Semantic match / Hybrid.
 
 ## Lessons Learned
-- TBD
+- Keeping snippets short avoids noisy CLI output.
