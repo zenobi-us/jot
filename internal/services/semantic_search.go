@@ -248,9 +248,7 @@ func fieldValuesForExpr(doc search.Document, field string) []string {
 		values := make([]string, 0)
 
 		if key == "tag" {
-			for _, tag := range doc.Tags {
-				values = append(values, tag)
-			}
+			values = append(values, doc.Tags...)
 		}
 
 		if doc.Metadata != nil {
