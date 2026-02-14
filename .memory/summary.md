@@ -8,11 +8,12 @@
 ## Milestone Progress
 - ✅ Phase 1 complete: [phase-52a9f0b3-semantic-search-research.md](phase-52a9f0b3-semantic-search-research.md)
 - ✅ Phase 2 plan approved by human and task breakdown created
-- ⏳ Phase 3 implementation/test and Phase 4 docs/release remain
+- ✅ Phase 2 task complete: [task-a1c4e7f2-hybrid-retrieval-orchestration.md](task-a1c4e7f2-hybrid-retrieval-orchestration.md)
+- 📄 New design artifact: [research-f2d6a8c0-hybrid-retrieval-contract.md](research-f2d6a8c0-hybrid-retrieval-contract.md)
+- ⏳ Phase 2 remaining tasks: 4
 
 ## Immediate Next Milestone
-- Execute Phase 2 design tasks:
-  - [task-a1c4e7f2-hybrid-retrieval-orchestration.md](task-a1c4e7f2-hybrid-retrieval-orchestration.md)
+- Execute remaining Phase 2 design tasks:
   - [task-b3d6a9c1-dsl-filter-parity-semantic.md](task-b3d6a9c1-dsl-filter-parity-semantic.md)
   - [task-c5f8b2d4-explainability-output-contract.md](task-c5f8b2d4-explainability-output-contract.md)
   - [task-d7a1c3e5-retrieval-mode-controls-cli.md](task-d7a1c3e5-retrieval-mode-controls-cli.md)
