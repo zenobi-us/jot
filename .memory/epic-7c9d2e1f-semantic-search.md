@@ -2,7 +2,7 @@
 id: 7c9d2e1f
 title: Semantic Search (Optional Enhancement)
 created_at: 2026-02-02T21:45:00+10:30
-updated_at: 2026-02-14T22:18:00+10:30
+updated_at: 2026-02-14T22:41:00+10:30
 status: in-progress
 ---
 
@@ -24,7 +24,7 @@ Introduce an optional semantic search capability that augments existing Bleve fu
 | Phase | Title | Status | File |
 |-------|-------|--------|------|
 | 1 | Research & User Story Discovery | ✅ `completed` | [phase-52a9f0b3-semantic-search-research.md](phase-52a9f0b3-semantic-search-research.md) |
-| 2 | Architecture & Integration Design | ⏳ `planned` | TBD |
+| 2 | Architecture & Integration Design | 🔄 `planning` | [phase-b2f4c8d1-architecture-integration-design.md](phase-b2f4c8d1-architecture-integration-design.md) |
 | 3 | Implementation & Testing | ⏳ `planned` | TBD |
 | 4 | Documentation & Release Guidance | ⏳ `planned` | TBD |
 
