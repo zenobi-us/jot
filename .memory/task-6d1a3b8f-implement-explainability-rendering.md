@@ -2,8 +2,8 @@
 id: 6d1a3b8f
 title: Implement Explainability Output and Semantic Rendering
 created_at: 2026-02-14T23:48:00+10:30
-updated_at: 2026-02-14T23:48:00+10:30
-status: todo
+updated_at: 2026-02-15T01:14:00+10:30
+status: in-progress
 epic_id: 7c9d2e1f
 phase_id: 91d3f6a2
 story_id: 3d7e9b2a
@@ -29,7 +29,16 @@ Implement `--explain` output contract with match labels and snippets via semanti
 Explain mode renders concise, trustworthy reasons without changing non-explain output.
 
 ## Actual Outcome
-Pending.
+In progress (checkpointed for next session):
+- Added semantic result hit model and explain snippet generation scaffolding in `internal/services/semantic_search.go`.
+- Added `SearchSemanticDetailed()` path that returns per-hit match type + explain text metadata.
+- Kept existing `SearchSemantic()` backward-compatible by adapting detailed hits back to `[]Note`.
+- Build and test pass at checkpoint (`mise run build`, `mise run test`).
+
+Remaining to complete task:
+- Add `--explain` flag on semantic CLI command.
+- Add semantic-specific output template/rendering with labels and `Why:` snippet lines.
+- Add focused tests for explain/no-snippet/truncation output behavior.
 
 ## Lessons Learned
-TBD.
+Splitting retrieval into detailed-hit and legacy-note paths allows explainability rollout without breaking current command outputs.

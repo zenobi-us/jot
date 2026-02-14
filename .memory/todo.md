@@ -4,8 +4,14 @@
 - [epic-7c9d2e1f-semantic-search.md](epic-7c9d2e1f-semantic-search.md)
 
 ## Open Tasks
-- [task-6d1a3b8f-implement-explainability-rendering.md](task-6d1a3b8f-implement-explainability-rendering.md)
+- [task-6d1a3b8f-implement-explainability-rendering.md](task-6d1a3b8f-implement-explainability-rendering.md) (in-progress checkpoint)
 - [task-7e2b4c9a-implement-benchmarks-and-threshold-checks.md](task-7e2b4c9a-implement-benchmarks-and-threshold-checks.md)
+
+## Next Session Start Checklist
+- Complete CLI `--explain` integration on semantic subcommand
+- Add semantic explain output template and rendering path
+- Add explainability tests (snippet selection, truncation, no-snippet fallback)
+- Then implement benchmark harness task (7e2b4c9a)
 
 ## Completed This Session
 - [task-ab7c2d1e-review-phase3-plan.md](task-ab7c2d1e-review-phase3-plan.md)

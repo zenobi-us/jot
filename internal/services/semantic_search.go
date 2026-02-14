@@ -26,6 +26,13 @@ type SemanticSearchMeta struct {
 	SemanticFallback bool
 }
 
+// SemanticSearchHit is one semantic-command output row.
+type SemanticSearchHit struct {
+	Note      Note
+	MatchType MatchType
+	Explain   string
+}
+
 // ParseRetrievalMode validates and normalizes retrieval mode strings.
 func ParseRetrievalMode(raw string) (RetrievalMode, error) {
 	mode := RetrievalMode(strings.ToLower(strings.TrimSpace(raw)))
@@ -37,7 +44,7 @@ func ParseRetrievalMode(raw string) (RetrievalMode, error) {
 	}
 }
 
-// SearchSemantic executes semantic/keyword/hybrid retrieval using one condition parser path.
+// SearchSemantic executes semantic/keyword/hybrid retrieval and returns notes only.
 func (s *NoteService) SearchSemantic(
 	ctx context.Context,
 	query string,
@@ -45,6 +52,27 @@ func (s *NoteService) SearchSemantic(
 	mode RetrievalMode,
 	topK int,
 ) ([]Note, SemanticSearchMeta, error) {
+	hits, meta, err := s.SearchSemanticDetailed(ctx, query, conditions, mode, topK)
+	if err != nil {
+		return nil, meta, err
+	}
+
+	notes := make([]Note, len(hits))
+	for i, hit := range hits {
+		notes[i] = hit.Note
+	}
+
+	return notes, meta, nil
+}
+
+// SearchSemanticDetailed executes semantic/keyword/hybrid retrieval with explainability metadata.
+func (s *NoteService) SearchSemanticDetailed(
+	ctx context.Context,
+	query string,
+	conditions []QueryCondition,
+	mode RetrievalMode,
+	topK int,
+) ([]SemanticSearchHit, SemanticSearchMeta, error) {
 	if s.notebookPath == "" {
 		return nil, SemanticSearchMeta{}, fmt.Errorf("no notebook selected")
 	}
@@ -63,7 +91,7 @@ func (s *NoteService) SearchSemantic(
 	switch mode {
 	case RetrievalModeKeyword:
 		meta.UsedKeyword = true
-		return searchResultsToNotes(keywordCandidates), meta, nil
+		return hitsFromKeywordResults(keywordCandidates, query), meta, nil
 
 	case RetrievalModeSemantic:
 		semanticCandidates, semErr := s.findSemanticCandidates(ctx, query, conditions, topK)
@@ -71,7 +99,7 @@ func (s *NoteService) SearchSemantic(
 			return nil, meta, semErr
 		}
 		meta.UsedSemantic = true
-		return semanticResultsToNotes(semanticCandidates), meta, nil
+		return hitsFromSemanticResults(semanticCandidates, query), meta, nil
 
 	case RetrievalModeHybrid:
 		meta.UsedKeyword = true
@@ -80,7 +108,7 @@ func (s *NoteService) SearchSemantic(
 		if semErr != nil {
 			if semErr == ErrSemanticUnavailable {
 				meta.SemanticFallback = true
-				return searchResultsToNotes(keywordCandidates), meta, nil
+				return hitsFromKeywordResults(keywordCandidates, query), meta, nil
 			}
 			return nil, meta, semErr
 		}
@@ -90,11 +118,115 @@ func (s *NoteService) SearchSemantic(
 		if len(merged) > topK {
 			merged = merged[:topK]
 		}
-		return hybridResultsToNotes(merged), meta, nil
+		return hitsFromHybridResults(merged, query), meta, nil
 
 	default:
 		return nil, meta, fmt.Errorf("unsupported retrieval mode: %s", mode)
 	}
+}
+
+func hitsFromKeywordResults(results []search.Result, query string) []SemanticSearchHit {
+	hits := make([]SemanticSearchHit, len(results))
+	for i, result := range results {
+		note := documentToNote(result.Document)
+		hits[i] = SemanticSearchHit{
+			Note:      note,
+			MatchType: MatchTypeExact,
+			Explain:   buildExplainSnippet(result.Document.Body, query, MatchTypeExact),
+		}
+	}
+	return hits
+}
+
+func hitsFromSemanticResults(results []SemanticResult, query string) []SemanticSearchHit {
+	hits := make([]SemanticSearchHit, len(results))
+	for i, result := range results {
+		note := documentToNote(result.Document)
+		hits[i] = SemanticSearchHit{
+			Note:      note,
+			MatchType: MatchTypeSemantic,
+			Explain:   buildExplainSnippet(result.Document.Body, query, MatchTypeSemantic),
+		}
+	}
+	return hits
+}
+
+func hitsFromHybridResults(results []HybridResult, query string) []SemanticSearchHit {
+	hits := make([]SemanticSearchHit, len(results))
+	for i, result := range results {
+		note := documentToNote(result.Document)
+		hits[i] = SemanticSearchHit{
+			Note:      note,
+			MatchType: result.MatchType,
+			Explain:   buildExplainSnippet(result.Document.Body, query, result.MatchType),
+		}
+	}
+	return hits
+}
+
+func buildExplainSnippet(body, query string, matchType MatchType) string {
+	if strings.TrimSpace(body) == "" {
+		return "No snippet available"
+	}
+
+	if matchType == MatchTypeSemantic {
+		return truncateWithEllipsis(strings.TrimSpace(extractLead(body)), 160)
+	}
+
+	query = strings.TrimSpace(query)
+	if query == "" {
+		return truncateWithEllipsis(strings.TrimSpace(extractLead(body)), 160)
+	}
+
+	bodyLower := strings.ToLower(body)
+	queryLower := strings.ToLower(query)
+	idx := strings.Index(bodyLower, queryLower)
+	if idx < 0 {
+		return truncateWithEllipsis(strings.TrimSpace(extractLead(body)), 160)
+	}
+
+	start := idx - 60
+	if start < 0 {
+		start = 0
+	}
+	end := idx + len(query) + 60
+	if end > len(body) {
+		end = len(body)
+	}
+
+	snippet := strings.TrimSpace(body[start:end])
+	snippet = highlightFirst(snippet, query)
+	return truncateWithEllipsis(snippet, 180)
+}
+
+func highlightFirst(text, query string) string {
+	if query == "" {
+		return text
+	}
+
+	textLower := strings.ToLower(text)
+	queryLower := strings.ToLower(query)
+	idx := strings.Index(textLower, queryLower)
+	if idx < 0 {
+		return text
+	}
+
+	end := idx + len(query)
+	if end > len(text) {
+		end = len(text)
+	}
+
+	return text[:idx] + "[" + text[idx:end] + "]" + text[end:]
+}
+
+func truncateWithEllipsis(text string, maxLen int) string {
+	if len(text) <= maxLen {
+		return text
+	}
+	if maxLen <= 3 {
+		return text[:maxLen]
+	}
+	return text[:maxLen-3] + "..."
 }
 
 func (s *NoteService) findKeywordCandidates(
@@ -161,30 +293,6 @@ func (s *NoteService) findSemanticCandidates(
 	}
 
 	return filtered, nil
-}
-
-func searchResultsToNotes(results []search.Result) []Note {
-	notes := make([]Note, len(results))
-	for i, result := range results {
-		notes[i] = documentToNote(result.Document)
-	}
-	return notes
-}
-
-func semanticResultsToNotes(results []SemanticResult) []Note {
-	notes := make([]Note, len(results))
-	for i, result := range results {
-		notes[i] = documentToNote(result.Document)
-	}
-	return notes
-}
-
-func hybridResultsToNotes(results []HybridResult) []Note {
-	notes := make([]Note, len(results))
-	for i, result := range results {
-		notes[i] = documentToNote(result.Document)
-	}
-	return notes
 }
 
 func queryMatchesDocument(query *search.Query, doc search.Document) bool {
