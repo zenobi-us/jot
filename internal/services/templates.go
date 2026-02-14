@@ -16,7 +16,7 @@ var loadedTemplates map[string]*template.Template
 func init() {
 	loadedTemplates = make(map[string]*template.Template)
 
-	templateNames := []string{"note-list", "note-detail", "notebook-info", "notebook-list"}
+	templateNames := []string{"note-list", "note-detail", "notebook-info", "notebook-list", "note-search-semantic"}
 	for _, name := range templateNames {
 		tmpl, err := loadTemplate(name)
 		if err != nil {

@@ -2,12 +2,12 @@
 id: 6d1a3b8f
 title: Implement Explainability Output and Semantic Rendering
 created_at: 2026-02-14T23:48:00+10:30
-updated_at: 2026-02-15T01:14:00+10:30
-status: in-progress
+updated_at: 2026-02-15T01:27:00+10:30
+status: completed
 epic_id: 7c9d2e1f
 phase_id: 91d3f6a2
 story_id: 3d7e9b2a
-assigned_to: 2026-02-14-semantic-phase3-execution
+assigned_to: 2026-02-15-semantic-phase3-task6-task7
 ---
 
 # Implement Explainability Output and Semantic Rendering
@@ -29,16 +29,14 @@ Implement `--explain` output contract with match labels and snippets via semanti
 Explain mode renders concise, trustworthy reasons without changing non-explain output.
 
 ## Actual Outcome
-In progress (checkpointed for next session):
-- Added semantic result hit model and explain snippet generation scaffolding in `internal/services/semantic_search.go`.
-- Added `SearchSemanticDetailed()` path that returns per-hit match type + explain text metadata.
-- Kept existing `SearchSemantic()` backward-compatible by adapting detailed hits back to `[]Note`.
-- Build and test pass at checkpoint (`mise run build`, `mise run test`).
-
-Remaining to complete task:
-- Add `--explain` flag on semantic CLI command.
-- Add semantic-specific output template/rendering with labels and `Why:` snippet lines.
-- Add focused tests for explain/no-snippet/truncation output behavior.
+Completed.
+- Added semantic CLI flag `--explain` to `opennotes notes search semantic`.
+- Routed semantic command through `SearchSemanticDetailed()` and added an explain-specific render path.
+- Added semantic output template `internal/services/templates/note-search-semantic.gotmpl` with match labels and `Why:` snippets.
+- Added focused tests:
+  - `internal/services/semantic_search_test.go` for explain highlight/no-snippet/truncation behavior.
+  - `internal/services/templates_test.go` coverage for semantic explain template rendering.
+- Verification passed: `mise run format`, `mise run build`, `mise run test`.
 
 ## Lessons Learned
-Splitting retrieval into detailed-hit and legacy-note paths allows explainability rollout without breaking current command outputs.
+Keeping explain rendering on a dedicated semantic template preserves existing note-list UX while allowing richer per-hit context in explain mode.

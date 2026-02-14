@@ -2,7 +2,7 @@
 id: 91d3f6a2
 title: Phase 3 - Implementation & Testing
 created_at: 2026-02-14T23:37:00+10:30
-updated_at: 2026-02-15T01:15:00+10:30
+updated_at: 2026-02-15T01:27:00+10:30
 status: in-progress
 epic_id: 7c9d2e1f
 start_criteria: Phase 2 architecture contracts completed and reviewed
@@ -48,6 +48,6 @@ Implement semantic search in production code using the Phase 2 contracts and val
 - ✅ Completed: [task-3f7a2c9e-implement-semantic-backend-lifecycle.md](task-3f7a2c9e-implement-semantic-backend-lifecycle.md)
 - ✅ Completed: [task-4b8d1f6a-implement-hybrid-merge-and-labels.md](task-4b8d1f6a-implement-hybrid-merge-and-labels.md)
 - ✅ Completed: [task-5c9e2a7d-implement-semantic-cli-mode-and-dsl.md](task-5c9e2a7d-implement-semantic-cli-mode-and-dsl.md)
-- 🔄 In progress: [task-6d1a3b8f-implement-explainability-rendering.md](task-6d1a3b8f-implement-explainability-rendering.md) (service-layer explain scaffolding complete; CLI/template integration pending)
-- ✅ Validation: `mise run build` and `mise run test` pass at checkpoint.
-- ⏳ Remaining after checkpoint: 2 tasks (task-6 completion + task-7 benchmark implementation)
+- ✅ Completed: [task-6d1a3b8f-implement-explainability-rendering.md](task-6d1a3b8f-implement-explainability-rendering.md)
+- ✅ Validation: `mise run format`, `mise run build`, and `mise run test` pass after Task 6 completion.
+- ⏳ Remaining: 1 task ([task-7e2b4c9a-implement-benchmarks-and-threshold-checks.md](task-7e2b4c9a-implement-benchmarks-and-threshold-checks.md))

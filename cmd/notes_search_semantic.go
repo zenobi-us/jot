@@ -25,7 +25,8 @@ Optional boolean filters are supported with the same DSL as:
 Examples:
   opennotes notes search semantic "meeting notes"
   opennotes notes search semantic "workflow" --mode keyword --and data.status=active
-  opennotes notes search semantic "project triage" --mode hybrid --not data.status=archived`,
+  opennotes notes search semantic "project triage" --mode hybrid --not data.status=archived
+  opennotes notes search semantic "architecture" --explain`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: notesSearchSemanticRunE,
 }
@@ -38,6 +39,7 @@ func init() {
 	notesSearchSemanticCmd.Flags().StringArray("or", []string{}, "OR condition (field=value) - any can match")
 	notesSearchSemanticCmd.Flags().StringArray("not", []string{}, "NOT condition (field=value) - excludes matches")
 	notesSearchSemanticCmd.Flags().Int("top-k", 100, "Maximum candidates per retrieval source before merge")
+	notesSearchSemanticCmd.Flags().Bool("explain", false, "Show per-result match label and why snippet")
 }
 
 func notesSearchSemanticRunE(cmd *cobra.Command, args []string) error {
@@ -54,6 +56,11 @@ func notesSearchSemanticRunE(cmd *cobra.Command, args []string) error {
 	mode, err := services.ParseRetrievalMode(modeRaw)
 	if err != nil {
 		return err
+	}
+
+	explain, err := cmd.Flags().GetBool("explain")
+	if err != nil {
+		return fmt.Errorf("failed to parse --explain: %w", err)
 	}
 
 	andFlags, err := cmd.Flags().GetStringArray("and")
@@ -85,7 +92,7 @@ func notesSearchSemanticRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	notes, meta, err := nb.Notes.SearchSemantic(context.Background(), query, conditions, mode, topK)
+	hits, meta, err := nb.Notes.SearchSemanticDetailed(context.Background(), query, conditions, mode, topK)
 	if err != nil {
 		if errors.Is(err, services.ErrSemanticUnavailable) {
 			fmt.Println("Semantic backend unavailable. Try --mode keyword or --mode hybrid.")
@@ -98,7 +105,7 @@ func notesSearchSemanticRunE(cmd *cobra.Command, args []string) error {
 		fmt.Println("Warning: semantic backend unavailable, showing keyword-mode results.")
 	}
 
-	if len(notes) == 0 {
+	if len(hits) == 0 {
 		switch mode {
 		case services.RetrievalModeKeyword:
 			fmt.Println("No keyword-mode results. Try --mode hybrid or --mode semantic.")
@@ -114,6 +121,39 @@ func notesSearchSemanticRunE(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
+	if explain {
+		fmt.Printf("Found %d note(s) using %s mode (explain):\n\n", len(hits), mode)
+		return displaySemanticSearchHits(hits, true)
+	}
+
+	notes := make([]services.Note, len(hits))
+	for i, hit := range hits {
+		notes[i] = hit.Note
+	}
+
 	fmt.Printf("Found %d note(s) using %s mode:\n\n", len(notes), mode)
 	return displayNoteList(notes)
+}
+
+func displaySemanticSearchHits(hits []services.SemanticSearchHit, explain bool) error {
+	output, err := services.TuiRender("note-search-semantic", map[string]any{
+		"Hits":    hits,
+		"Explain": explain,
+	})
+	if err != nil {
+		for _, hit := range hits {
+			fmt.Printf("- [%s] %s (%s)\n", hit.Note.DisplayName(), hit.Note.File.Relative, hit.MatchType)
+			if explain {
+				reason := hit.Explain
+				if reason == "" {
+					reason = "No snippet available"
+				}
+				fmt.Printf("  Why: %s\n", reason)
+			}
+		}
+		return nil
+	}
+
+	fmt.Print(output)
+	return nil
 }
