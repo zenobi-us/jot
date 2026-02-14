@@ -2,7 +2,7 @@
 id: b2f4c8d1
 title: Phase 2 - Architecture & Integration Design
 created_at: 2026-02-14T22:41:00+10:30
-updated_at: 2026-02-14T23:07:00+10:30
+updated_at: 2026-02-14T23:12:00+10:30
 status: in-progress
 epic_id: 7c9d2e1f
 start_criteria: Phase 1 research and story discovery completed with validated story set
@@ -45,5 +45,7 @@ Translate Phase 1 story outputs into an implementation-ready architecture for op
 
 ## Progress
 - ✅ Completed: [task-a1c4e7f2-hybrid-retrieval-orchestration.md](task-a1c4e7f2-hybrid-retrieval-orchestration.md)
+- ✅ Completed: [task-b3d6a9c1-dsl-filter-parity-semantic.md](task-b3d6a9c1-dsl-filter-parity-semantic.md)
 - 📄 Produced: [research-f2d6a8c0-hybrid-retrieval-contract.md](research-f2d6a8c0-hybrid-retrieval-contract.md)
-- ⏳ Remaining: 4/5 Phase 2 tasks
+- 📄 Produced: [research-a4e1b7c3-dsl-parity-contract-semantic.md](research-a4e1b7c3-dsl-parity-contract-semantic.md)
+- ⏳ Remaining: 3/5 Phase 2 tasks

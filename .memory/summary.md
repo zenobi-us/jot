@@ -8,13 +8,16 @@
 ## Milestone Progress
 - ✅ Phase 1 complete: [phase-52a9f0b3-semantic-search-research.md](phase-52a9f0b3-semantic-search-research.md)
 - ✅ Phase 2 plan approved by human and task breakdown created
-- ✅ Phase 2 task complete: [task-a1c4e7f2-hybrid-retrieval-orchestration.md](task-a1c4e7f2-hybrid-retrieval-orchestration.md)
-- 📄 New design artifact: [research-f2d6a8c0-hybrid-retrieval-contract.md](research-f2d6a8c0-hybrid-retrieval-contract.md)
-- ⏳ Phase 2 remaining tasks: 4
+- ✅ Phase 2 tasks complete:
+  - [task-a1c4e7f2-hybrid-retrieval-orchestration.md](task-a1c4e7f2-hybrid-retrieval-orchestration.md)
+  - [task-b3d6a9c1-dsl-filter-parity-semantic.md](task-b3d6a9c1-dsl-filter-parity-semantic.md)
+- 📄 New design artifacts:
+  - [research-f2d6a8c0-hybrid-retrieval-contract.md](research-f2d6a8c0-hybrid-retrieval-contract.md)
+  - [research-a4e1b7c3-dsl-parity-contract-semantic.md](research-a4e1b7c3-dsl-parity-contract-semantic.md)
+- ⏳ Phase 2 remaining tasks: 3
 
 ## Immediate Next Milestone
 - Execute remaining Phase 2 design tasks:
-  - [task-b3d6a9c1-dsl-filter-parity-semantic.md](task-b3d6a9c1-dsl-filter-parity-semantic.md)
   - [task-c5f8b2d4-explainability-output-contract.md](task-c5f8b2d4-explainability-output-contract.md)
   - [task-d7a1c3e5-retrieval-mode-controls-cli.md](task-d7a1c3e5-retrieval-mode-controls-cli.md)
   - [task-e9b2d4f6-benchmark-harness-latency-validation.md](task-e9b2d4f6-benchmark-harness-latency-validation.md)

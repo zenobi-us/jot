@@ -2,8 +2,8 @@
 id: b3d6a9c1
 title: Define Query DSL Filter Parity for Semantic Path
 created_at: 2026-02-14T22:50:00+10:30
-updated_at: 2026-02-14T22:50:00+10:30
-status: todo
+updated_at: 2026-02-14T23:11:00+10:30
+status: completed
 epic_id: 7c9d2e1f
 phase_id: b2f4c8d1
 story_id: 9c1b5e7a
@@ -28,7 +28,11 @@ Ensure semantic and hybrid retrieval paths honor existing query DSL filters and 
 Clear integration contract and test matrix for DSL parity in semantic search.
 
 ## Actual Outcome
-Pending.
+Completed filter parity contract in [research-a4e1b7c3-dsl-parity-contract-semantic.md](research-a4e1b7c3-dsl-parity-contract-semantic.md):
+- Mapped canonical condition flow: `ParseConditions()` → `BuildQuery()` → apply to both retrieval branches.
+- Defined pre-merge filtering requirement to enforce identical exclusions in hybrid results.
+- Confirmed unsupported `links-to`/`linked-by` remain fail-fast errors in semantic/hybrid until link graph support exists.
+- Defined parity test matrix for metadata fields, path/title filters, alias handling, and AND/OR/NOT behavior.
 
 ## Lessons Learned
-TBD.
+Using one query AST as the semantic/keyword contract eliminates divergence risk between retrieval modes.
