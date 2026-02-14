@@ -2,8 +2,8 @@
 id: b2f4c8d1
 title: Phase 2 - Architecture & Integration Design
 created_at: 2026-02-14T22:41:00+10:30
-updated_at: 2026-02-14T22:41:00+10:30
-status: planning
+updated_at: 2026-02-14T22:51:00+10:30
+status: in-progress
 epic_id: 7c9d2e1f
 start_criteria: Phase 1 research and story discovery completed with validated story set
 end_criteria: Architecture design approved, implementation tasks created, and risks documented
@@ -22,7 +22,11 @@ Translate Phase 1 story outputs into an implementation-ready architecture for op
 - Benchmark and observability plan aligned with P95 latency target
 
 ## Tasks
-Phase 2 task files will be created after human review of this phase plan.
+- [task-a1c4e7f2-hybrid-retrieval-orchestration.md](task-a1c4e7f2-hybrid-retrieval-orchestration.md)
+- [task-b3d6a9c1-dsl-filter-parity-semantic.md](task-b3d6a9c1-dsl-filter-parity-semantic.md)
+- [task-c5f8b2d4-explainability-output-contract.md](task-c5f8b2d4-explainability-output-contract.md)
+- [task-d7a1c3e5-retrieval-mode-controls-cli.md](task-d7a1c3e5-retrieval-mode-controls-cli.md)
+- [task-e9b2d4f6-benchmark-harness-latency-validation.md](task-e9b2d4f6-benchmark-harness-latency-validation.md)
 
 ## Dependencies
 - [phase-52a9f0b3-semantic-search-research.md](phase-52a9f0b3-semantic-search-research.md)
@@ -35,6 +39,6 @@ Phase 2 task files will be created after human review of this phase plan.
   - [story-2a6d8c4f-search-mode-controls.md](story-2a6d8c4f-search-mode-controls.md)
 
 ## Next Steps
-- Human review and approval of this phase scope and deliverables.
-- Break phase into implementation tasks (parser/filter parity, retrieval orchestration, explainability output, mode controls, benchmarks).
-- Start implementation once tasks are approved.
+- Execute Phase 2 tasks and finalize architecture contracts for implementation.
+- Convert completed design tasks into Phase 3 implementation backlog.
+- Confirm risk register and implementation sequence before coding starts.

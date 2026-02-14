@@ -2,17 +2,21 @@
 
 ## Current Focus
 - **Active Epic**: [epic-7c9d2e1f-semantic-search.md](epic-7c9d2e1f-semantic-search.md) (optional enhancement)
-- **Epic Status**: `in-progress` (Phase 1 complete, Phase 2 planning started)
-- **Current Phase**: [phase-b2f4c8d1-architecture-integration-design.md](phase-b2f4c8d1-architecture-integration-design.md) (`planning`)
+- **Epic Status**: `in-progress` (Phase 1 complete, Phase 2 in progress)
+- **Current Phase**: [phase-b2f4c8d1-architecture-integration-design.md](phase-b2f4c8d1-architecture-integration-design.md) (`in-progress`)
 
 ## Milestone Progress
 - ✅ Phase 1 complete: [phase-52a9f0b3-semantic-search-research.md](phase-52a9f0b3-semantic-search-research.md)
-- 🔄 Phase 2 planned and ready for human review
+- ✅ Phase 2 plan approved by human and task breakdown created
 - ⏳ Phase 3 implementation/test and Phase 4 docs/release remain
 
 ## Immediate Next Milestone
-- Human review/approval of Phase 2 plan via [task-c7e2a4d9-review-phase2-architecture-plan.md](task-c7e2a4d9-review-phase2-architecture-plan.md)
-- After approval: create Phase 2 implementation task breakdown
+- Execute Phase 2 design tasks:
+  - [task-a1c4e7f2-hybrid-retrieval-orchestration.md](task-a1c4e7f2-hybrid-retrieval-orchestration.md)
+  - [task-b3d6a9c1-dsl-filter-parity-semantic.md](task-b3d6a9c1-dsl-filter-parity-semantic.md)
+  - [task-c5f8b2d4-explainability-output-contract.md](task-c5f8b2d4-explainability-output-contract.md)
+  - [task-d7a1c3e5-retrieval-mode-controls-cli.md](task-d7a1c3e5-retrieval-mode-controls-cli.md)
+  - [task-e9b2d4f6-benchmark-harness-latency-validation.md](task-e9b2d4f6-benchmark-harness-latency-validation.md)
 
 ## Other Epics
 - [epic-1f41631e-pi-opennotes-extension.md](epic-1f41631e-pi-opennotes-extension.md): ready for distribution
