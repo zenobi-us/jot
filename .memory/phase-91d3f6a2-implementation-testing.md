@@ -2,7 +2,7 @@
 id: 91d3f6a2
 title: Phase 3 - Implementation & Testing
 created_at: 2026-02-14T23:37:00+10:30
-updated_at: 2026-02-15T00:12:00+10:30
+updated_at: 2026-02-15T01:11:00+10:30
 status: in-progress
 epic_id: 7c9d2e1f
 start_criteria: Phase 2 architecture contracts completed and reviewed
@@ -47,5 +47,6 @@ Implement semantic search in production code using the Phase 2 contracts and val
 - ✅ Phase 3 task breakdown created (5 tasks).
 - ✅ Completed: [task-3f7a2c9e-implement-semantic-backend-lifecycle.md](task-3f7a2c9e-implement-semantic-backend-lifecycle.md)
 - ✅ Completed: [task-4b8d1f6a-implement-hybrid-merge-and-labels.md](task-4b8d1f6a-implement-hybrid-merge-and-labels.md)
-- ✅ Validation: `mise run test` passed after lifecycle + merge changes.
-- ⏳ Remaining: 3/5 tasks
+- ✅ Completed: [task-5c9e2a7d-implement-semantic-cli-mode-and-dsl.md](task-5c9e2a7d-implement-semantic-cli-mode-and-dsl.md)
+- ✅ Validation: `mise run build` and `mise run test` passed after CLI/mode/DSL changes.
+- ⏳ Remaining: 2/5 tasks

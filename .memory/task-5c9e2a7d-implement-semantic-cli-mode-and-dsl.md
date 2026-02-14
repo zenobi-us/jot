@@ -2,8 +2,8 @@
 id: 5c9e2a7d
 title: Implement Semantic CLI Surface, Mode Controls, and DSL Parity
 created_at: 2026-02-14T23:48:00+10:30
-updated_at: 2026-02-14T23:48:00+10:30
-status: todo
+updated_at: 2026-02-15T01:10:00+10:30
+status: completed
 epic_id: 7c9d2e1f
 phase_id: 91d3f6a2
 story_id: 2a6d8c4f
@@ -30,7 +30,13 @@ Add semantic search command path with `--mode` controls and ensure DSL filters a
 Semantic CLI mode works with predictable validation, warnings, and DSL behavior.
 
 ## Actual Outcome
-Pending.
+Implemented semantic command surface, mode controls, and DSL parity wiring:
+- Added `notes search semantic` subcommand with `--mode`, `--and`, `--or`, `--not`, and `--top-k` flags in `cmd/notes_search_semantic.go`.
+- Added retrieval mode parsing/validation and semantic orchestration in `internal/services/semantic_search.go`.
+- Reused existing condition parser and `BuildQuery()` pipeline for semantic command DSL parity.
+- Added mode-specific no-result guidance and semantic-backend-unavailable fallback messaging.
+- Added e2e coverage for invalid mode, keyword mode with DSL filters, hybrid fallback warning, and semantic unavailable behavior in `tests/e2e/search_test.go`.
+- Verified with `mise run build` and `mise run test`.
 
 ## Lessons Learned
-TBD.
+E2E CLI tests depend on rebuilding `dist/opennotes`; running `mise run build` before test execution prevents stale-binary false failures.
