@@ -2,8 +2,8 @@
 id: 3f7a2c9e
 title: Implement Semantic Backend and Index Lifecycle
 created_at: 2026-02-14T23:48:00+10:30
-updated_at: 2026-02-14T23:48:00+10:30
-status: todo
+updated_at: 2026-02-15T00:08:00+10:30
+status: completed
 epic_id: 7c9d2e1f
 phase_id: 91d3f6a2
 story_id: 8f2c1a4b
@@ -29,7 +29,12 @@ Add semantic index abstraction and concrete backend wiring, including lifecycle 
 Semantic backend can be initialized and queried safely, with deterministic fallback on failure.
 
 ## Actual Outcome
-Pending.
+Implemented semantic backend lifecycle scaffolding with safe fallback:
+- Added semantic contracts and noop backend in `internal/services/semantic_index.go`.
+- Extended `NoteService` with semantic backend wiring (`SetSemanticIndex`, `SemanticAvailable`, `FindSemanticCandidates`).
+- Wired semantic backend initialization in `NotebookService.Open()` and `NotebookService.Create()` via `createSemanticIndex()`.
+- Added tests for noop behavior, backend fallback, configured backend usage, and notebook open wiring in `internal/services/semantic_index_test.go`.
+- Verified with full test run: `mise run test`.
 
 ## Lessons Learned
-TBD.
+Starting with a noop backend keeps lifecycle and service contracts stable while allowing incremental semantic backend rollout without breaking existing search behavior.

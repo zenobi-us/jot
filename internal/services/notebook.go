@@ -129,6 +129,13 @@ func (s *NotebookService) Open(notebookPath string) (*Notebook, error) {
 
 	noteService := NewNoteService(s.configService, idx, config.Root)
 
+	semanticIdx, err := s.createSemanticIndex(config.Root)
+	if err != nil {
+		s.log.Warn().Err(err).Msg("failed to initialize semantic backend; using noop fallback")
+		semanticIdx = NewNoopSemanticIndex()
+	}
+	noteService.SetSemanticIndex(semanticIdx)
+
 	return &Notebook{
 		Config: *config,
 		Notes:  noteService,
@@ -206,6 +213,14 @@ func (s *NotebookService) createIndex(notebookRoot string) (search.Index, error)
 	}
 
 	return idx, nil
+}
+
+// createSemanticIndex initializes semantic retrieval backend for a notebook.
+// Phase 3 starts with a safe noop backend and can be swapped with a real
+// semantic backend implementation without changing callers.
+func (s *NotebookService) createSemanticIndex(notebookRoot string) (SemanticIndex, error) {
+	s.log.Debug().Str("notebookRoot", notebookRoot).Msg("semantic backend not configured; using noop fallback")
+	return NewNoopSemanticIndex(), nil
 }
 
 // Helper functions for extracting metadata
@@ -367,6 +382,14 @@ func (s *NotebookService) Create(name, path string, register bool) (*Notebook, e
 	}
 
 	noteService := NewNoteService(s.configService, idx, notesDir)
+
+	semanticIdx, semErr := s.createSemanticIndex(notesDir)
+	if semErr != nil {
+		s.log.Warn().Err(semErr).Msg("failed to initialize semantic backend; using noop fallback")
+		semanticIdx = NewNoopSemanticIndex()
+	}
+	noteService.SetSemanticIndex(semanticIdx)
+
 	notebook := &Notebook{
 		Config: config,
 		Notes:  noteService,

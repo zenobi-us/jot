@@ -80,6 +80,7 @@ func documentToNote(doc search.Document) Note {
 type NoteService struct {
 	configService *ConfigService
 	index         search.Index
+	semanticIndex SemanticIndex
 	searchService *SearchService
 	notebookPath  string
 	log           zerolog.Logger
@@ -90,10 +91,48 @@ func NewNoteService(cfg *ConfigService, index search.Index, notebookPath string)
 	return &NoteService{
 		configService: cfg,
 		index:         index,
+		semanticIndex: NewNoopSemanticIndex(),
 		searchService: NewSearchService(),
 		notebookPath:  notebookPath,
 		log:           Log("NoteService"),
 	}
+}
+
+// SetSemanticIndex configures the semantic backend for this notebook.
+// Passing nil resets to a safe no-op backend.
+func (s *NoteService) SetSemanticIndex(idx SemanticIndex) {
+	if idx == nil {
+		s.semanticIndex = NewNoopSemanticIndex()
+		return
+	}
+	s.semanticIndex = idx
+}
+
+// SemanticAvailable reports whether semantic retrieval is currently available.
+func (s *NoteService) SemanticAvailable() bool {
+	return s.semanticIndex != nil && s.semanticIndex.IsAvailable()
+}
+
+// FindSemanticCandidates executes semantic retrieval through the configured backend.
+func (s *NoteService) FindSemanticCandidates(ctx context.Context, query string, topK int) ([]SemanticResult, error) {
+	if s.notebookPath == "" {
+		return nil, fmt.Errorf("no notebook selected")
+	}
+
+	if topK <= 0 {
+		topK = 10
+	}
+
+	if s.semanticIndex == nil || !s.semanticIndex.IsAvailable() {
+		return nil, ErrSemanticUnavailable
+	}
+
+	results, err := s.semanticIndex.FindSimilar(ctx, query, SemanticFindOpts{TopK: topK})
+	if err != nil {
+		return nil, fmt.Errorf("semantic search failed: %w", err)
+	}
+
+	return results, nil
 }
 
 // SearchNotes returns all notes in the notebook matching the query.
