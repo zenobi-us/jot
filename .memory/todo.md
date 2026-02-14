@@ -5,7 +5,7 @@
 **Active Epics**: 1
 1. **Pi-OpenNotes Extension** - Phase 3 Complete, Ready for Phase 4
 
-**Proposed Epic**: [epic-7c9d2e1f-semantic-search.md](epic-7c9d2e1f-semantic-search.md)
+**Optional Epic In Progress**: [epic-7c9d2e1f-semantic-search.md](epic-7c9d2e1f-semantic-search.md) (Phase 1: complete, prepare Phase 2)
 
 **Recently Completed Epics**: 1
 1. **Remove DuckDB** - ✅ Complete (2026-02-02)
@@ -59,12 +59,11 @@
 ---
 
 ## Tasks
-- [task-4d5e6f7a-dsl-filter-integration.md](task-4d5e6f7a-dsl-filter-integration.md)
-- [task-5e6f7a8b-mode-controls.md](task-5e6f7a8b-mode-controls.md)
+- _(No open Phase 1 tasks. Next: create Phase 2 architecture tasks.)_
 
 ## Notes
 
-- **Current Work**: Phase 1 (Semantic Search) planning
+- **Current Work**: Semantic Search Phase 1 finalized; Phase 2 planning next
 - **Tests**: All passing (22 new bleve tests + existing tests)
 - **Lint**: Clean, no issues
 - **No Push**: Changes not pushed (awaiting human review)

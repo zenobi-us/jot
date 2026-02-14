@@ -5,7 +5,7 @@
 **Current Focus**: One Active Epic
 1. **Pi-OpenNotes Extension** - Phase 3 Complete, Ready for Distribution
 
-**Proposed Epic**: Semantic Search (Optional Enhancement) - casual-user focus, dedicated subcommand, hybrid merged results
+**Semantic Search Epic (Optional Enhancement)**: Phase 1 complete (5/5 tasks) - ready for Phase 2 architecture & integration design
 
 **Recently Completed**:
 1. **Remove DuckDB Epic** - ✅ Complete (2026-02-02)
