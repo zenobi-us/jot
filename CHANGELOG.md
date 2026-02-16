@@ -17,6 +17,53 @@
 
 ## [Unreleased]
 
+### Features
+
+#### Semantic Search (Optional Enhancement) ✨
+
+**Vector-based search for finding notes by meaning, not just keywords**
+
+OpenNotes now supports semantic search that understands concepts and paraphrases, supplementing the existing full-text search.
+
+**Command**:
+```bash
+opennotes notes search semantic [query] [--mode hybrid|keyword|semantic] [--explain]
+```
+
+**Search Modes**:
+- **Hybrid (default)**: Combines keyword + semantic retrieval using RRF merge
+- **Keyword**: Fast full-text search via Bleve index
+- **Semantic**: Meaning-based search via vector embeddings
+
+**Features**:
+- Hybrid retrieval with deterministic RRF (Reciprocal Rank Fusion) merge
+- Boolean filters work across all modes (`--and`, `--or`, `--not`)
+- Explain mode shows match type and reasoning per result
+- Graceful fallback to keyword-only when semantic backend unavailable
+- Sub-200ms latency for typical notebook sizes
+
+**Examples**:
+```bash
+# Hybrid search (default)
+opennotes notes search semantic "project planning discussions"
+
+# With filters
+opennotes notes search semantic "architecture" --and data.tag=design --not data.status=archived
+
+# Explain output
+opennotes notes search semantic "workflow" --explain
+```
+
+**When to use**:
+- **Regular search**: Exact keywords, specific terms, quick lookups
+- **Semantic search**: Conceptual queries, paraphrases, exploratory search
+
+**Documentation**: [Semantic Search Guide](docs/semantic-search-guide.md)
+
+**Implementation**: chromem-go vector backend with automatic indexing lifecycle
+
+---
+
 ### BREAKING CHANGES
 
 #### Search Engine Migration: DuckDB → Bleve

@@ -260,6 +260,7 @@ Goal: Complete mastery of all features and patterns
 | -------------------- | ------------------------------------------------------- | -------------------------------- |
 | **SELECT queries**   | [SQL Quick Reference](sql-quick-reference.md) - Level 1 | Basic queries and LIMIT          |
 | **Search queries**   | [SQL Quick Reference](sql-quick-reference.md) - Level 2 | LIKE, wildcards, text search     |
+| **Semantic search**  | [Semantic Search Guide](semantic-search-guide.md)       | Meaning-based search, hybrid mode |
 | **Metadata**         | [SQL Quick Reference](sql-quick-reference.md) - Level 3 | Word count, line count, analysis |
 | **Complex queries**  | [SQL Quick Reference](sql-quick-reference.md) - Level 4 | GROUP BY, ORDER BY, aggregates   |
 | **Functions**        | [SQL Functions Reference](sql-functions-reference.md)   | Function parameters and returns  |
