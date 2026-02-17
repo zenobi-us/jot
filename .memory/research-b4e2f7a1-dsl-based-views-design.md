@@ -2,7 +2,7 @@
 id: b4e2f7a1
 title: "Research: DSL-based views design for opennotes"
 created_at: 2026-02-17T18:47:00+10:30
-updated_at: 2026-02-17T21:05:00+10:30
+updated_at: 2026-02-17T21:02:00+10:30
 status: in-progress
 epic_id: f661c068
 phase_id: null
@@ -332,6 +332,265 @@ directive   = "sort:" field (":" ("asc"|"desc"))?
 | Wildcard field values (`status:*`) | **Critical** | Add Wildcard token or `has:`/`missing:` keywords |
 | OR syntax (`tag:work OR tag:personal`) | **Medium** | `OrExpr` exists in AST but parser can't produce it |
 | Relative dates in DSL | **Already supported** | Bleve's `parseDate()` handles `today`, `yesterday`, etc. |
+
+### Phase 3: CLI Surface Design
+
+#### Design Principles Applied
+
+Following clig.dev guidelines and existing opennotes CLI patterns:
+- **Composability**: Views reuse the same output rendering as `notes search` and `notes list`
+- **Discoverability**: `notes view` with no args lists all views; `--help` shows full syntax
+- **Consistency**: Same `--format`, `--notebook` flags as other `notes` subcommands
+- **Script-friendly**: `--json` output for piping; exit codes for scripting
+- **Human-first**: Default output uses glamour markdown rendering via `TuiRender`
+
+#### CLI Specification: `notes view` Command Family
+
+##### USAGE
+
+```
+opennotes notes view [name] [flags]
+opennotes notes view --save <name> "<query>"
+opennotes notes view --delete <name>
+opennotes notes view --list [--format list|json]
+```
+
+##### Subcommand Semantics
+
+| Invocation | Behavior | Idempotent | State Change |
+|-----------|----------|------------|--------------|
+| `notes view` | List all available views | Yes | None |
+| `notes view <name>` | Execute named view, display results | Yes | None |
+| `notes view --save <name> "<query>"` | Save a custom view to notebook config | No | Writes `.opennotes.json` |
+| `notes view --delete <name>` | Delete a custom view from notebook config | No | Writes `.opennotes.json` |
+| `notes view --list` | List all available views (explicit) | Yes | None |
+
+##### Args & Flags Table
+
+| Flag | Short | Type | Default | Required | Description |
+|------|-------|------|---------|----------|-------------|
+| `[name]` | — | positional | — | No | View name to execute |
+| `--format` | `-f` | string | `list` | No | Output format: `list`, `table`, `json` |
+| `--param` | `-p` | string | — | No | View parameters: `key=value,key2=value2` |
+| `--list` | `-l` | bool | `false` | No | List all available views |
+| `--save` | `-s` | string | — | No | Save query as named view |
+| `--delete` | — | string | — | No | Delete a named custom view |
+| `--sort` | — | string | — | No | Override view sort: `field:asc\|desc` |
+| `--limit` | — | int | `0` | No | Override view result limit |
+| `--group` | — | string | — | No | Override view group-by field |
+| `--notebook` | `-n` | string | — | No | Notebook path (inherited from parent) |
+
+##### Query String Syntax (Pipe Convention from Phase 2 — Option C)
+
+```
+<filter DSL> | <directives>
+```
+
+- **Left of pipe**: DSL filter query (parsed by Participle parser)
+- **Right of pipe**: Presentation directives (simple `key:value` parser)
+- **Pipe is optional**: `tag:work` is valid (no directives)
+- **Filter is optional**: `| sort:modified:desc limit:20` is valid (all notes, sorted)
+
+Directives:
+- `sort:<field>:<asc|desc>` — Sort results (default: `asc`)
+- `limit:<n>` — Limit result count
+- `group:<field>` — Group results by field value
+- `offset:<n>` — Skip first N results (for pagination)
+
+##### View Resolution Order (Precedence)
+
+1. **Notebook views** (`.opennotes.json` → `views` section) — highest priority
+2. **Global views** (`~/.config/opennotes/config.json` → `views` section)
+3. **Built-in views** (hardcoded in Go) — lowest priority
+
+Users can override built-in views by defining a view with the same name in notebook or global config.
+
+##### Built-in Views (New DSL Definitions)
+
+```json
+{
+  "today": {
+    "name": "today",
+    "description": "Notes created or updated today",
+    "query": "modified:>=today | sort:modified:desc"
+  },
+  "recent": {
+    "name": "recent",
+    "description": "Recently modified notes (last 20)",
+    "query": "| sort:modified:desc limit:20"
+  },
+  "kanban": {
+    "name": "kanban",
+    "description": "Notes grouped by status",
+    "query": "has:status | group:status sort:title:asc"
+  },
+  "untagged": {
+    "name": "untagged",
+    "description": "Notes without any tags",
+    "query": "missing:tag | sort:created:desc"
+  },
+  "orphans": {
+    "name": "orphans",
+    "description": "Notes with no incoming links",
+    "type": "special"
+  },
+  "broken-links": {
+    "name": "broken-links",
+    "description": "Notes with broken references",
+    "type": "special"
+  }
+}
+```
+
+##### `--save` Behavior
+
+```bash
+opennotes notes view --save work-inbox "tag:work status:todo | sort:created:desc limit:50"
+```
+
+1. Validates the query string (parses filter DSL + directives)
+2. Rejects if name conflicts with a built-in view (unless `--force`)
+3. Writes to notebook `.opennotes.json` under `views.<name>`:
+   ```json
+   {
+     "views": {
+       "work-inbox": {
+         "name": "work-inbox",
+         "description": "Work inbox — todo items sorted by creation",
+         "query": "tag:work status:todo | sort:created:desc limit:50"
+       }
+     }
+   }
+   ```
+4. Confirms: `View "work-inbox" saved to notebook config`
+
+##### `--delete` Behavior
+
+```bash
+opennotes notes view --delete work-inbox
+```
+
+1. Rejects if name is a built-in view (cannot delete built-ins)
+2. Removes from notebook `.opennotes.json` → `views` section
+3. Confirms: `View "work-inbox" deleted from notebook config`
+
+##### Output Rules
+
+| Stream | Content |
+|--------|---------|
+| stdout | View results (notes list), view listing, JSON output |
+| stderr | Errors, warnings, diagnostics |
+
+| Format | Behavior |
+|--------|----------|
+| `list` (default) | Uses `TuiRender("note-list", ...)` — same as `notes list` / `notes search` |
+| `table` | ASCII table with columns: path, title, modified, tags |
+| `json` | JSON array of note objects (same schema as `notes list --format json`) |
+
+For `--list`:
+| Format | Behavior |
+|--------|----------|
+| `list` (default) | Grouped by origin (built-in, global, notebook) with descriptions |
+| `json` | `{"views": [...]}` JSON array |
+
+For grouped views (kanban):
+| Format | Behavior |
+|--------|----------|
+| `list` | Notes grouped under status headers |
+| `json` | `{"groups": {"todo": [...], "done": [...]}}` |
+
+##### Error & Exit Code Map
+
+| Exit Code | Condition |
+|-----------|-----------|
+| `0` | Success |
+| `1` | View not found, query parse error, notebook not found |
+| `2` | Invalid usage (bad flag combination, missing required args) |
+
+| Error | Message |
+|-------|---------|
+| View not found | `Error: view "xyz" not found. Run 'opennotes notes view --list' to see available views.` |
+| Invalid query | `Error: failed to parse query: <parser error detail>` |
+| Invalid directive | `Error: unknown directive "foo" in "| foo:bar". Valid: sort, limit, group, offset` |
+| Delete built-in | `Error: cannot delete built-in view "today". Built-in views can only be overridden.` |
+| Save conflict | `Error: "today" is a built-in view. Use --force to override in notebook config.` |
+
+##### Integration with `notes search`
+
+The pipe syntax also works in `notes search` for ad-hoc queries with directives:
+
+```bash
+# Current (no change needed):
+opennotes notes search "meeting"
+opennotes notes search --fuzzy "mtng"
+
+# New (pipe syntax in search):
+opennotes notes search "tag:work | sort:modified:desc limit:10"
+```
+
+This means `notes search` and `notes view` share the same query execution pipeline. The only difference is that `notes view` resolves a named view definition first, then executes it identically to `notes search`.
+
+##### Example Invocations
+
+```bash
+# List all views
+opennotes notes view
+opennotes notes view --list --format json
+
+# Execute built-in views
+opennotes notes view today
+opennotes notes view recent --format table
+opennotes notes view kanban
+opennotes notes view untagged --format json
+
+# Execute with runtime overrides
+opennotes notes view today --limit 5
+opennotes notes view recent --sort title:asc
+opennotes notes view kanban --group priority
+
+# Execute with parameters
+opennotes notes view my-sprint --param sprint=Q1-S3
+
+# Save custom views
+opennotes notes view --save work-inbox "tag:work status:todo | sort:created:desc limit:50"
+opennotes notes view --save stale-drafts "status:draft modified:<this-month | sort:modified:asc"
+opennotes notes view --save all-sorted "| sort:title:asc"
+
+# Delete custom view
+opennotes notes view --delete work-inbox
+
+# Ad-hoc search with pipe syntax
+opennotes notes search "tag:work | sort:modified:desc limit:10"
+
+# Pipe to external tools
+opennotes notes view today --format json | jq '.[].title'
+```
+
+##### New `ViewDefinition` Type (Proposed)
+
+```go
+type ViewDefinition struct {
+    Name        string          `json:"name"`
+    Description string          `json:"description"`
+    Parameters  []ViewParameter `json:"parameters,omitempty"`
+    Query       string          `json:"query"`           // "filter DSL | directives"
+    Type        string          `json:"type,omitempty"`  // "query" (default) or "special"
+}
+```
+
+Key change: `Query` becomes a plain `string` (was `ViewQuery` struct with SQL fields). The pipe-separated query string encodes everything. `Type` distinguishes DSL-queryable views from special graph-traversal views (orphans, broken-links).
+
+##### CLI Flag Overrides vs. Query Directives
+
+When a user provides both a view's query directives AND CLI flags, CLI flags win:
+
+```bash
+# View definition: "| sort:modified:desc limit:20"
+# CLI override: --limit 5 --sort title:asc
+# Effective: sort=title:asc, limit=5 (CLI flags override)
+```
+
+Precedence: CLI flags > query directives > defaults
 
 ## References
 
