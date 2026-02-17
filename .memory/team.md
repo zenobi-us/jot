@@ -1,9 +1,9 @@
 # OpenNotes Team Status
 
 ## Current Session
-- **Session ID**: bug-fix-views-session
-- **Status**: Task created, ready for implementation
-- **Working on**: [task-b4e2f7a1](task-b4e2f7a1-migrate-builtin-views-to-bleve.md) - Migrate builtin views to Bleve
+- **Session ID**: research-dsl-views-session
+- **Status**: In Progress - Phases 1-2 complete, awaiting Phase 3
+- **Working on**: [research-b4e2f7a1](research-b4e2f7a1-dsl-based-views-design.md) - Research DSL-based views design (Phases 1-2 complete)
 
 ## Epic Assignment
 - Residual cleanup from epic-f661c068 (DuckDB removal)

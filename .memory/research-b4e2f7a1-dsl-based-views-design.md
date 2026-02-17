@@ -2,12 +2,12 @@
 id: b4e2f7a1
 title: "Research: DSL-based views design for opennotes"
 created_at: 2026-02-17T18:47:00+10:30
-updated_at: 2026-02-17T18:54:00+10:30
-status: todo
+updated_at: 2026-02-17T21:05:00+10:30
+status: in-progress
 epic_id: f661c068
 phase_id: null
 related_task_id: null
-assigned_to: unassigned
+assigned_to: research-dsl-views-session
 ---
 
 # Research: DSL-based views design for opennotes
@@ -141,11 +141,116 @@ Use the `writing-plans` skill to produce the final implementation task(s).
 
 ## Summary
 
-_To be filled after research is complete._
+Phase 1 and Phase 2 complete. The codebase has three query pipelines: (1) text/fuzzy search fetching all notes then filtering in Go, (2) boolean query via CLI flags building AST→Bleve, and (3) a fully functional but **unused** Participle DSL parser with `FindByQueryString` having zero production callers. ~600 lines of `view.go` are dead SQL code; ~400 lines are reusable. **Recommendation: Option A (Thin Views)** — views as DSL query strings + metadata sidecar for sort/limit/group, leveraging existing `FindOpts` infrastructure. No grammar changes needed except adding existence checks (`has:tag`/`missing:tag`).
 
 ## Findings
 
-_To be filled during research._
+### Phase 1: DSL Pipeline Map
+
+#### Three Query Pipelines
+
+**Pipeline 1: Text/Fuzzy Search** (used by `notes search`)
+```
+CLI args → cmd/notes_search.go
+         → NoteService.SearchNotes(query, fuzzy)
+         → NoteService.getAllNotes() → Index.Find(empty FindOpts)
+         → SearchService.FuzzySearch() or .TextSearch() → in-memory filtering
+         → []Note results
+```
+
+**Pipeline 2: Boolean Query** (used by `notes search query`)
+```
+CLI flags (--and, --or, --not) → cmd/notes_search_query.go
+         → SearchService.ParseConditions(andFlags, orFlags, notFlags)
+         → []QueryCondition → NoteService.SearchWithConditions(conditions)
+         → SearchService.BuildQuery(ctx, conditions)
+         → *search.Query AST → Index.Find(FindOpts{Query: query})
+         → bleve.TranslateQuery(query) → Bleve execution → results
+```
+
+**Pipeline 3: DSL Parser** (exists but UNUSED in production)
+```
+DSL string → parser.New().Parse(input)
+           → Participle lexer+parser → queryAST
+           → convert() → *search.Query AST
+           → Index.FindByQueryString — ZERO production callers
+```
+
+#### Key Connection Points for Views
+
+1. **Input**: Convert view definition into `search.FindOpts` (contains `*search.Query` + sort + limit + offset)
+2. **Execution**: Call `Index.FindByQueryString(ctx, queryString, opts)` — already exists, ideal entry point
+
+#### Dead Code Inventory in `view.go` (1354 lines)
+
+| Code Block | Lines | Status |
+|-----------|-------|--------|
+| `initializeBuiltinViews()` | 48-157 | **Dead SQL** — all definitions use SQL syntax |
+| `GetView()` + view loading | 159-257 | **Reusable** — view discovery hierarchy works |
+| `ResolveTemplateVariables()` | 258-390 | **Reusable** — backend-agnostic string templating |
+| `ValidateViewDefinition()` | 447-676 | **Dead SQL** — validates SQL fields/operators |
+| `ParseViewParameters()` | 804-834 | **Reusable** — parses `key=value` strings |
+| `GenerateSQL()` | 867-1032 | **Dead SQL** — full SQL generator |
+| `GroupResults()` | 1072-1196 | **Partly reusable** — app-level grouping by field |
+| `ListAllViews()` | 1198-1354 | **Reusable** — view listing and discovery |
+
+### Phase 2: Design Options
+
+#### Option A: Thin Views — DSL String + Metadata Sidecar ⭐ RECOMMENDED
+
+```go
+type ViewDefinition struct {
+    Name        string          `json:"name"`
+    Description string          `json:"description"`
+    Parameters  []ViewParameter `json:"parameters,omitempty"`
+    Query       string          `json:"query"`              // DSL string
+    Sort        string          `json:"sort,omitempty"`      // "modified:desc"
+    Limit       int             `json:"limit,omitempty"`     // 20
+    GroupBy     string          `json:"group_by,omitempty"`  // "status"
+    Type        string          `json:"type,omitempty"`      // "query" or "special"
+}
+```
+
+Builtin examples:
+- `today`: `{ "query": "modified:>=today", "sort": "modified:desc" }`
+- `recent`: `{ "query": "", "sort": "modified:desc", "limit": 20 }`
+- `kanban`: `{ "query": "status:*", "group_by": "status" }`
+- `untagged`: `{ "query": "missing:tag", "sort": "created:desc" }`
+- `orphans`: `{ "type": "special" }`
+
+**Pros**: Zero grammar changes, `FindOpts` already has sort/limit/offset, correct separation of concerns (filtering vs presentation), 90% of wiring exists.
+**Cons**: Sort/limit aren't in the query string, two "languages".
+
+#### Option B: Rich DSL — Sort/Limit as Grammar Extensions
+
+Extend Participle grammar: `tag:work sort:modified:desc limit:20`
+
+**Pros**: Single self-contained query string, Gmail-like experience.
+**Cons**: Grammar changes risk regressions, conflates filtering with presentation, `sort`/`limit`/`group` collide with lexer Field token.
+
+#### Option C: Hybrid — Pipe Syntax
+
+`"modified:>=today | sort:modified:desc limit:20"` — pipe split before DSL parsing.
+
+**Pros**: Single query string, no grammar changes, familiar shell metaphor.
+**Cons**: Two parsers, non-standard in Gmail-style search.
+
+### Recommendation
+
+**Option A** for initial implementation with upgrade path to Option C later. Rationale:
+1. Lowest risk — zero grammar changes
+2. Already built — `FindOpts`, `FindByQueryString`, `ResolveTemplateVariables` exist
+3. Correct separation of filtering vs presentation concerns
+4. Clean upgrade path to Option C if users want self-contained strings
+
+### DSL Grammar Gaps
+
+| Gap | Severity | Fix |
+|-----|----------|-----|
+| Existence checks (`has:tag`, `missing:tag`) | **Critical** | Add new expression types to grammar |
+| Wildcard field values (`status:*`) | **Critical** | Add Wildcard token or `has:`/`missing:` keywords |
+| OR syntax (`tag:work OR tag:personal`) | **Medium** | `OrExpr` exists in AST but parser can't produce it |
+| Relative dates in DSL | **Already supported** | Bleve's `parseDate()` handles `today`, `yesterday`, etc. |
 
 ## References
 
