@@ -2,8 +2,9 @@
 id: 7c9d2e1f
 title: Semantic Search (Optional Enhancement)
 created_at: 2026-02-02T21:45:00+10:30
-updated_at: 2026-02-16T23:45:00+10:30
-status: completed
+updated_at: 2026-02-17T18:40:00+10:30
+status: archived
+distilled_learnings: learning-8bf639d3-semantic-search-epic-complete.md
 ---
 
 # Semantic Search (Optional Enhancement)
