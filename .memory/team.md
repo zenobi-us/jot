@@ -1,13 +1,9 @@
 # OpenNotes Team Status
 
 ## Current Session
-- **Session ID**: Post-epic cleanup session
-- **Status**: Completed epic archival
-- **Working on**: N/A - ready for new work
+- **Session ID**: bug-fix-views-session
+- **Status**: Task created, ready for implementation
+- **Working on**: [task-b4e2f7a1](task-b4e2f7a1-migrate-builtin-views-to-bleve.md) - Migrate builtin views to Bleve
 
 ## Epic Assignment
-- No active epic
-
-## Notes
-- Semantic Search Epic (7c9d2e1f) archived on Feb 17, 2026
-- Feature branch ready for PR review
+- Residual cleanup from epic-f661c068 (DuckDB removal)

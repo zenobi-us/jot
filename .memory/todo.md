@@ -1,10 +1,10 @@
 # OpenNotes TODO
 
 ## Active Epic
-- None - ready for new work
+- [epic-f661c068](epic-f661c068-remove-duckdb-alternative-search.md) (residual cleanup)
 
 ## Open Tasks
-- None
+- [ ] **[RESEARCH]** [research-b4e2f7a1](research-b4e2f7a1-dsl-based-views-design.md) - Research DSL-based views design for opennotes
 
 ## Next Queue
 - Consider creating PR for feature branch merge to main
@@ -12,5 +12,3 @@
 
 ## Recently Completed
 - ✅ Semantic Search Enhancement Epic (7c9d2e1f) - Archived
-  - All 4 phases completed and archived
-  - Learnings distilled to [learning-8bf639d3-semantic-search-epic-complete.md](learning-8bf639d3-semantic-search-epic-complete.md)
