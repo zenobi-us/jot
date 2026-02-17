@@ -4,11 +4,11 @@ OpenNotes includes an optional **semantic search** capability that finds notes b
 
 ## Overview
 
-| Search Mode | Best For | How It Works |
-|-------------|----------|--------------|
-| **Keyword** (default) | Exact terms, quick lookups | Bleve full-text index with BM25 ranking |
-| **Semantic** | Conceptual queries, paraphrases | Vector embeddings via chromem-go |
-| **Hybrid** (recommended) | Best of both worlds | Combines keyword + semantic with RRF merge |
+| Search Mode              | Best For                        | How It Works                               |
+| ------------------------ | ------------------------------- | ------------------------------------------ |
+| **Keyword** (default)    | Exact terms, quick lookups      | Bleve full-text index with BM25 ranking    |
+| **Semantic**             | Conceptual queries, paraphrases | Vector embeddings via chromem-go           |
+| **Hybrid** (recommended) | Best of both worlds             | Combines keyword + semantic with RRF merge |
 
 ## Quick Start
 
@@ -29,6 +29,7 @@ opennotes notes search semantic "architecture" --explain
 ## When to Use Each Mode
 
 ### Regular Search (`notes search`)
+
 - Finding notes with **specific keywords**
 - Quick lookups when you know the exact terms
 - **Performance-critical** scenarios (fastest)
@@ -39,6 +40,7 @@ opennotes notes search "2024-01-15"
 ```
 
 ### Semantic Search (`notes search semantic`)
+
 - **Conceptual queries**: "notes about team communication"
 - **Paraphrases**: Finding "meeting notes" when content says "sync discussion"
 - **Exploratory search**: When you don't know the exact terms used
@@ -58,14 +60,14 @@ opennotes notes search semantic [query] [flags]
 
 ### Flags
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--mode` | `hybrid` | Retrieval mode: `hybrid`, `keyword`, or `semantic` |
-| `--explain` | `false` | Show match type and explanation for each result |
-| `--top-k` | `100` | Maximum candidates per source before merge |
-| `--and` | - | AND condition (field=value) - all must match |
-| `--or` | - | OR condition (field=value) - any can match |
-| `--not` | - | NOT condition (field=value) - excludes matches |
+| Flag        | Default  | Description                                        |
+| ----------- | -------- | -------------------------------------------------- |
+| `--mode`    | `hybrid` | Retrieval mode: `hybrid`, `keyword`, or `semantic` |
+| `--explain` | `false`  | Show match type and explanation for each result    |
+| `--top-k`   | `100`    | Maximum candidates per source before merge         |
+| `--and`     | -        | AND condition (field=value) - all must match       |
+| `--or`      | -        | OR condition (field=value) - any can match         |
+| `--not`     | -        | NOT condition (field=value) - excludes matches     |
 
 ### Examples with Filters
 
@@ -91,10 +93,12 @@ opennotes notes search semantic "workflow automation" --explain
 ```
 
 Output includes:
+
 - **Match type**: `keyword`, `semantic`, or `both` (appeared in both retrievals)
 - **Explanation**: Snippet showing why the note matched
 
 Example output:
+
 ```
 Found 3 note(s) using hybrid mode (explain):
 
@@ -123,16 +127,17 @@ Found 3 note(s) using hybrid mode (explain):
 ### Fallback Behavior
 
 If the semantic backend is unavailable:
+
 - **Hybrid mode**: Falls back to keyword-only results with a warning
 - **Semantic mode**: Returns error suggesting `--mode keyword`
 
 ## Performance Considerations
 
-| Mode | Typical Latency | Notes |
-|------|-----------------|-------|
-| Keyword | <5ms | Fastest, uses Bleve index |
-| Semantic | 50-200ms | Depends on embedding model and notebook size |
-| Hybrid | 50-200ms | Parallel retrieval, slight overhead for merge |
+| Mode     | Typical Latency | Notes                                         |
+| -------- | --------------- | --------------------------------------------- |
+| Keyword  | <5ms            | Fastest, uses Bleve index                     |
+| Semantic | 50-200ms        | Depends on embedding model and notebook size  |
+| Hybrid   | 50-200ms        | Parallel retrieval, slight overhead for merge |
 
 ### Tips for Large Notebooks
 
@@ -146,6 +151,7 @@ If the semantic backend is unavailable:
 ### "Semantic backend unavailable"
 
 The semantic backend (chromem-go) may not be initialized. Try:
+
 ```bash
 # Use keyword-only mode
 opennotes notes search semantic "query" --mode keyword
@@ -160,6 +166,7 @@ opennotes notes search semantic "query" --mode keyword
 ### Different results between modes
 
 This is expected! Each mode has different strengths:
+
 - **Keyword** finds exact term matches
 - **Semantic** finds conceptually similar content
 - **Hybrid** combines both for balanced results
