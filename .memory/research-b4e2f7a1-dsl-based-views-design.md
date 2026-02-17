@@ -223,25 +223,106 @@ Builtin examples:
 
 #### Option B: Rich DSL — Sort/Limit as Grammar Extensions
 
-Extend Participle grammar: `tag:work sort:modified:desc limit:20`
+Extend Participle grammar so sort/limit/group are first-class DSL tokens:
 
-**Pros**: Single self-contained query string, Gmail-like experience.
-**Cons**: Grammar changes risk regressions, conflates filtering with presentation, `sort`/`limit`/`group` collide with lexer Field token.
+```go
+type ViewDefinition struct {
+    Name        string          `json:"name"`
+    Description string          `json:"description"`
+    Parameters  []ViewParameter `json:"parameters,omitempty"`
+    Query       string          `json:"query"`              // Full DSL string including directives
+    Type        string          `json:"type,omitempty"`      // "query" or "special"
+}
+```
 
-#### Option C: Hybrid — Pipe Syntax
+Builtin examples:
+- `today`: `{ "query": "modified:>=today sort:modified:desc" }`
+- `recent`: `{ "query": "sort:modified:desc limit:20" }`
+- `kanban`: `{ "query": "has:status group:status sort:path:asc" }`
+- `untagged`: `{ "query": "missing:tag sort:created:desc" }`
+- `orphans`: `{ "type": "special" }`
 
-`"modified:>=today | sort:modified:desc limit:20"` — pipe split before DSL parsing.
+User-created examples:
+- `{ "name": "work-inbox", "query": "tag:work status:todo sort:created:desc limit:50" }`
+- `{ "name": "stale-drafts", "query": "status:draft modified:<this-month sort:modified:asc" }`
 
-**Pros**: Single query string, no grammar changes, familiar shell metaphor.
-**Cons**: Two parsers, non-standard in Gmail-style search.
+CLI usage:
+```bash
+opennotes notes view today                    # executes builtin
+opennotes notes search "tag:work sort:modified:desc limit:10"  # ad-hoc with directives
+opennotes notes view --save my-view "tag:work status:todo sort:created:desc"
+```
+
+**Pros**: Single self-contained query string. `ViewDefinition` is minimal — just name + query string. Users can copy/paste/share entire queries. Saved views and ad-hoc search use identical syntax.
+**Cons**: Grammar changes risk regressions. `sort`/`limit`/`group` collide with lexer Field token (needs new `Directive` token type). Conflates filtering with presentation in the AST. `group:status` is post-query Go logic pretending to be a query directive.
+
+#### Option C: Hybrid — Pipe Syntax ⭐ SELECTED
+
+The query string has two halves separated by `|`: the left side is the filter DSL (parsed by Participle), the right side is presentation directives (parsed by simple key:value splitter). The pipe is processed *before* DSL parsing.
+
+```go
+type ViewDefinition struct {
+    Name        string          `json:"name"`
+    Description string          `json:"description"`
+    Parameters  []ViewParameter `json:"parameters,omitempty"`
+    Query       string          `json:"query"`              // "filter DSL | directives"
+    Type        string          `json:"type,omitempty"`      // "query" or "special"
+}
+```
+
+Builtin examples:
+- `today`: `{ "query": "modified:>=today | sort:modified:desc" }`
+- `recent`: `{ "query": "| sort:modified:desc limit:20" }`
+- `kanban`: `{ "query": "has:status | group:status sort:path:asc" }`
+- `untagged`: `{ "query": "missing:tag | sort:created:desc" }`
+- `orphans`: `{ "type": "special" }`
+
+User-created examples:
+- `{ "name": "work-inbox", "query": "tag:work status:todo | sort:created:desc limit:50" }`
+- `{ "name": "stale-drafts", "query": "status:draft modified:<this-month | sort:modified:asc" }`
+- `{ "name": "all-by-title", "query": "| sort:title:asc" }` (no filter, just sorted listing)
+- `{ "name": "weekly-review", "query": "modified:>=this-week | sort:modified:desc group:status" }`
+
+CLI usage:
+```bash
+opennotes notes view today                                      # executes builtin
+opennotes notes search "tag:work | sort:modified:desc limit:10" # ad-hoc with pipe
+opennotes notes view --save my-view "tag:work status:todo | sort:created:desc"
+```
+
+Execution flow:
+```
+ViewDefinition.Query
+  → ResolveTemplateVariables(query) → "modified:>=2026-02-17 | sort:modified:desc"
+  → SplitPipe(resolved) → filterPart="modified:>=2026-02-17", directivesPart="sort:modified:desc"
+  → parser.Parse(filterPart) → *search.Query
+  → parseDirectives(directivesPart) → sort, limit, groupBy
+  → FindOpts{Query: q, Sort: sort, Limit: limit}
+  → Index.Find(ctx, opts)
+  → if groupBy: post-process results in Go
+```
+
+Directive grammar (simple, not Participle):
+```
+directives  = directive (" " directive)*
+directive   = "sort:" field (":" ("asc"|"desc"))?
+            | "limit:" number
+            | "group:" field
+            | "offset:" number
+```
+
+**Pros**: Single self-contained query string — users copy/paste/share complete views. No Participle grammar changes — the DSL stays pure for filtering. Pipe is a clear visual separator between "what to find" and "how to present". Familiar shell metaphor (`grep pattern | sort`). `ViewDefinition` is minimal — just name + query string. Directives parser is trivial (~30 lines of Go, no Participle needed). The filter part can be empty (just `| sort:modified:desc`) for "all notes, sorted".
+**Cons**: `|` character needs to be documented. Two parsers (but the directives parser is trivial). Not standard in Gmail-style search (but this isn't Gmail — it's a CLI tool where pipes are natural).
 
 ### Recommendation
 
-**Option A** for initial implementation with upgrade path to Option C later. Rationale:
-1. Lowest risk — zero grammar changes
-2. Already built — `FindOpts`, `FindByQueryString`, `ResolveTemplateVariables` exist
-3. Correct separation of filtering vs presentation concerns
-4. Clean upgrade path to Option C if users want self-contained strings
+**Option C (Hybrid — Pipe Syntax)** selected by project owner. Rationale:
+1. Best UX — single self-contained query string that users can share, save, and compose
+2. Clean visual separation between filtering and presentation (`filter | directives`)
+3. No Participle grammar changes — DSL stays pure, directives parser is trivial
+4. Natural fit for a CLI tool where pipe metaphor is well-understood
+5. `ViewDefinition` type is minimal — just name + query string (no sidecar fields)
+6. Identical syntax works in both `notes view` (saved) and `notes search` (ad-hoc)
 
 ### DSL Grammar Gaps
 
