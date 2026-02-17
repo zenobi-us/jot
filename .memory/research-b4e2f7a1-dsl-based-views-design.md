@@ -64,6 +64,81 @@ These views require traversing note links — they can't be expressed as search 
 - What code is still useful? (Template variable resolution `{{today}}`, parameter handling, view discovery/loading)
 - What tests in `view_test.go` test SQL behavior vs. general view logic?
 
+## Execution Plan
+
+### Phase 1: Map the existing DSL pipeline (codemapper)
+
+Use the `codemapper` skill to build a complete picture of how queries flow through the system.
+
+**Actions:**
+- `cm trace "cmd" "search"` — trace how CLI commands reach the search service
+- `cm query "Parse" --format ai` — find all Parse-related symbols in the parser package
+- `cm query "BuildQuery" --format ai` — understand how QueryConditions become search.Query AST
+- `cm callers "SearchService.BuildQuery"` — who calls BuildQuery today?
+- `cm query "ViewDefinition" --format ai` — map all view type usage
+- `cm stats internal/services/view.go` — quantify dead SQL code vs. reusable code
+- `cm trace "internal/search" "internal/services"` — map dependencies between search and services
+
+**Deliverable:** A clear map of: DSL string → parser → search.Query AST → Bleve query → results. Identify exactly which connection points the view system needs to plug into.
+
+### Phase 2: Explore design options (brainstorming)
+
+Use the `brainstorming` skill to explore the design space before committing to an approach.
+
+**Key design tensions to explore:**
+- **DSL purity vs. view metadata**: Should sort/limit/group be DSL syntax extensions, or separate view-level config alongside a query string?
+- **Thin views vs. rich views**: Is a view just a saved query string, or does it need its own execution model?
+- **Grammar extension cost**: What's the impact of adding `sort:`, `limit:`, `group:` to the Participle grammar vs. keeping them out?
+- **Template resolution timing**: Resolve `{{today}}` before DSL parsing (simple string substitution) or make the parser date-aware?
+- **User experience**: `notes view today` vs. `notes search "modified:>=today"` — what's the value-add of named views?
+
+**Deliverable:** 2-3 concrete design options with tradeoffs articulated.
+
+### Phase 3: Design the CLI surface (creating-cli-tools)
+
+Use the `creating-cli-tools` skill to design the user-facing commands.
+
+**Questions to resolve:**
+- How does `notes view <name>` execute a saved query?
+- How does `notes view --save <name> "<query>"` work?
+- What flags does `notes view` need? (`--format`, `--sort`, `--limit`, `--group`?)
+- How do users list, edit, delete saved views?
+- How do parameters work? (`notes view my-view --param sprint=Q1`)
+- Output format: reuse `notes search` output rendering or separate?
+
+**Deliverable:** CLI specification for the view command family.
+
+### Phase 4: Validate the design (architect-reviewer)
+
+Use the `architect-reviewer` skill to validate the chosen approach.
+
+**Review criteria:**
+- Does the design compose well with existing search infrastructure?
+- Is it backwards-compatible with the working `orphans`/`broken-links` views?
+- Does it scale to complex user queries without becoming another SQL?
+- Is the ViewDefinition type clean and minimal?
+- Are there edge cases that break the model?
+
+**Deliverable:** Go/no-go recommendation with any design adjustments.
+
+### Phase 5: Plan the cleanup (refactoring-specialist)
+
+Use the `refactoring-specialist` skill to plan safe removal of dead SQL code.
+
+**Actions:**
+- Identify which code in `view.go` is reusable (template resolution, view discovery, parameter handling)
+- Identify which code is dead SQL (GenerateSQL, SQL validation, aggregate functions, escapeSQL, etc.)
+- Plan incremental removal strategy (don't break tests that test non-SQL behavior)
+- Identify which tests in `view_test.go` are SQL-specific vs. general
+
+**Deliverable:** A file-by-file cleanup plan with safe removal order.
+
+### Phase 6: Write implementation plan (writing-plans)
+
+Use the `writing-plans` skill to produce the final implementation task(s).
+
+**Deliverable:** Detailed implementation plan with exact file paths, code examples, and verification steps — ready for an engineer with zero context to execute.
+
 ## Summary
 
 _To be filled after research is complete._
