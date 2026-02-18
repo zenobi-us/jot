@@ -2,8 +2,8 @@
 id: b4e2f7a1
 title: "Research: DSL-based views design for opennotes"
 created_at: 2026-02-17T18:47:00+10:30
-updated_at: 2026-02-18T19:47:00+10:30
-status: in-progress
+updated_at: 2026-02-18T20:58:00+10:30
+status: completed
 epic_id: f661c068
 phase_id: null
 related_task_id: null
@@ -141,7 +141,17 @@ Use the `writing-plans` skill to produce the final implementation task(s).
 
 ## Summary
 
-Phase 1 and Phase 2 complete. The codebase has three query pipelines: (1) text/fuzzy search fetching all notes then filtering in Go, (2) boolean query via CLI flags building AST→Bleve, and (3) a fully functional but **unused** Participle DSL parser with `FindByQueryString` having zero production callers. ~600 lines of `view.go` are dead SQL code; ~400 lines are reusable. **Recommendation: Option A (Thin Views)** — views as DSL query strings + metadata sidecar for sort/limit/group, leveraging existing `FindOpts` infrastructure. No grammar changes needed except adding existence checks (`has:tag`/`missing:tag`).
+**All phases complete.** The DSL-based views design research is finished with a comprehensive implementation plan ready for execution.
+
+- **Phase 1-2**: Mapped DSL pipeline, identified 3 query paths (text search, boolean query, Participle DSL parser with zero production callers)
+- **Phase 3**: Designed CLI surface with pipe syntax (`filter | directives`)
+- **Phase 4**: Architecture validation — GO ✅
+- **Phase 5**: SQL cleanup plan — ~500 lines removable, ~550 lines reusable
+- **Phase 6**: Implementation plan created — 10 TDD tasks ready for execution
+
+**Selected Design**: Option C (Hybrid — Pipe Syntax). Views use DSL query strings with format `"filter DSL | directives"`. Example: `"modified:>=today | sort:modified:desc"`.
+
+**Next Step**: Execute [plan-b4e2f7a1-dsl-views-implementation.md](plan-b4e2f7a1-dsl-views-implementation.md) using `superpowers:executing-plans` skill.
 
 ## Findings
 
@@ -970,6 +980,51 @@ After each removal phase:
 | `view_test.go` lines | 1804 | ~850 |
 | SQL-related imports | database/sql concepts | 0 |
 | Dead code | ~600 lines | 0 |
+
+### Phase 6: Implementation Plan
+
+**Skill Applied**: `writing-plans`
+
+#### Deliverable
+
+Full implementation plan created: [plan-b4e2f7a1-dsl-views-implementation.md](plan-b4e2f7a1-dsl-views-implementation.md)
+
+#### Plan Summary
+
+The implementation plan contains **10 tasks** following TDD principles:
+
+| Task | Description | Files Changed |
+|------|-------------|---------------|
+| 1 | Add `has:` and `missing:` keywords to DSL grammar | `internal/search/parser/` |
+| 2 | Implement quote-aware pipe splitting | `internal/services/view_query.go` |
+| 3 | Implement directives parser | `internal/services/view_query.go` |
+| 4 | Update `ViewDefinition` type | `internal/core/view.go` |
+| 5 | Rewrite builtin views with DSL | `internal/services/view.go` |
+| 6 | Implement view query execution | `internal/services/view_executor.go` |
+| 7 | Remove dead SQL code | `internal/services/view.go` |
+| 8 | Update CLI `notes view` command | `cmd/notes_view.go` |
+| 9 | Add pipe syntax to `notes search` | `cmd/notes_search.go` |
+| 10 | Integration testing | `internal/services/view_integration_test.go` |
+
+#### Key Implementation Decisions
+
+1. **Grammar changes**: Only add `has:` and `missing:` keywords — no other Participle changes
+2. **Pipe splitting**: Quote-aware splitting before DSL parsing
+3. **Directives**: Simple `key:value` parser (~50 lines), not Participle
+4. **ViewDefinition**: Replace `ViewQuery` struct with `string` field
+5. **Execution**: Route through existing `Index.Find()` via `FindOpts`
+6. **Special views**: Unchanged — dispatch via `Type: "special"`
+
+#### Estimated Effort
+
+- Total tasks: 10
+- Estimated time: 4-6 hours (experienced developer)
+- Each task is self-contained and can be committed independently
+
+#### Execution Options
+
+1. **Subagent-Driven (recommended)**: Fresh subagent per task with code review between tasks
+2. **Parallel Session**: Open new session with `executing-plans` skill
 
 ## References
 
