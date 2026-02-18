@@ -2,7 +2,7 @@
 id: b4e2f7a1
 title: "Research: DSL-based views design for opennotes"
 created_at: 2026-02-17T18:47:00+10:30
-updated_at: 2026-02-18T18:55:00+10:30
+updated_at: 2026-02-18T21:08:00+10:30
 status: in-progress
 epic_id: f661c068
 phase_id: null
@@ -727,6 +727,34 @@ func SplitQuery(query string) (filter, directives string) {
     return query, "" // No pipe found
 }
 ```
+
+**Examples: where quote-aware splitting applies (split should happen):**
+- `tag:work | sort:modified:desc`
+  - filter: `tag:work`
+  - directives: `sort:modified:desc`
+- `status:todo modified:>=today | limit:20`
+  - filter: `status:todo modified:>=today`
+  - directives: `limit:20`
+- `| sort:title:asc limit:50`
+  - filter: *(empty = all notes)*
+  - directives: `sort:title:asc limit:50`
+
+**Examples: where quote-aware splitting does NOT apply at that pipe (no split at quoted `|`):**
+- `title:"A | B" tag:work`
+  - no split; entire string is filter
+- `body:"foo | bar baz"`
+  - no split; entire string is filter
+- `title:"roadmap | q1" | sort:modified:desc`
+  - first `|` inside quotes is ignored
+  - split on second (unquoted) `|`
+
+**Ambiguous/edge cases to define explicitly:**
+- `title:"unterminated | quote`
+  - treat as parse error (unclosed quote)
+- `tag:work | sort:title:asc | limit:10`
+  - split on first unquoted `|`; reject extra `|` in directives
+- `title:'A | B' | sort:...`
+  - if single quotes are unsupported by DSL, this should not protect `|`; document behavior
 
 ##### Adjustment 2: Directive Conflict Rule (REQUIRED)
 
