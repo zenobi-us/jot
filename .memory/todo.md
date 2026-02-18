@@ -8,7 +8,7 @@
   - [x] Phase 1: Map existing DSL pipeline (`codemapper`) — **completed**
   - [x] Phase 2: Explore design options (`brainstorming`) — **completed**
   - [x] Phase 3: Design CLI surface (`creating-cli-tools`) — **completed**
-  - [ ] Phase 4: Validate design (`architect-reviewer`)
+  - [x] Phase 4: Validate design (`architect-reviewer`) — **completed** ✅ GO
   - [ ] Phase 5: Plan SQL cleanup (`refactoring-specialist`)
   - [ ] Phase 6: Write implementation plan (`writing-plans`)
 

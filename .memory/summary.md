@@ -2,9 +2,10 @@
 
 ## Current Focus
 - **Active Research**: [research-b4e2f7a1](research-b4e2f7a1-dsl-based-views-design.md) - DSL-based views design
-  - Phases 1-3 complete: DSL pipeline mapped, 3 design options explored, CLI surface designed
+  - Phases 1-4 complete: DSL pipeline mapped, 3 design options explored, CLI surface designed, architecture validated
   - **Selected Design**: Option C (Hybrid — Pipe Syntax) with full CLI spec
-  - Next: Phase 4 (architecture validation), Phase 5 (SQL cleanup plan), Phase 6 (implementation plan)
+  - **Phase 4 Result**: ✅ GO — Design is architecturally sound, maps cleanly to existing `FindOpts`
+  - Next: Phase 5 (SQL cleanup plan), Phase 6 (implementation plan)
 - **Epic**: Residual cleanup from DuckDB removal (epic-f661c068)
 
 ## Key Research Findings
@@ -15,6 +16,7 @@
 - `ViewDefinition.Query` becomes plain `string` (replaces SQL-oriented `ViewQuery` struct)
 - CLI flags override query directives; notebook views override global; global overrides built-in
 - Three DSL grammar gaps remain: existence checks (`has:`/`missing:`) critical, wildcard values critical, OR syntax medium
+- **Architecture validation**: Design maps directly to `FindOpts` with zero interface changes; special views preserved via `Type: "special"`
 
 ## Recently Completed
 - ✅ **Semantic Search Enhancement** (epic-7c9d2e1f) - Archived Feb 17, 2026
@@ -22,4 +24,4 @@
 
 ## Project State
 - Feature branch: `feat/remove-duckdb-migrate-to-afero-chromedb-with-bleve-search`
-- Ready for: Research phases 4-6 → implementation → PR review and merge to main
+- Ready for: Research phases 5-6 → implementation → PR review and merge to main

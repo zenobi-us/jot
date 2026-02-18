@@ -2,7 +2,7 @@
 id: b4e2f7a1
 title: "Research: DSL-based views design for opennotes"
 created_at: 2026-02-17T18:47:00+10:30
-updated_at: 2026-02-17T21:02:00+10:30
+updated_at: 2026-02-18T18:55:00+10:30
 status: in-progress
 epic_id: f661c068
 phase_id: null
@@ -591,6 +591,197 @@ When a user provides both a view's query directives AND CLI flags, CLI flags win
 ```
 
 Precedence: CLI flags > query directives > defaults
+
+### Phase 4: Architecture Validation
+
+**Skill Applied**: `architect-reviewer`
+
+#### Executive Summary
+
+**GO** ✅ — The pipe syntax design (Option C) is architecturally sound and ready for implementation.
+
+The design composes cleanly with existing infrastructure, maintains backwards compatibility, and avoids the complexity trap of becoming "SQL 2.0". Three minor adjustments are recommended before implementation.
+
+#### Review Criteria Assessment
+
+##### 1. Composition with Existing Search Infrastructure ✅ PASS
+
+**Finding**: The design maps directly to existing `FindOpts` struct with no modifications needed.
+
+| Pipe Directive | Maps To | Status |
+|---------------|---------|--------|
+| Filter DSL (left of `\|`) | `FindOpts.Query *search.Query` | ✅ Exists |
+| `sort:field:dir` | `FindOpts.Sort SortSpec` | ✅ Exists |
+| `limit:n` | `FindOpts.Limit int` | ✅ Exists |
+| `offset:n` | `FindOpts.Offset int` | ✅ Exists |
+| `group:field` | Post-query Go logic | ✅ Pattern exists in `SpecialViewExecutor` |
+
+**Evidence**: `internal/search/options.go` already defines `SortSpec` with `SortByCreated`, `SortByModified`, `SortByTitle`, `SortByRelevance`. The execution path is:
+
+```
+Query string → SplitPipe() → filter | directives
+                              ↓          ↓
+                        Parser.Parse()  parseDirectives()
+                              ↓          ↓
+                        *search.Query   sort, limit, offset, groupBy
+                              ↓          ↓
+                        FindOpts{Query: q, Sort: s, Limit: l, Offset: o}
+                              ↓
+                        Index.Find(ctx, opts)
+                              ↓
+                        if groupBy: groupResults(results, groupBy)
+```
+
+**Verdict**: Zero changes to `FindOpts` or `Index` interface required. The design plugs into existing infrastructure.
+
+##### 2. Backwards Compatibility with Special Views ✅ PASS
+
+**Finding**: The `Type: "special"` field cleanly separates DSL-queryable views from graph-traversal views.
+
+| View | Type | Execution Path |
+|------|------|----------------|
+| `today`, `recent`, `kanban`, `untagged` | `"query"` (default) | DSL parser → `Index.Find()` |
+| `orphans`, `broken-links` | `"special"` | `SpecialViewExecutor.Execute*View()` |
+
+**Evidence**: `internal/services/view_special.go` already implements `ExecuteBrokenLinksView()` and `ExecuteOrphansView()` with Go logic that cannot be expressed as search queries. These views traverse note links to find broken references.
+
+**Verdict**: No changes to special view handling. The `Type` field provides clean dispatch routing.
+
+##### 3. Complexity Scaling (Not Becoming SQL 2.0) ✅ PASS
+
+**Finding**: The design has deliberate constraints that prevent feature creep.
+
+| Feature | In Scope | Out of Scope (Intentional) |
+|---------|----------|---------------------------|
+| Filtering | ✅ Field matching, comparisons, negation, free text | ❌ JOINs, subqueries |
+| Sorting | ✅ Single field, asc/desc | ❌ Multi-field sort, expressions |
+| Pagination | ✅ limit + offset | ❌ Cursors, keyset pagination |
+| Grouping | ✅ Single field post-query grouping | ❌ Aggregations, HAVING, nested groups |
+| Presentation | ✅ Directives separated by pipe | ❌ Projection (select columns) |
+
+**Key constraint**: The pipe syntax explicitly separates "what to find" (DSL) from "how to present" (directives). This prevents the DSL from evolving toward SQL expressiveness.
+
+**Verdict**: The design has clear boundaries. Complexity is bounded by the directive grammar, not the DSL grammar.
+
+##### 4. ViewDefinition Type Cleanliness ✅ PASS
+
+**Proposed type** (from Phase 3):
+```go
+type ViewDefinition struct {
+    Name        string          `json:"name"`
+    Description string          `json:"description"`
+    Parameters  []ViewParameter `json:"parameters,omitempty"`
+    Query       string          `json:"query"`           // "filter DSL | directives"
+    Type        string          `json:"type,omitempty"`  // "query" (default) or "special"
+}
+```
+
+**Comparison to current type**:
+```go
+// CURRENT (SQL-oriented, dead code)
+type ViewDefinition struct {
+    Name        string          `json:"name"`
+    Description string          `json:"description"`
+    Parameters  []ViewParameter `json:"parameters,omitempty"`
+    Query       ViewQuery       `json:"query"`  // ← Complex struct with 10 SQL fields
+}
+```
+
+**Improvement metrics**:
+- Fields removed: 10 (SelectColumns, GroupBy, Having, AggregateColumns, Distinct, Conditions, OrderBy, etc.)
+- New fields: 1 (`Type`)
+- Net complexity reduction: 90%
+
+**Verdict**: The new type is minimal and self-documenting. A view is just a name + query string.
+
+##### 5. Edge Cases Analysis ⚠️ MINOR ISSUES IDENTIFIED
+
+| Edge Case | Handling | Status |
+|-----------|----------|--------|
+| Empty filter (`\| sort:modified:desc`) | Valid — means "all notes, sorted" | ✅ Designed |
+| No pipe (`tag:work`) | Valid — filter only, default presentation | ✅ Designed |
+| Multiple pipes (`a \| b \| c`) | First pipe splits; remainder is directives | ⚠️ Needs explicit rule |
+| Pipe in quoted string (`title:"a \| b"`) | Should NOT split on this pipe | ⚠️ Needs careful implementation |
+| Unknown directive (`foo:bar`) | Error: "unknown directive 'foo'" | ✅ Designed |
+| Conflicting directives (`limit:10 limit:20`) | Last wins, or error? | ⚠️ Needs decision |
+| Case sensitivity (`Sort:modified` vs `sort:modified`) | Directives should be case-insensitive | ⚠️ Needs decision |
+
+#### Recommended Adjustments
+
+##### Adjustment 1: Pipe Splitting Rule (REQUIRED)
+
+**Issue**: Pipe character inside quoted strings should not trigger split.
+
+**Recommendation**: Split on first unquoted `|` only. Implementation:
+```go
+func SplitQuery(query string) (filter, directives string) {
+    // Use a simple state machine to track quote state
+    // Only split on '|' when not inside quotes
+    inQuote := false
+    for i, ch := range query {
+        if ch == '"' { inQuote = !inQuote }
+        if ch == '|' && !inQuote {
+            return strings.TrimSpace(query[:i]), strings.TrimSpace(query[i+1:])
+        }
+    }
+    return query, "" // No pipe found
+}
+```
+
+##### Adjustment 2: Directive Conflict Rule (REQUIRED)
+
+**Issue**: What happens with `limit:10 limit:20`?
+
+**Recommendation**: Last directive wins (consistent with CLI flag behavior where later flags override earlier ones). Document this explicitly.
+
+##### Adjustment 3: Case Insensitivity (RECOMMENDED)
+
+**Issue**: Should `Sort:modified` work?
+
+**Recommendation**: Directives are case-insensitive. Normalize to lowercase during parsing. This matches user expectations from CLI tools.
+
+#### Architecture Fitness Functions
+
+To maintain architectural integrity during implementation, add these checks:
+
+1. **No SQL imports in view.go**: `grep -c "database/sql" internal/services/view.go` should return 0
+2. **ViewDefinition.Query is string**: Type assertion test in `view_test.go`
+3. **Special views use Type field**: All special views have `Type: "special"` in definition
+4. **Directive grammar is closed**: New directives require explicit approval (prevent feature creep)
+
+#### Technical Debt Assessment
+
+| Item | Current State | After Implementation |
+|------|---------------|---------------------|
+| Dead SQL code in `view.go` | ~600 lines | 0 lines (Phase 5 cleanup) |
+| ViewQuery struct | 10 SQL-oriented fields | Removed entirely |
+| ViewCondition struct | SQL-oriented | Removed entirely |
+| Test coverage for SQL paths | ~40% | N/A (code removed) |
+
+#### Risk Assessment
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|------------|--------|------------|
+| Grammar gaps block built-in views | Medium | High | Phase 5 adds `has:`/`missing:` before view implementation |
+| Pipe syntax confuses users | Low | Low | Document clearly; familiar to CLI users |
+| Directive parser bugs | Low | Medium | Comprehensive test coverage; simple grammar |
+| Migration breaks saved views | N/A | N/A | No migration needed — views are new |
+
+#### Final Recommendation
+
+**GO** ✅ — Proceed to Phase 5 (SQL cleanup planning) and Phase 6 (implementation planning).
+
+**Pre-requisites for implementation**:
+1. Add `has:` / `missing:` keywords to DSL grammar (Critical gap from Phase 2)
+2. Implement `SplitQuery()` with quote-aware pipe splitting
+3. Remove dead SQL code (Phase 5 cleanup)
+
+**Post-implementation validation**:
+1. All built-in views execute correctly
+2. Custom view save/delete works
+3. `notes search` supports pipe syntax
+4. CLI flag overrides work correctly
+5. Special views (`orphans`, `broken-links`) unchanged
 
 ## References
 
