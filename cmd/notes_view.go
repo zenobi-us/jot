@@ -27,18 +27,68 @@ When called without arguments or with --list, displays all available views.
 
 BUILT-IN VIEWS:
 
-  today            - Notes created or updated today
-  recent           - Recently modified notes (last 20)
-  kanban           - Notes grouped by status column
-  untagged         - Notes without any tags
-  orphans          - Notes with no incoming links
-  broken-links     - Notes with broken references
+  View queries use DSL pipe syntax: filter | directives
+
+  today            modified:>=today | sort:modified:desc
+  recent           | sort:modified:desc limit:20
+  kanban           has:status | group:status sort:title:asc
+  untagged         missing:tag | sort:created:desc
+  orphans          (special) Notes with no incoming links
+  broken-links     (special) Notes with broken references
+
+DSL FILTER SYNTAX:
+
+  Filters go before the pipe (|). Multiple filters combine with AND.
+
+  Fields:
+    tag:<value>           Notes with a specific tag
+    status:<value>        Notes with a status value
+    title:<text>          Search within title
+    path:<prefix>         Notes under a path prefix
+    body:<text>           Search within body content
+    created:<date>        Notes created on date (YYYY-MM-DD)
+    modified:<date>       Notes modified on date (YYYY-MM-DD)
+
+  Operators (on date fields):
+    field:>=value         Greater than or equal
+    field:<=value         Less than or equal
+    field:>value          Greater than
+    field:<value          Less than
+
+  Existence checks:
+    has:<field>           Notes where field exists (e.g., has:tag)
+    missing:<field>       Notes where field is absent (e.g., missing:status)
+
+  Negation:
+    -<term>               Exclude notes matching term
+    -field:<value>        Exclude notes where field matches value
+
+  Text:
+    <word>                Full-text search term
+    "multi word phrase"   Quoted phrase search
+
+DIRECTIVES (after |):
+
+  sort:<field>:<dir>    Sort by field: modified, created, title, path, relevance
+                        Direction: asc (default) or desc
+  limit:<n>             Return at most n results
+  offset:<n>            Skip first n results (pagination)
+  group:<field>         Group results by field (e.g., group:status)
 
 CUSTOM VIEWS:
 
-  Define custom views in:
+  Define custom views using the same DSL pipe syntax in:
   - Global: ~/.config/opennotes/config.json
   - Notebook: <notebook>/.opennotes.json
+
+  Example custom view in .opennotes.json:
+    {
+      "views": [{
+        "name": "active-work",
+        "description": "Active work items sorted by modification",
+        "query": "tag:work status:todo | sort:modified:desc limit:50"
+      }]
+    }
 
 OUTPUT FORMATS:
 
@@ -49,13 +99,21 @@ OUTPUT FORMATS:
 EXAMPLES:
 
   opennotes notes view                                    # List all views
-  opennotes notes view --list                             # List all views explicitly
+  opennotes notes view --list                             # List all views
   opennotes notes view --list --format json               # List views as JSON
-  opennotes notes view today                              # Execute a view
-  opennotes notes view recent --format table              # Execute with table format
-  opennotes notes view kanban --param status=todo,done    # Execute with parameters
-  opennotes notes view orphans --format json              # Execute with JSON format
-  opennotes notes view my-workflow --param sprint=Q1-S3   # Execute custom view`,
+  opennotes notes view today                              # Notes modified today
+  opennotes notes view recent                             # Last 20 modified notes
+  opennotes notes view kanban                             # Notes grouped by status
+  opennotes notes view untagged                           # Notes without tags
+  opennotes notes view orphans --format json              # Orphaned notes as JSON
+  opennotes notes view my-workflow --param sprint=Q1-S3   # Custom view with params
+
+  DSL examples (use with custom views or 'notes search'):
+    tag:work status:todo                                  # Work items that are todo
+    tag:meeting modified:>=2026-01-01 | sort:modified:desc  # Recent meetings
+    has:status -tag:archived | group:status sort:title:asc  # Kanban without archived
+    missing:tag | sort:created:desc limit:10              # 10 newest untagged notes
+    "project plan" | sort:relevance:desc                  # Phrase search, best match first`,
 
 	Args: cobra.RangeArgs(0, 1),
 	RunE: func(cmd *cobra.Command, args []string) error {
