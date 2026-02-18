@@ -6,6 +6,13 @@ updated_at: 2026-02-02T19:40:00+10:30
 status: completed
 completion_date: 2026-02-02T19:40:00+10:30
 learning_doc: learning-f661c068-duckdb-removal-epic-complete.md
+distilled_learnings:
+  - learning-a1b2c3d4-parallel-research-methodology.md
+  - learning-b3c4d5e6-incremental-dependency-replacement.md
+  - learning-c5d6e7f8-pure-go-cgo-elimination.md
+  - learning-d7e8f9a0-interface-first-search-design.md
+  - archive/duckdb-removal-f661c068/learning-6ba0a703-bleve-backend-implementation.md
+  - archive/duckdb-removal-f661c068/learning-f661c068-duckdb-removal-epic-complete.md
 ---
 
 # Remove DuckDB - Pure Go Search Implementation
@@ -296,6 +303,19 @@ Users will use new syntax. Examples:
 
 See comprehensive learning document for detailed insights, lessons learned, and recommendations:
 - [learning-f661c068-duckdb-removal-epic-complete.md](learning-f661c068-duckdb-removal-epic-complete.md)
+
+## Distilled Learnings
+
+Generalizable insights extracted from this epic (golden knowledge — not archived):
+
+| Learning | Theme | File |
+|----------|-------|------|
+| Parallel Research Methodology | Research & Decisions | [learning-a1b2c3d4](../../learning-a1b2c3d4-parallel-research-methodology.md) |
+| Incremental Dependency Replacement | Migration Strategy | [learning-b3c4d5e6](../../learning-b3c4d5e6-incremental-dependency-replacement.md) |
+| Pure Go / CGO Elimination Benefits | Architecture | [learning-c5d6e7f8](../../learning-c5d6e7f8-pure-go-cgo-elimination.md) |
+| Interface-First Search Design | Design Patterns | [learning-d7e8f9a0](../../learning-d7e8f9a0-interface-first-search-design.md) |
+| Bleve Backend Implementation (Phase 4) | Implementation | [learning-6ba0a703](learning-6ba0a703-bleve-backend-implementation.md) |
+| DuckDB Removal Epic Complete | Epic Journey | [learning-f661c068](learning-f661c068-duckdb-removal-epic-complete.md) |
 
 ## Related Work
 

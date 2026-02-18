@@ -28,6 +28,12 @@
 | Tests | All pass | 161+ passing ✅ |
 | DuckDB refs | 0 | 0 ✅ (except residual converter, deferred) |
 
+**Distilled Learnings** (4 new + 2 archived):
+- [learning-a1b2c3d4](learning-a1b2c3d4-parallel-research-methodology.md) — Parallel research methodology for technology decisions
+- [learning-b3c4d5e6](learning-b3c4d5e6-incremental-dependency-replacement.md) — Incremental dependency replacement strategy
+- [learning-c5d6e7f8](learning-c5d6e7f8-pure-go-cgo-elimination.md) — Pure Go / CGO elimination benefits
+- [learning-d7e8f9a0](learning-d7e8f9a0-interface-first-search-design.md) — Interface-first search design patterns
+
 **Residual work**: DSL views implementation (plan-b4e2f7a1), DuckDBConverter cleanup
 
 ### Semantic Search (7c9d2e1f) — ✅ Archived
