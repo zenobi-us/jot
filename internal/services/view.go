@@ -12,6 +12,7 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/zenobi-us/opennotes/internal/core"
+	"github.com/zenobi-us/opennotes/internal/search/parser"
 )
 
 // ViewService manages named reusable query presets
@@ -21,6 +22,7 @@ type ViewService struct {
 	globalConfigPath string
 	builtinViews     map[string]*core.ViewDefinition
 	log              zerolog.Logger
+	executor         *ViewExecutor // executor for view query execution (set via SetExecutionContext)
 }
 
 // NewViewService creates a new ViewService
@@ -44,114 +46,50 @@ func NewViewServiceWithConfigPath(cfg *ConfigService, notebookPath string, globa
 	return vs
 }
 
-// initializeBuiltinViews creates all 6 built-in view definitions
+// initializeBuiltinViews creates all 6 built-in view definitions using DSL query strings.
+// Views use pipe syntax: "filter DSL | directives"
+// Special views (orphans, broken-links) use Type: "special" for custom execution.
 func (vs *ViewService) initializeBuiltinViews() {
 	// Today view: Notes created or updated today
 	vs.builtinViews["today"] = &core.ViewDefinition{
 		Name:        "today",
 		Description: "Notes created or updated today",
-		Query: core.ViewQuery{
-			Conditions: []core.ViewCondition{
-				{
-					Logic:    "AND",
-					Field:    "metadata->>'created_at'",
-					Operator: ">=",
-					Value:    "{{today}}",
-				},
-			},
-			OrderBy: "metadata->>'updated_at' DESC",
-			Limit:   50,
-		},
+		Query:       "modified:>=today | sort:modified:desc",
 	}
 
 	// Recent view: Recently modified notes (last 20)
 	vs.builtinViews["recent"] = &core.ViewDefinition{
 		Name:        "recent",
 		Description: "Recently modified notes (last 20)",
-		Query: core.ViewQuery{
-			OrderBy: "metadata->>'updated_at' DESC",
-			Limit:   20,
-		},
+		Query:       "| sort:modified:desc limit:20",
 	}
 
 	// Kanban view: Notes grouped by status
-	// Kanban view - Groups notes by status using SQL GROUP BY with array aggregation
-	// Uses DuckDB's list() aggregate to group content and metadata by status
-	// Returns structured data: one "row" per status with arrays of content and metadata
-	// Note: SQL-level grouping means each result represents one status group
 	vs.builtinViews["kanban"] = &core.ViewDefinition{
 		Name:        "kanban",
-		Description: "Notes grouped by status column",
-		Parameters: []core.ViewParameter{
-			{
-				Name:        "status",
-				Type:        "list",
-				Required:    false,
-				Default:     "backlog,todo,in-progress,reviewing,testing,deploying,done",
-				Description: "Comma-separated list of status values",
-			},
-		},
-		Query: core.ViewQuery{
-			Conditions: []core.ViewCondition{
-				{
-					Logic:    "AND",
-					Field:    "metadata->>'status'",
-					Operator: "IN",
-					Value:    "{{status}}",
-				},
-			},
-			SelectColumns: []string{
-				"metadata->>'status' AS status",
-				"list(content ORDER BY (metadata->>'priority')::INTEGER ASC, metadata->>'updated_at' DESC) AS content",
-				"list(metadata ORDER BY (metadata->>'priority')::INTEGER ASC, metadata->>'updated_at' DESC) AS metadata",
-			},
-			GroupBy: "metadata->>'status'",
-			OrderBy: "metadata->>'status' ASC",
-		},
+		Description: "Notes grouped by status",
+		Query:       "has:status | group:status sort:title:asc",
 	}
 
 	// Untagged view: Notes without any tags
 	vs.builtinViews["untagged"] = &core.ViewDefinition{
 		Name:        "untagged",
 		Description: "Notes without any tags",
-		Query: core.ViewQuery{
-			Conditions: []core.ViewCondition{
-				{
-					Logic:    "AND",
-					Field:    "metadata->>'tags'",
-					Operator: "IS NULL",
-					Value:    "",
-				},
-			},
-			OrderBy: "metadata->>'created_at' DESC",
-		},
+		Query:       "missing:tag | sort:created:desc",
 	}
 
-	// Orphans view: Notes with no incoming links
+	// Orphans view: Notes with no incoming links (special view)
 	vs.builtinViews["orphans"] = &core.ViewDefinition{
 		Name:        "orphans",
 		Description: "Notes with no incoming links (no other notes reference them)",
-		Parameters: []core.ViewParameter{
-			{
-				Name:        "definition",
-				Type:        "string",
-				Required:    false,
-				Default:     "no-incoming",
-				Description: "Definition type: no-incoming, no-links, or isolated",
-			},
-		},
-		Query: core.ViewQuery{
-			OrderBy: "metadata->>'created_at' DESC",
-		},
+		Type:        "special",
 	}
 
-	// Broken links view: Notes with broken links
+	// Broken links view: Notes with broken links (special view)
 	vs.builtinViews["broken-links"] = &core.ViewDefinition{
 		Name:        "broken-links",
 		Description: "Notes containing links to non-existent files",
-		Query: core.ViewQuery{
-			OrderBy: "metadata->>'updated_at' DESC",
-		},
+		Type:        "special",
 	}
 }
 
@@ -443,50 +381,47 @@ func getEndOfQuarter(t time.Time) time.Time {
 	return lastDay.AddDate(0, 0, -1)
 }
 
-// ValidateViewDefinition validates a view definition for security and correctness
+// ValidateViewDefinition validates a view definition for security and correctness.
+// For DSL-based views, validates that the query can be parsed.
+// For special views, only validates name and parameters.
 func (vs *ViewService) ValidateViewDefinition(view *core.ViewDefinition) error {
 	// Validate view name
 	if !isValidViewName(view.Name) {
 		return fmt.Errorf("invalid view name: %s (must be alphanumeric with hyphens)", view.Name)
 	}
 
-	// Validate conditions count
-	if len(view.Query.Conditions) > 10 {
-		return fmt.Errorf("too many conditions (max 10)")
-	}
-
-	// Validate each condition
-	for _, cond := range view.Query.Conditions {
-		if err := vs.validateViewCondition(cond); err != nil {
-			return err
+	// Special views don't need query validation
+	if view.IsSpecialView() {
+		// Validate parameters count
+		if len(view.Parameters) > 5 {
+			return fmt.Errorf("too many parameters (max 5)")
 		}
-	}
-
-	// Validate HAVING conditions
-	if len(view.Query.Having) > 0 {
-		// HAVING requires GROUP BY
-		if view.Query.GroupBy == "" {
-			return fmt.Errorf("HAVING clause requires GROUP BY to be specified")
-		}
-
-		for _, havingCond := range view.Query.Having {
-			if err := vs.validateHavingCondition(havingCond); err != nil {
+		for _, param := range view.Parameters {
+			if err := vs.validateViewParameter(param); err != nil {
 				return err
 			}
 		}
+		return nil
 	}
 
-	// Validate aggregate columns
-	for _, aggFunc := range view.Query.AggregateColumns {
-		if err := vs.validateAggregateFunction(aggFunc); err != nil {
-			return err
+	// For DSL views, validate the query string can be parsed
+	if view.Query != "" {
+		// Split query into filter and directives
+		filter, directives := SplitViewQuery(view.Query)
+
+		// Validate filter DSL if present
+		if filter != "" {
+			p := parser.New()
+			if _, err := p.Parse(filter); err != nil {
+				return fmt.Errorf("invalid filter DSL: %w", err)
+			}
 		}
-	}
 
-	// Validate select columns
-	for _, col := range view.Query.SelectColumns {
-		if err := validateField(col); err != nil {
-			return fmt.Errorf("invalid select column: %w", err)
+		// Validate directives if present
+		if directives != "" {
+			if _, err := ParseDirectives(directives); err != nil {
+				return fmt.Errorf("invalid directives: %w", err)
+			}
 		}
 	}
 
@@ -500,100 +435,6 @@ func (vs *ViewService) ValidateViewDefinition(view *core.ViewDefinition) error {
 		if err := vs.validateViewParameter(param); err != nil {
 			return err
 		}
-	}
-
-	return nil
-}
-
-// validateViewCondition validates a single condition
-func (vs *ViewService) validateViewCondition(cond core.ViewCondition) error {
-	// Validate field name
-	if err := validateField(cond.Field); err != nil {
-		return fmt.Errorf("invalid field in condition: %w", err)
-	}
-
-	// Validate operator
-	if err := validateOperator(cond.Operator); err != nil {
-		return fmt.Errorf("invalid operator in condition: %w", err)
-	}
-
-	return nil
-}
-
-// validateHavingCondition validates a HAVING clause condition
-// Similar to validateViewCondition but allows aggregate functions in field names
-func (vs *ViewService) validateHavingCondition(cond core.ViewCondition) error {
-	// For HAVING, we need to validate that:
-	// 1. The field contains an aggregate function (COUNT, SUM, AVG, MAX, MIN)
-	// 2. The operator is valid
-	// 3. The field follows a safe pattern
-
-	// Whitelist of aggregate functions allowed in HAVING
-	allowedAggregates := []string{
-		"COUNT(",
-		"SUM(",
-		"AVG(",
-		"MAX(",
-		"MIN(",
-	}
-
-	hasAggregate := false
-	for _, agg := range allowedAggregates {
-		if strings.Contains(strings.ToUpper(cond.Field), agg) {
-			hasAggregate = true
-			break
-		}
-	}
-
-	if !hasAggregate {
-		return fmt.Errorf("HAVING condition must contain an aggregate function (COUNT, SUM, AVG, MAX, MIN)")
-	}
-
-	// Basic injection prevention: ensure field ends with ) to close aggregate
-	if !strings.Contains(cond.Field, ")") {
-		return fmt.Errorf("invalid aggregate function format in HAVING condition")
-	}
-
-	// Validate operator
-	if err := validateOperator(cond.Operator); err != nil {
-		return fmt.Errorf("invalid operator in HAVING condition: %w", err)
-	}
-
-	return nil
-}
-
-// validateAggregateFunction validates an aggregate function string
-// Ensures only whitelisted functions are used and prevents SQL injection
-func (vs *ViewService) validateAggregateFunction(aggFunc string) error {
-	// Trim whitespace
-	aggFunc = strings.TrimSpace(aggFunc)
-
-	// Whitelist of allowed aggregate function patterns
-	allowedAggregates := []string{
-		"COUNT(",
-		"SUM(",
-		"AVG(",
-		"MAX(",
-		"MIN(",
-	}
-
-	upperFunc := strings.ToUpper(aggFunc)
-	hasValidAggregate := false
-
-	for _, agg := range allowedAggregates {
-		if strings.HasPrefix(upperFunc, agg) {
-			hasValidAggregate = true
-			break
-		}
-	}
-
-	if !hasValidAggregate {
-		return fmt.Errorf("invalid aggregate function: %s (allowed: COUNT, SUM, AVG, MAX, MIN)", aggFunc)
-	}
-
-	// Ensure function is properly closed with )
-	if !strings.HasSuffix(strings.TrimSpace(aggFunc), ")") {
-		return fmt.Errorf("aggregate function not properly closed: %s", aggFunc)
 	}
 
 	return nil
@@ -681,106 +522,6 @@ func isValidViewName(name string) bool {
 	return matched && len(name) > 0 && len(name) <= 64
 }
 
-// validateField checks if a field name is whitelisted
-func validateField(field string) error {
-	// Whitelist of allowed field prefixes and simple fields
-	allowedPrefixes := []string{
-		"metadata->>", // JSON field extraction (primary access pattern)
-		"metadata->",  // JSON object access
-		"path",
-		"file_path",
-		"content",
-		"stats->", // File statistics JSON
-		"stats->>",
-		"status",     // App-level grouping field (extracted from metadata)
-		"priority",   // App-level grouping field (extracted from metadata)
-		"created_at", // App-level grouping field (extracted from metadata)
-	}
-
-	// Allowed SQL aggregate functions
-	allowedFunctions := []string{
-		"list(", // DuckDB list aggregate for array grouping
-	}
-
-	// Remove quotes if present
-	cleanField := strings.Trim(field, "\"'")
-
-	// Allow function calls (e.g., list(...) AS alias)
-	for _, fn := range allowedFunctions {
-		if strings.HasPrefix(cleanField, fn) {
-			// Extract the function argument and validate it
-			funcStart := strings.Index(cleanField, fn) + len(fn)
-			// Find matching closing paren
-			depth := 1
-			pos := funcStart
-			for pos < len(cleanField) && depth > 0 {
-				switch cleanField[pos] {
-				case '(':
-					depth++
-				case ')':
-					depth--
-				}
-				pos++
-			}
-			if depth == 0 {
-				// Function is properly closed, validate the content inside
-				innerContent := cleanField[funcStart : pos-1]
-				// Remove ORDER BY clause for validation
-				if idx := strings.Index(innerContent, " ORDER BY "); idx != -1 {
-					innerContent = innerContent[:idx]
-				}
-				innerContent = strings.TrimSpace(innerContent)
-				// For bare "metadata" without operator, allow it
-				if innerContent == "metadata" || innerContent == "content" {
-					return nil
-				}
-				// Recursively validate the inner field
-				if innerContent != "" {
-					return validateField(innerContent)
-				}
-				return nil
-			}
-		}
-	}
-
-	// Special case: allow casting syntax like (metadata->>'priority')::INTEGER
-	if strings.Contains(cleanField, "::") {
-		parts := strings.Split(cleanField, "::")
-		if len(parts) == 2 {
-			cleanField = strings.TrimSpace(strings.Trim(parts[0], "()"))
-		}
-	}
-
-	for _, prefix := range allowedPrefixes {
-		if cleanField == prefix || strings.HasPrefix(cleanField, prefix) {
-			return nil
-		}
-	}
-
-	return fmt.Errorf("field not allowed: %s", field)
-}
-
-// validateOperator checks if an operator is whitelisted
-func validateOperator(operator string) error {
-	allowedOperators := map[string]bool{
-		"=":       true,
-		"!=":      true,
-		"<":       true,
-		">":       true,
-		"<=":      true,
-		">=":      true,
-		"LIKE":    true,
-		"IN":      true,
-		"IS NULL": true,
-	}
-
-	if !allowedOperators[operator] {
-		return fmt.Errorf("operator not allowed: %s", operator)
-	}
-
-	return nil
-}
-
 // ApplyParameterDefaults applies default values to parameters
 func (vs *ViewService) ApplyParameterDefaults(view *core.ViewDefinition, params map[string]string) map[string]string {
 	result := make(map[string]string)
@@ -831,366 +572,6 @@ func (vs *ViewService) ParseViewParameters(paramStr string) (map[string]string, 
 	}
 
 	return params, nil
-}
-
-// FormatQueryValue formats a value for SQL based on operator type
-func (vs *ViewService) FormatQueryValue(operator string, value string) string {
-	switch operator {
-	case "IN":
-		// For IN operator, format as list of strings
-		items := strings.Split(value, ",")
-		formatted := make([]string, 0, len(items))
-		for _, item := range items {
-			item = strings.TrimSpace(item)
-			formatted = append(formatted, fmt.Sprintf("'%s'", escapeSQL(item)))
-		}
-		return "(" + strings.Join(formatted, ",") + ")"
-	case "LIKE":
-		return fmt.Sprintf("'%s'", escapeSQL(value))
-	case "IS NULL":
-		return ""
-	default:
-		// For other operators, try to parse as number or string
-		if _, err := strconv.ParseFloat(value, 64); err == nil {
-			return value
-		}
-		return fmt.Sprintf("'%s'", escapeSQL(value))
-	}
-}
-
-// escapeSQL escapes single quotes in SQL strings
-func escapeSQL(s string) string {
-	return strings.ReplaceAll(s, "'", "''")
-}
-
-// GenerateSQL generates SQL from a view definition with parameters
-func (vs *ViewService) GenerateSQL(view *core.ViewDefinition, params map[string]string) (string, []interface{}, error) {
-	// Validate parameters
-	if err := vs.ValidateParameters(view, params); err != nil {
-		return "", nil, err
-	}
-
-	// Apply parameter defaults
-	resolvedParams := vs.ApplyParameterDefaults(view, params)
-
-	// Resolve template variables
-	for key, value := range resolvedParams {
-		resolvedParams[key] = vs.ResolveTemplateVariables(value)
-	}
-
-	// Build WHERE clause
-	var conditions []string
-	var args []interface{}
-
-	for _, cond := range view.Query.Conditions {
-		// Resolve parameter placeholders in value
-		value := cond.Value
-		if strings.HasPrefix(value, "{{") && strings.HasSuffix(value, "}}") {
-			paramName := strings.Trim(value, "{}")
-			if paramValue, ok := resolvedParams[paramName]; ok {
-				value = paramValue
-			}
-		}
-
-		// Resolve template variables
-		value = vs.ResolveTemplateVariables(value)
-
-		// Build condition SQL based on operator
-		var condSQL string
-		switch cond.Operator {
-		case "IS NULL":
-			condSQL = fmt.Sprintf("%s IS NULL", cond.Field)
-		case "IN":
-			// Parse comma-separated values
-			items := strings.Split(value, ",")
-			placeholders := make([]string, len(items))
-			for i, item := range items {
-				placeholders[i] = "?"
-				args = append(args, strings.TrimSpace(item))
-			}
-			condSQL = fmt.Sprintf("%s IN (%s)", cond.Field, strings.Join(placeholders, ","))
-		case "LIKE":
-			condSQL = fmt.Sprintf("%s LIKE ?", cond.Field)
-			args = append(args, value)
-		default:
-			// Standard operators: =, !=, <, >, <=, >=
-			condSQL = fmt.Sprintf("%s %s ?", cond.Field, cond.Operator)
-			args = append(args, value)
-		}
-
-		conditions = append(conditions, condSQL)
-	}
-
-	// Build query using read_markdown for notebook-relative file access
-	// Note: The glob pattern (first parameter) is added by the caller
-
-	// Build SELECT clause with support for aggregate functions
-	selectClause := "SELECT *"
-	if view.Query.Distinct {
-		selectClause = "SELECT DISTINCT *"
-	}
-
-	// If explicit columns or aggregates are specified, build custom SELECT clause
-	if len(view.Query.SelectColumns) > 0 || len(view.Query.AggregateColumns) > 0 {
-		var selectParts []string
-
-		// Add explicit columns
-		for _, col := range view.Query.SelectColumns {
-			if err := validateField(col); err != nil {
-				return "", nil, fmt.Errorf("invalid select column: %w", err)
-			}
-			selectParts = append(selectParts, col)
-		}
-
-		// Add aggregate columns
-		for alias, aggFunc := range view.Query.AggregateColumns {
-			if err := vs.validateAggregateFunction(aggFunc); err != nil {
-				return "", nil, fmt.Errorf("invalid aggregate function for column %s: %w", alias, err)
-			}
-			selectParts = append(selectParts, fmt.Sprintf("%s AS %s", aggFunc, alias))
-		}
-
-		if len(selectParts) > 0 {
-			distinct := ""
-			if view.Query.Distinct {
-				distinct = "DISTINCT "
-			}
-			selectClause = "SELECT " + distinct + strings.Join(selectParts, ", ")
-		}
-	}
-
-	query := selectClause + " FROM read_markdown(?, include_filepath:=true)"
-
-	if len(conditions) > 0 {
-		query += " WHERE " + strings.Join(conditions, " AND ")
-	}
-
-	if view.Query.GroupBy != "" {
-		if err := validateField(view.Query.GroupBy); err != nil {
-			return "", nil, fmt.Errorf("invalid group by field: %w", err)
-		}
-		// Only add GROUP BY to SQL if it's a column expression (contains >> or ->)
-		// Simple field names like "status" are handled by app-level GroupResults()
-		if strings.Contains(view.Query.GroupBy, ">>") || strings.Contains(view.Query.GroupBy, "->") {
-			query += " GROUP BY " + view.Query.GroupBy
-		}
-		// If it's a simple field name, skip SQL GROUP BY and rely on app-level grouping
-	}
-
-	// Build HAVING clause if conditions exist
-	if len(view.Query.Having) > 0 {
-		var havingConditions []string
-
-		for _, havingCond := range view.Query.Having {
-			if err := vs.validateHavingCondition(havingCond); err != nil {
-				return "", nil, fmt.Errorf("invalid having condition: %w", err)
-			}
-
-			// Build HAVING condition SQL based on operator
-			var havingSQL string
-			switch havingCond.Operator {
-			case "=":
-				havingSQL = fmt.Sprintf("%s = ?", havingCond.Field)
-			case "!=":
-				havingSQL = fmt.Sprintf("%s != ?", havingCond.Field)
-			case "<":
-				havingSQL = fmt.Sprintf("%s < ?", havingCond.Field)
-			case ">":
-				havingSQL = fmt.Sprintf("%s > ?", havingCond.Field)
-			case "<=":
-				havingSQL = fmt.Sprintf("%s <= ?", havingCond.Field)
-			case ">=":
-				havingSQL = fmt.Sprintf("%s >= ?", havingCond.Field)
-			default:
-				return "", nil, fmt.Errorf("unsupported HAVING operator: %s", havingCond.Operator)
-			}
-
-			havingConditions = append(havingConditions, havingSQL)
-			args = append(args, havingCond.Value)
-		}
-
-		if len(havingConditions) > 0 {
-			query += " HAVING " + strings.Join(havingConditions, " AND ")
-		}
-	}
-
-	if view.Query.OrderBy != "" {
-		query += " ORDER BY " + view.Query.OrderBy
-	}
-
-	if view.Query.Limit > 0 {
-		query += fmt.Sprintf(" LIMIT %d", view.Query.Limit)
-	}
-
-	if view.Query.Offset > 0 {
-		query += fmt.Sprintf(" OFFSET %d", view.Query.Offset)
-	}
-
-	return query, args, nil
-}
-
-// convertToJSONSafe converts duckdb types and other non-JSON-serializable types to JSON-safe types
-func convertToJSONSafe(value interface{}) interface{} {
-	if value == nil {
-		return nil
-	}
-
-	// Handle basic types
-	switch v := value.(type) {
-	case string, int, int32, int64, float32, float64, bool:
-		return v
-	case []interface{}:
-		// Convert array elements
-		result := make([]interface{}, len(v))
-		for i, elem := range v {
-			result[i] = convertToJSONSafe(elem)
-		}
-		return result
-	case map[string]interface{}:
-		// Convert map values
-		result := make(map[string]interface{})
-		for k, val := range v {
-			result[k] = convertToJSONSafe(val)
-		}
-		return result
-	}
-
-	// For any other type (including duckdb.Map), convert to string
-	return fmt.Sprintf("%v", value)
-}
-
-// GroupResults takes raw query results and groups them by the GroupBy field if specified
-// If no GroupBy is specified, returns results as a flat list wrapped in ViewResults
-// Converts all values to JSON-safe types
-// GroupResults transforms query results into grouped or flat structure
-// Returns map[string][]map[string]interface{} if grouped, or []map[string]interface{} if flat
-// This enables Option 2 pattern: pure grouped map or pure flat array
-//
-// Handles two cases:
-// 1. App-level grouping: GroupBy field exists, rows are ungrouped, function groups them
-// 2. SQL-level grouping: SelectColumns contain list() aggregates, rows are already grouped by SQL
-func (vs *ViewService) GroupResults(view *core.ViewDefinition, rows []map[string]interface{}) interface{} {
-	// Convert all rows to JSON-safe types
-	jsonSafeRows := make([]map[string]interface{}, len(rows))
-	for i, row := range rows {
-		jsonSafeRow := make(map[string]interface{})
-		for key, val := range row {
-			jsonSafeRow[key] = convertToJSONSafe(val)
-		}
-		jsonSafeRows[i] = jsonSafeRow
-	}
-
-	// If no GroupBy, return flat results
-	if view.Query.GroupBy == "" {
-		return jsonSafeRows
-	}
-
-	// Check if results are already SQL-grouped (content/metadata are arrays)
-	// This happens when SelectColumns contains list() aggregates
-	if len(jsonSafeRows) > 0 {
-		firstRow := jsonSafeRows[0]
-		// Check if content and metadata are arrays (from list() aggregates)
-		contentIsArray := isArray(firstRow["content"])
-		metadataIsArray := isArray(firstRow["metadata"])
-
-		if contentIsArray && metadataIsArray {
-			// SQL-level grouping: transform grouped rows into kanban structure
-			return transformSQLGroupedResults(jsonSafeRows)
-		}
-	}
-
-	// App-level grouping: group ungrouped rows by GroupBy field
-	grouped := make(map[string][]map[string]interface{})
-	for _, row := range jsonSafeRows {
-		// Get the group key from the row
-		groupKeyValue := row[view.Query.GroupBy]
-
-		// If field not found directly, try to extract from metadata
-		if groupKeyValue == nil && view.Query.GroupBy == "status" {
-			// Try to extract from metadata string if it exists
-			if metadata, ok := row["metadata"].(string); ok {
-				// Parse simple key:value pairs from metadata string
-				// Format is: "map[key1:value1 key2:value2 ...]"
-				if strings.Contains(metadata, "status:") {
-					start := strings.Index(metadata, "status:") + 7
-					end := strings.IndexAny(metadata[start:], " ]")
-					if end == -1 {
-						end = len(metadata[start:])
-					}
-					groupKeyValue = metadata[start : start+end]
-				}
-			}
-		}
-
-		if groupKeyValue == nil {
-			groupKeyValue = "null"
-		}
-
-		// Convert group key to string
-		var groupKey string
-		switch v := groupKeyValue.(type) {
-		case string:
-			groupKey = v
-		case int, int32, int64:
-			groupKey = fmt.Sprintf("%d", v)
-		case float32, float64:
-			groupKey = fmt.Sprintf("%v", v)
-		case bool:
-			groupKey = fmt.Sprintf("%v", v)
-		default:
-			groupKey = fmt.Sprintf("%v", v)
-		}
-
-		// Add row to the appropriate group
-		grouped[groupKey] = append(grouped[groupKey], row)
-	}
-
-	return grouped
-}
-
-// isArray checks if a value is an array/slice
-func isArray(val interface{}) bool {
-	if val == nil {
-		return false
-	}
-	switch val.(type) {
-	case []interface{}, []string, []map[string]interface{}:
-		return true
-	default:
-		return false
-	}
-}
-
-// transformSQLGroupedResults transforms SQL-grouped results (with list() aggregates)
-// into kanban structure: map[statusKey] -> []noteRows
-func transformSQLGroupedResults(rows []map[string]interface{}) map[string][]map[string]interface{} {
-	result := make(map[string][]map[string]interface{})
-
-	for _, row := range rows {
-		// Extract status key
-		statusKey := fmt.Sprintf("%v", row["status"])
-		if statusKey == "<nil>" || statusKey == "null" {
-			statusKey = "null"
-		}
-
-		// Extract content and metadata arrays
-		contentArray, okContent := row["content"].([]interface{})
-		metadataArray, okMetadata := row["metadata"].([]interface{})
-
-		if okContent && okMetadata && len(contentArray) == len(metadataArray) {
-			// Build individual note maps from the parallel arrays
-			notes := make([]map[string]interface{}, len(contentArray))
-			for i := 0; i < len(contentArray); i++ {
-				notes[i] = map[string]interface{}{
-					"content":  contentArray[i],
-					"metadata": metadataArray[i],
-				}
-			}
-			result[statusKey] = notes
-		}
-	}
-
-	return result
 }
 
 // ListAllViews returns all available views across all sources (built-in, global, notebook)

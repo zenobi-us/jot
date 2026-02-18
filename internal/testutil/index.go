@@ -81,6 +81,7 @@ func populateIndexFromNotebook(t *testing.T, idx search.Index, notebookDir strin
 			Title:    getTitle(metadata, filepath.Base(relPath)),
 			Body:     body,
 			Lead:     extractLead(body),
+			Tags:     extractTags(metadata),
 			Metadata: metadata,
 			Created:  time.Now(),
 			Modified: time.Now(),
@@ -143,6 +144,34 @@ func getTitle(metadata map[string]any, defaultTitle string) string {
 	return ""
 }
 
+// extractTags extracts tags from metadata (supports both "tag" and "tags" fields)
+func extractTags(metadata map[string]any) []string {
+	// Handle both "tag" and "tags" fields
+	if tag, ok := metadata["tag"].(string); ok && tag != "" {
+		return []string{tag}
+	}
+
+	if tags, ok := metadata["tags"].([]any); ok {
+		result := make([]string, 0, len(tags))
+		for _, t := range tags {
+			if s, ok := t.(string); ok {
+				result = append(result, strings.ToLower(s))
+			}
+		}
+		return result
+	}
+
+	if tags, ok := metadata["tags"].([]string); ok {
+		result := make([]string, 0, len(tags))
+		for _, t := range tags {
+			result = append(result, strings.ToLower(t))
+		}
+		return result
+	}
+
+	return nil
+}
+
 // extractLead extracts the first paragraph from markdown content
 func extractLead(body string) string {
 	lines := strings.Split(body, "\n")
@@ -180,4 +209,10 @@ func extractLead(body string) string {
 		return result[:200] + "..."
 	}
 	return result
+}
+
+// NewFindOpts creates an empty FindOpts for testing.
+// Use the fluent methods (WithLimit, WithSort, etc.) to configure.
+func NewFindOpts() search.FindOpts {
+	return search.FindOpts{}
 }

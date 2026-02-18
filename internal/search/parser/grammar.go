@@ -15,9 +15,16 @@ type queryAST struct {
 
 // expressionAST represents a single expression in the query.
 type expressionAST struct {
-	Not   *notExprAST   `parser:"  @@"`
-	Field *fieldExprAST `parser:"| @@"`
-	Term  *termAST      `parser:"| @@"`
+	Existence *existenceExprAST `parser:"  @@"`
+	Not       *notExprAST       `parser:"| @@"`
+	Field     *fieldExprAST     `parser:"| @@"`
+	Term      *termAST          `parser:"| @@"`
+}
+
+// existenceExprAST represents an existence check: has:field or missing:field
+type existenceExprAST struct {
+	Keyword string `parser:"@ExistenceKeyword ':'"`
+	Field   string `parser:"( @Field | @Word )"`
 }
 
 // notExprAST represents a negated expression: -term or -field:value
@@ -40,6 +47,8 @@ type termAST struct {
 
 // queryLexer defines the token types for the query language.
 var queryLexer = lexer.MustSimple([]lexer.SimpleRule{
+	// Existence keywords must come before Field to be matched first
+	{Name: "ExistenceKeyword", Pattern: `(has|missing)`},
 	{Name: "Field", Pattern: `(tag|title|path|created|modified|body|status)`},
 	{Name: "String", Pattern: `"[^"]*"`},
 	// Date patterns must come before Word to capture dates properly

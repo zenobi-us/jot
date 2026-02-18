@@ -122,6 +122,57 @@ func TestTranslateQuery_MultipleExpressions(t *testing.T) {
 	assert.NotNil(t, q)
 }
 
+func TestTranslateExpr_ExistsExpr(t *testing.T) {
+	t.Run("has:tag translates to regexp exists query", func(t *testing.T) {
+		query := &search.Query{
+			Expressions: []search.Expr{
+				search.ExistsExpr{Field: "tag", Negated: false},
+			},
+		}
+
+		q, err := TranslateQuery(query)
+		require.NoError(t, err)
+		assert.NotNil(t, q)
+	})
+
+	t.Run("missing:tag translates to boolean NOT exists query", func(t *testing.T) {
+		query := &search.Query{
+			Expressions: []search.Expr{
+				search.ExistsExpr{Field: "tag", Negated: true},
+			},
+		}
+
+		q, err := TranslateQuery(query)
+		require.NoError(t, err)
+		assert.NotNil(t, q)
+	})
+
+	t.Run("has:status translates correctly", func(t *testing.T) {
+		query := &search.Query{
+			Expressions: []search.Expr{
+				search.ExistsExpr{Field: "status", Negated: false},
+			},
+		}
+
+		q, err := TranslateQuery(query)
+		require.NoError(t, err)
+		assert.NotNil(t, q)
+	})
+
+	t.Run("exists combined with other expressions", func(t *testing.T) {
+		query := &search.Query{
+			Expressions: []search.Expr{
+				search.ExistsExpr{Field: "tag", Negated: false},
+				search.FieldExpr{Field: "status", Value: "todo"},
+			},
+		}
+
+		q, err := TranslateQuery(query)
+		require.NoError(t, err)
+		assert.NotNil(t, q)
+	})
+}
+
 func TestTranslateFindOpts_Empty(t *testing.T) {
 	opts := search.FindOpts{}
 

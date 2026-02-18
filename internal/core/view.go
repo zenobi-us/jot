@@ -2,12 +2,13 @@ package core
 
 import "encoding/json"
 
-// ViewDefinition represents a named, reusable query preset
+// ViewDefinition defines a named view with a DSL query string.
 type ViewDefinition struct {
 	Name        string          `json:"name"`
 	Description string          `json:"description"`
 	Parameters  []ViewParameter `json:"parameters,omitempty"`
-	Query       ViewQuery       `json:"query"`
+	Query       string          `json:"query"`          // "filter DSL | directives"
+	Type        string          `json:"type,omitempty"` // "query" (default) or "special"
 }
 
 // ViewInfo represents view metadata for discovery/listing (includes origin)
@@ -18,34 +19,18 @@ type ViewInfo struct {
 	Parameters  []ViewParameter `json:"parameters,omitempty"`
 }
 
-// ViewParameter represents a dynamic parameter in a view
+// ViewParameter defines a parameter that can be substituted into a view query.
 type ViewParameter struct {
 	Name        string `json:"name"`
-	Type        string `json:"type"` // "string", "list", "date", "bool"
-	Required    bool   `json:"required"`
+	Type        string `json:"type"` // "string", "number", "date"
+	Required    bool   `json:"required,omitempty"`
 	Default     string `json:"default,omitempty"`
 	Description string `json:"description,omitempty"`
 }
 
-// ViewQuery represents the query logic for a view
-type ViewQuery struct {
-	Conditions       []ViewCondition   `json:"conditions,omitempty"`
-	Distinct         bool              `json:"distinct,omitempty"`
-	OrderBy          string            `json:"order_by,omitempty"`
-	GroupBy          string            `json:"group_by,omitempty"`
-	Having           []ViewCondition   `json:"having,omitempty"`
-	SelectColumns    []string          `json:"select_columns,omitempty"`
-	AggregateColumns map[string]string `json:"aggregate_columns,omitempty"`
-	Limit            int               `json:"limit,omitempty"`
-	Offset           int               `json:"offset,omitempty"`
-}
-
-// ViewCondition represents a single query condition
-type ViewCondition struct {
-	Logic    string `json:"logic,omitempty"` // "AND", "OR"
-	Field    string `json:"field"`
-	Operator string `json:"operator"` // "=", "!=", "<", ">", "<=", ">=", "LIKE", "IN", "IS NULL"
-	Value    string `json:"value"`
+// IsSpecialView returns true if this view requires special execution (not DSL-based).
+func (v *ViewDefinition) IsSpecialView() bool {
+	return v.Type == "special"
 }
 
 // ViewsConfig represents the views section in config files

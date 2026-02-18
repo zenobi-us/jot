@@ -1379,3 +1379,51 @@ Items deferred from this implementation:
 5. **Global views** (views in `~/.config/opennotes/config.json`)
 
 These can be implemented in follow-up tasks after the core DSL view system is working.
+
+---
+
+## Follow-up Tasks from Review (2026-02-18)
+
+> Source: independent subagent review using plan checklist + CLI validation via `go run . ...`.
+
+### F1. Implement `ExistsExpr` translation in Bleve backend (BLOCKER)
+
+**Problem:** `kanban` and `untagged` views fail at runtime even though parser support exists.
+
+**Evidence (CLI):**
+- `go run . notes view kanban` → `failed to translate query: unsupported expression type: search.ExistsExpr`
+- `go run . notes view untagged` → same root cause
+
+**Scope:**
+- Modify: `internal/search/bleve/query.go`
+- Add `search.ExistsExpr` handling in `translateExpr()`.
+- Implement translation for:
+  - `has:<field>` (`Negated=false`)
+  - `missing:<field>` (`Negated=true`)
+
+**Acceptance Criteria:**
+- `go run . notes view kanban` succeeds
+- `go run . notes view untagged` succeeds
+- `mise run test -- -run "TestViewExecution_Integration|TestViewService_ExecuteView"` passes without skipping `kanban`/`untagged` due to missing exists support
+
+### F2. Remove temporary integration skips tied to missing exists translation
+
+**Problem:** Integration tests currently skip paths for `kanban`/`untagged` because backend exists translation is incomplete.
+
+**Scope:**
+- Modify: `internal/services/view_integration_test.go`
+- Remove conditional `t.Skip(...)` guards that reference missing `ExistsExpr` support.
+
+**Acceptance Criteria:**
+- `TestViewExecution_Integration` fully executes all builtin views without skip conditions for `kanban` and `untagged`
+
+### F3. Optional cleanup: reduce `internal/services/view.go` size toward plan target
+
+**Problem:** `view.go` remains above the plan’s rough target (~700 lines).
+
+**Scope (optional):**
+- Move cohesive helper logic to focused files if needed (no behavior change).
+
+**Acceptance Criteria:**
+- No functional regression (`mise run test`, `mise run lint`, `mise run build` pass)
+- `view.go` size is reduced and responsibilities remain clear

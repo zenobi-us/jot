@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"sort"
 
 	"github.com/spf13/cobra"
 	"github.com/zenobi-us/opennotes/internal/core"
@@ -76,37 +78,169 @@ EXAMPLES:
 		// Initialize ViewService
 		vs := services.NewViewService(cfgService, notebookDir)
 
+		// Set execution context for view execution
+		// This requires the search index and note service from the notebook
+		vs.SetExecutionContext(nb.Notes.GetIndex(), nb.Notes)
+
+		// Get the view definition
+		viewDef, err := vs.GetView(viewName)
+		if err != nil {
+			return fmt.Errorf("failed to get view '%s': %w", viewName, err)
+		}
+
 		// Parse user parameters
 		userParams, err := vs.ParseViewParameters(viewParams)
 		if err != nil {
 			return fmt.Errorf("failed to parse parameters: %w", err)
 		}
 
-		// SQL views are no longer supported after DuckDB removal
-		return fmt.Errorf(`SQL views are no longer supported
+		// Validate parameters against view definition
+		if err := vs.ValidateParameters(viewDef, userParams); err != nil {
+			return fmt.Errorf("invalid parameters: %w", err)
+		}
 
-OpenNotes has removed DuckDB and SQL query support in favor of a pure Go
-full-text search implementation using Bleve.
+		// Apply parameter defaults
+		userParams = vs.ApplyParameterDefaults(viewDef, userParams)
 
-MIGRATION OPTIONS:
+		// Execute the view
+		ctx := context.Background()
+		results, err := vs.ExecuteView(ctx, viewDef, userParams)
+		if err != nil {
+			return fmt.Errorf("failed to execute view '%s': %w", viewName, err)
+		}
 
-1. Use query DSL for searches:
-   opennotes notes search "tag:work status:todo"
-   opennotes notes search "project AND (urgent OR high-priority)"
+		// Render results based on whether they are grouped or flat
+		if len(results.Groups) > 0 {
+			return displayGroupedViewResults(viewName, results.Groups, viewFormat)
+		}
 
-2. Use 'notes list' with filtering:
-   opennotes notes list
-
-3. For advanced filtering, use jq with JSON output:
-   opennotes notes list --format json | jq '.notes[] | select(.metadata.status == "todo")'
-
-BREAKING CHANGE: This is part of the DuckDB removal in version 0.1.0.
-Custom views using SQL queries must be migrated to use the query DSL or
-external tooling (jq, grep, etc.).
-
-View name: %s
-Parameters: %v`, viewName, userParams)
+		return displayViewResults(viewName, results.Notes, viewFormat)
 	},
+}
+
+// displayViewResults displays flat view results (non-grouped)
+func displayViewResults(viewName string, notes []services.Note, format string) error {
+	if len(notes) == 0 {
+		fmt.Printf("View '%s': No notes found\n", viewName)
+		return nil
+	}
+
+	switch format {
+	case "json":
+		return displayViewResultsJSON(notes)
+	case "table":
+		fmt.Printf("View '%s' (%d notes):\n\n", viewName, len(notes))
+		return displayNoteList(notes)
+	case "list":
+		fallthrough
+	default:
+		fmt.Printf("View '%s' (%d notes):\n\n", viewName, len(notes))
+		return displayNoteList(notes)
+	}
+}
+
+// displayViewResultsJSON displays view results in JSON format
+func displayViewResultsJSON(notes []services.Note) error {
+	type ViewResultsResponse struct {
+		Notes []services.Note `json:"notes"`
+		Count int             `json:"count"`
+	}
+
+	response := ViewResultsResponse{
+		Notes: notes,
+		Count: len(notes),
+	}
+
+	jsonBytes, err := json.MarshalIndent(response, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal JSON: %w", err)
+	}
+
+	fmt.Println(string(jsonBytes))
+	return nil
+}
+
+// displayGroupedViewResults displays grouped view results (e.g., kanban)
+func displayGroupedViewResults(viewName string, groups map[string][]services.Note, format string) error {
+	// Count total notes
+	totalNotes := 0
+	for _, notes := range groups {
+		totalNotes += len(notes)
+	}
+
+	if totalNotes == 0 {
+		fmt.Printf("View '%s': No notes found\n", viewName)
+		return nil
+	}
+
+	switch format {
+	case "json":
+		return displayGroupedResultsJSON(groups)
+	case "table":
+		fallthrough
+	case "list":
+		fallthrough
+	default:
+		return displayGroupedResultsList(viewName, groups, totalNotes)
+	}
+}
+
+// displayGroupedResultsJSON displays grouped results in JSON format
+func displayGroupedResultsJSON(groups map[string][]services.Note) error {
+	type GroupedResultsResponse struct {
+		Groups map[string][]services.Note `json:"groups"`
+		Count  int                        `json:"count"`
+	}
+
+	totalNotes := 0
+	for _, notes := range groups {
+		totalNotes += len(notes)
+	}
+
+	response := GroupedResultsResponse{
+		Groups: groups,
+		Count:  totalNotes,
+	}
+
+	jsonBytes, err := json.MarshalIndent(response, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal JSON: %w", err)
+	}
+
+	fmt.Println(string(jsonBytes))
+	return nil
+}
+
+// displayGroupedResultsList displays grouped results in list format
+func displayGroupedResultsList(viewName string, groups map[string][]services.Note, totalNotes int) error {
+	fmt.Printf("View '%s' (%d notes in %d groups):\n\n", viewName, totalNotes, len(groups))
+
+	// Sort group keys for consistent output
+	keys := make([]string, 0, len(groups))
+	for k := range groups {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, key := range keys {
+		notes := groups[key]
+		fmt.Printf("## %s (%d)\n\n", key, len(notes))
+
+		for _, note := range notes {
+			// Get title from metadata or use filename
+			title := note.File.Relative
+			if t, ok := note.Metadata["title"]; ok {
+				if str, ok := t.(string); ok && str != "" {
+					title = str
+				}
+			}
+			fmt.Printf("  - %s\n", title)
+			fmt.Printf("    Path: %s\n", note.File.Relative)
+		}
+		fmt.Println()
+	}
+
+	return nil
 }
 
 // handleViewList lists all available views

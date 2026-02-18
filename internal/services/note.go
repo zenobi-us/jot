@@ -108,6 +108,17 @@ func (s *NoteService) SetSemanticIndex(idx SemanticIndex) {
 	s.semanticIndex = idx
 }
 
+// GetIndex returns the search index for this notebook.
+// This is needed for view execution context.
+func (s *NoteService) GetIndex() search.Index {
+	return s.index
+}
+
+// GetNotebookPath returns the notebook path for this service.
+func (s *NoteService) GetNotebookPath() string {
+	return s.notebookPath
+}
+
 // SemanticAvailable reports whether semantic retrieval is currently available.
 func (s *NoteService) SemanticAvailable() bool {
 	return s.semanticIndex != nil && s.semanticIndex.IsAvailable()
@@ -245,6 +256,53 @@ func (s *NoteService) SearchWithConditions(ctx context.Context, conditions []Que
 	}
 
 	s.log.Debug().Int("count", len(notes)).Msg("boolean query completed")
+	return notes, nil
+}
+
+// SearchWithFindOpts executes a search using the provided FindOpts.
+// This provides direct access to the search index with full control over
+// query, sorting, pagination, and other options.
+func (s *NoteService) SearchWithFindOpts(ctx context.Context, opts search.FindOpts) ([]Note, error) {
+	if s.notebookPath == "" {
+		return nil, fmt.Errorf("no notebook selected")
+	}
+
+	if s.index == nil {
+		return nil, fmt.Errorf("index not initialized")
+	}
+
+	s.log.Debug().
+		Bool("hasQuery", opts.Query != nil).
+		Int("limit", opts.Limit).
+		Int("offset", opts.Offset).
+		Str("sortField", string(opts.Sort.Field)).
+		Msg("executing search with FindOpts")
+
+	// If no limit set, need to get count first to retrieve all results
+	if opts.Limit == 0 {
+		count, err := s.index.Count(ctx, search.FindOpts{})
+		if err != nil {
+			return nil, fmt.Errorf("failed to count documents: %w", err)
+		}
+		if count == 0 {
+			return []Note{}, nil
+		}
+		opts.Limit = int(count)
+	}
+
+	// Execute search using Index
+	results, err := s.index.Find(ctx, opts)
+	if err != nil {
+		return nil, fmt.Errorf("search failed: %w", err)
+	}
+
+	// Convert results to Notes
+	notes := make([]Note, len(results.Items))
+	for i, result := range results.Items {
+		notes[i] = documentToNote(result.Document)
+	}
+
+	s.log.Debug().Int("count", len(notes)).Msg("search with FindOpts completed")
 	return notes, nil
 }
 

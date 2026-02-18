@@ -864,7 +864,7 @@ func TestCLI_ViewDiscovery_OriginInfo(t *testing.T) {
 	// Create notebook
 	notebookDir := env.createNotebook("view-origin-test")
 
-	// Add a custom view to notebook config
+	// Add a custom view to notebook config using DSL query format
 	configPath := filepath.Join(notebookDir, ".opennotes.json")
 	configData := map[string]interface{}{
 		"name": "Test Notebook",
@@ -873,9 +873,7 @@ func TestCLI_ViewDiscovery_OriginInfo(t *testing.T) {
 			"my-custom-view": map[string]interface{}{
 				"name":        "my-custom-view",
 				"description": "A custom notebook view",
-				"query": map[string]interface{}{
-					"order_by": "updated DESC",
-				},
+				"query":       "| sort:modified:desc", // DSL format
 			},
 		},
 	}
@@ -919,7 +917,8 @@ func TestCLI_ViewDiscovery_OriginInfo(t *testing.T) {
 	}
 }
 
-// TestCLI_ViewDiscovery_ParameterDisplay tests that parameters are displayed in view listings
+// TestCLI_ViewDiscovery_ParameterDisplay tests that views show description in listings
+// NOTE: DSL-based views use directives (e.g., "group:status") instead of parameters
 func TestCLI_ViewDiscovery_ParameterDisplay(t *testing.T) {
 	env := newTestEnv(t)
 
@@ -933,26 +932,32 @@ func TestCLI_ViewDiscovery_ParameterDisplay(t *testing.T) {
 		t.Errorf("view command failed with exit code %d, stderr: %s", exitCode, stderr)
 	}
 
-	// kanban view should show parameters
+	// kanban view should be present
 	if !strings.Contains(stdout, "kanban") {
 		t.Errorf("expected 'kanban' view in output")
 	}
 
-	// Should show parameter info
+	// Should show kanban description
 	if !strings.Contains(stdout, "status") {
-		t.Errorf("expected 'status' parameter for kanban view")
+		t.Errorf("expected 'status' in kanban view description")
 	}
 
-	if !strings.Contains(stdout, "[list, optional") {
-		t.Errorf("expected parameter type and required status in output")
+	// Should show "Built-in Views" header
+	if !strings.Contains(stdout, "Built-in Views") {
+		t.Errorf("expected 'Built-in Views' header in output")
 	}
 
-	if !strings.Contains(stdout, "default:") {
-		t.Errorf("expected parameter default value in output")
+	// Should show all 6 builtin views
+	builtins := []string{"today", "recent", "kanban", "untagged", "orphans", "broken-links"}
+	for _, name := range builtins {
+		if !strings.Contains(stdout, name) {
+			t.Errorf("expected builtin view '%s' in output", name)
+		}
 	}
 }
 
-// TestCLI_ViewDiscovery_JSONParametersComplete tests that JSON output includes all parameter details
+// TestCLI_ViewDiscovery_JSONParametersComplete tests that JSON output includes all view details
+// NOTE: DSL-based views use directives instead of parameters, so parameters may be empty
 func TestCLI_ViewDiscovery_JSONParametersComplete(t *testing.T) {
 	env := newTestEnv(t)
 
@@ -974,6 +979,11 @@ func TestCLI_ViewDiscovery_JSONParametersComplete(t *testing.T) {
 
 	views, _ := result["views"].([]interface{})
 
+	// Should have at least 6 builtin views
+	if len(views) < 6 {
+		t.Errorf("expected at least 6 builtin views, got: %d", len(views))
+	}
+
 	// Find kanban view
 	var kanbanView map[string]interface{}
 	for _, v := range views {
@@ -989,44 +999,21 @@ func TestCLI_ViewDiscovery_JSONParametersComplete(t *testing.T) {
 		return
 	}
 
-	// Check parameters array exists
-	params, ok := kanbanView["parameters"].([]interface{})
-	if !ok {
-		t.Errorf("kanban view should have 'parameters' array, got: %v", kanbanView)
-		return
+	// Check required fields exist on kanban view
+	if name, _ := kanbanView["name"].(string); name != "kanban" {
+		t.Errorf("expected view name 'kanban', got: %s", name)
 	}
 
-	// Should have at least one parameter
-	if len(params) == 0 {
-		t.Errorf("kanban view should have at least one parameter")
+	if origin, _ := kanbanView["origin"].(string); origin != "built-in" {
+		t.Errorf("expected kanban origin 'built-in', got: %s", origin)
 	}
 
-	// Check parameter details
-	statusParam, ok := params[0].(map[string]interface{})
-	if !ok {
-		t.Errorf("parameter should be an object, got: %v", params[0])
-		return
+	if desc, _ := kanbanView["description"].(string); desc == "" {
+		t.Errorf("expected kanban view to have a description")
 	}
 
-	if name, _ := statusParam["name"].(string); name != "status" {
-		t.Errorf("expected parameter name 'status', got: %s", name)
-	}
-
-	if paramType, _ := statusParam["type"].(string); paramType != "list" {
-		t.Errorf("expected parameter type 'list', got: %s", paramType)
-	}
-
-	if _, ok := statusParam["required"]; !ok {
-		t.Errorf("parameter should have 'required' field")
-	}
-
-	if _, ok := statusParam["default"]; !ok {
-		t.Errorf("parameter should have 'default' field")
-	}
-
-	if _, ok := statusParam["description"]; !ok {
-		t.Errorf("parameter should have 'description' field")
-	}
+	// DSL-based views may have empty parameters array, which is valid
+	// The directive "group:status" handles grouping instead of parameters
 }
 
 // TestCLI_ViewDiscovery_Sorting tests that views are sorted by origin

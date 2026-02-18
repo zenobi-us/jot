@@ -3,14 +3,18 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/zenobi-us/opennotes/internal/search"
+	"github.com/zenobi-us/opennotes/internal/search/parser"
+	"github.com/zenobi-us/opennotes/internal/services"
 )
 
 var notesSearchCmd = &cobra.Command{
 	Use:   "search [query]",
-	Short: "Search notes with text, fuzzy matching, or boolean queries",
-	Long: `Search notes using multiple methods: text search, fuzzy matching, or boolean queries.
+	Short: "Search notes with text, fuzzy matching, boolean queries, or DSL pipe syntax",
+	Long: `Search notes using multiple methods: text search, fuzzy matching, boolean queries, or DSL with pipe syntax.
 
 SEARCH METHODS:
 
@@ -22,6 +26,9 @@ SEARCH METHODS:
 
   3. Boolean Queries: Structured AND/OR/NOT filtering (see 'query' subcommand)
      opennotes notes search query --and data.tag=workflow
+
+  4. DSL Pipe Syntax: Filter with directives for sorting and limits
+     opennotes notes search "tag:work | sort:modified:desc limit:10"
 
 TEXT SEARCH EXAMPLES:
   opennotes notes search "meeting"              # Search for "meeting"
@@ -38,6 +45,25 @@ FUZZY SEARCH EXAMPLES:
   - Title matches weighted 2x higher than body matches
   - Results sorted by match score (best first)
   - Searches first 500 chars of body for performance
+
+DSL PIPE SYNTAX EXAMPLES:
+  opennotes notes search "tag:work | sort:modified:desc"
+  opennotes notes search "status:todo | sort:created:asc limit:20"
+  opennotes notes search "| sort:title:asc"     # All notes, sorted by title
+
+  DSL Filter:
+  - tag:<value>      Notes with specific tag
+  - status:<value>   Notes with status field
+  - title:<text>     Search in title
+  - path:<prefix>    Notes in path prefix
+  - created:>date    Created after date
+  - modified:<date   Modified before date
+
+  Directives (after |):
+  - sort:<field>:<dir>  Sort by field (modified, created, title, path)
+                        Direction: asc or desc (default: asc)
+  - limit:<n>           Return at most n results
+  - offset:<n>          Skip first n results (for pagination)
 
 BOOLEAN QUERY SUBCOMMAND:
   Use 'opennotes notes search query' for structured filtering:
@@ -70,6 +96,11 @@ DOCUMENTATION:
 		nb, err := requireNotebook(cmd)
 		if err != nil {
 			return err
+		}
+
+		// Check if query contains pipe syntax (and not fuzzy mode)
+		if !fuzzyFlag && strings.Contains(searchTerm, "|") {
+			return runSearchWithPipeSyntax(cmd.Context(), nb, searchTerm)
 		}
 
 		notes, err := nb.Notes.SearchNotes(context.Background(), searchTerm, fuzzyFlag)
@@ -109,4 +140,80 @@ func init() {
 		false,
 		"Enable fuzzy matching for ranked results. Matches notes by similarity instead of exact text. Title matches weighted higher than body matches.",
 	)
+}
+
+// runSearchWithPipeSyntax executes a search using pipe syntax (filter | directives).
+// This allows DSL-based search with sort, limit, and other options.
+// Example: "tag:work | sort:modified:desc limit:10"
+func runSearchWithPipeSyntax(ctx context.Context, nb *services.Notebook, query string) error {
+	// Split query into filter and directives
+	filterPart, directivesPart := services.SplitViewQuery(query)
+
+	// Parse directives
+	directives, err := services.ParseDirectives(directivesPart)
+	if err != nil {
+		return fmt.Errorf("failed to parse directives: %w", err)
+	}
+
+	// Build FindOpts from directives
+	opts := search.FindOpts{
+		Limit:  directives.Limit,
+		Offset: directives.Offset,
+	}
+
+	// Parse filter DSL if present
+	if filterPart != "" {
+		p := parser.New()
+		parsedQuery, err := p.Parse(filterPart)
+		if err != nil {
+			return fmt.Errorf("failed to parse filter: %w", err)
+		}
+		opts.Query = parsedQuery
+		opts.RawQuery = filterPart
+	}
+
+	// Set sort from directives
+	if directives.SortField != "" {
+		opts.Sort = directiveToSortSpec(directives.SortField, directives.SortDirection)
+	}
+
+	// Execute search using the new method
+	notes, err := nb.Notes.SearchWithFindOpts(ctx, opts)
+	if err != nil {
+		return fmt.Errorf("search failed: %w", err)
+	}
+
+	if len(notes) == 0 {
+		fmt.Printf("No notes found matching query\n")
+		return nil
+	}
+
+	fmt.Printf("Found %d note(s):\n\n", len(notes))
+	return displayNoteList(notes)
+}
+
+// directiveToSortSpec converts directive sort parameters to search.SortSpec
+func directiveToSortSpec(field, direction string) search.SortSpec {
+	var sortDirection search.SortDirection
+	if direction == "desc" {
+		sortDirection = search.SortDesc
+	} else {
+		sortDirection = search.SortAsc
+	}
+
+	var sortField search.SortField
+	switch field {
+	case "modified":
+		sortField = search.SortByModified
+	case "created":
+		sortField = search.SortByCreated
+	case "title":
+		sortField = search.SortByTitle
+	case "path":
+		sortField = search.SortByPath
+	default:
+		sortField = search.SortByRelevance
+	}
+
+	return search.SortSpec{Field: sortField, Direction: sortDirection}
 }

@@ -51,6 +51,8 @@ func translateExpr(expr search.Expr) (bquery.Query, error) {
 		return translateRangeExpr(e)
 	case search.WildcardExpr:
 		return translateWildcardExpr(e)
+	case search.ExistsExpr:
+		return translateExistsExpr(e)
 	default:
 		return nil, fmt.Errorf("unsupported expression type: %T", expr)
 	}
@@ -213,6 +215,27 @@ func translateWildcardExpr(e search.WildcardExpr) (bquery.Query, error) {
 	return wq, nil
 }
 
+// translateExistsExpr translates an existence check to a Bleve query.
+// has:<field> (Negated=false) uses a regexp query to match any non-empty value.
+// missing:<field> (Negated=true) wraps the exists query in a boolean NOT.
+func translateExistsExpr(e search.ExistsExpr) (bquery.Query, error) {
+	field := normalizeField(e.Field)
+
+	// Use a regexp that matches any non-empty string to check field existence.
+	existsQ := bquery.NewRegexpQuery(".+")
+	existsQ.SetField(field)
+
+	if e.Negated {
+		// missing:<field> — match all documents that do NOT have this field
+		must := []bquery.Query{bquery.NewMatchAllQuery()}
+		mustNot := []bquery.Query{existsQ}
+		return bquery.NewBooleanQuery(must, nil, mustNot), nil
+	}
+
+	// has:<field> — match documents where the field exists
+	return existsQ, nil
+}
+
 // normalizeField maps query field names to Bleve field names.
 func normalizeField(field string) string {
 	switch strings.ToLower(field) {
@@ -230,6 +253,8 @@ func normalizeField(field string) string {
 		return FieldCreated
 	case "modified", "updated":
 		return FieldModified
+	case "status":
+		return FieldMetadata + ".status"
 	default:
 		// Check if it's a metadata field
 		if strings.HasPrefix(field, "meta.") || strings.HasPrefix(field, "metadata.") {

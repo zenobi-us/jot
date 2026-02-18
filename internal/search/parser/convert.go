@@ -31,6 +31,8 @@ func convertExpr(e *expressionAST) search.Expr {
 	}
 
 	switch {
+	case e.Existence != nil:
+		return convertExistence(e.Existence)
 	case e.Not != nil:
 		return convertNot(e.Not)
 	case e.Field != nil:
@@ -39,6 +41,18 @@ func convertExpr(e *expressionAST) search.Expr {
 		return convertTerm(e.Term)
 	default:
 		return nil
+	}
+}
+
+// convertExistence converts an existence expression.
+func convertExistence(ex *existenceExprAST) search.Expr {
+	if ex == nil {
+		return nil
+	}
+
+	return search.ExistsExpr{
+		Field:   strings.ToLower(ex.Field),
+		Negated: ex.Keyword == "missing",
 	}
 }
 

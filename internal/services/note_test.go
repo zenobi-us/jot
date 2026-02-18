@@ -1221,3 +1221,70 @@ func TestResolvePath(t *testing.T) {
 		})
 	}
 }
+
+func TestNoteService_SearchWithFindOpts_Basic(t *testing.T) {
+	ctx := context.Background()
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+
+	// Create test notebook with notes
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+	testutil.CreateTestNote(t, notebookDir, "note1.md", `---
+tag: work
+status: active
+---
+# Note 1
+Work related content.
+`)
+	testutil.CreateTestNote(t, notebookDir, "note2.md", `---
+tag: personal
+status: done
+---
+# Note 2
+Personal note.
+`)
+	testutil.CreateTestNote(t, notebookDir, "note3.md", `---
+tag: work
+status: done
+---
+# Note 3
+Another work note.
+`)
+
+	idx := testutil.CreateTestIndex(t, notebookDir)
+	svc := services.NewNoteService(cfg, idx, notebookDir)
+
+	t.Run("empty opts returns all notes", func(t *testing.T) {
+		results, err := svc.SearchWithFindOpts(ctx, testutil.NewFindOpts())
+		assert.NoError(t, err)
+		assert.Len(t, results, 3)
+	})
+
+	t.Run("with limit", func(t *testing.T) {
+		results, err := svc.SearchWithFindOpts(ctx, testutil.NewFindOpts().WithLimit(2))
+		assert.NoError(t, err)
+		assert.Len(t, results, 2)
+	})
+}
+
+func TestNoteService_SearchWithFindOpts_ErrorCases(t *testing.T) {
+	ctx := context.Background()
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+
+	t.Run("no notebook selected returns error", func(t *testing.T) {
+		svc := services.NewNoteService(cfg, nil, "")
+		_, err := svc.SearchWithFindOpts(ctx, testutil.NewFindOpts())
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "no notebook selected")
+	})
+
+	t.Run("nil index returns error", func(t *testing.T) {
+		svc := services.NewNoteService(cfg, nil, "/some/path")
+		_, err := svc.SearchWithFindOpts(ctx, testutil.NewFindOpts())
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "index not initialized")
+	})
+}

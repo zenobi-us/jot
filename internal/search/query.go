@@ -157,3 +157,17 @@ const (
 	WildcardSuffix WildcardType = "suffix" // "*java"
 	WildcardBoth   WildcardType = "both"   // "*java*"
 )
+
+// ExistsExpr represents an existence check for a field.
+//
+// Example: "has:tag" matches notes that have at least one tag.
+// Example: "missing:status" matches notes without a status field.
+type ExistsExpr struct {
+	// Field is the field name to check for existence
+	Field string
+
+	// Negated indicates whether this is a "missing:" (true) or "has:" (false) check
+	Negated bool
+}
+
+func (ExistsExpr) exprNode() {}
