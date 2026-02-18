@@ -1,9 +1,13 @@
 # OpenNotes Team Status
 
 ## Current Session
-- **Session ID**: research-dsl-views-phase4-archreview
-- **Status**: Phase 4 complete (GO), ready for Phase 5
-- **Working on**: [research-b4e2f7a1](research-b4e2f7a1-dsl-based-views-design.md) - Research DSL-based views design (Phases 1-4 complete)
+- **Session ID**: rename-jot-epic-setup
+- **Status**: Epic and Phase 1 task created
+- **Working on**: [epic-8361d3a2](epic-8361d3a2-rename-to-jot.md) - Rename Project to "Jot"
 
 ## Epic Assignment
-- Residual cleanup from epic-f661c068 (DuckDB removal)
+- Active: epic-8361d3a2 (Rename to Jot) — Phase 1 Discovery
+- Parked: epic-f661c068 (DuckDB removal residual — DSL views research)
+
+## Next Action
+- Execute [task-b66d2263](task-b66d2263-identify-rename-locations.md) to inventory all rename locations
