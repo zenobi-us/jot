@@ -5,7 +5,7 @@
   - Phase 1: Discovery — Identify all rename locations (in-repo and external)
   - Status: Planning
 - **Parked Research**: [research-b4e2f7a1](research-b4e2f7a1-dsl-based-views-design.md) - DSL-based views design
-  - Phases 1-4 complete, Phases 5-6 pending
+  - Phases 1-5 complete, Phase 6 pending (SQL cleanup plan done)
   - **Selected Design**: Option C (Hybrid — Pipe Syntax)
 
 ## Rename Epic (8361d3a2) Overview
@@ -17,8 +17,9 @@
 
 ## Key Research Findings (DSL Views)
 - Participle DSL parser is functional but has zero production callers
-- `view.go` has ~600 lines dead SQL code, ~400 lines reusable
-- Pipe syntax selected for CLI design
+- `view.go`: ~500 lines removable SQL, ~550 lines reusable, ~150 lines to replace
+- `view_test.go`: ~900 lines removable (50%), ~750 lines reusable
+- Pipe syntax selected; safe incremental cleanup strategy defined
 - Architecture maps directly to `FindOpts` with zero interface changes
 
 ## Recently Completed

@@ -13,7 +13,7 @@
 ### Epic: DuckDB Removal Residual (f661c068) — Parked
 - [ ] **[RESEARCH] [PARKED]** [research-b4e2f7a1](research-b4e2f7a1-dsl-based-views-design.md) - Research DSL-based views design
   - [x] Phase 1-4: Complete ✅ GO
-  - [ ] Phase 5: Plan SQL cleanup
+  - [x] Phase 5: Plan SQL cleanup — **completed**
   - [ ] Phase 6: Write implementation plan
 
 ## Next Queue

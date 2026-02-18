@@ -2,7 +2,7 @@
 id: b4e2f7a1
 title: "Research: DSL-based views design for opennotes"
 created_at: 2026-02-17T18:47:00+10:30
-updated_at: 2026-02-18T21:08:00+10:30
+updated_at: 2026-02-18T19:47:00+10:30
 status: in-progress
 epic_id: f661c068
 phase_id: null
@@ -810,6 +810,166 @@ To maintain architectural integrity during implementation, add these checks:
 3. `notes search` supports pipe syntax
 4. CLI flag overrides work correctly
 5. Special views (`orphans`, `broken-links`) unchanged
+
+### Phase 5: SQL Cleanup Plan
+
+**Skill Applied**: `refactoring-specialist`
+
+#### Executive Summary
+
+The `view.go` file (1355 lines) contains ~600 lines of dead SQL code and ~400 lines of reusable code. The `view_test.go` file (1804 lines) is 50% SQL-specific tests that can be removed. This section provides a safe, incremental removal strategy with dependency ordering.
+
+#### Code Classification: `internal/services/view.go`
+
+| Lines | Function(s) | Status | Rationale |
+|-------|-------------|--------|-----------|
+| 48-157 | `initializeBuiltinViews()` | 🔴 **REPLACE** | All definitions use SQL-oriented `ViewQuery` struct. Must be rewritten with new DSL format. |
+| 159-257 | `GetView`, `loadNotebookView`, `loadGlobalView` | 🟢 **KEEP** | View discovery hierarchy is backend-agnostic. |
+| 258-390 | `ResolveTemplateVariables`, `resolveDayArithmetic`, `resolveWeekMonthArithmetic`, `resolveEnvironmentVariables`, date helpers | 🟢 **KEEP** | Template resolution is pure string manipulation, backend-agnostic. |
+| 447-507 | `ValidateViewDefinition` | 🔴 **REPLACE** | Validates SQL-oriented fields (`Conditions`, `Having`, `AggregateColumns`). Needs new validator for DSL query string. |
+| 509-566 | `validateViewCondition`, `validateHavingCondition` | 🔴 **REMOVE** | SQL condition validation, no replacement needed. |
+| 567-602 | `validateAggregateFunction` | 🔴 **REMOVE** | SQL aggregates not used in new design. |
+| 603-618 | `validateViewParameter` | 🟢 **KEEP** | Parameter type validation is backend-agnostic. |
+| 620-677 | `ValidateParameters`, `validateParamType`, `isValidViewName` | 🟢 **KEEP** | Parameter handling is backend-agnostic. |
+| 685-763 | `validateField` | 🔴 **REMOVE** | SQL field whitelist validation. |
+| 764-783 | `validateOperator` | 🔴 **REMOVE** | SQL operator whitelist validation. |
+| 785-834 | `ApplyParameterDefaults`, `ParseViewParameters` | 🟢 **KEEP** | Parameter handling is backend-agnostic. |
+| 837-865 | `FormatQueryValue`, `escapeSQL` | 🔴 **REMOVE** | SQL value formatting and escaping. |
+| 867-1032 | `GenerateSQL` | 🔴 **REMOVE** | Full SQL query generator — core dead code. |
+| 1033-1070 | `convertToJSONSafe` | 🟢 **KEEP** | JSON serialization helper. |
+| 1072-1151 | `GroupResults` | 🟡 **ADAPT** | Grouping logic reusable, but signature may change (takes `[]Note` not `[]map[string]interface{}`). |
+| 1152-1165 | `isArray` | 🟢 **KEEP** | Utility function. |
+| 1166-1196 | `transformSQLGroupedResults` | 🔴 **REMOVE** | SQL-specific result transformation. |
+| 1198-1354 | `ListAllViews`, `ListBuiltinViews`, `LoadAllGlobalViews`, `LoadAllNotebookViews` | 🟢 **KEEP** | View listing and discovery is backend-agnostic. |
+
+**Summary:**
+- **REMOVE**: ~500 lines (SQL-specific code)
+- **REPLACE**: ~150 lines (need new DSL versions)
+- **KEEP**: ~550 lines (backend-agnostic)
+- **ADAPT**: ~80 lines (minor signature changes)
+
+#### Code Classification: `internal/services/view_test.go`
+
+| Lines | Test Group | Status | Rationale |
+|-------|------------|--------|-----------|
+| 16-112 | Builtin view structure tests | 🟡 **ADAPT** | Tests check SQL-oriented structure. Update to check DSL `Query` string. |
+| 113-182 | `ResolveTemplateVariables_*` (basic) | 🟢 **KEEP** | Backend-agnostic template tests. |
+| 184-290 | `ValidateViewDefinition_*` | 🔴 **REMOVE** | Tests SQL-oriented validation. |
+| 291-336 | `ValidateParameters_*` | 🟢 **KEEP** | Parameter validation tests (backend-agnostic). |
+| 337-428 | `ValidateParamType_*`, `ApplyParameterDefaults_*` | 🟢 **KEEP** | Backend-agnostic. |
+| 431-464 | `ParseViewParameters_*` | 🟢 **KEEP** | Backend-agnostic. |
+| 466-504 | `FormatQueryValue_*` | 🔴 **REMOVE** | SQL value formatting tests. |
+| 506-655 | `GetView_*`, `Precedence_*` | 🟢 **KEEP** | Tests view discovery logic. |
+| 658-1368 | `GenerateSQL_*` (all variants) | 🔴 **REMOVE** | All test SQL generation (~710 lines). |
+| 1369-1645 | More `ResolveTemplateVariables_*` | 🟢 **KEEP** | Backend-agnostic template tests. |
+| 1646-1804 | `GroupResults_*` | 🟡 **ADAPT** | Grouping tests may need signature updates. |
+
+**Summary:**
+- **REMOVE**: ~900 lines (50% of test file)
+- **KEEP**: ~750 lines (42%)
+- **ADAPT**: ~150 lines (8%)
+
+#### Safe Incremental Removal Strategy
+
+**Phase 5A: Remove Dead SQL Tests First (Safe, No Production Impact)**
+
+1. Remove `FormatQueryValue_*` tests (lines 466-504)
+2. Remove `GenerateSQL_*` tests (lines 658-1368)
+3. Remove `ValidateViewDefinition_*` tests (lines 184-290)
+4. Run `mise run test` — all remaining tests should pass
+
+**Phase 5B: Remove Dead SQL Implementation (Leaf Functions First)**
+
+Remove in this order (leaf → caller dependency order):
+
+1. `escapeSQL()` — no callers after GenerateSQL removal
+2. `FormatQueryValue()` — no callers
+3. `validateOperator()` — called only by validateViewCondition
+4. `validateField()` — called only by validateViewCondition, validateHavingCondition, GenerateSQL
+5. `validateAggregateFunction()` — called only by ValidateViewDefinition, GenerateSQL
+6. `validateHavingCondition()` — called only by ValidateViewDefinition
+7. `validateViewCondition()` — called only by ValidateViewDefinition
+8. `transformSQLGroupedResults()` — called only by GroupResults (SQL path)
+9. `GenerateSQL()` — the big one, no callers after Bleve migration
+10. Update `ValidateViewDefinition()` — remove SQL-specific field checks
+
+**Phase 5C: Replace Builtin Views (Requires New DSL Implementation)**
+
+This depends on Phase 6 implementation, but the outline is:
+
+1. Change `ViewDefinition.Query` from `ViewQuery` struct to `string` (in `core/view.go`)
+2. Rewrite `initializeBuiltinViews()` to use new DSL format
+3. Update tests in lines 16-112 to check new structure
+
+**Phase 5D: Adapt GroupResults (Minor Signature Change)**
+
+1. Update `GroupResults()` to accept `[]core.Note` instead of `[]map[string]interface{}`
+2. Remove SQL-specific path in GroupResults
+3. Update `GroupResults_*` tests
+
+#### Dependency Graph for Removal
+
+```
+GenerateSQL
+├── ValidateParameters (KEEP)
+├── ApplyParameterDefaults (KEEP)
+├── ResolveTemplateVariables (KEEP)
+├── validateField (REMOVE)
+├── validateAggregateFunction (REMOVE)
+├── validateHavingCondition (REMOVE)
+│   └── validateOperator (REMOVE)
+└── escapeSQL (REMOVE - unused after GenerateSQL gone)
+
+ValidateViewDefinition
+├── isValidViewName (KEEP)
+├── validateViewCondition (REMOVE)
+│   ├── validateField (REMOVE)
+│   └── validateOperator (REMOVE)
+├── validateHavingCondition (REMOVE)
+├── validateAggregateFunction (REMOVE)
+├── validateField (REMOVE)
+└── validateViewParameter (KEEP)
+
+GroupResults
+├── transformSQLGroupedResults (REMOVE)
+└── isArray (KEEP)
+```
+
+#### Verification Steps
+
+After each removal phase:
+
+1. `mise run test` — all tests pass
+2. `mise run lint` — no lint errors
+3. `mise run build` — binary compiles
+4. `git diff --stat` — confirm only expected files changed
+5. Commit with scope: `refactor(views): remove <description>`
+
+#### Risk Mitigation
+
+| Risk | Mitigation |
+|------|------------|
+| Accidentally remove reusable code | Follow dependency graph strictly; remove leaves first |
+| Break special views | `view_special.go` is separate file, not touched in Phase 5 |
+| Break view discovery | View loading functions (`GetView`, `loadNotebookView`, etc.) are explicitly KEEP |
+| Break template resolution | All `Resolve*` functions are explicitly KEEP |
+
+#### Files to Modify
+
+| File | Action |
+|------|--------|
+| `internal/services/view.go` | Remove ~500 lines, replace ~150 lines |
+| `internal/services/view_test.go` | Remove ~900 lines, adapt ~150 lines |
+| `internal/core/view.go` | Change `ViewQuery` struct (Phase 5C, depends on Phase 6) |
+
+#### Post-Cleanup Metrics Target
+
+| Metric | Before | After |
+|--------|--------|-------|
+| `view.go` lines | 1355 | ~700 |
+| `view_test.go` lines | 1804 | ~850 |
+| SQL-related imports | database/sql concepts | 0 |
+| Dead code | ~600 lines | 0 |
 
 ## References
 
