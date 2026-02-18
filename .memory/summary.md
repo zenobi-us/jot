@@ -1,7 +1,7 @@
 # OpenNotes Project Summary
 
 ## Current Focus
-- **Active Epic**: [epic-8361d3a2](epic-8361d3a2-rename-to-jot.md) - **Rename Project to "Jot"**
+- **Future Epic**: [epic-8361d3a2](epic-8361d3a2-rename-to-jot.md) - **Rename Project to "Jot"**
   - Phase 1: Discovery — Identify all rename locations (in-repo and external)
   - Status: Planning
 - **Ready for Implementation**: [plan-b4e2f7a1](plan-b4e2f7a1-dsl-views-implementation.md) - DSL-based views
@@ -15,24 +15,29 @@
 - New repo: `github.com/zenobi-us/jot`
 - New config: `~/.config/jot/`, `.jot.json`
 
-## DSL Views Research Complete (b4e2f7a1)
-**Status**: All 6 phases complete ✅
+## Completed Epics
 
-**Key Findings**:
-- Participle DSL parser is functional but has zero production callers
-- `view.go`: ~500 lines removable SQL, ~550 lines reusable, ~150 lines to replace
-- Pipe syntax selected: `"filter DSL | directives"`
-- Architecture maps directly to `FindOpts` with zero interface changes
+### DuckDB Removal (f661c068) — ✅ Archived
+**Completed**: 2026-02-02 | **Duration**: 29 hours | **Archive**: [archive/duckdb-removal-f661c068/](archive/duckdb-removal-f661c068/)
 
-**Implementation Plan**: [plan-b4e2f7a1-dsl-views-implementation.md](plan-b4e2f7a1-dsl-views-implementation.md)
-- 10 TDD tasks ready for execution
+| Metric | Target | Achieved |
+|--------|--------|----------|
+| Binary | <15MB | 23MB (64% smaller than DuckDB) |
+| Startup | <100ms | 17ms ✅ |
+| Search | <25ms | 0.754ms ✅ |
+| Tests | All pass | 161+ passing ✅ |
+| DuckDB refs | 0 | 0 ✅ (except residual converter, deferred) |
+
+**Residual work**: DSL views implementation (plan-b4e2f7a1), DuckDBConverter cleanup
+
+### Semantic Search (7c9d2e1f) — ✅ Archived
+**Archive**: [archive/semantic-search-7c9d2e1f/](archive/semantic-search-7c9d2e1f/)
+
+## DSL Views Plan (b4e2f7a1) — Ready
+**Status**: Research complete, 10 TDD tasks ready
+- Replaces SQL view system with DSL pipe syntax
 - Estimated: 4-6 hours
 - Use `superpowers:executing-plans` skill
-
-## Recently Completed
-- ✅ DSL Views Research Phase 6 (Feb 18, 2026) — Implementation plan created
-- ✅ **Semantic Search Enhancement** (epic-7c9d2e1f) - Archived Feb 17, 2026
-- ✅ **DuckDB Removal** (epic-f661c068) - Core completed, views cleanup planned
 
 ## Project State
 - Feature branch: `feat/remove-duckdb-migrate-to-afero-chromedb-with-bleve-search`

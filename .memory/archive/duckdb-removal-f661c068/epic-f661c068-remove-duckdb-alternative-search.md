@@ -32,7 +32,7 @@ learning_doc: learning-f661c068-duckdb-removal-epic-complete.md
   - Production uses `afero.OsFs` for real filesystem
   - **Status**: Fully implemented in `internal/search/bleve/storage.go`
   
-- [ ] **Concept 2**: Complete removal of DuckDB dependency (Phase 5)
+- [x] **Concept 2**: Complete removal of DuckDB dependency (Phase 5) ✅
   - No DuckDB imports in codebase
   - No markdown extension
   - No CGO dependencies for search
