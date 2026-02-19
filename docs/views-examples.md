@@ -1,6 +1,6 @@
 # Views System Examples
 
-Real-world examples and workflows using OpenNotes Views System.
+Real-world examples and workflows using Jot Views System.
 
 ## Table of Contents
 
@@ -23,19 +23,19 @@ Real-world examples and workflows using OpenNotes Views System.
 
 ```bash
 # 1. See what you worked on today
-opennotes notes view today
+jot notes view today
 
 # 2. Check recent activity
-opennotes notes view recent
+jot notes view recent
 
 # 3. Find in-progress tasks
-opennotes notes view kanban --param status=in-progress
+jot notes view kanban --param status=in-progress
 
 # 4. Export to JSON for reporting
-opennotes notes view today --format json > /tmp/standup-$(date +%Y-%m-%d).json
+jot notes view today --format json > /tmp/standup-$(date +%Y-%m-%d).json
 ```
 
-**Custom View**: `standup` (add to `~/.config/opennotes/config.json`)
+**Custom View**: `standup` (add to `~/.config/jot/config.json`)
 
 ```json
 {
@@ -66,7 +66,7 @@ opennotes notes view today --format json > /tmp/standup-$(date +%Y-%m-%d).json
 **Usage**:
 
 ```bash
-opennotes notes view standup
+jot notes view standup
 ```
 
 ---
@@ -79,11 +79,11 @@ opennotes notes view standup
 
 ```bash
 # 1. Review today's completed work
-opennotes notes view kanban --param status=done --format json \
+jot notes view kanban --param status=done --format json \
   | jq '.[] | select(.updated_at | startswith("'$(date +%Y-%m-%d)'"))'
 
 # 2. Find unfinished tasks
-opennotes notes view kanban --param status=todo,in-progress
+jot notes view kanban --param status=todo,in-progress
 
 # 3. Create tomorrow's plan
 # (Manual: create new daily note with links to carry-over tasks)
@@ -150,14 +150,14 @@ opennotes notes view kanban --param status=todo,in-progress
 
 ```bash
 # 1. Review week's activity
-opennotes notes view this-week
+jot notes view this-week
 
 # 2. Count completed tasks this week
-opennotes notes view this-week --format json \
+jot notes view this-week --format json \
   | jq '[.[] | select(.metadata.status == "done")] | length'
 
 # 3. Generate weekly report
-opennotes notes view this-week --format json \
+jot notes view this-week --format json \
   | jq 'group_by(.metadata.status) | map({status: .[0].metadata.status, count: length})'
 ```
 
@@ -179,7 +179,7 @@ opennotes notes view this-week --format json \
 
 **Goal**: Organize work for 2-week sprint
 
-**Custom View**: `sprint` (add to notebook `.opennotes.json`)
+**Custom View**: `sprint` (add to notebook `.jot.json`)
 
 ```json
 {
@@ -214,10 +214,10 @@ opennotes notes view this-week --format json \
 
 ```bash
 # View current sprint
-opennotes notes view sprint --param sprint_number=sprint-12
+jot notes view sprint --param sprint_number=sprint-12
 
 # Export sprint backlog
-opennotes notes view sprint --param sprint_number=sprint-12 --format json \
+jot notes view sprint --param sprint_number=sprint-12 --format json \
   > sprint-12-backlog.json
 ```
 
@@ -231,14 +231,14 @@ opennotes notes view sprint --param sprint_number=sprint-12 --format json \
 
 ```bash
 # 1. See full kanban board
-opennotes notes view kanban
+jot notes view kanban
 
 # 2. Filter specific columns
-opennotes notes view kanban --param status=todo
-opennotes notes view kanban --param status=in-progress
+jot notes view kanban --param status=todo
+jot notes view kanban --param status=in-progress
 
 # 3. Export to JSON for dashboard
-opennotes notes view kanban --format json \
+jot notes view kanban --format json \
   | jq 'group_by(.metadata->>\'status\') | map({status: .[0].metadata->>\'status\', tasks: [.[] | .title]})'
 ```
 
@@ -313,10 +313,10 @@ Add to notebook config for project-specific workflow:
 
 ```bash
 # Morning: Check urgent tasks
-opennotes notes view urgent
+jot notes view urgent
 
 # Filter by category
-opennotes notes view urgent --format json \
+jot notes view urgent --format json \
   | jq '.[] | select(.metadata->>\'category\' == "bugs")'
 ```
 
@@ -332,20 +332,20 @@ opennotes notes view urgent --format json \
 
 ```bash
 # Notes with no incoming links (common orphans)
-opennotes notes view orphans
+jot notes view orphans
 
 # Notes with no links at all
-opennotes notes view orphans --param definition=no-links
+jot notes view orphans --param definition=no-links
 
 # Completely isolated notes
-opennotes notes view orphans --param definition=isolated
+jot notes view orphans --param definition=isolated
 ```
 
 **Maintenance Workflow**:
 
 ```bash
 # 1. Find orphans
-opennotes notes view orphans --format json > /tmp/orphans.json
+jot notes view orphans --format json > /tmp/orphans.json
 
 # 2. Review and categorize
 cat /tmp/orphans.json | jq '.[] | {path, title}'
@@ -356,7 +356,7 @@ cat /tmp/orphans.json | jq '.[] | {path, title}'
 #    - Archive if obsolete
 
 # 4. Verify reduction
-opennotes notes view orphans --format json | jq '. | length'
+jot notes view orphans --format json | jq '. | length'
 ```
 
 ---
@@ -369,10 +369,10 @@ opennotes notes view orphans --format json | jq '. | length'
 
 ```bash
 # 1. Find notes with broken links
-opennotes notes view broken-links
+jot notes view broken-links
 
 # 2. Get JSON for programmatic processing
-opennotes notes view broken-links --format json > /tmp/broken.json
+jot notes view broken-links --format json > /tmp/broken.json
 
 # 3. Analyze broken link patterns
 cat /tmp/broken.json | jq -r '.[] | .broken_links[]' | sort | uniq -c | sort -rn
@@ -405,10 +405,10 @@ cat /tmp/broken.json | jq -r '.[] | .broken_links[]' | sort | uniq -c | sort -rn
 
 ```bash
 # 1. Find untagged notes
-opennotes notes view untagged
+jot notes view untagged
 
 # 2. Export for batch tagging
-opennotes notes view untagged --format json > /tmp/untagged.json
+jot notes view untagged --format json > /tmp/untagged.json
 
 # 3. Analyze paths to infer tags
 cat /tmp/untagged.json | jq -r '.[].path' | xargs dirname | sort | uniq -c
@@ -417,7 +417,7 @@ cat /tmp/untagged.json | jq -r '.[].path' | xargs dirname | sort | uniq -c
 # (Manual: edit notes or use script to add tags based on path)
 
 # 5. Verify progress
-opennotes notes view untagged --format json | jq '. | length'
+jot notes view untagged --format json | jq '. | length'
 ```
 
 ---
@@ -463,10 +463,10 @@ opennotes notes view untagged --format json | jq '. | length'
 
 ```bash
 # View Alice's notes
-opennotes notes view by-author --param author="Alice"
+jot notes view by-author --param author="Alice"
 
 # Export for review
-opennotes notes view by-author --param author="Bob" --format json \
+jot notes view by-author --param author="Bob" --format json \
   | jq '[.[] | {title, path, updated_at}]'
 ```
 
@@ -508,7 +508,7 @@ opennotes notes view by-author --param author="Bob" --format json \
 
 ```bash
 # Generate team standup report
-opennotes notes view team-today --format json \
+jot notes view team-today --format json \
   | jq 'group_by(.metadata.author) | map({
       author: .[0].metadata.author,
       updates: [.[] | {title, status: .metadata.status}]
@@ -556,10 +556,10 @@ opennotes notes view team-today --format json \
 
 ```bash
 # View release notes and tasks
-opennotes notes view release --param version=v1.2.0
+jot notes view release --param version=v1.2.0
 
 # Count remaining work
-opennotes notes view release --param version=v1.2.0 --format json \
+jot notes view release --param version=v1.2.0 --format json \
   | jq '[.[] | select(.metadata.status != "done")] | length'
 ```
 
@@ -726,13 +726,13 @@ cat > "$REPORT" << EOF
 # Daily Report - $DATE
 
 ## Completed Today
-$(opennotes notes view completed-today --format table)
+$(jot notes view completed-today --format table)
 
 ## In Progress
-$(opennotes notes view kanban --param status=in-progress --format table)
+$(jot notes view kanban --param status=in-progress --format table)
 
 ## Urgent Items
-$(opennotes notes view urgent --format table)
+$(jot notes view urgent --format table)
 
 EOF
 
@@ -753,10 +753,10 @@ mail -s "Daily Report - $DATE" team@example.com < "$REPORT"
 mkdir -p /tmp/dashboard
 
 # Export multiple views
-opennotes notes view kanban --format json > /tmp/dashboard/kanban.json
-opennotes notes view orphans --format json > /tmp/dashboard/orphans.json
-opennotes notes view broken-links --format json > /tmp/dashboard/broken-links.json
-opennotes notes view this-week --format json > /tmp/dashboard/activity.json
+jot notes view kanban --format json > /tmp/dashboard/kanban.json
+jot notes view orphans --format json > /tmp/dashboard/orphans.json
+jot notes view broken-links --format json > /tmp/dashboard/broken-links.json
+jot notes view this-week --format json > /tmp/dashboard/activity.json
 
 # Combine into single dashboard JSON
 jq -n \
@@ -786,11 +786,11 @@ echo "Dashboard exported to /tmp/dashboard/dashboard.json"
 # .git/hooks/pre-commit
 
 # Check for broken links before commit
-BROKEN=$(opennotes notes view broken-links --format json | jq '. | length')
+BROKEN=$(jot notes view broken-links --format json | jq '. | length')
 
 if [ "$BROKEN" -gt 0 ]; then
   echo "❌ Commit blocked: $BROKEN notes have broken links"
-  echo "Run: opennotes notes view broken-links"
+  echo "Run: jot notes view broken-links"
   exit 1
 fi
 
@@ -813,11 +813,11 @@ METRICS_FILE="metrics/$WEEK.json"
 mkdir -p metrics
 
 jq -n \
-  --argjson total $(opennotes notes list --format json | jq '. | length') \
-  --argjson completed $(opennotes notes view this-week --format json | jq '[.[] | select(.metadata.status == "done")] | length') \\\
-  --argjson in_progress $(opennotes notes view kanban --param status=in-progress --format json | jq '. | length') \
-  --argjson orphans $(opennotes notes view orphans --format json | jq '. | length') \
-  --argjson untagged $(opennotes notes view untagged --format json | jq '. | length') \
+  --argjson total $(jot notes list --format json | jq '. | length') \
+  --argjson completed $(jot notes view this-week --format json | jq '[.[] | select(.metadata.status == "done")] | length') \\\
+  --argjson in_progress $(jot notes view kanban --param status=in-progress --format json | jq '. | length') \
+  --argjson orphans $(jot notes view orphans --format json | jq '. | length') \
+  --argjson untagged $(jot notes view untagged --format json | jq '. | length') \
   '{
     week: $ENV.WEEK,
     total_notes: $total,

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/zenobi-us/opennotes/internal/services"
+	"github.com/zenobi-us/jot/internal/services"
 )
 
 var notesSearchQueryCmd = &cobra.Command{
@@ -53,27 +53,27 @@ GLOB PATTERNS:
 EXAMPLES:
 
   Basic filtering:
-    opennotes notes search query --and data.tag=workflow
-    opennotes notes search query --and data.tag=workflow --and data.status=active
-    opennotes notes search query --or data.priority=high --or data.priority=critical
-    opennotes notes search query --and data.tag=epic --not data.status=archived
+    jot notes search query --and data.tag=workflow
+    jot notes search query --and data.tag=workflow --and data.status=active
+    jot notes search query --or data.priority=high --or data.priority=critical
+    jot notes search query --and data.tag=epic --not data.status=archived
 
   Path filtering:
-    opennotes notes search query --and path=projects/*
-    opennotes notes search query --and path=**/*.md --not path=archive/*
+    jot notes search query --and path=projects/*
+    jot notes search query --and path=**/*.md --not path=archive/*
 
   Link queries:
     # Find notes that link TO architecture.md
-    opennotes notes search query --and links-to=docs/architecture.md
+    jot notes search query --and links-to=docs/architecture.md
 
     # Find notes that planning.md links TO
-    opennotes notes search query --and linked-by=planning/q1.md
+    jot notes search query --and linked-by=planning/q1.md
 
     # Find epics linking to any task
-    opennotes notes search query --and data.tag=epic --and links-to=tasks/**/*.md
+    jot notes search query --and data.tag=epic --and links-to=tasks/**/*.md
 
   Complex queries:
-    opennotes notes search query \
+    jot notes search query \
       --and data.tag=workflow \
       --and data.status=active \
       --or data.priority=high \

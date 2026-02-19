@@ -40,7 +40,7 @@ func createTestNotebook(t *testing.T, dir, name string) string {
 func createTestConfigService(t *testing.T, tmpDir string, notebooks []string) *ConfigService {
 	t.Helper()
 
-	configPath := filepath.Join(tmpDir, "opennotes", "config.json")
+	configPath := filepath.Join(tmpDir, "jot", "config.json")
 	require.NoError(t, os.MkdirAll(filepath.Dir(configPath), 0755))
 
 	config := Config{
@@ -104,6 +104,19 @@ func TestNotebookService_LoadConfig_ValidConfig(t *testing.T) {
 	assert.Equal(t, "test-notebook", config.Name)
 	assert.Equal(t, filepath.Join(notebookDir, ".notes"), config.Root)
 	assert.Equal(t, []string{notebookDir}, config.Contexts)
+}
+
+func TestNotebookService_LoadConfig_DefaultsLegacyConfigVersion(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := createTestNotebook(t, tmpDir, "legacy-notebook")
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	config, err := svc.LoadConfig(notebookDir)
+	require.NoError(t, err)
+
+	assert.Equal(t, NotebookConfigVersionBootstrap, config.ConfigVersion)
 }
 
 func TestNotebookService_LoadConfig_InvalidJSON(t *testing.T) {
@@ -669,7 +682,7 @@ func TestNotebookService_Infer_ContextMatchWinsOverAncestor(t *testing.T) {
 }
 
 // TestNotebookService_Infer_CompleteResolutionOrder verifies the complete priority order:
-// 1. Current directory (.opennotes.json)
+// 1. Current directory (.jot.json)
 // 2. Context match (registered notebooks)
 // 3. Ancestor search
 func TestNotebookService_Infer_CompleteResolutionOrder(t *testing.T) {
@@ -696,7 +709,7 @@ func TestNotebookService_Infer_CompleteResolutionOrder(t *testing.T) {
 	require.NoError(t, os.WriteFile(contextConfigPath, contextData, 0644))
 
 	// Create current directory notebook (should have highest priority)
-	currentNotebook := filepath.Join(workDir, ".opennotes.json")
+	currentNotebook := filepath.Join(workDir, ".jot.json")
 	currentConfig := StoredNotebookConfig{
 		Name:     "current-directory-notebook",
 		Root:     ".notes",

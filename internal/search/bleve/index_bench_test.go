@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zenobi-us/opennotes/internal/search"
+	"github.com/zenobi-us/jot/internal/search"
 )
 
 // BenchmarkIndex_Add measures single document indexing performance

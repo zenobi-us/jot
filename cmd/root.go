@@ -1,11 +1,11 @@
 /**
- * OpenNotes - A CLI for managing markdown-based notes
+ * Jot - A CLI for managing markdown-based notes
  */
 package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/zenobi-us/opennotes/internal/services"
+	"github.com/zenobi-us/jot/internal/services"
 )
 
 // Version information - these are set from version.go at build time
@@ -23,41 +23,41 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:     "opennotes",
+	Use:     "jot",
 	Version: "0.0.2", // This will be updated by the version setting in main()
 	Short:   "A CLI for managing markdown-based notes with fast search and automation",
-	Long: `OpenNotes is a CLI tool for managing your markdown-based notes
+	Long: `Jot is a CLI tool for managing your markdown-based notes
 organized in notebooks. Notes are stored as markdown files and can be
 searched using fast full-text queries.
 
 QUICK START:
-  1. Import existing markdown: opennotes notebook create "My Notes" --path ~/my-notes
-  2. List notes: opennotes notes list
-  3. Filter with queries: opennotes notes search query --and path=projects/*.md
+  1. Import existing markdown: jot notebook create "My Notes" --path ~/my-notes
+  2. List notes: jot notes list
+  3. Filter with queries: jot notes search query --and path=projects/*.md
   4. JSON output ready for jq and automation
 
 DOCUMENTATION:
-  📚 Search Guide: https://github.com/zenobi-us/opennotes/blob/main/docs/commands/notes-search.md
-  📋 Notebook Management: https://github.com/zenobi-us/opennotes/blob/main/docs/notebook-discovery.md
+  📚 Search Guide: https://github.com/zenobi-us/jot/blob/main/docs/commands/notes-search.md
+  📋 Notebook Management: https://github.com/zenobi-us/jot/blob/main/docs/notebook-discovery.md
 
 Environment Variables:
-  OPENNOTES_CONFIG    Path to config file (default: ~/.config/opennotes/config.json)
+  JOT_CONFIG    Path to config file (default: ~/.config/jot/config.json)
   DEBUG               Enable debug logging (set to any value)
   LOG_LEVEL           Set log level (debug, info, warn, error)
   LOG_FORMAT          Set log format (compact, console, json, ci) [default: compact]
 
 Examples:
   # Initialize configuration
-  opennotes init
+  jot init
 
   # Create a notebook with existing markdown
-  opennotes notebook create "My Notes" --path ~/my-notes
+  jot notebook create "My Notes" --path ~/my-notes
 
   # List all notes
-  opennotes notes list
+  jot notes list
 
   # Search with query filters and automation
-  opennotes notes search query --and path=projects/*.md | jq`,
+  jot notes search query --and path=projects/*.md | jq`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		// Initialize logger first
 		services.InitLogger()

@@ -22,8 +22,8 @@ type testEnv struct {
 func newTestEnv(t *testing.T) *testEnv {
 	t.Helper()
 
-	// Use pre-built binary from dist/opennotes or build if not exists
-	binaryPath := filepath.Join(getRootDir(), "dist", "opennotes")
+	// Use pre-built binary from dist/jot or build if not exists
+	binaryPath := filepath.Join(getRootDir(), "dist", "jot")
 
 	// Verify binary exists
 	if _, err := os.Stat(binaryPath); os.IsNotExist(err) {
@@ -31,7 +31,7 @@ func newTestEnv(t *testing.T) *testEnv {
 	}
 
 	// Create temp directory
-	tmpDir, err := os.MkdirTemp("", "opennotes-e2e-*")
+	tmpDir, err := os.MkdirTemp("", "jot-e2e-*")
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
@@ -119,7 +119,7 @@ func (e *testEnv) createNotebook(name string) string {
 		e.t.Fatalf("failed to create notes dir: %v", err)
 	}
 
-	// Create .opennotes.json with relative root path (as the CLI does)
+	// Create .jot.json with relative root path (as the CLI does)
 	config := map[string]interface{}{
 		"name":     name,
 		"root":     ".notes", // Relative path!
@@ -138,7 +138,7 @@ func (e *testEnv) createNotebook(name string) string {
 		e.t.Fatalf("failed to marshal config: %v", err)
 	}
 
-	configPath := filepath.Join(notebookDir, ".opennotes.json")
+	configPath := filepath.Join(notebookDir, ".jot.json")
 	if err := os.WriteFile(configPath, data, 0644); err != nil {
 		e.t.Fatalf("failed to write config: %v", err)
 	}
@@ -205,7 +205,7 @@ func TestCLI_Init_CreatesConfig(t *testing.T) {
 	}
 
 	// Verify config file was created
-	configPath := filepath.Join(env.tmpDir, ".config", "opennotes", "config.json")
+	configPath := filepath.Join(env.tmpDir, ".config", "jot", "config.json")
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		t.Errorf("config file not created at %s", configPath)
 	}
@@ -229,7 +229,7 @@ func TestCLI_NotebookCreate_CreatesNotebook(t *testing.T) {
 	}
 
 	// Verify notebook directory structure
-	if _, err := os.Stat(filepath.Join(notebookPath, ".opennotes.json")); os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(notebookPath, ".jot.json")); os.IsNotExist(err) {
 		t.Error("notebook config file not created")
 	}
 
@@ -311,7 +311,7 @@ func TestCLI_NotebookAddContext_AddsContext(t *testing.T) {
 	}
 
 	// Verify context in config
-	configPath := filepath.Join(notebookDir, ".opennotes.json")
+	configPath := filepath.Join(notebookDir, ".jot.json")
 	data, err := os.ReadFile(configPath)
 	if err != nil {
 		t.Fatalf("failed to read config: %v", err)
@@ -645,8 +645,8 @@ func TestCLI_HelpCommands(t *testing.T) {
 	if exitCode != 0 {
 		t.Error("--help should exit 0")
 	}
-	if !strings.Contains(stdout, "opennotes") {
-		t.Errorf("help should contain 'opennotes', got: %s", stdout)
+	if !strings.Contains(stdout, "jot") {
+		t.Errorf("help should contain 'jot', got: %s", stdout)
 	}
 
 	// Test subcommand help
@@ -865,7 +865,7 @@ func TestCLI_ViewDiscovery_OriginInfo(t *testing.T) {
 	notebookDir := env.createNotebook("view-origin-test")
 
 	// Add a custom view to notebook config using DSL query format
-	configPath := filepath.Join(notebookDir, ".opennotes.json")
+	configPath := filepath.Join(notebookDir, ".jot.json")
 	configData := map[string]interface{}{
 		"name": "Test Notebook",
 		"root": "notes",
@@ -1024,7 +1024,7 @@ func TestCLI_ViewDiscovery_Sorting(t *testing.T) {
 	notebookDir := env.createNotebook("view-sorting-test")
 
 	// Add custom views to both global config and notebook config
-	configDir := filepath.Join(env.tmpDir, ".config", "opennotes")
+	configDir := filepath.Join(env.tmpDir, ".config", "jot")
 	if err := os.MkdirAll(configDir, 0755); err != nil {
 		t.Fatalf("failed to create config dir: %v", err)
 	}
@@ -1049,7 +1049,7 @@ func TestCLI_ViewDiscovery_Sorting(t *testing.T) {
 	}
 
 	// Add notebook view
-	notebookConfigPath := filepath.Join(notebookDir, ".opennotes.json")
+	notebookConfigPath := filepath.Join(notebookDir, ".jot.json")
 	notebookConfig := map[string]interface{}{
 		"name": "Test Notebook",
 		"root": "notes",

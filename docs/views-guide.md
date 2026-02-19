@@ -40,62 +40,62 @@ The Views System provides named, reusable query presets that make it easy to fin
 
 ```bash
 # See all views available in current notebook
-opennotes notes view --list
+jot notes view --list
 
 # Get JSON output for programmatic use
-opennotes notes view --list --format json
+jot notes view --list --format json
 ```
 
 ### Use a Built-in View
 
 ```bash
 # View today's notes
-opennotes notes view today
+jot notes view today
 
 # View recent notes (last 20 modified)
-opennotes notes view recent
+jot notes view recent
 
 # View notes by status (kanban)
-opennotes notes view kanban
+jot notes view kanban
 
 # Find untagged notes
-opennotes notes view untagged
+jot notes view untagged
 
 # Find orphaned notes (no incoming links)
-opennotes notes view orphans
+jot notes view orphans
 
 # Find broken links
-opennotes notes view broken-links
+jot notes view broken-links
 ```
 
 ### Use Parameters
 
 ```bash
 # Kanban view with custom statuses
-opennotes notes view kanban --param status=todo,in-progress,done
+jot notes view kanban --param status=todo,in-progress,done
 
 # Orphans view with different definition
-opennotes notes view orphans --param definition=isolated
+jot notes view orphans --param definition=isolated
 ```
 
 ### Change Output Format
 
 ```bash
 # Default: List format (markdown-style)
-opennotes notes view today
+jot notes view today
 
 # Table format (ASCII table)
-opennotes notes view today --format table
+jot notes view today --format table
 
 # JSON format (for automation)
-opennotes notes view today --format json
+jot notes view today --format json
 ```
 
 ---
 
 ## Built-in Views
 
-OpenNotes includes 6 pre-configured views for common workflows.
+Jot includes 6 pre-configured views for common workflows.
 
 ### 1. Today View
 
@@ -112,7 +112,7 @@ OpenNotes includes 6 pre-configured views for common workflows.
 **Example**:
 
 ```bash
-opennotes notes view today
+jot notes view today
 ```
 
 **Output**:
@@ -142,7 +142,7 @@ opennotes notes view today
 **Example**:
 
 ```bash
-opennotes notes view recent
+jot notes view recent
 ```
 
 **Output**:
@@ -178,13 +178,13 @@ opennotes notes view recent
 
 ```bash
 # Default statuses
-opennotes notes view kanban
+jot notes view kanban
 
 # Custom statuses
-opennotes notes view kanban --param status=todo,blocked,done
+jot notes view kanban --param status=todo,blocked,done
 
 # Only in-progress items
-opennotes notes view kanban --param status=in-progress
+jot notes view kanban --param status=in-progress
 ```
 
 **Output**:
@@ -221,7 +221,7 @@ opennotes notes view kanban --param status=in-progress
 **Example**:
 
 ```bash
-opennotes notes view untagged
+jot notes view untagged
 ```
 
 **Output**:
@@ -258,13 +258,13 @@ opennotes notes view untagged
 
 ```bash
 # Default: Notes with no incoming links
-opennotes notes view orphans
+jot notes view orphans
 
 # Notes with no links at all
-opennotes notes view orphans --param definition=no-links
+jot notes view orphans --param definition=no-links
 
 # Completely isolated notes
-opennotes notes view orphans --param definition=isolated
+jot notes view orphans --param definition=isolated
 ```
 
 **Output**:
@@ -293,7 +293,7 @@ opennotes notes view orphans --param definition=isolated
 **Example**:
 
 ```bash
-opennotes notes view broken-links
+jot notes view broken-links
 ```
 
 **Output**:
@@ -314,8 +314,8 @@ opennotes notes view broken-links
 
 You can define custom views in two locations:
 
-1. **Global Config** (`~/.config/opennotes/config.json`): Available to all notebooks
-2. **Notebook Config** (`.opennotes.json`): Available only in that notebook
+1. **Global Config** (`~/.config/jot/config.json`): Available to all notebooks
+2. **Notebook Config** (`.jot.json`): Available only in that notebook
 
 ### Basic Custom View
 
@@ -344,7 +344,7 @@ Add to your config file:
 Then use it:
 
 ```bash
-opennotes notes view urgent
+jot notes view urgent
 ```
 
 ### View with Parameters
@@ -380,7 +380,7 @@ opennotes notes view urgent
 Usage:
 
 ```bash
-opennotes notes view by-author --param author="John Doe"
+jot notes view by-author --param author="John Doe"
 ```
 
 ### View with Template Variables
@@ -408,7 +408,7 @@ opennotes notes view by-author --param author="John Doe"
 Usage:
 
 ```bash
-opennotes notes view this-week
+jot notes view this-week
 ```
 
 ### Complex View with Multiple Conditions
@@ -487,18 +487,18 @@ Parameters make views flexible and reusable.
 
 ```bash
 # Single parameter
-opennotes notes view my-view --param author="Alice"
+jot notes view my-view --param author="Alice"
 
 # Multiple parameters
-opennotes notes view my-view --param status=todo,done --param author="Bob"
+jot notes view my-view --param status=todo,done --param author="Bob"
 
 # Using default values (omit parameter)
-opennotes notes view my-view
+jot notes view my-view
 ```
 
 ### Parameter Validation
 
-OpenNotes validates parameters before query execution:
+Jot validates parameters before query execution:
 
 - **Required parameters**: Must be provided or have defaults
 - **Type checking**: Values must match declared types
@@ -507,13 +507,13 @@ OpenNotes validates parameters before query execution:
 **Error Example**:
 
 ```bash
-$ opennotes notes view by-author
+$ jot notes view by-author
 Error: Required parameter 'author' not provided
 
-$ opennotes notes view by-author --param author=
+$ jot notes view by-author --param author=
 Error: Parameter 'author' cannot be empty
 
-$ opennotes notes view this-week --param date=invalid
+$ jot notes view this-week --param date=invalid
 Error: Parameter 'date' must be valid ISO date format
 ```
 
@@ -604,7 +604,7 @@ Views support three output formats.
 **Example**:
 
 ```bash
-opennotes notes view today
+jot notes view today
 ```
 
 **Output**:
@@ -628,7 +628,7 @@ opennotes notes view today
 **Example**:
 
 ```bash
-opennotes notes view today --format table
+jot notes view today --format table
 ```
 
 **Output**:
@@ -654,7 +654,7 @@ opennotes notes view today --format table
 **Example**:
 
 ```bash
-opennotes notes view today --format json
+jot notes view today --format json
 ```
 
 **Output**:
@@ -678,13 +678,13 @@ opennotes notes view today --format json
 
 ```bash
 # Extract only paths
-opennotes notes view today --format json | jq -r '.[].path'
+jot notes view today --format json | jq -r '.[].path'
 
 # Filter by status
-opennotes notes view kanban --format json | jq '.[] | select(.metadata.status == "todo")'
+jot notes view kanban --format json | jq '.[] | select(.metadata.status == "todo")'
 
 # Count results
-opennotes notes view untagged --format json | jq '. | length'
+jot notes view untagged --format json | jq '. | length'
 ```
 
 ---
@@ -695,17 +695,17 @@ Views can be defined in three locations with specific precedence:
 
 ### 1. Built-in Views (Lowest Priority)
 
-Location: Embedded in OpenNotes binary
+Location: Embedded in Jot binary
 
 Examples: `today`, `recent`, `kanban`, `untagged`, `orphans`, `broken-links`
 
-**Cannot be modified** without recompiling OpenNotes.
+**Cannot be modified** without recompiling Jot.
 
 ---
 
 ### 2. Global Views (Medium Priority)
 
-Location: `~/.config/opennotes/config.json`
+Location: `~/.config/jot/config.json`
 
 **Use When**: Views should be available across all notebooks
 
@@ -729,7 +729,7 @@ Location: `~/.config/opennotes/config.json`
 
 ### 3. Notebook Views (Highest Priority)
 
-Location: `.opennotes.json` in notebook root
+Location: `.jot.json` in notebook root
 
 **Use When**: Views are specific to a project or notebook
 
@@ -767,7 +767,7 @@ Given:
 **Listing Views**:
 
 ```bash
-opennotes notes view --list
+jot notes view --list
 ```
 
 Shows views from all three sources, with notebook views taking precedence.
@@ -790,14 +790,14 @@ Shows views from all three sources, with notebook views taking precedence.
 
 ```bash
 # List available views
-opennotes notes view --list
+jot notes view --list
 
 # Check view exists in config
-cat ~/.config/opennotes/config.json | jq '.views'
-cat .opennotes.json | jq '.views'
+cat ~/.config/jot/config.json | jq '.views'
+cat .jot.json | jq '.views'
 
 # Validate JSON syntax
-jq empty ~/.config/opennotes/config.json
+jq empty ~/.config/jot/config.json
 ```
 
 ---
@@ -812,10 +812,10 @@ jq empty ~/.config/opennotes/config.json
 
 ```bash
 # Provide required parameter
-opennotes notes view by-author --param author="Alice"
+jot notes view by-author --param author="Alice"
 
 # Check view definition for required parameters
-opennotes notes view --list --format json | jq '.[] | select(.name == "by-author") | .parameters'
+jot notes view --list --format json | jq '.[] | select(.name == "by-author") | .parameters'
 ```
 
 ---
@@ -830,7 +830,7 @@ opennotes notes view --list --format json | jq '.[] | select(.name == "by-author
 
 ```bash
 # Correct format for list parameters
-opennotes notes view kanban --param status=todo,done
+jot notes view kanban --param status=todo,done
 
 # Not: --param status=todo (single value when list expected)
 ```
@@ -850,7 +850,7 @@ opennotes notes view kanban --param status=todo,done
 # {{today}}, {{yesterday}}, {{this_week}}, {{this_month}}, {{now}}
 
 # Check view definition
-cat .opennotes.json | jq '.views[] | select(.name == "my-view") | .query'
+cat .jot.json | jq '.views[] | select(.name == "my-view") | .query'
 ```
 
 ---
@@ -869,16 +869,16 @@ cat .opennotes.json | jq '.views[] | select(.name == "my-view") | .query'
 
 ```bash
 # Check notebook context
-opennotes notebooks info
+jot notebooks info
 
 # Test with broader criteria
-opennotes notes list
+jot notes list
 
 # Check if notes have expected metadata
-opennotes notes search --sql "SELECT path, data FROM read_markdown('**/*.md') LIMIT 5"
+jot notes search --sql "SELECT path, data FROM read_markdown('**/*.md') LIMIT 5"
 
 # Verify view query is correct
-opennotes notes view --list --format json | jq '.[] | select(.name == "my-view") | .query'
+jot notes view --list --format json | jq '.[] | select(.name == "my-view") | .query'
 ```
 
 ---
@@ -897,7 +897,7 @@ opennotes notes view --list --format json | jq '.[] | select(.name == "my-view")
 
 ```bash
 # Use simpler views for large notebooks
-opennotes notes view recent  # Faster than orphans
+jot notes view recent  # Faster than orphans
 
 # Limit results
 # (Modify view to include LIMIT clause)
@@ -906,7 +906,7 @@ opennotes notes view recent  # Faster than orphans
 find . -name "*.md" | wc -l
 
 # Profile query
-time opennotes notes view my-view
+time jot notes view my-view
 ```
 
 ---

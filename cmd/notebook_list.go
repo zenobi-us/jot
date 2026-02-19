@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/zenobi-us/opennotes/internal/services"
+	"github.com/zenobi-us/jot/internal/services"
 )
 
 var notebookListCmd = &cobra.Command{
@@ -14,16 +14,16 @@ var notebookListCmd = &cobra.Command{
 	Long: `Lists all registered notebooks and notebooks found in ancestor directories.
 
 Shows notebooks from:
-  - Global config (~/.config/opennotes/config.json)
-  - Ancestor directories containing .opennotes.json
+  - Global config (~/.config/jot/config.json)
+  - Ancestor directories containing .jot.json
 
 Examples:
   # List all known notebooks
-  opennotes notebook list`,
+  jot notebook list`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Check if opennotes has been initialized
+		// Check if jot has been initialized
 		if !cfgService.Exists() {
-			return fmt.Errorf("opennotes not initialized. Run 'opennotes init' to create config file")
+			return fmt.Errorf("jot not initialized. Run 'jot init' to create config file")
 		}
 
 		notebooks, err := notebookService.List("")
@@ -35,7 +35,7 @@ Examples:
 			fmt.Println("No notebooks found.")
 			fmt.Println("")
 			fmt.Println("Create one with:")
-			fmt.Println("  opennotes notebook create --name \"My Notebook\"")
+			fmt.Println("  jot notebook create --name \"My Notebook\"")
 			return nil
 		}
 

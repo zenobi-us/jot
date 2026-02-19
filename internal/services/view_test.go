@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/zenobi-us/opennotes/internal/core"
+	"github.com/zenobi-us/jot/internal/core"
 )
 
 func TestViewService_BuiltinViews_Initialization(t *testing.T) {
@@ -901,11 +901,11 @@ func TestViewService_ResolveTemplateVariables_EnvironmentVariable(t *testing.T) 
 	vs := NewViewService(cfg, "")
 
 	// Set an environment variable for this test
-	envVar := "TEST_OPENNOTES_VAR"
+	envVar := "TEST_JOT_VAR"
 	envValue := "test_value_123"
 	t.Setenv(envVar, envValue)
 
-	result := vs.ResolveTemplateVariables("{{env:TEST_OPENNOTES_VAR}}")
+	result := vs.ResolveTemplateVariables("{{env:TEST_JOT_VAR}}")
 	assert.Equal(t, envValue, result)
 }
 

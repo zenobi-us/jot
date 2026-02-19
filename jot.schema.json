@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://jot.dev/schema/v1/notebook.json",
+  "title": "Jot Notebook Configuration",
+  "description": "Configuration schema for .jot.json files",
+  "type": "object",
+  "required": ["root", "name"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference for IDE support",
+      "format": "uri"
+    },
+    "root": {
+      "type": "string",
+      "description": "Root directory for notes (relative to config file)",
+      "examples": [".", ".notes", ".memory"],
+      "minLength": 1
+    },
+    "name": {
+      "type": "string",
+      "description": "Notebook name (used for display and identification)",
+      "minLength": 1,
+      "examples": ["My Notes", "Work", "Personal"]
+    },
+    "contexts": {
+      "type": "array",
+      "description": "Directories where this notebook is active (for auto-discovery)",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "examples": [["/home/user/workspace", "/home/user/projects"]]
+    },
+    "templates": {
+      "type": "object",
+      "description": "Named templates mapping to file paths",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      },
+      "examples": [
+        {
+          "daily": ".templates/daily.md",
+          "meeting": ".templates/meeting.md"
+        }
+      ]
+    },
+    "groups": {
+      "type": "array",
+      "description": "Note groups with glob patterns and default metadata",
+      "items": {
+        "type": "object",
+        "required": ["name", "globs"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Group name",
+            "minLength": 1
+          },
+          "globs": {
+            "type": "array",
+            "description": "Glob patterns for matching notes",
+            "items": {
+              "type": "string",
+              "pattern": "^.*\\.md$|^\\*\\*/\\*\\.md$"
+            },
+            "minItems": 1,
+            "examples": [["**/*.md"], ["daily/**/*.md", "meetings/**/*.md"]]
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Default metadata for notes in this group",
+            "additionalProperties": true
+          },
+          "template": {
+            "type": "string",
+            "description": "Default template for notes in this group",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

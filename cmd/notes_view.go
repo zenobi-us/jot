@@ -8,8 +8,8 @@ import (
 	"sort"
 
 	"github.com/spf13/cobra"
-	"github.com/zenobi-us/opennotes/internal/core"
-	"github.com/zenobi-us/opennotes/internal/services"
+	"github.com/zenobi-us/jot/internal/core"
+	"github.com/zenobi-us/jot/internal/services"
 )
 
 var (
@@ -78,10 +78,10 @@ DIRECTIVES (after |):
 CUSTOM VIEWS:
 
   Define custom views using the same DSL pipe syntax in:
-  - Global: ~/.config/opennotes/config.json
-  - Notebook: <notebook>/.opennotes.json
+  - Global: ~/.config/jot/config.json
+  - Notebook: <notebook>/.jot.json
 
-  Example custom view in .opennotes.json:
+  Example custom view in .jot.json:
     {
       "views": [{
         "name": "active-work",
@@ -98,15 +98,15 @@ OUTPUT FORMATS:
 
 EXAMPLES:
 
-  opennotes notes view                                    # List all views
-  opennotes notes view --list                             # List all views
-  opennotes notes view --list --format json               # List views as JSON
-  opennotes notes view today                              # Notes modified today
-  opennotes notes view recent                             # Last 20 modified notes
-  opennotes notes view kanban                             # Notes grouped by status
-  opennotes notes view untagged                           # Notes without tags
-  opennotes notes view orphans --format json              # Orphaned notes as JSON
-  opennotes notes view my-workflow --param sprint=Q1-S3   # Custom view with params
+  jot notes view                                    # List all views
+  jot notes view --list                             # List all views
+  jot notes view --list --format json               # List views as JSON
+  jot notes view today                              # Notes modified today
+  jot notes view recent                             # Last 20 modified notes
+  jot notes view kanban                             # Notes grouped by status
+  jot notes view untagged                           # Notes without tags
+  jot notes view orphans --format json              # Orphaned notes as JSON
+  jot notes view my-workflow --param sprint=Q1-S3   # Custom view with params
 
   DSL examples (use with custom views or 'notes search'):
     tag:work status:todo                                  # Work items that are todo
@@ -355,9 +355,9 @@ func displayViewsList(views []core.ViewInfo) error {
 			case "built-in":
 				fmt.Println("Built-in Views:")
 			case "global":
-				fmt.Println("\nGlobal Views (from ~/.config/opennotes/config.json):")
+				fmt.Println("\nGlobal Views (from ~/.config/jot/config.json):")
 			case "notebook":
-				fmt.Println("\nNotebook Views (from <notebook>/.opennotes.json):")
+				fmt.Println("\nNotebook Views (from <notebook>/.jot.json):")
 			}
 
 			for _, viewInfo := range viewList {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/zenobi-us/opennotes/internal/services"
+	"github.com/zenobi-us/jot/internal/services"
 )
 
 var notebookCreateCmd = &cobra.Command{
@@ -12,18 +12,18 @@ var notebookCreateCmd = &cobra.Command{
 	Short: "Create a new notebook",
 	Long: `Creates a new notebook in the specified directory (or current directory).
 
-This creates a .opennotes.json config file and a notes/ directory.
+This creates a .jot.json config file and a notes/ directory.
 Use --register to also add the notebook to your global config.
 
 Examples:
   # Create notebook in current directory
-  opennotes notebook create --name "My Notes"
+  jot notebook create --name "My Notes"
 
   # Create notebook at specific path
-  opennotes notebook create ~/work/notes --name "Work"
+  jot notebook create ~/work/notes --name "Work"
 
   # Create and register globally
-  opennotes notebook create --name "Personal" --register`,
+  jot notebook create --name "Personal" --register`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name, _ := cmd.Flags().GetString("name")

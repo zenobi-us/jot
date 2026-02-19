@@ -9,9 +9,9 @@ import (
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print version information",
-	Long:  "Print detailed version information for OpenNotes including build metadata",
+	Long:  "Print detailed version information for Jot including build metadata",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("OpenNotes %s\n", Version)
+		fmt.Printf("Jot %s\n", Version)
 		if BuildDate != "unknown" {
 			fmt.Printf("Built: %s\n", BuildDate)
 		}

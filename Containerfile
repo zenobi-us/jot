@@ -1,4 +1,4 @@
-# Multi-stage Containerfile for OpenNotes
+# Multi-stage Containerfile for Jot
 # Base stage: mise + build dependencies + isolated test environment
 # Default stage: development environment
 
@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN useradd -m -d /home/testuser -s /bin/bash testuser;
 
 # Create expected config directories (empty, isolated)
-RUN mkdir -p /home/testuser/.config/opennotes \
+RUN mkdir -p /home/testuser/.config/jot \
     && mkdir -p /home/testuser/.cache \
     && mkdir -p /home/testuser/.local/share/mise \
     && chown -R testuser:testuser /home/testuser;

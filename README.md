@@ -1,8 +1,8 @@
-# OpenNotes
+# Jot
 
-![OpenNotes Banner](./banner.png)
+![Jot Banner](./banner.png)
 
-A simple, fast, and powerful CLI tool for managing your markdown notes. OpenNotes helps you organize, search, and manage your thoughts without leaving the terminal.
+A simple, fast, and powerful CLI tool for managing your markdown notes. Jot helps you organize, search, and manage your thoughts without leaving the terminal.
 
 ## Features
 
@@ -16,7 +16,7 @@ A simple, fast, and powerful CLI tool for managing your markdown notes. OpenNote
 ## Installation
 
 ```bash
-go install github.com/zenobi-us/opennotes@latest
+go install github.com/zenobi-us/jot@latest
 ```
 
 *Requires Go 1.24+*
@@ -27,22 +27,22 @@ Get started in seconds:
 
 1.  **Initialize a notebook** in your current directory:
     ```bash
-    opennotes init
+    jot init
     ```
 
 2.  **Create your first note**:
     ```bash
-    opennotes notes add "My First Idea"
+    jot notes add "My First Idea"
     ```
 
 3.  **List your notes**:
     ```bash
-    opennotes notes list
+    jot notes list
     ```
 
 4.  **Search your notes**:
     ```bash
-    opennotes notes search "Idea"
+    jot notes search "Idea"
     ```
 
 ## Common Commands
@@ -53,10 +53,10 @@ Create a new note with a title. You can also specify a path if you want to organ
 
 ```bash
 # Create a note in the root
-opennotes notes add "Meeting Notes"
+jot notes add "Meeting Notes"
 
 # Create a note in a subfolder
-opennotes notes add "Project Specs" projects/
+jot notes add "Project Specs" projects/
 ```
 
 ### Listing Notes
@@ -64,7 +64,7 @@ opennotes notes add "Project Specs" projects/
 See all your notes in the current notebook.
 
 ```bash
-opennotes notes list
+jot notes list
 ```
 
 ### Searching Notes
@@ -72,31 +72,31 @@ opennotes notes list
 Find notes instantly by keyword.
 
 ```bash
-opennotes notes search "important"
+jot notes search "important"
 ```
 
 ### Views 
 
-Opennotes supports various preset views to help you organize and visualize your notes.
+Jot supports various preset views to help you organize and visualize your notes.
 
 Output is JSON by default.
 
 ```bash
 # view all available views
-opennotes notes view
+jot notes view
 
 # display notes in kanban view
-opennotes notes view kanban
+jot notes view kanban
 ```
 
 ## Configuration
 
-OpenNotes works out of the box, but you can customize it.
+Jot works out of the box, but you can customize it.
 
 Global configuration is stored in:
-- **Linux**: `~/.config/opennotes/config.json`
-- **macOS**: `~/Library/Preferences/opennotes/config.json`
-- **Windows**: `%APPDATA%\opennotes\config.json`
+- **Linux**: `~/.config/jot/config.json`
+- **macOS**: `~/Library/Preferences/jot/config.json`
+- **Windows**: `%APPDATA%\jot\config.json`
 
 ## Semantic Search (Optional)
 
@@ -104,16 +104,16 @@ Find notes by meaning, not just keywords. Semantic search understands concepts a
 
 ```bash
 # Hybrid search (default): combines keyword + semantic ranking
-opennotes notes search semantic "meeting notes about project timeline"
+jot notes search semantic "meeting notes about project timeline"
 
 # Pure semantic mode: meaning-based, ideal for conceptual queries
-opennotes notes search semantic "discussions about deadlines" --mode semantic
+jot notes search semantic "discussions about deadlines" --mode semantic
 
 # With filters: combine semantic search with boolean conditions
-opennotes notes search semantic "architecture decisions" --and data.tag=design
+jot notes search semantic "architecture decisions" --and data.tag=design
 
 # Explain mode: see why each result matched
-opennotes notes search semantic "workflow improvements" --explain
+jot notes search semantic "workflow improvements" --explain
 ```
 
 **When to use semantic vs regular search:**
@@ -124,6 +124,6 @@ For more details, see **[Semantic Search Guide](docs/semantic-search-guide.md)**
 
 ## Advanced Usage
 
-OpenNotes provides powerful search capabilities with full-text search, fuzzy matching, boolean query operators, and semantic retrieval for complex filtering.
+Jot provides powerful search capabilities with full-text search, fuzzy matching, boolean query operators, and semantic retrieval for complex filtering.
 
 For advanced features like boolean queries, JSON output for automation, and multi-notebook management, please see our **[Advanced Documentation](docs/getting-started-power-users.md)**.

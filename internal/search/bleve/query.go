@@ -7,7 +7,7 @@ import (
 
 	bquery "github.com/blevesearch/bleve/v2/search/query"
 
-	"github.com/zenobi-us/opennotes/internal/search"
+	"github.com/zenobi-us/jot/internal/search"
 )
 
 // TranslateQuery converts a search.Query AST to a Bleve query.

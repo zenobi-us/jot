@@ -18,10 +18,10 @@ directories with specific notebooks.
 
 Examples:
   # Add current directory as context
-  opennotes notebook add-context
+  jot notebook add-context
 
   # Add specific path as context
-  opennotes notebook add-context ~/projects/myapp`,
+  jot notebook add-context ~/projects/myapp`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		contextPath := ""
@@ -38,7 +38,7 @@ Examples:
 		}
 
 		if nb == nil {
-			return fmt.Errorf("no notebook found. Create one first with: opennotes notebook create --name \"My Notebook\"")
+			return fmt.Errorf("no notebook found. Create one first with: jot notebook create --name \"My Notebook\"")
 		}
 
 		if err := nb.AddContext(contextPath, cfgService); err != nil {

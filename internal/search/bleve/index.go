@@ -13,8 +13,8 @@ import (
 	bsearch "github.com/blevesearch/bleve/v2/search"
 	bindex "github.com/blevesearch/bleve_index_api"
 
-	"github.com/zenobi-us/opennotes/internal/search"
-	"github.com/zenobi-us/opennotes/internal/search/parser"
+	"github.com/zenobi-us/jot/internal/search"
+	"github.com/zenobi-us/jot/internal/search/parser"
 )
 
 // Index implements search.Index using Bleve full-text search.
@@ -29,7 +29,7 @@ type Index struct {
 // Options configures the Bleve index.
 type Options struct {
 	// IndexDir is the directory to store the index (relative to storage root)
-	// Defaults to ".opennotes/index"
+	// Defaults to ".jot/index"
 	IndexDir string
 
 	// InMemory creates an in-memory index (for testing)

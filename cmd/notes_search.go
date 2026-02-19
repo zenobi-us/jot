@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/zenobi-us/opennotes/internal/search"
-	"github.com/zenobi-us/opennotes/internal/search/parser"
-	"github.com/zenobi-us/opennotes/internal/services"
+	"github.com/zenobi-us/jot/internal/search"
+	"github.com/zenobi-us/jot/internal/search/parser"
+	"github.com/zenobi-us/jot/internal/services"
 )
 
 var notesSearchCmd = &cobra.Command{
@@ -19,26 +19,26 @@ var notesSearchCmd = &cobra.Command{
 SEARCH METHODS:
 
   1. Text Search (default): Exact substring matching
-     opennotes notes search "meeting"
+     jot notes search "meeting"
 
   2. Fuzzy Search: Similarity-based, typo-tolerant, ranked results
-     opennotes notes search --fuzzy "mtng"
+     jot notes search --fuzzy "mtng"
 
   3. Boolean Queries: Structured AND/OR/NOT filtering (see 'query' subcommand)
-     opennotes notes search query --and data.tag=workflow
+     jot notes search query --and data.tag=workflow
 
   4. DSL Pipe Syntax: Filter with directives for sorting and limits
-     opennotes notes search "tag:work | sort:modified:desc limit:10"
+     jot notes search "tag:work | sort:modified:desc limit:10"
 
 TEXT SEARCH EXAMPLES:
-  opennotes notes search "meeting"              # Search for "meeting"
-  opennotes notes search "todo" --notebook ~/n  # Search in specific notebook
-  opennotes notes search                        # List all notes
+  jot notes search "meeting"              # Search for "meeting"
+  jot notes search "todo" --notebook ~/n  # Search in specific notebook
+  jot notes search                        # List all notes
 
 FUZZY SEARCH EXAMPLES:
-  opennotes notes search --fuzzy "mtng"         # Matches "meeting", "meetings"
-  opennotes notes search "project" --fuzzy      # Ranked by similarity
-  opennotes notes search --fuzzy                # All notes, ranked
+  jot notes search --fuzzy "mtng"         # Matches "meeting", "meetings"
+  jot notes search "project" --fuzzy      # Ranked by similarity
+  jot notes search --fuzzy                # All notes, ranked
 
   Fuzzy matching:
   - Uses character sequence matching (like VS Code's Ctrl+P)
@@ -47,9 +47,9 @@ FUZZY SEARCH EXAMPLES:
   - Searches first 500 chars of body for performance
 
 DSL PIPE SYNTAX EXAMPLES:
-  opennotes notes search "tag:work | sort:modified:desc"
-  opennotes notes search "status:todo | sort:created:asc limit:20"
-  opennotes notes search "| sort:title:asc"     # All notes, sorted by title
+  jot notes search "tag:work | sort:modified:desc"
+  jot notes search "status:todo | sort:created:asc limit:20"
+  jot notes search "| sort:title:asc"     # All notes, sorted by title
 
   DSL Filter:
   - tag:<value>      Notes with specific tag
@@ -66,12 +66,12 @@ DSL PIPE SYNTAX EXAMPLES:
   - offset:<n>          Skip first n results (for pagination)
 
 BOOLEAN QUERY SUBCOMMAND:
-  Use 'opennotes notes search query' for structured filtering:
+  Use 'jot notes search query' for structured filtering:
   
-  opennotes notes search query --and data.tag=workflow
-  opennotes notes search query --and data.tag=epic --not data.status=archived
-  opennotes notes search query --or data.priority=high --or data.priority=critical
-  opennotes notes search query --and links-to=tasks/**/*.md
+  jot notes search query --and data.tag=workflow
+  jot notes search query --and data.tag=epic --not data.status=archived
+  jot notes search query --or data.priority=high --or data.priority=critical
+  jot notes search query --and links-to=tasks/**/*.md
 
   Supported fields:
   - data.tag, data.status, data.priority, data.assignee, data.author

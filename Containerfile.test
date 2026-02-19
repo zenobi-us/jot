@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN useradd -m -d /home/testuser -s /bin/bash testuser
 
 # Create directories
-RUN mkdir -p /home/testuser/.config/opennotes \
+RUN mkdir -p /home/testuser/.config/jot \
     && mkdir -p /app \
     && chown -R testuser:testuser /home/testuser /app
 

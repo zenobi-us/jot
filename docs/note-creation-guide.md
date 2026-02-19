@@ -1,6 +1,6 @@
 # Note Creation Guide
 
-Quick reference for creating notes with OpenNotes, including metadata support and flexible path handling.
+Quick reference for creating notes with Jot, including metadata support and flexible path handling.
 
 ## Table of Contents
 
@@ -16,16 +16,16 @@ Quick reference for creating notes with OpenNotes, including metadata support an
 
 ```bash
 # Simple note in notebook root
-opennotes notes add "My First Note"
+jot notes add "My First Note"
 
 # Note with metadata
-opennotes notes add "Meeting Notes" --data tag=meeting --data priority=high
+jot notes add "Meeting Notes" --data tag=meeting --data priority=high
 
 # Note in specific folder
-opennotes notes add "Retrospective" meetings/
+jot notes add "Retrospective" meetings/
 
 # Pipe content from stdin
-echo "# Quick Note\n\nSome content" | opennotes notes add "Quick Note"
+echo "# Quick Note\n\nSome content" | jot notes add "Quick Note"
 ```
 
 ## Basic Usage
@@ -33,7 +33,7 @@ echo "# Quick Note\n\nSome content" | opennotes notes add "Quick Note"
 ### Syntax
 
 ```bash
-opennotes notes add <title> [path] [flags]
+jot notes add <title> [path] [flags]
 ```
 
 **Arguments**:
@@ -51,13 +51,13 @@ opennotes notes add <title> [path] [flags]
 
 ```bash
 # Create note in root with default content
-opennotes notes add "Daily Log"
+jot notes add "Daily Log"
 
 # Create with specific title
-opennotes notes add "Project Brainstorm 2026-01-24"
+jot notes add "Project Brainstorm 2026-01-24"
 
 # Use a template
-opennotes notes add "Weekly Review" --template weekly
+jot notes add "Weekly Review" --template weekly
 ```
 
 ## Adding Metadata
@@ -68,7 +68,7 @@ The `--data` flag adds frontmatter fields to your note. It's **repeatable** - us
 
 ```bash
 # Add single metadata fields
-opennotes notes add "Sprint Planning" \
+jot notes add "Sprint Planning" \
   --data author="John Doe" \
   --data status=draft \
   --data priority=high
@@ -88,11 +88,11 @@ priority: high
 
 ### Array Values (Repeated Fields)
 
-When you repeat the same field name, OpenNotes automatically creates an array:
+When you repeat the same field name, Jot automatically creates an array:
 
 ```bash
 # Tags as array
-opennotes notes add "Team Standup" \
+jot notes add "Team Standup" \
   --data tag=meeting \
   --data tag=daily \
   --data tag=team
@@ -114,7 +114,7 @@ tag:
 ### Mixed Metadata
 
 ```bash
-opennotes notes add "API Design Review" \
+jot notes add "API Design Review" \
   --data author="Engineering Team" \
   --data status=in-review \
   --data tag=architecture \
@@ -141,32 +141,32 @@ reviewers: Alice,Bob,Charlie
 
 ## Path Options
 
-The `[path]` argument is flexible - OpenNotes auto-detects whether you mean a file or folder.
+The `[path]` argument is flexible - Jot auto-detects whether you mean a file or folder.
 
 ### No Path (Default)
 
 ```bash
-opennotes notes add "Quick Idea"
+jot notes add "Quick Idea"
 # Creates: quick-idea.md (in notebook root)
 ```
 
 ### Folder Path
 
 ```bash
-opennotes notes add "Meeting Notes" meetings/
+jot notes add "Meeting Notes" meetings/
 # Creates: meetings/meeting-notes.md
 
-opennotes notes add "Retrospective" projects/sprint-5/
+jot notes add "Retrospective" projects/sprint-5/
 # Creates: projects/sprint-5/retrospective.md
 ```
 
 ### File Path (with or without .md)
 
 ```bash
-opennotes notes add "Status Update" reports/weekly.md
+jot notes add "Status Update" reports/weekly.md
 # Creates: reports/weekly.md
 
-opennotes notes add "Changelog" CHANGELOG
+jot notes add "Changelog" CHANGELOG
 # Creates: CHANGELOG.md (auto-adds .md extension)
 ```
 
@@ -179,7 +179,7 @@ opennotes notes add "Changelog" CHANGELOG
 
 ## Content Sources
 
-OpenNotes prioritizes content from multiple sources:
+Jot prioritizes content from multiple sources:
 
 **Priority Order** (highest to lowest):
 
@@ -192,30 +192,30 @@ OpenNotes prioritizes content from multiple sources:
 ```bash
 # Pipe from echo
 echo -e "# Daily Log\n\n- Completed feature X\n- Started feature Y" | \
-  opennotes notes add "Daily Log 2026-01-24"
+  jot notes add "Daily Log 2026-01-24"
 
 # Redirect from file
-opennotes notes add "Import" < existing-note.md
+jot notes add "Import" < existing-note.md
 
 # Pipe from command
-curl https://example.com/api/doc | opennotes notes add "API Documentation"
+curl https://example.com/api/doc | jot notes add "API Documentation"
 ```
 
 ### Template Content
 
 ```bash
 # Use predefined template
-opennotes notes add "Weekly Review" --template weekly
+jot notes add "Weekly Review" --template weekly
 
 # Template with metadata
-opennotes notes add "Meeting" --template meeting \
+jot notes add "Meeting" --template meeting \
   --data attendees="Alice,Bob" \
   --data date=2026-01-24
 ```
 
 ### Default Content
 
-If no stdin or template is provided, OpenNotes creates a simple note:
+If no stdin or template is provided, Jot creates a simple note:
 
 ```markdown
 # Your Title Here
@@ -227,16 +227,16 @@ If no stdin or template is provided, OpenNotes creates a simple note:
 
 ```bash
 # Morning standup
-opennotes notes add "Standup $(date +%Y-%m-%d)" \
+jot notes add "Standup $(date +%Y-%m-%d)" \
   --data tag=standup --data tag=daily \
   standups/
 
 # Quick task capture
 echo "- [ ] Review PR #123\n- [ ] Update docs" | \
-  opennotes notes add "Tasks $(date +%Y-%m-%d)"
+  jot notes add "Tasks $(date +%Y-%m-%d)"
 
 # End of day notes
-opennotes notes add "EOD $(date +%Y-%m-%d)" \
+jot notes add "EOD $(date +%Y-%m-%d)" \
   --data completed=5 --data in-progress=2 \
   daily/
 ```
@@ -245,7 +245,7 @@ opennotes notes add "EOD $(date +%Y-%m-%d)" \
 
 ```bash
 # Sprint planning with metadata
-opennotes notes add "Sprint 5 Planning" \
+jot notes add "Sprint 5 Planning" \
   --data sprint=5 \
   --data start-date=2026-01-27 \
   --data end-date=2026-02-07 \
@@ -253,7 +253,7 @@ opennotes notes add "Sprint 5 Planning" \
   sprints/
 
 # Feature specification
-opennotes notes add "User Authentication" \
+jot notes add "User Authentication" \
   --data status=draft \
   --data priority=high \
   --data tag=feature --data tag=security \
@@ -264,14 +264,14 @@ opennotes notes add "User Authentication" \
 
 ```bash
 # Team meeting with attendees
-opennotes notes add "Team Sync 2026-01-24" \
+jot notes add "Team Sync 2026-01-24" \
   --data type=team-sync \
   --data attendees="Alice,Bob,Charlie" \
   --data tag=meeting \
   meetings/team/
 
 # Client meeting
-opennotes notes add "Client Review" \
+jot notes add "Client Review" \
   --data client="Acme Corp" \
   --data status=completed \
   --data tag=client --data tag=review \
@@ -282,13 +282,13 @@ opennotes notes add "Client Review" \
 
 ```bash
 # Technical documentation
-opennotes notes add "Database Migration Guide" \
+jot notes add "Database Migration Guide" \
   --data category=infrastructure \
   --data tag=database --data tag=migration --data tag=guide \
   docs/technical/
 
 # How-to guide
-opennotes notes add "Deploy to Production" \
+jot notes add "Deploy to Production" \
   --data type=howto \
   --data difficulty=advanced \
   --data tag=deployment --data tag=production \
@@ -300,7 +300,7 @@ opennotes notes add "Deploy to Production" \
 ```bash
 # Generate weekly template
 for day in {Mon,Tue,Wed,Thu,Fri}; do
-  opennotes notes add "Standup - $day Week 5" \
+  jot notes add "Standup - $day Week 5" \
     --data day=$day --data week=5 --data tag=standup \
     standups/2026-01/
 done
@@ -308,7 +308,7 @@ done
 # Import from external source
 curl -s https://api.github.com/repos/user/repo/issues/1 | \
   jq -r '.body' | \
-  opennotes notes add "Issue #1 - Bug Report" \
+  jot notes add "Issue #1 - Bug Report" \
     --data source=github --data type=issue
 ```
 
@@ -320,27 +320,27 @@ The old `--title` flag is deprecated but still works for backward compatibility.
 
 ```bash
 # ⚠️ Works but deprecated
-opennotes notes add --title "My Note"
+jot notes add --title "My Note"
 ```
 
 **Warning shown**:
 
 ```
 Warning: --title flag is deprecated, use positional argument instead
-Example: opennotes notes add "My Note"
+Example: jot notes add "My Note"
 ```
 
 ### New Syntax (Recommended)
 
 ```bash
 # ✅ New way
-opennotes notes add "My Note"
+jot notes add "My Note"
 
 # ✅ With path
-opennotes notes add "My Note" path/to/location/
+jot notes add "My Note" path/to/location/
 
 # ✅ With metadata
-opennotes notes add "My Note" --data tag=important
+jot notes add "My Note" --data tag=important
 ```
 
 ### Migration Checklist
@@ -354,10 +354,10 @@ opennotes notes add "My Note" --data tag=important
 
 ```bash
 # Old command in scripts
-opennotes notes add --title "Daily Log"
+jot notes add --title "Daily Log"
 
 # New command
-opennotes notes add "Daily Log"
+jot notes add "Daily Log"
 ```
 
 ## Tips & Best Practices
@@ -368,12 +368,12 @@ Use consistent field names across your notes for better querying:
 
 ```bash
 # Good - consistent tags
-opennotes notes add "Note 1" --data tag=meeting --data tag=daily
-opennotes notes add "Note 2" --data tag=meeting --data tag=weekly
+jot notes add "Note 1" --data tag=meeting --data tag=daily
+jot notes add "Note 2" --data tag=meeting --data tag=weekly
 
 # Avoid - inconsistent naming
-opennotes notes add "Note 1" --data tags=meeting  # plural
-opennotes notes add "Note 2" --data tag=meeting   # singular
+jot notes add "Note 1" --data tags=meeting  # plural
+jot notes add "Note 2" --data tag=meeting   # singular
 ```
 
 ### Title Slugification
@@ -381,10 +381,10 @@ opennotes notes add "Note 2" --data tag=meeting   # singular
 Titles are automatically slugified for filenames:
 
 ```bash
-opennotes notes add "My Great Idea!"
+jot notes add "My Great Idea!"
 # Creates: my-great-idea.md
 
-opennotes notes add "2026-01-24: Daily Log"
+jot notes add "2026-01-24: Daily Log"
 # Creates: 2026-01-24-daily-log.md
 ```
 
@@ -392,7 +392,7 @@ opennotes notes add "2026-01-24: Daily Log"
 
 ```bash
 # Organize by year/month/day
-opennotes notes add "Standup" \
+jot notes add "Standup" \
   $(date +%Y/%m/%d)/
 
 # Creates: 2026/01/24/standup.md
@@ -404,12 +404,12 @@ Add metadata that works well with the Views System:
 
 ```bash
 # For kanban view
-opennotes notes add "Feature X" \
+jot notes add "Feature X" \
   --data status=in-progress \
   --data tag=feature
 
 # For filtering
-opennotes notes add "Bug Report" \
+jot notes add "Bug Report" \
   --data priority=high \
   --data assignee=alice \
   --data tag=bug
@@ -428,7 +428,7 @@ opennotes notes add "Bug Report" \
 **Problem**: Folder path doesn't exist
 
 ```bash
-opennotes notes add "Note" non-existent-folder/
+jot notes add "Note" non-existent-folder/
 # Error: folder not found
 ```
 
@@ -436,7 +436,7 @@ opennotes notes add "Note" non-existent-folder/
 
 ```bash
 mkdir -p non-existent-folder
-opennotes notes add "Note" non-existent-folder/
+jot notes add "Note" non-existent-folder/
 ```
 
 ### Metadata Not Appearing
@@ -459,13 +459,13 @@ opennotes notes add "Note" non-existent-folder/
 
 ```bash
 # ❌ Template overrides stdin
-echo "content" | opennotes notes add "Note" --template weekly
+echo "content" | jot notes add "Note" --template weekly
 
 # ✅ Stdin content used
-echo "content" | opennotes notes add "Note"
+echo "content" | jot notes add "Note"
 ```
 
 ---
 
 **Last Updated**: 2026-01-24  
-**Version**: OpenNotes 0.0.4+
+**Version**: Jot 0.0.4+

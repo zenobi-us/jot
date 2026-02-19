@@ -1,6 +1,6 @@
 # Views System API Reference
 
-Complete technical reference for the OpenNotes Views System.
+Complete technical reference for the Jot Views System.
 
 ## Table of Contents
 
@@ -168,7 +168,7 @@ Parameters allow runtime customization of views.
 **CLI Usage**:
 
 ```bash
-opennotes notes view my-view --param author="Alice"
+jot notes view my-view --param author="Alice"
 ```
 
 **Validation**:
@@ -197,7 +197,7 @@ opennotes notes view my-view --param author="Alice"
 **CLI Usage**:
 
 ```bash
-opennotes notes view my-view --param status=todo,in-progress,done
+jot notes view my-view --param status=todo,in-progress,done
 ```
 
 **Validation**:
@@ -227,8 +227,8 @@ opennotes notes view my-view --param status=todo,in-progress,done
 **CLI Usage**:
 
 ```bash
-opennotes notes view my-view --param after_date=2026-01-24
-opennotes notes view my-view --param after_date="{{today}}"
+jot notes view my-view --param after_date=2026-01-24
+jot notes view my-view --param after_date="{{today}}"
 ```
 
 **Validation**:
@@ -257,8 +257,8 @@ opennotes notes view my-view --param after_date="{{today}}"
 **CLI Usage**:
 
 ```bash
-opennotes notes view my-view --param include_archived=true
-opennotes notes view my-view --param include_archived=false
+jot notes view my-view --param include_archived=true
+jot notes view my-view --param include_archived=false
 ```
 
 **Validation**:
@@ -591,7 +591,7 @@ Views can be defined in two configuration files.
 
 ### Global Config
 
-**Location**: `~/.config/opennotes/config.json`
+**Location**: `~/.config/jot/config.json`
 
 **Scope**: All notebooks
 
@@ -638,7 +638,7 @@ Views can be defined in two configuration files.
 
 ### Notebook Config
 
-**Location**: `.opennotes.json` (in notebook root)
+**Location**: `.jot.json` (in notebook root)
 
 **Scope**: Current notebook only
 
@@ -739,7 +739,7 @@ Complete JSON Schema for view definitions (for validation).
 ```json
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "OpenNotes View Definition",
+  "title": "Jot View Definition",
   "type": "object",
   "required": ["name", "query"],
   "properties": {

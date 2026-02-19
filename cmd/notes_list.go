@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/zenobi-us/opennotes/internal/services"
+	"github.com/zenobi-us/jot/internal/services"
 )
 
 var notesListCmd = &cobra.Command{
@@ -19,10 +19,10 @@ Shows all .md files in the notebook's notes directory with metadata.
 
 Examples:
   # List notes in current notebook
-  opennotes notes list
+  jot notes list
 
   # List notes from specific notebook
-  opennotes notes list --notebook /path/to/notebook`,
+  jot notes list --notebook /path/to/notebook`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		nb, err := requireNotebook(cmd)
 		if err != nil {
@@ -67,14 +67,14 @@ func displayNoteList(notes []services.Note) error {
 
 // requireNotebook is a helper to get the current notebook or return an error.
 // Resolution order (first wins):
-// 1. OPENNOTES_NOTEBOOK envvar
+// 1. JOT_NOTEBOOK envvar
 // 2. --notebook flag
-// 3. .opennotes.json in current directory
+// 3. .jot.json in current directory
 // 4. context match (registered notebooks)
 // 5. ancestor search
 func requireNotebook(cmd *cobra.Command) (*services.Notebook, error) {
-	// Step 1: Check OPENNOTES_NOTEBOOK envvar
-	if envNotebook := os.Getenv("OPENNOTES_NOTEBOOK"); envNotebook != "" {
+	// Step 1: Check JOT_NOTEBOOK envvar
+	if envNotebook := os.Getenv("JOT_NOTEBOOK"); envNotebook != "" {
 		return notebookService.Open(envNotebook)
 	}
 
@@ -91,7 +91,7 @@ func requireNotebook(cmd *cobra.Command) (*services.Notebook, error) {
 	}
 
 	if nb == nil {
-		return nil, fmt.Errorf("no notebook found. Set OPENNOTES_NOTEBOOK, use --notebook flag, or create one with: opennotes notebook create --name \"My Notebook\"")
+		return nil, fmt.Errorf("no notebook found. Set JOT_NOTEBOOK, use --notebook flag, or create one with: jot notebook create --name \"My Notebook\"")
 	}
 
 	return nb, nil

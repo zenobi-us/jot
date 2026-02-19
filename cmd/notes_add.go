@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/zenobi-us/opennotes/internal/core"
-	"github.com/zenobi-us/opennotes/internal/services"
+	"github.com/zenobi-us/jot/internal/core"
+	"github.com/zenobi-us/jot/internal/services"
 	"gopkg.in/yaml.v3"
 )
 
@@ -20,25 +20,25 @@ var notesAddCmd = &cobra.Command{
 	Long: `Creates a new markdown note in the current notebook with optional metadata and template support.
 
 SYNTAX:
-  opennotes notes add <title> [path] [flags]          # New style (recommended)
-  opennotes notes add [path] --title "Title" [flags]  # Old style (deprecated)
+  jot notes add <title> [path] [flags]          # New style (recommended)
+  jot notes add [path] --title "Title" [flags]  # Old style (deprecated)
 
 EXAMPLES:
   # Create note in root
-  opennotes notes add "Quick Thought"
+  jot notes add "Quick Thought"
   
   # Create note in folder
-  opennotes notes add "Meeting Notes" meetings/
+  jot notes add "Meeting Notes" meetings/
   
   # Create note with metadata
-  opennotes notes add "Sprint Planning" meetings/ \
+  jot notes add "Sprint Planning" meetings/ \
     --data tag=meeting --data priority=high
   
   # Pipe content from stdin
-  echo "# Content" | opennotes notes add "My Note"
+  echo "# Content" | jot notes add "My Note"
   
   # Use template
-  opennotes notes add "Bug Report" bugs/ --template bug`,
+  jot notes add "Bug Report" bugs/ --template bug`,
 	Args: cobra.MaximumNArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		nb, err := requireNotebook(cmd)

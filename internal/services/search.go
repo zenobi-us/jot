@@ -8,7 +8,7 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/sahilm/fuzzy"
-	"github.com/zenobi-us/opennotes/internal/search"
+	"github.com/zenobi-us/jot/internal/search"
 )
 
 // QueryCondition represents a single search condition for boolean queries.
@@ -607,10 +607,10 @@ func (s *SearchService) buildLinkQueryError(field string) error {
 		"link queries are not yet supported\n\n"+
 			"Field '%s' requires a dedicated link graph index, which is planned for Phase 5.3.\n\n"+
 			"Temporary workaround: Use text search or path/title filters:\n"+
-			"  opennotes notes search \"project\"\n"+
-			"  opennotes notes search query --and path=docs/*.md\n\n"+
+			"  jot notes search \"project\"\n"+
+			"  jot notes search query --and path=docs/*.md\n\n"+
 			"Track implementation progress:\n"+
-			"  https://github.com/zenobi-us/opennotes/issues/XXX\n\n"+
+			"  https://github.com/zenobi-us/jot/issues/XXX\n\n"+
 			"Supported fields:\n"+
 			"  - Metadata: data.tag, data.status, data.priority, data.assignee,\n"+
 			"              data.author, data.type, data.category, data.project, data.sprint\n"+

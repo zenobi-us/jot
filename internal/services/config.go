@@ -16,11 +16,11 @@ import (
 )
 
 // NotebookConfigFile is the config filename in notebook directories.
-const NotebookConfigFile = ".opennotes.json"
+const NotebookConfigFile = ".jot.json"
 
 // Config represents the global configuration schema.
 type Config struct {
-	// Notebooks paths are directories containing .opennotes.json
+	// Notebooks paths are directories containing .jot.json
 	Notebooks []string `koanf:"notebooks" json:"notebooks"`
 	// NotebookPath is the current notebook path (from env, flag, or stored)
 	NotebookPath string `koanf:"notebookpath" json:"notebookpath,omitempty"`
@@ -36,7 +36,7 @@ type ConfigService struct {
 
 // GlobalConfigFile returns the platform-specific config path.
 func GlobalConfigFile() string {
-	if override := strings.TrimSpace(os.Getenv("OPENNOTES_CONFIG")); override != "" {
+	if override := strings.TrimSpace(os.Getenv("JOT_CONFIG")); override != "" {
 		return override
 	}
 
@@ -44,7 +44,7 @@ func GlobalConfigFile() string {
 	if err != nil {
 		configDir = filepath.Join(os.Getenv("HOME"), ".config")
 	}
-	return filepath.Join(configDir, "opennotes", "config.json")
+	return filepath.Join(configDir, "jot", "config.json")
 }
 
 // NewConfigService creates and initializes the config service.
@@ -78,12 +78,12 @@ func NewConfigServiceWithPath(configPath string) (*ConfigService, error) {
 		}
 	}
 
-	// 3. Load environment variables with OPENNOTES_ prefix
-	// Transform: OPENNOTES_NOTEBOOK_PATH -> notebookpath
-	err := k.Load(env.Provider("OPENNOTES_", ".", func(s string) string {
+	// 3. Load environment variables with JOT_ prefix
+	// Transform: JOT_NOTEBOOK_PATH -> notebookpath
+	err := k.Load(env.Provider("JOT_", ".", func(s string) string {
 		return strings.ToLower(
 			strings.ReplaceAll(
-				strings.TrimPrefix(s, "OPENNOTES_"),
+				strings.TrimPrefix(s, "JOT_"),
 				"_",
 				"",
 			),

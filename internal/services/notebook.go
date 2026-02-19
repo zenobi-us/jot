@@ -13,8 +13,8 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
-	"github.com/zenobi-us/opennotes/internal/search"
-	"github.com/zenobi-us/opennotes/internal/search/bleve"
+	"github.com/zenobi-us/jot/internal/search"
+	"github.com/zenobi-us/jot/internal/search/bleve"
 	"gopkg.in/yaml.v3"
 )
 
@@ -26,13 +26,21 @@ type NotebookGroup struct {
 	Template string         `json:"template,omitempty"`
 }
 
-// StoredNotebookConfig is what's stored in .opennotes.json.
+// Notebook config version constants.
+const (
+	// NotebookConfigVersionBootstrap is assigned to legacy notebooks that do not
+	// yet declare a config_version value.
+	NotebookConfigVersionBootstrap Version = 1
+)
+
+// StoredNotebookConfig is what's stored in .jot.json.
 type StoredNotebookConfig struct {
-	Root      string            `json:"root"`
-	Name      string            `json:"name"`
-	Contexts  []string          `json:"contexts,omitempty"`
-	Templates map[string]string `json:"templates,omitempty"`
-	Groups    []NotebookGroup   `json:"groups,omitempty"`
+	ConfigVersion Version           `json:"config_version,omitempty"`
+	Root          string            `json:"root"`
+	Name          string            `json:"name"`
+	Contexts      []string          `json:"contexts,omitempty"`
+	Templates     map[string]string `json:"templates,omitempty"`
+	Groups        []NotebookGroup   `json:"groups,omitempty"`
 }
 
 // NotebookConfig includes runtime-resolved paths.
@@ -89,6 +97,10 @@ func (s *NotebookService) LoadConfig(path string) (*NotebookConfig, error) {
 		return nil, fmt.Errorf("invalid notebook config: %w", err)
 	}
 
+	if stored.ConfigVersion == 0 {
+		stored.ConfigVersion = NotebookConfigVersionBootstrap
+	}
+
 	// Resolve root path relative to config location
 	rootPath := filepath.Join(path, stored.Root)
 	if _, err := os.Stat(rootPath); err != nil {
@@ -104,11 +116,12 @@ func (s *NotebookService) LoadConfig(path string) (*NotebookConfig, error) {
 
 	return &NotebookConfig{
 		StoredNotebookConfig: StoredNotebookConfig{
-			Root:      rootPath, // Now absolute
-			Name:      stored.Name,
-			Contexts:  stored.Contexts,
-			Templates: stored.Templates,
-			Groups:    stored.Groups,
+			ConfigVersion: stored.ConfigVersion,
+			Root:          rootPath, // Now absolute
+			Name:          stored.Name,
+			Contexts:      stored.Contexts,
+			Templates:     stored.Templates,
+			Groups:        stored.Groups,
 		},
 		Path: configPath,
 	}, nil
@@ -404,17 +417,17 @@ func (s *NotebookService) Create(name, path string, register bool) (*Notebook, e
 }
 
 // Infer discovers notebook from current context (auto-detection only).
-// Note: OPENNOTES_NOTEBOOK envvar and --notebook flag are handled upstream in requireNotebook().
+// Note: JOT_NOTEBOOK envvar and --notebook flag are handled upstream in requireNotebook().
 // Infer() handles auto-detection priority:
-// 1. .opennotes.json in current directory
+// 1. .jot.json in current directory
 // 2. Context matching (registered notebooks with path context)
-// 3. Ancestor search (walk up tree for .opennotes.json)
+// 3. Ancestor search (walk up tree for .jot.json)
 func (s *NotebookService) Infer(cwd string) (*Notebook, error) {
 	if cwd == "" {
 		cwd, _ = os.Getwd()
 	}
 
-	// Step 1: Check .opennotes.json in current directory (direct check)
+	// Step 1: Check .jot.json in current directory (direct check)
 	if s.HasNotebook(cwd) {
 		return s.Open(cwd)
 	}
@@ -550,7 +563,7 @@ func (n *Notebook) SaveConfig(register bool, configService *ConfigService) error
 	return nil
 }
 
-// GetViews returns all views defined in a notebook's .opennotes.json
+// GetViews returns all views defined in a notebook's .jot.json
 // Returns an empty map if no views are defined
 func (s *NotebookService) GetViews(notebookPath string) (map[string]json.RawMessage, error) {
 	if notebookPath == "" {

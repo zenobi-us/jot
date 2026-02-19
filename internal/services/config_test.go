@@ -13,21 +13,21 @@ import (
 func TestNewConfigService_Defaults(t *testing.T) {
 	// Create temp directory for config
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "opennotes", "config.json")
+	configPath := filepath.Join(tmpDir, "jot", "config.json")
 
 	// No config file exists, should use defaults
 	svc, err := NewConfigServiceWithPath(configPath)
 	require.NoError(t, err)
 
 	// Default notebooks should be relative to config path
-	expectedNotebooks := filepath.Join(tmpDir, "opennotes", "notebooks")
+	expectedNotebooks := filepath.Join(tmpDir, "jot", "notebooks")
 	assert.Equal(t, []string{expectedNotebooks}, svc.Store.Notebooks)
 	assert.Equal(t, "", svc.Store.NotebookPath)
 }
 
 func TestNewConfigService_LoadFromFile(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "opennotes", "config.json")
+	configPath := filepath.Join(tmpDir, "jot", "config.json")
 
 	// Create config file
 	config := Config{
@@ -45,7 +45,7 @@ func TestNewConfigService_LoadFromFile(t *testing.T) {
 
 func TestNewConfigService_InvalidFile(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "opennotes", "config.json")
+	configPath := filepath.Join(tmpDir, "jot", "config.json")
 
 	// Create invalid JSON file
 	err := os.MkdirAll(filepath.Dir(configPath), 0755)
@@ -58,16 +58,16 @@ func TestNewConfigService_InvalidFile(t *testing.T) {
 	require.NoError(t, err)
 
 	// Should have defaults since file was invalid
-	expectedNotebooks := filepath.Join(tmpDir, "opennotes", "notebooks")
+	expectedNotebooks := filepath.Join(tmpDir, "jot", "notebooks")
 	assert.Equal(t, []string{expectedNotebooks}, svc.Store.Notebooks)
 }
 
 func TestNewConfigService_EnvVarOverride(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "opennotes", "config.json")
+	configPath := filepath.Join(tmpDir, "jot", "config.json")
 
 	// Set environment variable
-	t.Setenv("OPENNOTES_NOTEBOOKPATH", "/env/notebook")
+	t.Setenv("JOT_NOTEBOOKPATH", "/env/notebook")
 
 	svc, err := NewConfigServiceWithPath(configPath)
 	require.NoError(t, err)
@@ -77,7 +77,7 @@ func TestNewConfigService_EnvVarOverride(t *testing.T) {
 
 func TestNewConfigService_EnvVarPriorityOverFile(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "opennotes", "config.json")
+	configPath := filepath.Join(tmpDir, "jot", "config.json")
 
 	// Create config file with notebookPath
 	config := Config{
@@ -87,7 +87,7 @@ func TestNewConfigService_EnvVarPriorityOverFile(t *testing.T) {
 	createTestConfigFile(t, configPath, config)
 
 	// Set environment variable (should override file)
-	t.Setenv("OPENNOTES_NOTEBOOKPATH", "/env/notebook")
+	t.Setenv("JOT_NOTEBOOKPATH", "/env/notebook")
 
 	svc, err := NewConfigServiceWithPath(configPath)
 	require.NoError(t, err)
@@ -100,7 +100,7 @@ func TestNewConfigService_EnvVarPriorityOverFile(t *testing.T) {
 
 func TestConfigService_Write_CreatesDirectory(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "nested", "opennotes", "config.json")
+	configPath := filepath.Join(tmpDir, "nested", "jot", "config.json")
 
 	// Create service (directory doesn't exist yet)
 	svc, err := NewConfigServiceWithPath(configPath)
@@ -125,7 +125,7 @@ func TestConfigService_Write_CreatesDirectory(t *testing.T) {
 
 func TestConfigService_Write_PersistsConfig(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "opennotes", "config.json")
+	configPath := filepath.Join(tmpDir, "jot", "config.json")
 
 	svc, err := NewConfigServiceWithPath(configPath)
 	require.NoError(t, err)
@@ -155,7 +155,7 @@ func TestConfigService_Write_PersistsConfig(t *testing.T) {
 
 func TestConfigService_Write_Roundtrip(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "opennotes", "config.json")
+	configPath := filepath.Join(tmpDir, "jot", "config.json")
 
 	// Create and write config
 	svc1, err := NewConfigServiceWithPath(configPath)
@@ -180,7 +180,7 @@ func TestGlobalConfigFile(t *testing.T) {
 	path := GlobalConfigFile()
 
 	// Should end with expected suffix
-	assert.Contains(t, path, "opennotes")
+	assert.Contains(t, path, "jot")
 	assert.True(t, filepath.IsAbs(path), "config path should be absolute")
 	assert.True(t,
 		filepath.Base(path) == "config.json",
@@ -192,7 +192,7 @@ func TestGlobalConfigFile_EnvOverride(t *testing.T) {
 	tmpDir := t.TempDir()
 	overridePath := filepath.Join(tmpDir, "custom", "config.json")
 
-	t.Setenv("OPENNOTES_CONFIG", overridePath)
+	t.Setenv("JOT_CONFIG", overridePath)
 
 	path := GlobalConfigFile()
 
@@ -201,7 +201,7 @@ func TestGlobalConfigFile_EnvOverride(t *testing.T) {
 
 func TestConfigService_Path(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "opennotes", "config.json")
+	configPath := filepath.Join(tmpDir, "jot", "config.json")
 
 	svc, err := NewConfigServiceWithPath(configPath)
 	require.NoError(t, err)

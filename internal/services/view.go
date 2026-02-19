@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/rs/zerolog"
-	"github.com/zenobi-us/opennotes/internal/core"
-	"github.com/zenobi-us/opennotes/internal/search/parser"
+	"github.com/zenobi-us/jot/internal/core"
+	"github.com/zenobi-us/jot/internal/search/parser"
 )
 
 // ViewService manages named reusable query presets
@@ -118,7 +118,7 @@ func (vs *ViewService) GetView(name string) (*core.ViewDefinition, error) {
 	return nil, fmt.Errorf("view not found: %s", name)
 }
 
-// loadNotebookView loads a view from notebook .opennotes.json
+// loadNotebookView loads a view from notebook .jot.json
 func (vs *ViewService) loadNotebookView(name string) (*core.ViewDefinition, error) {
 	if vs.notebookPath == "" {
 		return nil, nil

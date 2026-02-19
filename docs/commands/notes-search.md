@@ -4,7 +4,7 @@ Search notes using text search, fuzzy matching, boolean queries, or SQL.
 
 ## Overview
 
-OpenNotes provides multiple search methods to find notes:
+Jot provides multiple search methods to find notes:
 
 1. **Text Search**: Exact substring matching in content and filenames
 2. **Fuzzy Search**: Similarity-based matching with ranked results
@@ -15,16 +15,16 @@ OpenNotes provides multiple search methods to find notes:
 
 ```bash
 # Simple text search
-opennotes notes search "meeting"
+jot notes search "meeting"
 
 # Fuzzy search (typo-tolerant, ranked results)
-opennotes notes search --fuzzy "mtng"
+jot notes search --fuzzy "mtng"
 
 # Boolean query (metadata filtering)
-opennotes notes search query --and data.tag=workflow
+jot notes search query --and data.tag=workflow
 
 # SQL query (full power)
-opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md') LIMIT 10"
+jot notes search --sql "SELECT * FROM read_markdown('**/*.md') LIMIT 10"
 ```
 
 ---
@@ -36,20 +36,20 @@ Basic substring search in note content and filenames.
 ### Syntax
 
 ```bash
-opennotes notes search [text]
+jot notes search [text]
 ```
 
 ### Examples
 
 ```bash
 # Search for "meeting" in all notes
-opennotes notes search "meeting"
+jot notes search "meeting"
 
 # Search in specific notebook
-opennotes notes search "todo" --notebook ~/notes
+jot notes search "todo" --notebook ~/notes
 
 # List all notes (no search term)
-opennotes notes search
+jot notes search
 ```
 
 ### Behavior
@@ -67,20 +67,20 @@ Similarity-based matching that tolerates typos and partial matches. Results are 
 ### Syntax
 
 ```bash
-opennotes notes search [text] --fuzzy
+jot notes search [text] --fuzzy
 ```
 
 ### Examples
 
 ```bash
 # Fuzzy search for "meeting" (matches "mtng", "meeting", "meetings")
-opennotes notes search --fuzzy "mtng"
+jot notes search --fuzzy "mtng"
 
 # Fuzzy search with text
-opennotes notes search "project" --fuzzy
+jot notes search "project" --fuzzy
 
 # List all notes with fuzzy ranking
-opennotes notes search --fuzzy
+jot notes search --fuzzy
 ```
 
 ### How Fuzzy Matching Works
@@ -108,7 +108,7 @@ Structured queries with AND/OR/NOT operators for filtering by metadata fields.
 ### Syntax
 
 ```bash
-opennotes notes search query [--and field=value] [--or field=value] [--not field=value]
+jot notes search query [--and field=value] [--or field=value] [--not field=value]
 ```
 
 ### Boolean Operators
@@ -129,19 +129,19 @@ opennotes notes search query [--and field=value] [--or field=value] [--not field
 
 ```bash
 # Single condition - find workflow notes
-opennotes notes search query --and data.tag=workflow
+jot notes search query --and data.tag=workflow
 
 # Multiple AND - all must match
-opennotes notes search query --and data.tag=workflow --and data.status=active
+jot notes search query --and data.tag=workflow --and data.status=active
 
 # OR conditions - any can match
-opennotes notes search query --or data.priority=high --or data.priority=critical
+jot notes search query --or data.priority=high --or data.priority=critical
 
 # Combined - find active epics excluding archived
-opennotes notes search query --and data.tag=epic --not data.status=archived
+jot notes search query --and data.tag=epic --not data.status=archived
 
 # Complex query
-opennotes notes search query \
+jot notes search query \
   --and data.tag=workflow \
   --and data.status=active \
   --or data.priority=high \
@@ -202,16 +202,16 @@ linked-by=A   → Returns B (what does A point to?)
 
 ```bash
 # Find notes that link to architecture.md
-opennotes notes search query --and links-to=docs/architecture.md
+jot notes search query --and links-to=docs/architecture.md
 
 # Find notes that planning.md links to
-opennotes notes search query --and linked-by=planning/q1.md
+jot notes search query --and linked-by=planning/q1.md
 
 # Find notes linking to any epic
-opennotes notes search query --and links-to=epics/**/*.md
+jot notes search query --and links-to=epics/**/*.md
 
 # Find notes linking to any task, but not archived
-opennotes notes search query \
+jot notes search query \
   --and links-to=tasks/**/*.md \
   --not data.status=archived
 ```
@@ -234,7 +234,7 @@ opennotes notes search query \
 > verify the links field is being parsed as an array using SQL:
 >
 > ```bash
-> opennotes notes search --sql "SELECT file_path, metadata['links'] FROM read_markdown('**/*.md', include_filepath:=true)"
+> jot notes search --sql "SELECT file_path, metadata['links'] FROM read_markdown('**/*.md', include_filepath:=true)"
 > ```
 
 ---
@@ -255,16 +255,16 @@ Both `path` and link fields support glob patterns.
 
 ```bash
 # All markdown files in docs/
-opennotes notes search query --and path=docs/*.md
+jot notes search query --and path=docs/*.md
 
 # All markdown files in any subdirectory
-opennotes notes search query --and path=**/*.md
+jot notes search query --and path=**/*.md
 
 # Files matching pattern
-opennotes notes search query --and path=task-???.md
+jot notes search query --and path=task-???.md
 
 # Epics linking to any task
-opennotes notes search query --and path=epics/* --and links-to=tasks/**/*.md
+jot notes search query --and path=epics/* --and links-to=tasks/**/*.md
 ```
 
 ---
@@ -276,20 +276,20 @@ Full DuckDB SQL for advanced queries.
 ### Syntax
 
 ```bash
-opennotes notes search --sql "SELECT ..."
+jot notes search --sql "SELECT ..."
 ```
 
 ### Basic Examples
 
 ```bash
 # List first 10 notes
-opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md') LIMIT 10"
+jot notes search --sql "SELECT * FROM read_markdown('**/*.md') LIMIT 10"
 
 # Search content
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) WHERE content LIKE '%todo%'"
+jot notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) WHERE content LIKE '%todo%'"
 
 # Word count statistics
-opennotes notes search --sql "SELECT file_path, (md_stats(content)).word_count as words FROM read_markdown('**/*.md', include_filepath:=true) WHERE (md_stats(content)).word_count > 1000"
+jot notes search --sql "SELECT file_path, (md_stats(content)).word_count as words FROM read_markdown('**/*.md', include_filepath:=true) WHERE (md_stats(content)).word_count > 1000"
 ```
 
 ### SQL Security
@@ -358,50 +358,50 @@ All queries are validated for security:
 
 ```bash
 # All active tasks
-opennotes notes search query --and data.tag=task --and data.status=active
+jot notes search query --and data.tag=task --and data.status=active
 
 # High priority items
-opennotes notes search query --or data.priority=high --or data.priority=critical
+jot notes search query --or data.priority=high --or data.priority=critical
 
 # My assignments
-opennotes notes search query --and data.assignee=myname --not data.status=done
+jot notes search query --and data.assignee=myname --not data.status=done
 ```
 
 ### Explore Relationships
 
 ```bash
 # What depends on architecture doc?
-opennotes notes search query --and links-to=docs/architecture.md
+jot notes search query --and links-to=docs/architecture.md
 
 # What does the Q1 plan reference?
-opennotes notes search query --and linked-by=planning/q1.md
+jot notes search query --and linked-by=planning/q1.md
 
 # Epics with task dependencies
-opennotes notes search query --and data.tag=epic --and links-to=tasks/**/*.md
+jot notes search query --and data.tag=epic --and links-to=tasks/**/*.md
 ```
 
 ### Project Organization
 
 ```bash
 # All notes in projects folder
-opennotes notes search query --and path=projects/**/*.md
+jot notes search query --and path=projects/**/*.md
 
 # Project Alpha notes
-opennotes notes search query --and data.project=alpha
+jot notes search query --and data.project=alpha
 
 # Specs not yet implemented
-opennotes notes search query --and data.type=spec --not data.status=implemented
+jot notes search query --and data.type=spec --not data.status=implemented
 ```
 
 ### Content Discovery
 
 ````bash
 # Fuzzy find meeting notes
-opennotes notes search --fuzzy "mtng"
+jot notes search --fuzzy "mtng"
 
 # Find code-related notes
-opennotes notes search "```python"
+jot notes search "```python"
 
 # SQL: Notes with images
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) WHERE content LIKE '%![%](%)%'"
+jot notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) WHERE content LIKE '%![%](%)%'"
 ````

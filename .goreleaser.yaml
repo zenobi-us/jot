@@ -1,6 +1,6 @@
 version: 2
 
-project_name: opennotes
+project_name: jot
 
 env:
   # Use Go 1.21 (from go.mod)
@@ -14,16 +14,16 @@ before:
 builds:
   - id: linux-amd64
     main: ./main.go
-    binary: opennotes
+    binary: jot
     goos:
       - linux
     goarch:
       - amd64
     ldflags:
       - -s -w
-      - -X github.com/zenobius/opennotes/cmd.Version={{.Version}}
-      - -X github.com/zenobius/opennotes/cmd.Commit={{.Commit}}
-      - -X github.com/zenobius/opennotes/cmd.Date={{.Date}}
+      - -X github.com/zenobi-us/jot/cmd.Version={{.Version}}
+      - -X github.com/zenobi-us/jot/cmd.Commit={{.Commit}}
+      - -X github.com/zenobi-us/jot/cmd.Date={{.Date}}
 
 archives:
   - id: default
@@ -75,10 +75,10 @@ release:
 
     **Installation:**
 
-    - **macOS (ARM64)**: `curl -sSL https://github.com/zenobi-us/opennotes/releases/download/{{ .Tag }}/opennotes_{{ .Version }}_Darwin_arm64.tar.gz | tar xz && sudo mv opennotes /usr/local/bin/`
-    - **macOS (Intel)**: `curl -sSL https://github.com/zenobi-us/opennotes/releases/download/{{ .Tag }}/opennotes_{{ .Version }}_Darwin_x86_64.tar.gz | tar xz && sudo mv opennotes /usr/local/bin/`
-    - **Linux (x86_64)**: `curl -sSL https://github.com/zenobi-us/opennotes/releases/download/{{ .Tag }}/opennotes_{{ .Version }}_Linux_x86_64.tar.gz | tar xz && sudo mv opennotes /usr/local/bin/`
-    - **Linux (ARM64)**: `curl -sSL https://github.com/zenobi-us/opennotes/releases/download/{{ .Tag }}/opennotes_{{ .Version }}_Linux_arm64.tar.gz | tar xz && sudo mv opennotes /usr/local/bin/`
+    - **macOS (ARM64)**: `curl -sSL https://github.com/zenobi-us/jot/releases/download/{{ .Tag }}/jot_{{ .Version }}_Darwin_arm64.tar.gz | tar xz && sudo mv jot /usr/local/bin/`
+    - **macOS (Intel)**: `curl -sSL https://github.com/zenobi-us/jot/releases/download/{{ .Tag }}/jot_{{ .Version }}_Darwin_x86_64.tar.gz | tar xz && sudo mv jot /usr/local/bin/`
+    - **Linux (x86_64)**: `curl -sSL https://github.com/zenobi-us/jot/releases/download/{{ .Tag }}/jot_{{ .Version }}_Linux_x86_64.tar.gz | tar xz && sudo mv jot /usr/local/bin/`
+    - **Linux (ARM64)**: `curl -sSL https://github.com/zenobi-us/jot/releases/download/{{ .Tag }}/jot_{{ .Version }}_Linux_arm64.tar.gz | tar xz && sudo mv jot /usr/local/bin/`
     - **Windows**: Download the `.zip` file from the release page
 
 checksum:

@@ -1,4 +1,4 @@
-# SQL Query Guide for OpenNotes
+# SQL Query Guide for Jot
 
 This guide shows you how to use the `--sql` flag to run custom SQL queries against your notebook files using DuckDB's powerful markdown extension.
 
@@ -24,7 +24,7 @@ This guide shows you how to use the `--sql` flag to run custom SQL queries again
 Use the `--sql` flag with the search command:
 
 ```bash
-opennotes search --sql "SELECT * FROM read_markdown('**/*.md') LIMIT 5"
+jot search --sql "SELECT * FROM read_markdown('**/*.md') LIMIT 5"
 ```
 
 ### Your First Query
@@ -32,12 +32,12 @@ opennotes search --sql "SELECT * FROM read_markdown('**/*.md') LIMIT 5"
 List all notes in your notebook:
 
 ```bash
-opennotes search --sql "SELECT file_path, content FROM read_markdown('**/*.md', include_filepath:=true)"
+jot search --sql "SELECT file_path, content FROM read_markdown('**/*.md', include_filepath:=true)"
 ```
 
 **Output format:**
 
-OpenNotes returns SQL query results in **JSON format** by default:
+Jot returns SQL query results in **JSON format** by default:
 
 ```json
 [
@@ -84,21 +84,21 @@ OpenNotes returns SQL query results in **JSON format** by default:
 
 ```bash
 # These commands produce identical results regardless of current directory
-cd ~/notebook && opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md')"
-cd ~/notebook/projects && opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md')"
-cd /tmp && opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md')" --notebook ~/notebook
+cd ~/notebook && jot notes search --sql "SELECT * FROM read_markdown('**/*.md')"
+cd ~/notebook/projects && jot notes search --sql "SELECT * FROM read_markdown('**/*.md')"
+cd /tmp && jot notes search --sql "SELECT * FROM read_markdown('**/*.md')" --notebook ~/notebook
 ```
 
 **Security Protection**: Path traversal attempts are automatically blocked:
 
 ```bash
 # ❌ These patterns are blocked and logged as security violations
-opennotes notes search --sql "SELECT * FROM read_markdown('../secret/*.md')"
-opennotes notes search --sql "SELECT * FROM read_markdown('/etc/passwd')"
+jot notes search --sql "SELECT * FROM read_markdown('../secret/*.md')"
+jot notes search --sql "SELECT * FROM read_markdown('/etc/passwd')"
 
 # ✅ These patterns work correctly
-opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md')"
-opennotes notes search --sql "SELECT * FROM read_markdown('projects/*.md')"
+jot notes search --sql "SELECT * FROM read_markdown('**/*.md')"
+jot notes search --sql "SELECT * FROM read_markdown('projects/*.md')"
 ```
 
 ### Best Practices for Patterns
@@ -414,10 +414,10 @@ ORDER BY usage_count DESC
 
 ```bash
 # ❌ This fails
-opennotes search --sql "DELETE FROM markdown"
+jot search --sql "DELETE FROM markdown"
 
 # ✅ This works
-opennotes search --sql "SELECT * FROM read_markdown('**/*.md')"
+jot search --sql "SELECT * FROM read_markdown('**/*.md')"
 ```
 
 #### "File or directory does not exist"
@@ -427,10 +427,10 @@ opennotes search --sql "SELECT * FROM read_markdown('**/*.md')"
 
 ```bash
 # ❌ No .md files found
-opennotes search --sql "SELECT * FROM read_markdown('*.txt')"
+jot search --sql "SELECT * FROM read_markdown('*.txt')"
 
 # ✅ Correct pattern
-opennotes search --sql "SELECT * FROM read_markdown('**/*.md')"
+jot search --sql "SELECT * FROM read_markdown('**/*.md')"
 ```
 
 #### "path traversal detected: query would access files outside notebook"
@@ -440,12 +440,12 @@ opennotes search --sql "SELECT * FROM read_markdown('**/*.md')"
 
 ```bash
 # ❌ Path traversal attempt (blocked)
-opennotes search --sql "SELECT * FROM read_markdown('../other-folder/*.md')"
-opennotes search --sql "SELECT * FROM read_markdown('/home/user/secret/*.md')"
+jot search --sql "SELECT * FROM read_markdown('../other-folder/*.md')"
+jot search --sql "SELECT * FROM read_markdown('/home/user/secret/*.md')"
 
 # ✅ Correct patterns from notebook root
-opennotes search --sql "SELECT * FROM read_markdown('other-folder/*.md')"
-opennotes search --sql "SELECT * FROM read_markdown('**/*.md')"
+jot search --sql "SELECT * FROM read_markdown('other-folder/*.md')"
+jot search --sql "SELECT * FROM read_markdown('**/*.md')"
 ```
 
 #### "query preprocessing failed: malformed pattern"
@@ -455,13 +455,13 @@ opennotes search --sql "SELECT * FROM read_markdown('**/*.md')"
 
 ```bash
 # ❌ Mismatched quotes
-opennotes search --sql "SELECT * FROM read_markdown('**/*.md\")"
+jot search --sql "SELECT * FROM read_markdown('**/*.md\")"
 
 # ❌ Unclosed quotes
-opennotes search --sql "SELECT * FROM read_markdown('**/*.md"
+jot search --sql "SELECT * FROM read_markdown('**/*.md"
 
 # ✅ Proper quotes
-opennotes search --sql "SELECT * FROM read_markdown('**/*.md')"
+jot search --sql "SELECT * FROM read_markdown('**/*.md')"
 ```
 
 #### "keyword 'DROP' is not allowed"
@@ -476,10 +476,10 @@ opennotes search --sql "SELECT * FROM read_markdown('**/*.md')"
 
 ```bash
 # ❌ May timeout on large notebooks
-opennotes search --sql "SELECT * FROM read_markdown('**/*.md')"
+jot search --sql "SELECT * FROM read_markdown('**/*.md')"
 
 # ✅ Limited results
-opennotes search --sql "SELECT * FROM read_markdown('**/*.md') LIMIT 100"
+jot search --sql "SELECT * FROM read_markdown('**/*.md') LIMIT 100"
 ```
 
 ### Debug Tips
@@ -488,7 +488,7 @@ opennotes search --sql "SELECT * FROM read_markdown('**/*.md') LIMIT 100"
 2. **Check your pattern:** Use specific glob patterns to limit files
 3. **Use LIMIT:** Always limit results during testing
 4. **Test patterns:** Use `include_filepath:=true` to see which files are being accessed
-5. **Verify notebook path:** Run `opennotes notebook info` to confirm notebook location
+5. **Verify notebook path:** Run `jot notebook info` to confirm notebook location
 6. **Check current directory:** Pattern resolution is independent of current directory
 
 ### Pattern Resolution Debugging
@@ -497,26 +497,26 @@ opennotes search --sql "SELECT * FROM read_markdown('**/*.md') LIMIT 100"
 
 ```bash
 # Check notebook configuration
-opennotes notebook info
+jot notebook info
 
 # Test simple pattern first
-opennotes search --sql "SELECT file_path FROM read_markdown('*.md', include_filepath:=true) LIMIT 3"
+jot search --sql "SELECT file_path FROM read_markdown('*.md', include_filepath:=true) LIMIT 3"
 
 # Then expand to recursive
-opennotes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) LIMIT 10"
+jot search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) LIMIT 10"
 ```
 
 **Test incremental patterns**: Build complexity gradually:
 
 ```bash
 # 1. Test root files only
-opennotes search --sql "SELECT COUNT(*) FROM read_markdown('*.md')"
+jot search --sql "SELECT COUNT(*) FROM read_markdown('*.md')"
 
 # 2. Test specific subfolder
-opennotes search --sql "SELECT COUNT(*) FROM read_markdown('projects/*.md')"
+jot search --sql "SELECT COUNT(*) FROM read_markdown('projects/*.md')"
 
 # 3. Test recursive pattern
-opennotes search --sql "SELECT COUNT(*) FROM read_markdown('**/*.md')"
+jot search --sql "SELECT COUNT(*) FROM read_markdown('**/*.md')"
 ```
 
 ## Security Model
@@ -592,7 +592,7 @@ Queries are validated before execution to block:
 ### Isolation
 
 - Separate read-only database connection
-- No access to OpenNotes internal tables
+- No access to Jot internal tables
 - Cannot affect notebook files on disk
 - Query processing runs in isolated context
 
@@ -733,6 +733,6 @@ SELECT COUNT(*) FROM read_markdown('projects/*.md')
 
 - [DuckDB SQL Reference](https://duckdb.org/docs/sql/introduction)
 - [DuckDB Markdown Extension](https://github.com/duckdb/duckdb/blob/main/extension/markdown/README.md)
-- [OpenNotes CLI Reference](./cli-reference.md)
+- [Jot CLI Reference](./cli-reference.md)
 
 Need help? Check the troubleshooting section above or open an issue on GitHub.

@@ -4,7 +4,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/zenobi-us/opennotes/internal/search"
+	"github.com/zenobi-us/jot/internal/search"
 )
 
 // MatchType identifies how a note entered the hybrid result set.

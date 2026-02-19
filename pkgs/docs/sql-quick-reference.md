@@ -1,4 +1,4 @@
-# SQL Quick Reference for OpenNotes
+# SQL Quick Reference for Jot
 
 This guide provides a progressive learning path for querying your notes with SQL. Start simple, build confidence, then tackle advanced patterns. All examples are tested and ready to copy-paste.
 
@@ -21,7 +21,7 @@ This guide provides a progressive learning path for querying your notes with SQL
 
 ### What is SQL?
 
-SQL is a language for querying structured data. OpenNotes uses **DuckDB**, an embedded SQL engine, to query your markdown files.
+SQL is a language for querying structured data. Jot uses **DuckDB**, an embedded SQL engine, to query your markdown files.
 
 Think of SQL as powerful filtering and analysis that would take hours in a text editor—but executes in milliseconds.
 
@@ -50,10 +50,10 @@ LIMIT <how-many>
 
 ```bash
 # Basic syntax
-opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md')"
+jot notes search --sql "SELECT * FROM read_markdown('**/*.md')"
 
 # With file paths included
-opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md', include_filepath:=true)"
+jot notes search --sql "SELECT * FROM read_markdown('**/*.md', include_filepath:=true)"
 ```
 
 **Parameters**:
@@ -68,7 +68,7 @@ opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md', include_fil
 List all your notes:
 
 ```bash
-opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md', include_filepath:=true) LIMIT 10"
+jot notes search --sql "SELECT * FROM read_markdown('**/*.md', include_filepath:=true) LIMIT 10"
 ```
 
 Output:
@@ -122,7 +122,7 @@ Output:
 ### Query 1.1: List All Notes
 
 ```bash
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)"
+jot notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)"
 ```
 
 **What it does**: Returns list of all markdown files in your notebook
@@ -136,7 +136,7 @@ opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', inc
 ### Query 1.2: Count Total Notes
 
 ```bash
-opennotes notes search --sql "SELECT COUNT(*) as total_notes FROM read_markdown('**/*.md')"
+jot notes search --sql "SELECT COUNT(*) as total_notes FROM read_markdown('**/*.md')"
 ```
 
 **What it does**: Returns single number—total count of notes
@@ -156,10 +156,10 @@ opennotes notes search --sql "SELECT COUNT(*) as total_notes FROM read_markdown(
 
 ```bash
 # First 10 notes
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) LIMIT 10"
+jot notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) LIMIT 10"
 
 # Next 10 notes (skip first 10)
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) LIMIT 10 OFFSET 10"
+jot notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) LIMIT 10 OFFSET 10"
 ```
 
 **What it does**: Returns paginated results (useful for large collections)
@@ -169,7 +169,7 @@ opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', inc
 ### Query 1.4: Sort Notes by Filename
 
 ```bash
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) ORDER BY file_path"
+jot notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) ORDER BY file_path"
 ```
 
 **What it does**: Lists all notes sorted alphabetically
@@ -184,13 +184,13 @@ opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', inc
 
 ```bash
 # All notes in projects folder
-opennotes notes search --sql "SELECT file_path FROM read_markdown('projects/**/*.md', include_filepath:=true)"
+jot notes search --sql "SELECT file_path FROM read_markdown('projects/**/*.md', include_filepath:=true)"
 
 # Only in projects root (not subfolders)
-opennotes notes search --sql "SELECT file_path FROM read_markdown('projects/*.md', include_filepath:=true)"
+jot notes search --sql "SELECT file_path FROM read_markdown('projects/*.md', include_filepath:=true)"
 
 # All daily notes from 2024
-opennotes notes search --sql "SELECT file_path FROM read_markdown('daily/2024-*.md', include_filepath:=true)"
+jot notes search --sql "SELECT file_path FROM read_markdown('daily/2024-*.md', include_filepath:=true)"
 ```
 
 **What it does**: Filters notes by file pattern
@@ -206,7 +206,7 @@ opennotes notes search --sql "SELECT file_path FROM read_markdown('daily/2024-*.
 ### Query 2.1: Find Notes by Exact Text
 
 ```bash
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) WHERE content LIKE '%TODO%'"
 ```
 
@@ -223,7 +223,7 @@ opennotes notes search --sql \
 ### Query 2.2: Case-Insensitive Search
 
 ```bash
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path, content FROM read_markdown('**/*.md', include_filepath:=true) WHERE content ILIKE '%python%' LIMIT 10"
 ```
 
@@ -239,7 +239,7 @@ opennotes notes search --sql \
 ### Query 2.3: Find Notes with Multiple Keywords
 
 ```bash
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) WHERE content ILIKE '%deadline%' AND content ILIKE '%urgent%' LIMIT 20"
 ```
 
@@ -254,7 +254,7 @@ opennotes notes search --sql \
 ### Query 2.4: Find Notes Without Specific Text
 
 ```bash
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) WHERE content NOT LIKE '%archived%' LIMIT 10"
 ```
 
@@ -268,11 +268,11 @@ opennotes notes search --sql \
 
 ```bash
 # Find "bug" in projects only
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path FROM read_markdown('projects/**/*.md', include_filepath:=true) WHERE content ILIKE '%bug%' LIMIT 20"
 
 # Find "meeting" in daily notes from 2024
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path FROM read_markdown('daily/2024-*.md', include_filepath:=true) WHERE content ILIKE '%meeting%' LIMIT 20"
 ```
 
@@ -286,19 +286,19 @@ opennotes notes search --sql \
 
 ```bash
 # Notes with checked checkboxes [x]
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) WHERE content LIKE '%[x]%'"
 
 # Notes with unchecked checkboxes [ ]
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) WHERE content LIKE '%[ ]%'"
 
 # Notes with code blocks
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) WHERE content LIKE '%```%'"
 
 # Notes with links
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) WHERE content LIKE '%[%](%'  LIMIT 20"
 ```
 
@@ -315,7 +315,7 @@ opennotes notes search --sql \
 ### Query 3.1: Get Word Count per Note
 
 ```bash
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path, (md_stats(content)).word_count as words FROM read_markdown('**/*.md', include_filepath:=true) ORDER BY words DESC LIMIT 10"
 ```
 
@@ -335,7 +335,7 @@ opennotes notes search --sql \
 ### Query 3.2: Total Statistics About Collection
 
 ```bash
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT COUNT(*) as total_notes, SUM((md_stats(content)).word_count) as total_words, AVG((md_stats(content)).word_count) as avg_words FROM read_markdown('**/*.md')"
 ```
 
@@ -358,15 +358,15 @@ opennotes notes search --sql \
 
 ```bash
 # Long notes (over 2000 words)
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path, (md_stats(content)).word_count as words FROM read_markdown('**/*.md', include_filepath:=true) WHERE (md_stats(content)).word_count > 2000 ORDER BY words DESC"
 
 # Short notes (under 100 words)
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path, (md_stats(content)).word_count as words FROM read_markdown('**/*.md', include_filepath:=true) WHERE (md_stats(content)).word_count < 100"
 
 # Medium notes (500-1500 words)
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path, (md_stats(content)).word_count as words FROM read_markdown('**/*.md', include_filepath:=true) WHERE (md_stats(content)).word_count BETWEEN 500 AND 1500"
 ```
 
@@ -377,7 +377,7 @@ opennotes notes search --sql \
 ### Query 3.4: Heading Count per Note
 
 ```bash
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path, (md_stats(content)).heading_count as headings FROM read_markdown('**/*.md', include_filepath:=true) ORDER BY headings DESC LIMIT 15"
 ```
 
@@ -388,7 +388,7 @@ opennotes notes search --sql \
 ### Query 3.5: Line Count Statistics
 
 ```bash
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path, (md_stats(content)).line_count as lines FROM read_markdown('**/*.md', include_filepath:=true) ORDER BY lines DESC LIMIT 10"
 ```
 
@@ -400,11 +400,11 @@ opennotes notes search --sql \
 
 ```bash
 # Stats for all notes in projects folder
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT COUNT(*) as total, SUM((md_stats(content)).word_count) as total_words FROM read_markdown('projects/**/*.md')"
 
 # Compare folders
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT 'projects' as folder, COUNT(*) as count, SUM((md_stats(content)).word_count) as words FROM read_markdown('projects/**/*.md')
    UNION
    SELECT 'daily' as folder, COUNT(*) as count, SUM((md_stats(content)).word_count) as words FROM read_markdown('daily/**/*.md')"
@@ -423,7 +423,7 @@ opennotes notes search --sql \
 ### Query 4.1: Find Incomplete Tasks
 
 ```bash
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path, content FROM read_markdown('**/*.md', include_filepath:=true) WHERE content LIKE '%[ ]%' AND content NOT LIKE '%[x]%' LIMIT 20"
 ```
 
@@ -431,7 +431,7 @@ opennotes notes search --sql \
 
 **Enhancement**: Filter to specific folder:
 ```bash
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path FROM read_markdown('projects/**/*.md', include_filepath:=true) WHERE content LIKE '%[ ]%'"
 ```
 
@@ -441,7 +441,7 @@ opennotes notes search --sql \
 
 ```bash
 # Daily notes from last 7 days (if named YYYY-MM-DD)
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path FROM read_markdown('daily/2024-01-*.md', include_filepath:=true) ORDER BY file_path DESC LIMIT 7"
 ```
 
@@ -454,7 +454,7 @@ opennotes notes search --sql \
 ### Query 4.3: Combine Content and Metadata Filters
 
 ```bash
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path, (md_stats(content)).word_count as words 
    FROM read_markdown('**/*.md', include_filepath:=true) 
    WHERE content ILIKE '%TODO%' AND (md_stats(content)).word_count > 100 
@@ -474,14 +474,14 @@ opennotes notes search --sql \
 
 ```bash
 # Find code examples in documentation
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path, (md_stats(content)).word_count as words
    FROM read_markdown('reference/**/*.md', include_filepath:=true)
    WHERE content LIKE '%```%' AND (md_stats(content)).word_count > 500
    ORDER BY words DESC"
 
 # Find outdated documentation
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path
    FROM read_markdown('docs/**/*.md', include_filepath:=true)
    WHERE (content LIKE '%FIXME%' OR content LIKE '%TODO%' OR content LIKE '%OUTDATED%')
@@ -516,15 +516,15 @@ ORDER BY note_count DESC
 
 ```bash
 # Get all content for external processing
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path, content FROM read_markdown('**/*.md', include_filepath:=true) LIMIT 100"
 
 # Export just file paths for scripting
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)" | jq -r '.[].file_path'
 
 # Complex export
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path, (md_stats(content)).word_count FROM read_markdown('**/*.md', include_filepath:=true) ORDER BY word_count DESC" \
   | jq 'map({path: .file_path, words: .word_count})'
 ```
@@ -540,7 +540,7 @@ opennotes notes search --sql \
 Returns metadata about markdown content:
 
 ```bash
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT (md_stats(content)).word_count, (md_stats(content)).line_count FROM read_markdown('**/*.md') LIMIT 5"
 ```
 
@@ -701,17 +701,17 @@ Get list of all notes matching criteria
 
 ✅ **Quick keyword search**
 ```bash
-opennotes notes search "project alpha"
+jot notes search "project alpha"
 ```
 
 ✅ **Simple content lookup**
 ```bash
-opennotes notes search "deadline"
+jot notes search "deadline"
 ```
 
 ✅ **Browse recent notes**
 ```bash
-opennotes notes list
+jot notes list
 ```
 
 ---
@@ -721,25 +721,25 @@ opennotes notes list
 **Exercise 1: Basic Query**
 ```bash
 # Try it: List first 5 notes in your notebook
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) LIMIT 5"
+jot notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) LIMIT 5"
 ```
 
 **Exercise 2: Content Search**
 ```bash
 # Try it: Find all notes with "TODO" in them
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) WHERE content ILIKE '%todo%'"
+jot notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) WHERE content ILIKE '%todo%'"
 ```
 
 **Exercise 3: Metadata Analysis**
 ```bash
 # Try it: Find your longest notes
-opennotes notes search --sql "SELECT file_path, (md_stats(content)).word_count as words FROM read_markdown('**/*.md', include_filepath:=true) ORDER BY words DESC LIMIT 5"
+jot notes search --sql "SELECT file_path, (md_stats(content)).word_count as words FROM read_markdown('**/*.md', include_filepath:=true) ORDER BY words DESC LIMIT 5"
 ```
 
 **Exercise 4: Combine Everything**
 ```bash
 # Try it: Find long TODO notes (complex tasks)
-opennotes notes search --sql "SELECT file_path, (md_stats(content)).word_count FROM read_markdown('**/*.md', include_filepath:=true) WHERE content ILIKE '%todo%' AND (md_stats(content)).word_count > 500"
+jot notes search --sql "SELECT file_path, (md_stats(content)).word_count FROM read_markdown('**/*.md', include_filepath:=true) WHERE content ILIKE '%todo%' AND (md_stats(content)).word_count > 500"
 ```
 
 ---

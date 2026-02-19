@@ -1,12 +1,12 @@
-# OpenNotes Documentation Index
+# Jot Documentation Index
 
-Complete guide to OpenNotes documentation, organized for quick navigation by use case, workflow, and learning level.
+Complete guide to Jot documentation, organized for quick navigation by use case, workflow, and learning level.
 
 ---
 
 ## 🚀 Quick Start by Use Case
 
-### I'm new to OpenNotes
+### I'm new to Jot
 
 Choose your path:
 
@@ -28,7 +28,7 @@ Choose your path:
 
 ### I'm migrating from another tool
 
-**Time**: 30 minutes | **Goal**: Move your existing notes to OpenNotes
+**Time**: 30 minutes | **Goal**: Move your existing notes to Jot
 
 1. Pick your source: [Import Workflow Guide](import-workflow-guide.md)
    - Coming from Obsidian? See "Obsidian Vault Import"
@@ -234,7 +234,7 @@ Goal: Complete mastery of all features and patterns
 7. **[Getting Started Troubleshooting Guide](getting-started-troubleshooting.md)** (30 min)
    - Deep understanding of issues and solutions
 
-**Outcome**: You're an OpenNotes expert
+**Outcome**: You're an Jot expert
 
 ---
 
@@ -256,25 +256,24 @@ Goal: Complete mastery of all features and patterns
 
 ### By Feature
 
-| Feature              | Best Guide                                              | Details                           |
-| -------------------- | ------------------------------------------------------- | --------------------------------- |
-| **SELECT queries**   | [SQL Quick Reference](sql-quick-reference.md) - Level 1 | Basic queries and LIMIT           |
-| **Search queries**   | [SQL Quick Reference](sql-quick-reference.md) - Level 2 | LIKE, wildcards, text search      |
-| **Semantic search**  | [Semantic Search Guide](semantic-search-guide.md)       | Meaning-based search, hybrid mode |
-| **Metadata**         | [SQL Quick Reference](sql-quick-reference.md) - Level 3 | Word count, line count, analysis  |
-| **Complex queries**  | [SQL Quick Reference](sql-quick-reference.md) - Level 4 | GROUP BY, ORDER BY, aggregates    |
-| **Functions**        | [SQL Functions Reference](sql-functions-reference.md)   | Function parameters and returns   |
-| **read_markdown()**  | [SQL Functions Reference](sql-functions-reference.md)   | File reading and patterns         |
-| **md_stats()**       | [SQL Functions Reference](sql-functions-reference.md)   | Metadata extraction               |
-| **JSON output**      | [JSON-SQL Guide](json-sql-guide.md)                     | JSON export patterns              |
-| **jq integration**   | [JSON-SQL Guide](json-sql-guide.md)                     | jq pipelines and examples         |
-| **Import workflow**  | [Import Workflow Guide](import-workflow-guide.md)       | From any source                   |
-| **Obsidian import**  | [Import Workflow Guide](import-workflow-guide.md)       | Obsidian-specific steps           |
-| **Bear import**      | [Import Workflow Guide](import-workflow-guide.md)       | Bear-specific steps               |
-| **Daily reports**    | [Automation Recipes](automation-recipes.md)             | note-stats.sh, cron               |
-| **Weekly summaries** | [Automation Recipes](automation-recipes.md)             | weekly-note-summary.sh            |
-| **Backups**          | [Automation Recipes](automation-recipes.md)             | note-backup.sh, git               |
-| **Export**           | [Automation Recipes](automation-recipes.md)             | note-export.sh, formats           |
+| Feature              | Best Guide                                              | Details                          |
+| -------------------- | ------------------------------------------------------- | -------------------------------- |
+| **SELECT queries**   | [SQL Quick Reference](sql-quick-reference.md) - Level 1 | Basic queries and LIMIT          |
+| **Search queries**   | [SQL Quick Reference](sql-quick-reference.md) - Level 2 | LIKE, wildcards, text search     |
+| **Metadata**         | [SQL Quick Reference](sql-quick-reference.md) - Level 3 | Word count, line count, analysis |
+| **Complex queries**  | [SQL Quick Reference](sql-quick-reference.md) - Level 4 | GROUP BY, ORDER BY, aggregates   |
+| **Functions**        | [SQL Functions Reference](sql-functions-reference.md)   | Function parameters and returns  |
+| **read_markdown()**  | [SQL Functions Reference](sql-functions-reference.md)   | File reading and patterns        |
+| **md_stats()**       | [SQL Functions Reference](sql-functions-reference.md)   | Metadata extraction              |
+| **JSON output**      | [JSON-SQL Guide](json-sql-guide.md)                     | JSON export patterns             |
+| **jq integration**   | [JSON-SQL Guide](json-sql-guide.md)                     | jq pipelines and examples        |
+| **Import workflow**  | [Import Workflow Guide](import-workflow-guide.md)       | From any source                  |
+| **Obsidian import**  | [Import Workflow Guide](import-workflow-guide.md)       | Obsidian-specific steps          |
+| **Bear import**      | [Import Workflow Guide](import-workflow-guide.md)       | Bear-specific steps              |
+| **Daily reports**    | [Automation Recipes](automation-recipes.md)             | note-stats.sh, cron              |
+| **Weekly summaries** | [Automation Recipes](automation-recipes.md)             | weekly-note-summary.sh           |
+| **Backups**          | [Automation Recipes](automation-recipes.md)             | note-backup.sh, git              |
+| **Export**           | [Automation Recipes](automation-recipes.md)             | note-export.sh, formats          |
 
 ### By Audience
 
@@ -300,19 +299,19 @@ Goal: Complete mastery of all features and patterns
 
 ```bash
 # Full help
-opennotes --help
+jot --help
 
 # Notebook help
-opennotes notebook --help
+jot notebook --help
 
 # Notes help
-opennotes notes --help
+jot notes --help
 
 # Search help
-opennotes notes search --help
+jot notes search --help
 
 # SQL help
-opennotes notes search --help  # See --sql flag documentation
+jot notes search --help  # See --sql flag documentation
 ```
 
 ---
@@ -348,7 +347,7 @@ opennotes notes search --help  # See --sql flag documentation
 ## 📋 Complete Documentation Structure
 
 ```
-📚 OpenNotes Documentation
+📚 Jot Documentation
 
 ├── 🚀 Getting Started
 │   ├── Getting Started for Power Users (15 min onboarding)
@@ -378,7 +377,7 @@ opennotes notes search --help  # See --sql flag documentation
 **Bash/Shell**:
 
 ```bash
-opennotes notebook create "MyNotebook" --path ~/my-notes
+jot notebook create "MyNotebook" --path ~/my-notes
 ```
 
 **SQL**:
@@ -412,7 +411,7 @@ ORDER BY words DESC
 
 **Internal**: Cross-reference guides with markdown links like `[SQL Quick Reference](sql-quick-reference.md)`
 
-**CLI Help**: Reference commands like `opennotes notes search --help`
+**CLI Help**: Reference commands like `jot notes search --help`
 
 ---
 

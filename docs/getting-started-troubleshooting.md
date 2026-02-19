@@ -1,6 +1,6 @@
 # Getting Started Troubleshooting Guide
 
-This guide helps you resolve common issues when getting started with OpenNotes. If you encounter a problem, find the error message or symptom below to get a solution.
+This guide helps you resolve common issues when getting started with Jot. If you encounter a problem, find the error message or symptom below to get a solution.
 
 ---
 
@@ -8,7 +8,7 @@ This guide helps you resolve common issues when getting started with OpenNotes. 
 
 Before diving into specific sections, use this flowchart to identify your issue:
 
-1. **Can't run `opennotes` command?** → [CLI Issues](#cli-issues)
+1. **Can't run `jot` command?** → [CLI Issues](#cli-issues)
 2. **Getting errors about notebooks?** → [Import Issues](#import-issues)
 3. **SQL queries not working?** → [SQL Query Issues](#sql-query-issues)
 4. **Searches are slow?** → [Performance Issues](#performance-issues)
@@ -28,44 +28,44 @@ Before diving into specific sections, use this flowchart to identify your issue:
 
    ```bash
    # List existing notebooks
-   opennotes notebook list
+   jot notebook list
 
    # Create the notebook
-   opennotes notebook create "MyNotebook" --path ~/my-notes
+   jot notebook create "MyNotebook" --path ~/my-notes
    ```
 
 2. **Notebook name is case-sensitive**
 
    ```bash
    # ❌ Won't work if notebook is named "MyNotebook"
-   opennotes notebook info mynotebook
+   jot notebook info mynotebook
 
    # ✅ Use exact name
-   opennotes notebook info MyNotebook
+   jot notebook info MyNotebook
    ```
 
 3. **Notebook configuration file corrupted**
 
    ```bash
    # Check config file location
-   cat ~/.config/opennotes/config.json
+   cat ~/.config/jot/config.json
 
    # Backup and recreate if needed
-   cp ~/.config/opennotes/config.json ~/.config/opennotes/config.json.bak
-   opennotes notebook create "MyNotebook" --path ~/my-notes --force
+   cp ~/.config/jot/config.json ~/.config/jot/config.json.bak
+   jot notebook create "MyNotebook" --path ~/my-notes --force
    ```
 
 4. **Using wrong notebook in multi-notebook setup**
 
    ```bash
    # See all notebooks
-   opennotes notebook list
+   jot notebook list
 
    # Specify notebook explicitly
-   opennotes -n "MyNotebook" notes list
+   jot -n "MyNotebook" notes list
 
    # Or set default
-   opennotes notebook set-default "MyNotebook"
+   jot notebook set-default "MyNotebook"
    ```
 
 ---
@@ -94,7 +94,7 @@ Before diving into specific sections, use this flowchart to identify your issue:
    ls -la ~/my-notes
 
    # Run commands as the same user
-   sudo -u username opennotes notebook create ...
+   sudo -u username jot notebook create ...
 
    # Or change ownership
    sudo chown -R $USER:$USER ~/my-notes
@@ -109,20 +109,20 @@ Before diving into specific sections, use this flowchart to identify your issue:
    # Temporarily disable for testing
    sudo setenforce 0
 
-   # Or configure policy for opennotes (consult your admin)
+   # Or configure policy for jot (consult your admin)
    ```
 
 4. **Windows: Path with special characters**
 
    ```bash
    # ❌ May fail with spaces or special chars
-   opennotes notebook create "My Notes" --path "C:\Users\Me\My Documents\Notes"
+   jot notebook create "My Notes" --path "C:\Users\Me\My Documents\Notes"
 
    # ✅ Use quoted paths
-   opennotes notebook create "MyNotes" --path "C:\Users\Me\My Documents\Notes"
+   jot notebook create "MyNotes" --path "C:\Users\Me\My Documents\Notes"
 
    # ✅ Or use forward slashes
-   opennotes notebook create "MyNotes" --path "C:/Users/Me/My Documents/Notes"
+   jot notebook create "MyNotes" --path "C:/Users/Me/My Documents/Notes"
    ```
 
 ---
@@ -138,11 +138,11 @@ Before diving into specific sections, use this flowchart to identify your issue:
    ```bash
    # Import works, but may take time on first run
    # Be patient - large collections need time to index
-   opennotes notebook create "BigCollection" --path ~/large-notes
+   jot notebook create "BigCollection" --path ~/large-notes
 
    # Subsequent operations will be faster (cached)
-   opennotes notes list  # First time: may take 30-60 seconds
-   opennotes notes list  # Second time: <1 second
+   jot notes list  # First time: may take 30-60 seconds
+   jot notes list  # Second time: <1 second
    ```
 
 2. **Network-mounted notebook (slow storage)**
@@ -151,7 +151,7 @@ Before diving into specific sections, use this flowchart to identify your issue:
    # Network drives are slower
    # Solution: Copy to local storage first
    cp -r /mnt/network-storage/notes ~/local-notes
-   opennotes notebook create "LocalNotes" --path ~/local-notes
+   jot notebook create "LocalNotes" --path ~/local-notes
    ```
 
 3. **System running out of memory**
@@ -163,14 +163,14 @@ Before diving into specific sections, use this flowchart to identify your issue:
 
    # If low on memory, close other applications
    # Or process in smaller batches:
-   opennotes notebook create "Batch1" --path ~/notes/a-m
-   opennotes notebook create "Batch2" --path ~/notes/n-z
+   jot notebook create "Batch1" --path ~/notes/a-m
+   jot notebook create "Batch2" --path ~/notes/n-z
    ```
 
 4. **Antivirus scanning files during import**
 
    ```bash
-   # Add opennotes to antivirus exclusions
+   # Add jot to antivirus exclusions
    # Location depends on antivirus (Windows Defender, etc.)
 
    # Or temporarily disable for import
@@ -195,22 +195,22 @@ Before diving into specific sections, use this flowchart to identify your issue:
    export LC_ALL=en_US.UTF-8
    export LANG=en_US.UTF-8
 
-   # Then run opennotes
-   opennotes notebook create "MyNotebook" --path ~/my-notes
+   # Then run jot
+   jot notebook create "MyNotebook" --path ~/my-notes
    ```
 
 2. **Special shell characters in filenames**
 
    ```bash
    # Files with spaces, quotes, etc. are handled automatically
-   # OpenNotes safely escapes these
+   # Jot safely escapes these
 
    # These are fine:
    # - "My Note (v2).md"
    # - "TODO: Buy groceries.md"
    # - "Author's notes.md"
 
-   opennotes notes list  # Shows all correctly
+   jot notes list  # Shows all correctly
    ```
 
 3. **Windows: Forbidden characters**
@@ -256,7 +256,7 @@ Before diving into specific sections, use this flowchart to identify your issue:
 3. **Deeply nested symlinks**
 
    ```bash
-   # OpenNotes resolves symlinks safely
+   # Jot resolves symlinks safely
    # But deeply nested structures may be slow
 
    # Check depth
@@ -280,15 +280,15 @@ Before diving into specific sections, use this flowchart to identify your issue:
 
    ```bash
    # ❌ Wrong pattern
-   opennotes notes search --sql "
+   jot notes search --sql "
    SELECT * FROM read_markdown('/wrong/*.md')
    "
 
    # ✅ Check what files exist first
-   opennotes notes list
+   jot notes list
 
    # ✅ Use correct pattern
-   opennotes notes search --sql "
+   jot notes search --sql "
    SELECT * FROM read_markdown('*.md')
    "
    ```
@@ -449,7 +449,7 @@ Before diving into specific sections, use this flowchart to identify your issue:
    SELECT * FROM read_markdown()
 
    # ✅ Export incrementally
-   opennotes notes search --sql "
+   jot notes search --sql "
    SELECT file_path FROM read_markdown()
    LIMIT 1000 OFFSET 0
    " | head -100 > results.txt
@@ -495,10 +495,10 @@ Before diving into specific sections, use this flowchart to identify your issue:
    ```bash
    # ❌ Can't run while importing
    # Wait for import to complete
-   opennotes notebook create "Notebook" --path ~/notes  # Taking long
+   jot notebook create "Notebook" --path ~/notes  # Taking long
 
    # In another terminal, queries will wait
-   opennotes notes search --sql "SELECT * FROM read_markdown()"  # Waits
+   jot notes search --sql "SELECT * FROM read_markdown()"  # Waits
    ```
 
 3. **System under heavy load**
@@ -518,15 +518,15 @@ Before diving into specific sections, use this flowchart to identify your issue:
 
 ### Command Not Recognized
 
-**Error message**: `opennotes: command not found` or `unknown command`
+**Error message**: `jot: command not found` or `unknown command`
 
 **Causes and solutions**:
 
-1. **opennotes not in PATH**
+1. **jot not in PATH**
 
    ```bash
-   # Check if opennotes is installed
-   which opennotes
+   # Check if jot is installed
+   which jot
 
    # If not found, install it
    # See README for installation instructions
@@ -539,19 +539,19 @@ Before diving into specific sections, use this flowchart to identify your issue:
 
    ```bash
    # ❌ Wrong command
-   opennotes note list
+   jot note list
 
    # ✅ Correct commands
-   opennotes notes list
-   opennotes notebook list
+   jot notes list
+   jot notebook list
    ```
 
 3. **Subcommand not available**
    ```bash
    # See all available commands
-   opennotes --help
-   opennotes notes --help
-   opennotes notebook --help
+   jot --help
+   jot notes --help
+   jot notebook --help
    ```
 
 ---
@@ -566,34 +566,34 @@ Before diving into specific sections, use this flowchart to identify your issue:
 
    ```bash
    # Check config file
-   cat ~/.config/opennotes/config.json
+   cat ~/.config/jot/config.json
 
    # Validate JSON (if you have jq)
-   jq empty ~/.config/opennotes/config.json
+   jq empty ~/.config/jot/config.json
 
    # Backup and regenerate if needed
-   cp ~/.config/opennotes/config.json ~/.config/opennotes/config.json.bak
-   rm ~/.config/opennotes/config.json
-   opennotes notebook list  # Creates fresh config
+   cp ~/.config/jot/config.json ~/.config/jot/config.json.bak
+   rm ~/.config/jot/config.json
+   jot notebook list  # Creates fresh config
    ```
 
 2. **Wrong permissions on config file**
 
    ```bash
    # Config file should be readable by user
-   ls -la ~/.config/opennotes/config.json
+   ls -la ~/.config/jot/config.json
 
    # Fix permissions if needed
-   chmod 644 ~/.config/opennotes/config.json
-   chmod 755 ~/.config/opennotes
+   chmod 644 ~/.config/jot/config.json
+   chmod 755 ~/.config/jot
    ```
 
 3. **Config file in wrong location (custom HOME)**
 
    ```bash
-   # OpenNotes looks in $HOME/.config/opennotes
+   # Jot looks in $HOME/.config/jot
    echo $HOME
-   ls -la ~/.config/opennotes/
+   ls -la ~/.config/jot/
 
    # If custom config location needed, check docs
    ```
@@ -610,38 +610,38 @@ Before diving into specific sections, use this flowchart to identify your issue:
 
    ```bash
    # List all notebooks
-   opennotes notebook list
+   jot notebook list
 
    # Use full name or set default
-   opennotes -n "Work" notes list
-   opennotes notebook set-default "Work"
+   jot -n "Work" notes list
+   jot notebook set-default "Work"
    ```
 
 2. **Environment variable overriding settings**
 
    ```bash
-   # Check for OPENNOTES environment variables
-   env | grep OPENNOTES
+   # Check for JOT environment variables
+   env | grep JOT
 
    # Unset if causing conflicts
-   unset OPENNOTES_NOTEBOOK
+   unset JOT_NOTEBOOK
 
    # Use explicit flag instead
-   opennotes -n "MyNotebook" notes list
+   jot -n "MyNotebook" notes list
    ```
 
 3. **Auto-discovery finding multiple matches**
 
    ```bash
-   # OpenNotes searches parent directories for .opennotes.json
+   # Jot searches parent directories for .jot.json
    # May find multiple if nested
 
    # Specify explicitly
-   opennotes -n "MyNotebook" notes list
+   jot -n "MyNotebook" notes list
 
-   # Or move to directory containing .opennotes.json
+   # Or move to directory containing .jot.json
    cd ~/my-notes
-   opennotes notes list
+   jot notes list
    ```
 
 ---
@@ -652,13 +652,13 @@ Before diving into specific sections, use this flowchart to identify your issue:
 
 **Causes and solutions**:
 
-1. **PATH not including OpenNotes**
+1. **PATH not including Jot**
 
    ```bash
    # Check PATH
    echo $PATH
 
-   # Add OpenNotes location
+   # Add Jot location
    export PATH="/home/user/.local/bin:$PATH"
 
    # Make permanent in ~/.bashrc or ~/.zshrc
@@ -674,7 +674,7 @@ Before diving into specific sections, use this flowchart to identify your issue:
    # If empty, set it
    export HOME=/home/username
 
-   # Then opennotes can find config
+   # Then jot can find config
    ```
 
 3. **Shell not loading environment**
@@ -693,17 +693,17 @@ Before diving into specific sections, use this flowchart to identify your issue:
 
 #### macOS
 
-**Issue**: "opennotes cannot be opened because it is not from an identified developer"
+**Issue**: "jot cannot be opened because it is not from an identified developer"
 
 Solution:
 
 ```bash
 # Allow in Security & Privacy
 # System Preferences → Security & Privacy → General
-# Click "Open Anyway" for opennotes
+# Click "Open Anyway" for jot
 
 # Or bypass from terminal
-spctl --add --label "OpenNotes" $(which opennotes)
+spctl --add --label "Jot" $(which jot)
 ```
 
 #### Windows
@@ -731,7 +731,7 @@ Solution:
 
 ```bash
 # Check if binary is for your architecture
-file $(which opennotes)
+file $(which jot)
 
 # Should show "x86-64 executable" or similar
 # If not, you may have wrong binary for your system
@@ -746,7 +746,7 @@ file $(which opennotes)
 
 ### Slow Searches
 
-**Symptom**: `opennotes notes search` takes 10+ seconds
+**Symptom**: `jot notes search` takes 10+ seconds
 
 **Causes and solutions**:
 
@@ -754,10 +754,10 @@ file $(which opennotes)
 
    ```bash
    # First run: slower (loading index)
-   # opennotes notes search "keyword"  # ~5-30 seconds
+   # jot notes search "keyword"  # ~5-30 seconds
 
    # Subsequent runs: much faster (cached)
-   # opennotes notes search "keyword"  # <1 second
+   # jot notes search "keyword"  # <1 second
 
    # This is normal behavior
    ```
@@ -771,17 +771,17 @@ file $(which opennotes)
    # Slow storage (USB drive, network mount) impacts performance
    # Solution: Copy to SSD
    cp -r /mnt/slow-drive/notes ~/fast-ssd/notes
-   opennotes notebook create "Notes" --path ~/fast-ssd/notes
+   jot notebook create "Notes" --path ~/fast-ssd/notes
    ```
 
 3. **Regex patterns can be slow**
 
    ```bash
    # ❌ Complex regex may be slow
-   opennotes notes search "^[A-Z].*\d{4}$"
+   jot notes search "^[A-Z].*\d{4}$"
 
    # ✅ Simpler patterns are faster
-   opennotes notes search "word1 word2"
+   jot notes search "word1 word2"
    ```
 
 ---
@@ -796,12 +796,12 @@ file $(which opennotes)
 
    ```bash
    # ❌ Slow: Reads all content
-   opennotes notes search --sql "
+   jot notes search --sql "
    SELECT * FROM read_markdown()
    "
 
    # ✅ Fast: Uses metadata only
-   opennotes notes search --sql "
+   jot notes search --sql "
    SELECT file_path FROM read_markdown()
    LIMIT 100
    "
@@ -824,11 +824,11 @@ file $(which opennotes)
 
    ```bash
    # Instead of one 20,000-file notebook
-   opennotes notebook create "Archive" --path ~/notes/archive
-   opennotes notebook create "Active" --path ~/notes/active
+   jot notebook create "Archive" --path ~/notes/archive
+   jot notebook create "Active" --path ~/notes/active
 
    # Queries on each will be faster
-   opennotes -n "Active" notes search --sql "SELECT * FROM read_markdown()"
+   jot -n "Active" notes search --sql "SELECT * FROM read_markdown()"
    ```
 
 ---
@@ -849,7 +849,7 @@ file $(which opennotes)
    HAVING complex aggregate conditions
 
    # ✅ Two simpler queries
-   opennotes notes search --sql "SELECT * FROM read_markdown() LIMIT 100"
+   jot notes search --sql "SELECT * FROM read_markdown() LIMIT 100"
    # Process results in script or jq
    ```
 
@@ -873,8 +873,8 @@ file $(which opennotes)
 
    ```bash
    # Remove and recreate notebook
-   opennotes notebook delete "MyNotebook"
-   opennotes notebook create "MyNotebook" --path ~/my-notes
+   jot notebook delete "MyNotebook"
+   jot notebook create "MyNotebook" --path ~/my-notes
    ```
 
 2. **Check disk space**
@@ -919,11 +919,11 @@ file $(which opennotes)
    # Or download from jqlang.github.io/jq
    ```
 
-2. **Invalid JSON from OpenNotes**
+2. **Invalid JSON from Jot**
 
    ```bash
-   # Check if opennotes output is valid JSON
-   opennotes notes search --sql "SELECT * FROM read_markdown() LIMIT 1" | jq .
+   # Check if jot output is valid JSON
+   jot notes search --sql "SELECT * FROM read_markdown() LIMIT 1" | jq .
 
    # If error, may need --json flag (if available)
    ```
@@ -932,10 +932,10 @@ file $(which opennotes)
 
    ```bash
    # ❌ Invalid jq syntax
-   opennotes notes search --sql "..." | jq '.[] | invalid syntax'
+   jot notes search --sql "..." | jq '.[] | invalid syntax'
 
    # ✅ Valid jq syntax
-   opennotes notes search --sql "..." | jq '.[] | .field'
+   jot notes search --sql "..." | jq '.[] | .field'
    ```
 
 ---
@@ -961,7 +961,7 @@ file $(which opennotes)
    ```bash
    # ❌ Won't work in /bin/sh
    #!/bin/sh
-   opennotes notes search --sql "SELECT ..."  # Command substitution
+   jot notes search --sql "SELECT ..."  # Command substitution
 
    # ✅ Fix by using #!/bin/bash
    #!/bin/bash
@@ -989,30 +989,30 @@ file $(which opennotes)
 
    ```bash
    # ❌ Backslashes in bash/PowerShell
-   opennotes notebook create "Notes" --path "C:\Users\Me\Notes"
+   jot notebook create "Notes" --path "C:\Users\Me\Notes"
 
    # ✅ Use forward slashes
-   opennotes notebook create "Notes" --path "C:/Users/Me/Notes"
+   jot notebook create "Notes" --path "C:/Users/Me/Notes"
 
    # ✅ Or escape backslashes
-   opennotes notebook create "Notes" --path "C:\\Users\\Me\\Notes"
+   jot notebook create "Notes" --path "C:\\Users\\Me\\Notes"
    ```
 
 2. **Spaces in paths**
 
    ```bash
    # ❌ Unquoted path with spaces fails
-   opennotes notebook create "Notes" --path C:\Users\My Documents\Notes
+   jot notebook create "Notes" --path C:\Users\My Documents\Notes
 
    # ✅ Quote the path
-   opennotes notebook create "Notes" --path "C:/Users/My Documents/Notes"
+   jot notebook create "Notes" --path "C:/Users/My Documents/Notes"
    ```
 
 3. **UNC paths (network shares)**
 
    ```bash
    # UNC paths are supported
-   opennotes notebook create "Remote" --path "//server/share/notes"
+   jot notebook create "Remote" --path "//server/share/notes"
 
    # But may be slower than local storage
    ```
@@ -1065,11 +1065,11 @@ file $(which opennotes)
 
 **Causes and solutions**:
 
-1. **OpenNotes version too old**
+1. **Jot version too old**
 
    ```bash
    # Check version
-   opennotes --version
+   jot --version
 
    # Update to latest
    # See README for update instructions
@@ -1078,7 +1078,7 @@ file $(which opennotes)
 2. **DuckDB version mismatch**
 
    ```bash
-   # OpenNotes includes correct DuckDB version
+   # Jot includes correct DuckDB version
    # Shouldn't need separate installation
 
    # If issues, try rebuilding
@@ -1110,20 +1110,20 @@ file $(which opennotes)
 4. **Store notebooks on fast storage** (SSD, not network drives)
 5. **Split large collections** into multiple notebooks
 
-### Q: Can I use OpenNotes with Obsidian/Bear/Notion?
+### Q: Can I use Jot with Obsidian/Bear/Notion?
 
 **A**:
 
-- **Obsidian**: Yes! OpenNotes can read Obsidian vaults directly
+- **Obsidian**: Yes! Jot can read Obsidian vaults directly
 - **Bear**: You must export from Bear first (as Markdown)
 - **Notion**: Export to Markdown, then import
 - See [Import Workflow Guide](import-workflow-guide.md) for details
 
-### Q: Is my data safe with OpenNotes?
+### Q: Is my data safe with Jot?
 
 **A**:
 
-- **OpenNotes doesn't modify notes** unless you explicitly run commands
+- **Jot doesn't modify notes** unless you explicitly run commands
 - **SQL queries are read-only** (defensive programming prevents writes)
 - **Backups recommended** - store notebook on git for version control
 - **Local-only by default** - notes stay on your computer
@@ -1133,7 +1133,7 @@ file $(which opennotes)
 **A**:
 
 - **Local notebooks**: Share the folder (via cloud sync, git, etc.)
-- **Set up on each machine**: `opennotes notebook create "Shared" --path /path/to/notes`
+- **Set up on each machine**: `jot notebook create "Shared" --path /path/to/notes`
 - **Git workflow**: Pull latest, run queries, commit results
 - **See Notebook Discovery guide** for multi-notebook setups
 
@@ -1143,7 +1143,7 @@ file $(which opennotes)
 
 - **SQL queries return JSON** - pipe to jq for transformation
 - **Export to CSV**: Use SQL's text output or jq conversion
-- **Save to file**: Redirect output: `opennotes notes search ... > results.md`
+- **Save to file**: Redirect output: `jot notes search ... > results.md`
 - **See Automation Recipes** for export scripts
 
 ### Q: What SQL functions are available?
@@ -1167,8 +1167,8 @@ Yes! **Fully supported** on Windows 10+. See:
 
 **A**:
 
-- **Notes stay in original location** - OpenNotes doesn't move them
-- **Configuration**: `~/.config/opennotes/config.json`
+- **Notes stay in original location** - Jot doesn't move them
+- **Configuration**: `~/.config/jot/config.json`
 - **All original files**: Untouched in your notebook directory
 
 ### Q: Can I run SQL queries on encrypted notes?
@@ -1177,7 +1177,7 @@ Yes! **Fully supported** on Windows 10+. See:
 
 - **Encrypted files**: Must be decrypted first (done at OS level)
 - **Encrypted filesystems**: Supported if mounted and readable
-- **Encrypted text**: OpenNotes sees encrypted content as regular text
+- **Encrypted text**: Jot sees encrypted content as regular text
 
 ### Q: How do I troubleshoot a slow query?
 
@@ -1196,7 +1196,7 @@ Yes! **Fully supported** on Windows 10+. See:
 If your issue isn't covered here:
 
 1. **Check the documentation**: [Getting Started Guide](getting-started-power-users.md), [SQL Quick Reference](sql-quick-reference.md)
-2. **Read the CLI help**: `opennotes --help`, `opennotes notes search --help`
+2. **Read the CLI help**: `jot --help`, `jot notes search --help`
 3. **Try the examples**: [Automation Recipes](automation-recipes.md) has working examples
 4. **Report bugs**: GitHub issues with command and error output
 
@@ -1216,4 +1216,4 @@ Next steps:
 
 - Explore [Advanced Workflows](automation-recipes.md) for automation
 - Master [SQL Queries](sql-quick-reference.md) for custom analysis
-- Build a [Personal Knowledge Base](getting-started-power-users.md) with OpenNotes
+- Build a [Personal Knowledge Base](getting-started-power-users.md) with Jot
