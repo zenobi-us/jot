@@ -32,14 +32,14 @@ func CreateTestNotebook(t *testing.T, dir, name string) string {
 		t.Fatalf("failed to create notes directory: %v", err)
 	}
 
-	// Create .opennotes.json config
+	// Create .jot.json config
 	config := NotebookConfig{
 		Name:     name,
 		Root:     notebookDir,
 		Contexts: []string{},
 	}
 
-	configPath := filepath.Join(notebookDir, ".opennotes.json")
+	configPath := filepath.Join(notebookDir, ".jot.json")
 	data, err := json.MarshalIndent(config, "", "  ")
 	if err != nil {
 		t.Fatalf("failed to marshal notebook config: %v", err)
@@ -120,7 +120,7 @@ func CreateInvalidNotebookConfig(t *testing.T, dir, name string) string {
 		t.Fatalf("failed to create notebook directory: %v", err)
 	}
 
-	configPath := filepath.Join(notebookDir, ".opennotes.json")
+	configPath := filepath.Join(notebookDir, ".jot.json")
 	if err := os.WriteFile(configPath, []byte("{ invalid json }"), 0644); err != nil {
 		t.Fatalf("failed to write invalid config: %v", err)
 	}

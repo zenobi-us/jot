@@ -381,7 +381,7 @@ func setupSearchNotebook(t *testing.T, env *testEnv) string {
 		"name": "Search Test Notebook",
 		"version": "1.0.0"
 	}`
-	require.NoError(t, os.WriteFile(filepath.Join(nbDir, ".opennotes.json"), []byte(config), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(nbDir, ".jot.json"), []byte(config), 0644))
 
 	// Create notes directory structure
 	require.NoError(t, os.MkdirAll(filepath.Join(nbDir, "epics"), 0755))

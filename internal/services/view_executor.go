@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zenobi-us/opennotes/internal/core"
-	"github.com/zenobi-us/opennotes/internal/search"
-	"github.com/zenobi-us/opennotes/internal/search/parser"
+	"github.com/zenobi-us/jot/internal/core"
+	"github.com/zenobi-us/jot/internal/search"
+	"github.com/zenobi-us/jot/internal/search/parser"
 )
 
 // ViewResults holds the results of executing a view.

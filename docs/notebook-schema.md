@@ -1,6 +1,6 @@
 # Notebook Configuration Schema
 
-This document describes the JSON schema for `.opennotes.json` notebook configuration files.
+This document describes the JSON schema for `.jot.json` notebook configuration files.
 
 ## Purpose
 
@@ -14,8 +14,8 @@ The schema provides:
 
 The schema will be available at:
 
-- Local: `./opennotes.schema.json` (generated on notebook creation)
-- Remote: `https://opennotes.dev/schema/v1/notebook.json` (future)
+- Local: `./jot.schema.json` (generated on notebook creation)
+- Remote: `https://jot.dev/schema/v1/notebook.json` (future)
 
 ## Configuration Structure
 
@@ -43,8 +43,8 @@ type NotebookGroup struct {
 ```json
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "OpenNotes Notebook Configuration",
-  "description": "Configuration for an OpenNotes notebook",
+  "title": "Jot Notebook Configuration",
+  "description": "Configuration for an Jot notebook",
   "type": "object",
   "required": ["root", "name"],
   "properties": {
@@ -113,11 +113,11 @@ type NotebookGroup struct {
 
 ## Usage
 
-Once implemented, users can reference the schema in their `.opennotes.json`:
+Once implemented, users can reference the schema in their `.jot.json`:
 
 ```json
 {
-  "$schema": "./opennotes.schema.json",
+  "$schema": "./jot.schema.json",
   "root": ".notes",
   "name": "My Notebook",
   "contexts": ["/path/to/workspace"],
@@ -133,8 +133,8 @@ Once implemented, users can reference the schema in their `.opennotes.json`:
 
 ## Implementation Plan
 
-1. Create `opennotes.schema.json` file
-2. Modify `opennotes notebook create` to generate schema file
-3. Update existing `.opennotes.json` files to include `$schema` reference
-4. Add validation command: `opennotes notebook validate`
+1. Create `jot.schema.json` file
+2. Modify `jot notebook create` to generate schema file
+3. Update existing `.jot.json` files to include `$schema` reference
+4. Add validation command: `jot notebook validate`
 5. Document in main README and guides

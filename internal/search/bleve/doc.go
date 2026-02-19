@@ -6,7 +6,7 @@
 //
 // # Index Location
 //
-// The index is stored in `.opennotes/index/` within the notebook root directory.
+// The index is stored in `.jot/index/` within the notebook root directory.
 // The directory is created automatically when the index is first opened.
 //
 // # Document Mapping

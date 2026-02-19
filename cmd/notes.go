@@ -14,29 +14,29 @@ The notebook is automatically discovered from the current directory,
 or can be specified with the --notebook flag.
 
 POWER USER FEATURES:
-  🔍 Advanced Query Filters: opennotes notes search query --and path=projects/*.md
+  🔍 Advanced Query Filters: jot notes search query --and path=projects/*.md
   🤖 JSON Output for Automation: Results automatically JSON-formatted for jq and tool integration
-  ✨ Fuzzy Search: opennotes notes search --fuzzy "mtng"
+  ✨ Fuzzy Search: jot notes search --fuzzy "mtng"
   💾 Large Notebook Support: Efficiently search thousands of notes in seconds
 
 DOCUMENTATION:
-  📚 Search Guide: https://github.com/zenobi-us/opennotes/blob/main/docs/commands/notes-search.md
+  📚 Search Guide: https://github.com/zenobi-us/jot/blob/main/docs/commands/notes-search.md
 
 Examples:
   # List all notes
-  opennotes notes list
+  jot notes list
 
   # Add a new note with title
-  opennotes notes add --title "Meeting Notes"
+  jot notes add --title "Meeting Notes"
 
   # Search notes by content
-  opennotes notes search "project deadline"
+  jot notes search "project deadline"
 
   # Query with boolean filters
-  opennotes notes search query --and path=**/*.md --not path=archive/*
+  jot notes search query --and path=**/*.md --not path=archive/*
 
   # Remove a note
-  opennotes notes remove my-note.md`,
+  jot notes remove my-note.md`,
 }
 
 func init() {

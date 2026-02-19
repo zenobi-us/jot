@@ -1,6 +1,6 @@
 # DuckDB Extensions in CI/CD
 
-This document explains how OpenNotes handles DuckDB extension loading in CI/CD environments like GitHub Actions.
+This document explains how Jot handles DuckDB extension loading in CI/CD environments like GitHub Actions.
 
 ## The Problem
 

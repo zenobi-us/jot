@@ -1,12 +1,12 @@
-# OpenNotes Documentation Index
+# Jot Documentation Index
 
-Complete guide to OpenNotes documentation, organized for quick navigation by use case, workflow, and learning level.
+Complete guide to Jot documentation, organized for quick navigation by use case, workflow, and learning level.
 
 ---
 
 ## 🚀 Quick Start by Use Case
 
-### I'm new to OpenNotes
+### I'm new to Jot
 
 Choose your path:
 
@@ -26,7 +26,7 @@ Choose your path:
 
 ### I'm migrating from another tool
 
-**Time**: 30 minutes | **Goal**: Move your existing notes to OpenNotes
+**Time**: 30 minutes | **Goal**: Move your existing notes to Jot
 
 1. Pick your source: [Import Workflow Guide](import-workflow-guide.md)
    - Coming from Obsidian? See "Obsidian Vault Import"
@@ -221,7 +221,7 @@ Goal: Complete mastery of all features and patterns
 7. **[Getting Started Troubleshooting Guide](getting-started-troubleshooting.md)** (30 min)
    - Deep understanding of issues and solutions
 
-**Outcome**: You're an OpenNotes expert
+**Outcome**: You're an Jot expert
 
 ---
 
@@ -284,19 +284,19 @@ Goal: Complete mastery of all features and patterns
 ### CLI Help Commands
 ```bash
 # Full help
-opennotes --help
+jot --help
 
 # Notebook help
-opennotes notebook --help
+jot notebook --help
 
 # Notes help
-opennotes notes --help
+jot notes --help
 
 # Search help
-opennotes notes search --help
+jot notes search --help
 
 # SQL help
-opennotes notes search --help  # See --sql flag documentation
+jot notes search --help  # See --sql flag documentation
 ```
 
 ---
@@ -328,7 +328,7 @@ opennotes notes search --help  # See --sql flag documentation
 ## 📋 Complete Documentation Structure
 
 ```
-📚 OpenNotes Documentation
+📚 Jot Documentation
 
 ├── 🚀 Getting Started
 │   ├── Getting Started for Power Users (15 min onboarding)
@@ -357,7 +357,7 @@ opennotes notes search --help  # See --sql flag documentation
 
 **Bash/Shell**:
 ```bash
-opennotes notebook create "MyNotebook" --path ~/my-notes
+jot notebook create "MyNotebook" --path ~/my-notes
 ```
 
 **SQL**:
@@ -389,7 +389,7 @@ ORDER BY words DESC
 
 **Internal**: Cross-reference guides with markdown links like `[SQL Quick Reference](sql-quick-reference.md)`
 
-**CLI Help**: Reference commands like `opennotes notes search --help`
+**CLI Help**: Reference commands like `jot notes search --help`
 
 ---
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/zenobi-us/opennotes/cmd"
+	"github.com/zenobi-us/jot/cmd"
 )
 
 func main() {
@@ -20,10 +20,10 @@ func main() {
 	}
 }
 
-// Version information for OpenNotes
+// Version information for Jot
 // These variables are updated automatically by release-please
 var (
-	// Version is the current version of OpenNotes
+	// Version is the current version of Jot
 	// x-release-please-start-version
 	Version = "0.0.2"
 	// x-release-please-end

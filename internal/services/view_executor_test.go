@@ -6,9 +6,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/zenobi-us/opennotes/internal/core"
-	"github.com/zenobi-us/opennotes/internal/services"
-	"github.com/zenobi-us/opennotes/internal/testutil"
+	"github.com/zenobi-us/jot/internal/core"
+	"github.com/zenobi-us/jot/internal/services"
+	"github.com/zenobi-us/jot/internal/testutil"
 )
 
 func TestViewService_ExecuteView(t *testing.T) {

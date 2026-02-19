@@ -2,11 +2,11 @@
 
 > **Looking for a simpler onboarding path?** Check out the [Getting Started: Beginner's Guide](getting-started-basics.md) if you prefer to learn basic note management without SQL first. You can always come back to this guide when you're ready for advanced features!
 
-Welcome to OpenNotes! This guide is designed for experienced developers who want to unlock the full power of OpenNotes in 15 minutes.
+Welcome to Jot! This guide is designed for experienced developers who want to unlock the full power of Jot in 15 minutes.
 
-## The OpenNotes Advantage
+## The Jot Advantage
 
-Unlike basic note tools, OpenNotes gives you:
+Unlike basic note tools, Jot gives you:
 
 - **SQL Querying**: Query your entire markdown collection using DuckDB's powerful SQL engine
 - **Markdown Intelligence**: Extract structure, statistics, and metadata from markdown files
@@ -19,16 +19,16 @@ Unlike basic note tools, OpenNotes gives you:
 
 ## Part 1: Import Your Existing Notes (2 minutes)
 
-OpenNotes works best with your existing markdown files. No migration needed—just point it at your notes directory.
+Jot works best with your existing markdown files. No migration needed—just point it at your notes directory.
 
 ### Basic Setup
 
 ```bash
 # Create a notebook from your existing markdown folder
-opennotes notebook create "My Notes" --path ~/my-notes
+jot notebook create "My Notes" --path ~/my-notes
 
 # Verify the import worked
-opennotes notes list
+jot notes list
 ```
 
 ### Verify Import Success
@@ -46,12 +46,12 @@ You should see your markdown files listed with titles extracted from frontmatter
 **Pro Tip**: If you have multiple note collections (work, personal, projects), create separate notebooks:
 
 ```bash
-opennotes notebook create "Work" --path ~/work/notes
-opennotes notebook create "Personal" --path ~/personal/notes
-opennotes notebook create "Projects" --path ~/projects/notes
+jot notebook create "Work" --path ~/work/notes
+jot notebook create "Personal" --path ~/personal/notes
+jot notebook create "Projects" --path ~/projects/notes
 
 # Switch between contexts automatically by changing directories
-cd ~/work/notes && opennotes notes list  # Uses "Work" notebook
+cd ~/work/notes && jot notes list  # Uses "Work" notebook
 ```
 
 ---
@@ -64,7 +64,7 @@ Now for the magic. Execute sophisticated queries against your entire note collec
 
 ```bash
 # Find all your markdown files
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')"
+jot notes search --sql "SELECT file_path FROM read_markdown('**/*.md')"
 ```
 
 **What this does**: Queries all markdown files in your notebook using DuckDB's SQL engine, returning clean JSON.
@@ -75,7 +75,7 @@ opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')"
 
 ```bash
 # Search for "deadline" across all notes
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path, content FROM read_markdown('**/*.md', include_filepath:=true)
    WHERE content ILIKE '%deadline%'
    LIMIT 10"
@@ -85,7 +85,7 @@ opennotes notes search --sql \
 
 ```bash
 # Find your longest notes (by word count)
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path, (md_stats(content)).word_count as words
    FROM read_markdown('**/*.md', include_filepath:=true)
    ORDER BY words DESC
@@ -96,7 +96,7 @@ opennotes notes search --sql \
 
 ```bash
 # Find all unchecked tasks in your notes
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)
    WHERE content LIKE '%[ ]%'
    ORDER BY file_path"
@@ -106,7 +106,7 @@ opennotes notes search --sql \
 
 ```bash
 # See word count distribution
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT
      CASE
        WHEN (md_stats(content)).word_count < 500 THEN 'short'
@@ -131,13 +131,13 @@ All the examples above just scratch the surface. For complete documentation:
 
 ## Part 3: Automation with JSON (5 minutes)
 
-All OpenNotes query results are JSON—perfect for piping to tools and scripts.
+All Jot query results are JSON—perfect for piping to tools and scripts.
 
 ### Basic JSON Output
 
 ```bash
 # All SQL query results are automatically JSON
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')"
+jot notes search --sql "SELECT file_path FROM read_markdown('**/*.md')"
 # Output:
 # [
 #   { "file_path": "notes/project-ideas.md" },
@@ -152,7 +152,7 @@ opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')"
 
 ```bash
 # Get just the file paths for piping to other commands
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" \
+jot notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" \
   | jq -r '.[].file_path'
 ```
 
@@ -160,7 +160,7 @@ opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" \
 
 ```bash
 # Total word count across all notes
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT (md_stats(content)).word_count FROM read_markdown('**/*.md')" \
   | jq 'map(.word_count) | {
       total: add,
@@ -173,12 +173,12 @@ opennotes notes search --sql \
 
 ```bash
 # Export as CSV
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path, (md_stats(content)).word_count FROM read_markdown('**/*.md')" \
   | jq -r '.[] | [.file_path, .word_count] | @csv'
 
 # Export as tab-separated
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path, (md_stats(content)).word_count FROM read_markdown('**/*.md')" \
   | jq -r '.[] | [.file_path, .word_count] | @tsv'
 ```
@@ -189,7 +189,7 @@ opennotes notes search --sql \
 
 ```bash
 # Find markdown files and get real file size
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" \
+jot notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" \
   | jq -r '.[].file_path' \
   | xargs ls -lh
 
@@ -201,7 +201,7 @@ opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" \
 
 ```bash
 # Count total lines across all notes
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" \
+jot notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" \
   | jq -r '.[].file_path' \
   | xargs wc -l | tail -1
 ```
@@ -210,25 +210,25 @@ opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" \
 
 ```bash
 # Find notes created today and show their content
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" \
+jot notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" \
   | jq -r '.[].file_path' \
   | xargs find -mtime -1
 
 # Combine with other tools
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" \
+jot notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" \
   | jq -r '.[].file_path' \
   | xargs ls -lh | awk '{print $9, $5}'
 ```
 
 ### Continuous Monitoring
 
-Use cron + OpenNotes for automated note processing:
+Use cron + Jot for automated note processing:
 
 ```bash
 #!/bin/bash
 # Save as ~/bin/note-stats.sh
 
-STATS=$(opennotes notes search --sql \
+STATS=$(jot notes search --sql \
   "SELECT
      COUNT(*) as total_notes,
      AVG((md_stats(content)).word_count) as avg_words
@@ -255,16 +255,16 @@ Now that you understand the core capabilities, here are some practical workflows
 
 ```bash
 # Indexed knowledge base with search
-opennotes notebook create "Knowledge" --path ~/knowledge
+jot notebook create "Knowledge" --path ~/knowledge
 
 # Find related topics
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT DISTINCT file_path FROM read_markdown('**/*.md', include_filepath:=true)
    WHERE content ILIKE '%machine learning%' OR content ILIKE '%neural networks%'
    ORDER BY file_path"
 
 # Generate index of all notes
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path, (md_stats(content)).word_count FROM read_markdown('**/*.md')
    ORDER BY file_path" \
   | jq -r '.[] | "- [\(.file_path)](\(.file_path)) (\(.word_count) words)"'
@@ -274,16 +274,16 @@ opennotes notes search --sql \
 
 ```bash
 # Create notebook for project docs
-opennotes notebook create "ProjectDocs" --path ~/projects/docs
+jot notebook create "ProjectDocs" --path ~/projects/docs
 
 # Find all decision records
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)
    WHERE file_path LIKE '%decision%' OR file_path LIKE '%adr%'
    ORDER BY file_path DESC LIMIT 20"
 
 # Get documentation completeness
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT
      file_path,
      CASE WHEN (md_stats(content)).word_count > 500 THEN 'complete' ELSE 'needs-work' END
@@ -295,15 +295,15 @@ opennotes notes search --sql \
 
 ```bash
 # Create research notebook
-opennotes notebook create "Research" --path ~/research
+jot notebook create "Research" --path ~/research
 
 # Find all references to specific topics
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)
    WHERE content LIKE '%@TODO%' OR content LIKE '%[CITATION NEEDED]%'"
 
 # Get topic frequency (markdown headings)
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path, content FROM read_markdown('**/*.md', include_filepath:=true)
    LIMIT 100" | jq '.[] | select(.content | startswith("#"))'
 ```
@@ -312,7 +312,7 @@ opennotes notes search --sql \
 
 ```bash
 # Weekly stats email
-WEEKLY_REPORT=$(opennotes notes search --sql \
+WEEKLY_REPORT=$(jot notes search --sql \
   "SELECT
      COUNT(*) as new_notes,
      ROUND(AVG((md_stats(content)).word_count)) as avg_length
@@ -328,7 +328,7 @@ echo "Subject: Weekly Notes Report" | \
 
 ## Next Steps: Advanced Topics
 
-You now understand the OpenNotes power-user workflow. Here's what's available for deeper dives:
+You now understand the Jot power-user workflow. Here's what's available for deeper dives:
 
 ### Reference Documentation
 
@@ -353,10 +353,10 @@ You now understand the OpenNotes power-user workflow. Here's what's available fo
 
 ```bash
 # Verify your notebook is set up correctly
-opennotes notes list
+jot notes list
 
 # Try a simple query first
-opennotes notes search --sql "SELECT file_path FROM read_markdown('*.md') LIMIT 1"
+jot notes search --sql "SELECT file_path FROM read_markdown('*.md') LIMIT 1"
 
 # Check file patterns (use forward slashes, even on Windows)
 # ✓ Good: '**/*.md', 'notes/*.md'
@@ -376,12 +376,12 @@ mkdir -p ~/my-notes/test
 echo "# Test" > ~/my-notes/test/sample.md
 
 # Then try:
-opennotes notes search --sql "SELECT file_path FROM read_markdown('test/*.md')"
+jot notes search --sql "SELECT file_path FROM read_markdown('test/*.md')"
 ```
 
 ### "JSON output format unexpected"
 
-OpenNotes always returns an array of objects:
+Jot always returns an array of objects:
 
 ```bash
 # Single result
@@ -391,7 +391,7 @@ OpenNotes always returns an array of objects:
 [{"file_path": "notes1.md"}, {"file_path": "notes2.md"}]
 
 # Parse with jq
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" | jq '.[].file_path'
+jot notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" | jq '.[].file_path'
 ```
 
 ### Performance Issues
@@ -400,10 +400,10 @@ For notebooks with 1000+ notes:
 
 ```bash
 # Limit results
-opennotes notes search --sql "... LIMIT 100"
+jot notes search --sql "... LIMIT 100"
 
 # Filter early with WHERE clauses
-opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md') WHERE ..."
+jot notes search --sql "SELECT * FROM read_markdown('**/*.md') WHERE ..."
 
 # See SQL optimization tips in sql-guide.md
 ```
@@ -412,7 +412,7 @@ opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md') WHERE ..."
 
 ## Key Takeaways
 
-✅ **OpenNotes = Markdown + SQL + Automation**
+✅ **Jot = Markdown + SQL + Automation**
 
 1. **Import** your existing markdown instantly—no migration needed
 2. **Query** using SQL to find patterns and insights across your notes
@@ -428,7 +428,7 @@ opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md') WHERE ..."
 
 ✅ **What's Different**
 
-Most note tools give you basic search. OpenNotes gives you a full database query language over your markdown—a unique combination of simplicity and power.
+Most note tools give you basic search. Jot gives you a full database query language over your markdown—a unique combination of simplicity and power.
 
 ---
 
@@ -467,4 +467,4 @@ Most note tools give you basic search. OpenNotes gives you a full database query
 - **[Check the SQL Quick Reference](sql-quick-reference.md)** to start learning SQL progressively
 - **[Read the SQL Guide](sql-guide.md)** for advanced query patterns
 - **[See the Import Guide](import-workflow-guide.md)** if you're having import issues
-- **[Join the Community](https://github.com/zenobi-us/opennotes)** on GitHub
+- **[Join the Community](https://github.com/zenobi-us/jot)** on GitHub

@@ -1,6 +1,6 @@
 # Import Workflow Guide
 
-This guide walks you through importing your existing markdown collection into OpenNotes. Whether you're migrating from another tool or organizing existing files, this guide covers all scenarios and common issues.
+This guide walks you through importing your existing markdown collection into Jot. Whether you're migrating from another tool or organizing existing files, this guide covers all scenarios and common issues.
 
 ## Table of Contents
 
@@ -16,14 +16,14 @@ This guide walks you through importing your existing markdown collection into Op
 
 ## Why Import Matters
 
-Importing existing markdown gives you **immediate value** from OpenNotes without starting from scratch:
+Importing existing markdown gives you **immediate value** from Jot without starting from scratch:
 
 - **Access existing knowledge**: Your notes are already in markdown, no format conversion needed
 - **Preserve organization**: Keep your folder structure or reorganize gradually
 - **Enable SQL power**: Start querying your collection instantly
-- **Gradual adoption**: Use OpenNotes alongside existing workflows
+- **Gradual adoption**: Use Jot alongside existing workflows
 
-OpenNotes respects your existing filesystem structure—it doesn't lock your notes into a proprietary format. You can edit files directly in your editor, and OpenNotes sees the changes immediately.
+Jot respects your existing filesystem structure—it doesn't lock your notes into a proprietary format. You can edit files directly in your editor, and Jot sees the changes immediately.
 
 ---
 
@@ -40,11 +40,11 @@ OpenNotes respects your existing filesystem structure—it doesn't lock your not
 
 ### Key Concepts
 
-**Notebook**: An OpenNotes context pointing to a directory containing markdown files. One notebook = one collection of notes.
+**Notebook**: An Jot context pointing to a directory containing markdown files. One notebook = one collection of notes.
 
-**File Pattern**: How OpenNotes discovers files in your collection. Default pattern `**/*.md` recursively finds all markdown files.
+**File Pattern**: How Jot discovers files in your collection. Default pattern `**/*.md` recursively finds all markdown files.
 
-**Metadata Extraction**: OpenNotes automatically extracts:
+**Metadata Extraction**: Jot automatically extracts:
 
 - **Title**: From frontmatter `title` field, first heading (H1), or filename
 - **Content**: Full markdown content including all formatting
@@ -86,10 +86,10 @@ Expected output:
 
 ### Step 2: Create a Notebook
 
-Create an OpenNotes notebook pointing to your collection:
+Create an Jot notebook pointing to your collection:
 
 ```bash
-opennotes notebook create "My Notes" --path ~/my-notes
+jot notebook create "My Notes" --path ~/my-notes
 ```
 
 Output:
@@ -102,8 +102,8 @@ Files discovered: 157
 
 **What happens**:
 
-- Notebook config created at `~/.config/opennotes/config.json`
-- OpenNotes scans your directory for all `*.md` files recursively
+- Notebook config created at `~/.config/jot/config.json`
+- Jot scans your directory for all `*.md` files recursively
 - Metadata extraction begins in background
 - No files are copied or moved
 
@@ -111,11 +111,11 @@ Files discovered: 157
 
 ```bash
 # List all notebooks
-opennotes notebook list
+jot notebook list
 
 # If needed, set default by path
 cd ~/my-notes
-opennotes notes list
+jot notes list
 ```
 
 ### Step 3: Verify Import Success
@@ -124,13 +124,13 @@ Check that your files were discovered:
 
 ```bash
 # Count total notes
-opennotes notes list | wc -l
+jot notes list | wc -l
 
 # Show first 10 notes with titles
-opennotes notes list | head -10
+jot notes list | head -10
 
 # Verify a specific file was found
-opennotes notes search "filename"
+jot notes search "filename"
 ```
 
 Example output:
@@ -147,10 +147,10 @@ Example output:
 
 ```bash
 # Check if titles are extracted from frontmatter
-opennotes notes list | grep -i "title"
+jot notes list | grep -i "title"
 
 # List notes with word count (requires SQL)
-opennotes notes search --sql "SELECT file_path, (md_stats(content)).word_count as words FROM read_markdown('**/*.md', include_filepath:=true) ORDER BY words DESC LIMIT 10"
+jot notes search --sql "SELECT file_path, (md_stats(content)).word_count as words FROM read_markdown('**/*.md', include_filepath:=true) ORDER BY words DESC LIMIT 10"
 ```
 
 ### Step 4: Execute First SQL Query
@@ -159,11 +159,11 @@ Unlock SQL power to verify the import worked completely:
 
 ```bash
 # Find all notes with "TODO" in content
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path, content FROM read_markdown('**/*.md', include_filepath:=true) WHERE content ILIKE '%TODO%' LIMIT 5"
 
 # Get statistics about your collection
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT COUNT(*) as total_notes, SUM((md_stats(content)).word_count) as total_words FROM read_markdown('**/*.md')"
 ```
 
@@ -193,13 +193,13 @@ my-notes/
 **Import command**:
 
 ```bash
-opennotes notebook create "My Notes" --path ~/my-notes
+jot notebook create "My Notes" --path ~/my-notes
 ```
 
 **Query all notes**:
 
 ```bash
-opennotes notes search --sql "SELECT file_path FROM read_markdown('*.md')"
+jot notes search --sql "SELECT file_path FROM read_markdown('*.md')"
 ```
 
 **Best for**: Small collections (<50 notes), single-topic notes, quick reference files
@@ -234,20 +234,20 @@ my-notes/
 **Import command**:
 
 ```bash
-opennotes notebook create "My Notes" --path ~/my-notes
+jot notebook create "My Notes" --path ~/my-notes
 ```
 
 **Query notes by folder**:
 
 ```bash
 # All project notes
-opennotes notes search --sql "SELECT file_path FROM read_markdown('projects/**/*.md', include_filepath:=true)"
+jot notes search --sql "SELECT file_path FROM read_markdown('projects/**/*.md', include_filepath:=true)"
 
 # Recent daily notes
-opennotes notes search --sql "SELECT file_path FROM read_markdown('daily/2024-*.md', include_filepath:=true) ORDER BY file_path DESC LIMIT 7"
+jot notes search --sql "SELECT file_path FROM read_markdown('daily/2024-*.md', include_filepath:=true) ORDER BY file_path DESC LIMIT 7"
 
 # Specific project
-opennotes notes search --sql "SELECT file_path FROM read_markdown('projects/project-alpha/*.md', include_filepath:=true)"
+jot notes search --sql "SELECT file_path FROM read_markdown('projects/project-alpha/*.md', include_filepath:=true)"
 ```
 
 **Best for**: Medium to large collections (50-1000+ notes), multiple projects, organized by context
@@ -277,20 +277,20 @@ client-a/
 **Import commands**:
 
 ```bash
-opennotes notebook create "Work" --path ~/work-notes
-opennotes notebook create "Personal" --path ~/personal-notes
-opennotes notebook create "Client A" --path ~/client-a
+jot notebook create "Work" --path ~/work-notes
+jot notebook create "Personal" --path ~/personal-notes
+jot notebook create "Client A" --path ~/client-a
 ```
 
 **Switch between notebooks by directory**:
 
 ```bash
-# OpenNotes auto-detects from current directory
-cd ~/work-notes && opennotes notes list        # Uses "Work" notebook
-cd ~/personal-notes && opennotes notes list    # Uses "Personal" notebook
+# Jot auto-detects from current directory
+cd ~/work-notes && jot notes list        # Uses "Work" notebook
+cd ~/personal-notes && jot notes list    # Uses "Personal" notebook
 
 # Or specify explicitly
-opennotes notes list --notebook "Client A"
+jot notes list --notebook "Client A"
 ```
 
 **Best for**: Power users managing multiple contexts, teams with shared repositories, client work
@@ -312,23 +312,23 @@ cp ~/Documents/*.md ~/my-notes/
 cp ~/Dropbox/Notes/*.md ~/my-notes/
 
 # 2. Create notebook
-opennotes notebook create "Personal Notes" --path ~/my-notes
+jot notebook create "Personal Notes" --path ~/my-notes
 
 # 3. Verify import
-opennotes notes list | head -20
+jot notes list | head -20
 
 # 4. First SQL query
-opennotes notes search --sql "SELECT COUNT(*) as total FROM read_markdown('**/*.md')"
+jot notes search --sql "SELECT COUNT(*) as total FROM read_markdown('**/*.md')"
 ```
 
 **First workflow**: Search and explore
 
 ```bash
 # Find notes about "Python"
-opennotes notes search "Python"
+jot notes search "Python"
 
 # Get top 10 longest notes
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path, (md_stats(content)).word_count FROM read_markdown('**/*.md') ORDER BY word_count DESC LIMIT 10"
 ```
 
@@ -345,24 +345,24 @@ Your team uses a Git repository for shared documentation.
 cd ~/projects/shared-knowledge
 
 # 2. Create notebook
-opennotes notebook create "Team Knowledge" --path ~/projects/shared-knowledge
+jot notebook create "Team Knowledge" --path ~/projects/shared-knowledge
 
 # 3. Verify structure
-opennotes notes list
+jot notes list
 
 # 4. Test team search
-opennotes notes search "API documentation"
+jot notes search "API documentation"
 ```
 
 **First workflow**: Generate team reports
 
 ```bash
 # Find all documentation that needs updating
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path FROM read_markdown('**/*.md') WHERE content LIKE '%TODO%' OR content LIKE '%FIXME%' LIMIT 20"
 
 # Export as JSON for processing
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path FROM read_markdown('**/*.md')" | jq -r '.[].file_path'
 ```
 
@@ -371,7 +371,7 @@ opennotes notes search --sql \
 ```bash
 # Notebook points to git repo
 # Changes to .md files are tracked by git
-# Use OpenNotes for querying, git for collaboration
+# Use Jot for querying, git for collaboration
 git add .
 git commit -m "Updated documentation"
 ```
@@ -386,16 +386,16 @@ You manage multiple projects with separate note repositories.
 
 ```bash
 # 1. Create notebooks for each project
-opennotes notebook create "Project Alpha" --path ~/projects/alpha/notes
-opennotes notebook create "Project Beta" --path ~/projects/beta/notes
-opennotes notebook create "Archive" --path ~/projects/archive
+jot notebook create "Project Alpha" --path ~/projects/alpha/notes
+jot notebook create "Project Beta" --path ~/projects/beta/notes
+jot notebook create "Archive" --path ~/projects/archive
 
 # 2. Verify each notebook
-opennotes notebook list
+jot notebook list
 
 # 3. Switch to a project
 cd ~/projects/alpha/notes
-opennotes notes list
+jot notes list
 
 # 4. Cross-project query (requires manual SQL)
 # Create a script to search all notebooks (see Advanced below)
@@ -405,13 +405,13 @@ opennotes notes list
 
 ```bash
 # Search in current project
-cd ~/projects/alpha/notes && opennotes notes search "feature-x"
+cd ~/projects/alpha/notes && jot notes search "feature-x"
 
 # Switch to another project
-cd ~/projects/beta/notes && opennotes notes search "bug-report"
+cd ~/projects/beta/notes && jot notes search "bug-report"
 
 # List all projects
-opennotes notebook list
+jot notebook list
 ```
 
 ---
@@ -420,7 +420,7 @@ opennotes notebook list
 
 ### Frontmatter Extraction
 
-OpenNotes automatically extracts metadata from YAML frontmatter:
+Jot automatically extracts metadata from YAML frontmatter:
 
 **Example note with frontmatter**:
 
@@ -437,7 +437,7 @@ date: 2024-01-15
 ... content ...
 ```
 
-**How OpenNotes handles it**:
+**How Jot handles it**:
 
 - **Title source**: Uses `title` field first, falls back to first `# Heading`, then filename
 - **Content**: Full markdown including frontmatter preserved as-is
@@ -446,7 +446,7 @@ date: 2024-01-15
 **Query with metadata**:
 
 ```bash
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path, content FROM read_markdown('**/*.md', include_filepath:=true) LIMIT 5"
 ```
 
@@ -454,7 +454,7 @@ opennotes notes search --sql \
 
 ### Automatic Title Detection
 
-If you don't use frontmatter, OpenNotes detects titles from content:
+If you don't use frontmatter, Jot detects titles from content:
 
 | Priority | Source              | Example            |
 | -------- | ------------------- | ------------------ |
@@ -490,11 +490,11 @@ For structured metadata beyond frontmatter, use SQL queries:
 
 ```bash
 # Extract frontmatter-like data
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path, content FROM read_markdown('**/*.md', include_filepath:=true) LIMIT 10"
 
 # Parse content structure (requires md_extract_headings)
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) WHERE content LIKE '%---' LIMIT 10"
 ```
 
@@ -506,7 +506,7 @@ See [SQL Functions Reference](sql-functions-reference.md) for advanced metadata 
 
 ### Obsidian Vault Import
 
-Obsidian stores notes as markdown with optional frontmatter (like OpenNotes):
+Obsidian stores notes as markdown with optional frontmatter (like Jot):
 
 **Step 1: Export from Obsidian**
 
@@ -519,37 +519,37 @@ cd ~/Obsidian/My-Vault
 find . -name "*.md" -type f | head -10
 ```
 
-**Step 2: Import into OpenNotes**
+**Step 2: Import into Jot**
 
 ```bash
-opennotes notebook create "Obsidian Import" --path ~/Obsidian/My-Vault
+jot notebook create "Obsidian Import" --path ~/Obsidian/My-Vault
 ```
 
 **Step 3: Verify Import**
 
 ```bash
 # Check note count
-opennotes notes list | wc -l
+jot notes list | wc -l
 
 # Test SQL query
-opennotes notes search --sql "SELECT COUNT(*) as total FROM read_markdown('**/*.md')"
+jot notes search --sql "SELECT COUNT(*) as total FROM read_markdown('**/*.md')"
 
 # Search for specific content
-opennotes notes search "important"
+jot notes search "important"
 ```
 
 **Handle Obsidian-specific features**:
 
-- ✅ **Frontmatter**: OpenNotes preserves YAML frontmatter
+- ✅ **Frontmatter**: Jot preserves YAML frontmatter
 - ✅ **Wikilinks**: Content preserved as-is (rendered as `[[link]]` text)
 - ✅ **Tags**: Stored in content, queryable with SQL `LIKE '%#tag%'`
 - ❌ **Obsidian plugins**: Not supported (use plain markdown content)
-- ❌ **Vault settings**: Not imported (use OpenNotes config instead)
+- ❌ **Vault settings**: Not imported (use Jot config instead)
 
 **Query Obsidian tags**:
 
 ```bash
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) WHERE content LIKE '%#project%' LIMIT 20"
 ```
 
@@ -566,11 +566,11 @@ Bear uses proprietary database format, but supports markdown export:
 3. Choose "Markdown" format
 4. Save to `~/bear-export`
 
-**Step 2: Import into OpenNotes**
+**Step 2: Import into Jot**
 
 ```bash
 # Bear exports as folder of .md files
-opennotes notebook create "Bear Migration" --path ~/bear-export
+jot notebook create "Bear Migration" --path ~/bear-export
 ```
 
 **Step 3: Verify and Clean**
@@ -580,10 +580,10 @@ opennotes notebook create "Bear Migration" --path ~/bear-export
 find ~/bear-export -type f ! -name "*.md"
 
 # Test import
-opennotes notes list
+jot notes list
 
 # Verify content
-opennotes notes search --sql "SELECT COUNT(*) FROM read_markdown('**/*.md')"
+jot notes search --sql "SELECT COUNT(*) FROM read_markdown('**/*.md')"
 ```
 
 **Handle Bear-specific content**:
@@ -592,7 +592,7 @@ opennotes notes search --sql "SELECT COUNT(*) FROM read_markdown('**/*.md')"
 - ✅ **Formatting**: Markdown formatting (bold, italic, etc.) preserved
 - ⚠️ **Images**: Exported as separate files, links preserved but external
 - ⚠️ **Sketches**: Not exported (re-create or use screenshots)
-- ❌ **Pinned notes**: Status lost (recreate organization in OpenNotes)
+- ❌ **Pinned notes**: Status lost (recreate organization in Jot)
 
 ---
 
@@ -625,13 +625,13 @@ done
 **Step 3: Import**
 
 ```bash
-opennotes notebook create "Imported Notes" --path ~/my-notes
+jot notebook create "Imported Notes" --path ~/my-notes
 ```
 
 **Step 4: Verify**
 
 ```bash
-opennotes notes list
+jot notes list
 ```
 
 ---
@@ -648,7 +648,7 @@ opennotes notes list
 
    ```bash
    # If this completes quickly, database is working
-   opennotes notes search --sql "SELECT COUNT(*) FROM read_markdown('**/*.md')"
+   jot notes search --sql "SELECT COUNT(*) FROM read_markdown('**/*.md')"
    ```
 
 2. **Verify file count**:
@@ -657,16 +657,16 @@ opennotes notes list
    # Count files in filesystem
    find ~/my-notes -name "*.md" | wc -l
 
-   # Compare with OpenNotes count
-   opennotes notes search --sql "SELECT COUNT(*) FROM read_markdown('**/*.md')"
+   # Compare with Jot count
+   jot notes search --sql "SELECT COUNT(*) FROM read_markdown('**/*.md')"
    ```
 
 3. **Import in batches** (if needed):
 
    ```bash
    # Create multiple notebooks for different folders
-   opennotes notebook create "Notes A-M" --path ~/my-notes/a-m
-   opennotes notebook create "Notes N-Z" --path ~/my-notes/n-z
+   jot notebook create "Notes A-M" --path ~/my-notes/a-m
+   jot notebook create "Notes N-Z" --path ~/my-notes/n-z
    ```
 
 4. **Check system resources**:
@@ -722,7 +722,7 @@ client[backup].md
 3. **SQL pattern handling**:
    ```bash
    # If you keep special characters, quote in SQL patterns
-   opennotes notes search --sql \
+   jot notes search --sql \
      "SELECT * FROM read_markdown('**/*.md') LIMIT 5"
    ```
 
@@ -745,7 +745,7 @@ client[backup].md
 # Check for symlinks
 find ~/my-notes -type l
 
-# OpenNotes follows symlinks by default
+# Jot follows symlinks by default
 # If a symlink points outside notebook, it may be blocked (security)
 
 # Solution: Copy files instead of symlinking
@@ -768,11 +768,11 @@ my-notes/
 
 ```bash
 # Matches any depth
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)"
 
 # Specific depth
-opennotes notes search --sql \
+jot notes search --sql \
   "SELECT file_path FROM read_markdown('level1/level2/**/*.md', include_filepath:=true)"
 ```
 
@@ -845,14 +845,14 @@ chmod -R u+rX ~/my-notes
 
 ### Import Not Discovering Files
 
-**Problem**: Created notebook but `opennotes notes list` shows "0 notes"
+**Problem**: Created notebook but `jot notes list` shows "0 notes"
 
 **Debugging**:
 
 1. **Verify notebook creation**:
 
    ```bash
-   opennotes notebook list
+   jot notebook list
    ```
 
 2. **Check directory path**:
@@ -869,7 +869,7 @@ chmod -R u+rX ~/my-notes
 
    ```bash
    # If this works, database is OK
-   opennotes notes search --sql "SELECT COUNT(*) FROM read_markdown('**/*.md')"
+   jot notes search --sql "SELECT COUNT(*) FROM read_markdown('**/*.md')"
 
    # If this returns 0, no .md files found
    ```
@@ -888,7 +888,7 @@ chmod -R u+rX ~/my-notes
 
 5. **Verify notebook path in config**:
    ```bash
-   cat ~/.config/opennotes/config.json
+   cat ~/.config/jot/config.json
    ```
 
 ---
@@ -901,7 +901,7 @@ chmod -R u+rX ~/my-notes
 
 ```bash
 # List notes with titles
-opennotes notes list
+jot notes list
 
 # Should show titles like "My Note Title", not "my-note.md"
 ```
@@ -928,7 +928,7 @@ opennotes notes list
 
 3. **Verify extraction with SQL**:
    ```bash
-   opennotes notes search --sql \
+   jot notes search --sql \
      "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) LIMIT 5"
    ```
 

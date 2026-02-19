@@ -12,7 +12,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/zenobi-us/opennotes/internal/services"
+	"github.com/zenobi-us/jot/internal/services"
 )
 
 // generateRandomNote creates a note with realistic content for stress testing
@@ -62,7 +62,7 @@ Chinese: 测试内容 Japanese: テスト内容 Arabic: محتوى الاختب�
 - Tag reference: #test%d
 
 ---
-Generated for OpenNotes stress testing - note %d of large dataset.
+Generated for Jot stress testing - note %d of large dataset.
 `,
 		// title, tags, date, priority
 		index, index%10, index%100, index%20, time.Now().Format(time.RFC3339), index%5+1,
@@ -105,7 +105,7 @@ func generateStressNotebook(t *testing.T, numNotes int, depth int) (string, *ser
 		"contexts": ["%s"]
 	}`, numNotes, tempDir)
 
-	configPath := filepath.Join(tempDir, ".opennotes.json")
+	configPath := filepath.Join(tempDir, ".jot.json")
 	err := os.WriteFile(configPath, []byte(configContent), 0644)
 	require.NoError(t, err)
 
@@ -212,7 +212,7 @@ This note is at directory depth %d for testing deep structure handling.
 		"root": ".",
 		"contexts": []
 	}`
-	configPath := filepath.Join(tempDir, ".opennotes.json")
+	configPath := filepath.Join(tempDir, ".jot.json")
 	err := os.WriteFile(configPath, []byte(configContent), 0644)
 	require.NoError(t, err)
 
@@ -259,7 +259,7 @@ func TestNoteService_LargeFiles(t *testing.T) {
 		"root": ".",
 		"contexts": []
 	}`
-	configPath := filepath.Join(tempDir, ".opennotes.json")
+	configPath := filepath.Join(tempDir, ".jot.json")
 	err := os.WriteFile(configPath, []byte(configContent), 0644)
 	require.NoError(t, err)
 
@@ -333,7 +333,7 @@ func TestNoteService_UnicodeAtScale(t *testing.T) {
 		"root": ".",
 		"contexts": []
 	}`
-	configPath := filepath.Join(tempDir, ".opennotes.json")
+	configPath := filepath.Join(tempDir, ".jot.json")
 	err := os.WriteFile(configPath, []byte(configContent), 0644)
 	require.NoError(t, err)
 

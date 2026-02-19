@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/rs/zerolog"
-	"github.com/zenobi-us/opennotes/internal/core"
-	"github.com/zenobi-us/opennotes/internal/search"
+	"github.com/zenobi-us/jot/internal/core"
+	"github.com/zenobi-us/jot/internal/search"
 )
 
 // Note represents a markdown note.

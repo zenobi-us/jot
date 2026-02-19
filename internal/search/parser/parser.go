@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zenobi-us/opennotes/internal/search"
+	"github.com/zenobi-us/jot/internal/search"
 )
 
 // Parser implements the search.Parser interface using Participle.
@@ -40,7 +40,7 @@ func (p *Parser) Validate(input string) error {
 
 // Help returns syntax help for the query language.
 func (p *Parser) Help() string {
-	return `OpenNotes Query Syntax
+	return `Jot Query Syntax
 ======================
 
 Basic Search:

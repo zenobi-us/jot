@@ -12,15 +12,15 @@ var notebookRegisterCmd = &cobra.Command{
 	Short: "Register an existing notebook globally",
 	Long: `Registers an existing notebook directory in the global configuration.
 
-This adds the notebook to ~/.config/opennotes/config.json so it can be
+This adds the notebook to ~/.config/jot/config.json so it can be
 discovered from anywhere using context paths.
 
 Examples:
   # Register current directory
-  opennotes notebook register
+  jot notebook register
 
   # Register specific path
-  opennotes notebook register /path/to/notebook`,
+  jot notebook register /path/to/notebook`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		path := ""

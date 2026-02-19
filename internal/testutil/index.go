@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"github.com/zenobi-us/opennotes/internal/search"
-	"github.com/zenobi-us/opennotes/internal/search/bleve"
+	"github.com/zenobi-us/jot/internal/search"
+	"github.com/zenobi-us/jot/internal/search/bleve"
 	"gopkg.in/yaml.v3"
 )
 

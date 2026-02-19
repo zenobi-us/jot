@@ -1,6 +1,6 @@
 # AGENTS.md
 
-**OpenNotes** is a **Go CLI tool** for managing markdown-based notes organized in notebooks. It uses Bleve for full-text search with fuzzy matching and boolean queries. The project is production-ready with comprehensive testing and clean architecture.
+**Jot** is a **Go CLI tool** for managing markdown-based notes organized in notebooks. It uses Bleve for full-text search with fuzzy matching and boolean queries. The project is production-ready with comprehensive testing and clean architecture.
 
 ## Build & Test Commands
 
@@ -8,7 +8,7 @@ Always run commands from the project root using `mise run <command>`.
 
 Do NOT use `go` directly for tests/build - use `mise run`.
 
-- **Build**: `mise run build` — Compiles to native binary at `dist/opennotes`
+- **Build**: `mise run build` — Compiles to native binary at `dist/jot`
 - **Test**: `mise run test` — Run all tests (161+ tests, ~4 seconds)
 - **Single Test**: `mise run test -- NoteService` — Run one test package
 - **Lint**: `mise run lint` — Check code quality
@@ -19,7 +19,7 @@ Do NOT use `go` directly for tests/build - use `mise run`.
 
 ### Go Language Conventions
 
-- **Module System**: Standard Go `import` statements with `github.com/zenobi-us/opennotes` base
+- **Module System**: Standard Go `import` statements with `github.com/zenobi-us/jot` base
 - **Import Order**: Standard library → external packages → internal modules
 - **Naming**:
   - **Types/Structs**: PascalCase (`ConfigService`, `NotebookService`, `Note`)
@@ -175,7 +175,7 @@ Systematically scan for and refactor duplicated code. This prevents maintenance 
 
 Core services are singletons initialized in `cmd/root.go`:
 
-- **ConfigService** (`internal/services/config.go`): Global user config (~/.config/opennotes/config.json)
+- **ConfigService** (`internal/services/config.go`): Global user config (~/.config/jot/config.json)
 - **NotebookService** (`internal/services/notebook.go`): Notebook discovery & operations, index management
 - **NoteService** (`internal/services/note.go`): Note CRUD operations and search via Bleve Index
 - **SearchService** (`internal/services/search.go`): Query building and search operations
@@ -200,7 +200,7 @@ Commands are defined in `cmd/` directory and follow standard Cobra CLI pattern w
 
 **ConfigService**: Manages registered notebooks, global settings. Supports env var overrides.
 
-**NotebookService**: Discovers notebooks, loads `.opennotes.json` config, manages notebook lifecycle. Creates and manages Bleve indices per notebook.
+**NotebookService**: Discovers notebooks, loads `.jot.json` config, manages notebook lifecycle. Creates and manages Bleve indices per notebook.
 
 **NoteService**: Provides note CRUD operations and search interface. Uses Bleve Index for queries, handles metadata extraction from frontmatter.
 
@@ -233,7 +233,7 @@ Templates are stored as `.gotmpl` files in `internal/services/templates/` and em
 
 ## Recommended Skill Usage
 
-When working on OpenNotes, use AI skills strategically to enhance code quality and consistency. Prioritize skills based on task type:
+When working on Jot, use AI skills strategically to enhance code quality and consistency. Prioritize skills based on task type:
 
 ### Priority Skill Matrix
 

@@ -10,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/zenobi-us/opennotes/internal/services"
+	"github.com/zenobi-us/jot/internal/services"
 )
 
 // TestNotebookService_ReadOnlyDirectory tests graceful handling of permission denied
@@ -56,7 +56,7 @@ func TestConfigService_PermissionDeniedWrite(t *testing.T) {
 		_ = os.Chmod(tempDir, 0755)
 	}()
 
-	configDir := filepath.Join(tempDir, ".config", "opennotes")
+	configDir := filepath.Join(tempDir, ".config", "jot")
 	err := os.MkdirAll(configDir, 0755)
 	require.NoError(t, err)
 
@@ -103,7 +103,7 @@ func TestNotebookService_SymlinkHandling(t *testing.T) {
 		"root": ".",
 		"contexts": []
 	}`
-	configPath := filepath.Join(realNotebook, ".opennotes.json")
+	configPath := filepath.Join(realNotebook, ".jot.json")
 	err = os.WriteFile(configPath, []byte(configContent), 0644)
 	require.NoError(t, err)
 

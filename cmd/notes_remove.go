@@ -21,10 +21,10 @@ is optional when specifying the note name.
 
 Examples:
   # Remove with confirmation
-  opennotes notes remove my-note
+  jot notes remove my-note
 
   # Remove without confirmation
-  opennotes notes remove my-note.md --force`,
+  jot notes remove my-note.md --force`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		nb, err := requireNotebook(cmd)

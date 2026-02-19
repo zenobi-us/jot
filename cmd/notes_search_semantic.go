@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/zenobi-us/opennotes/internal/services"
+	"github.com/zenobi-us/jot/internal/services"
 )
 
 var notesSearchSemanticCmd = &cobra.Command{
@@ -20,13 +20,13 @@ Modes:
   --mode semantic Semantic-only retrieval
 
 Optional boolean filters are supported with the same DSL as:
-  opennotes notes search query --and/--or/--not
+  jot notes search query --and/--or/--not
 
 Examples:
-  opennotes notes search semantic "meeting notes"
-  opennotes notes search semantic "workflow" --mode keyword --and data.status=active
-  opennotes notes search semantic "project triage" --mode hybrid --not data.status=archived
-  opennotes notes search semantic "architecture" --explain`,
+  jot notes search semantic "meeting notes"
+  jot notes search semantic "workflow" --mode keyword --and data.status=active
+  jot notes search semantic "project triage" --mode hybrid --not data.status=archived
+  jot notes search semantic "architecture" --explain`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: notesSearchSemanticRunE,
 }

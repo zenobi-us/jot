@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/spf13/afero"
-	"github.com/zenobi-us/opennotes/internal/search"
+	"github.com/zenobi-us/jot/internal/search"
 )
 
 // AferoStorage adapts an afero.Fs to the search.Storage interface.
@@ -136,7 +136,7 @@ func OsStorage(root string) *AferoStorage {
 }
 
 // IndexPath returns the default index path within a notebook.
-const IndexDir = ".opennotes/index"
+const IndexDir = ".jot/index"
 
 // CreateTestDocument creates a test document with the given path and content.
 // Useful for testing.

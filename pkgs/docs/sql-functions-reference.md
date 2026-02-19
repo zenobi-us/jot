@@ -1,6 +1,6 @@
 # SQL Functions Reference
 
-Quick reference for DuckDB markdown extension functions available in OpenNotes.
+Quick reference for DuckDB markdown extension functions available in Jot.
 
 ## File Pattern Resolution
 

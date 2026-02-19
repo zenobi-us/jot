@@ -1,4 +1,4 @@
-module github.com/zenobi-us/opennotes/pkgs/md-process-blocks-cli
+module github.com/zenobi-us/jot/pkgs/md-process-blocks-cli
 
 go 1.23
 

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/zenobi-us/opennotes/internal/search"
+	"github.com/zenobi-us/jot/internal/search"
 )
 
 func TestMergeHybridResults_LabelsAndOrdering(t *testing.T) {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/zenobi-us/opennotes/internal/search"
+	"github.com/zenobi-us/jot/internal/search"
 )
 
 // ErrSemanticUnavailable is returned when semantic search is requested

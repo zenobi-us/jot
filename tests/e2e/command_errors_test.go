@@ -166,7 +166,7 @@ func TestCLI_NotebookFlag_InvalidPath(t *testing.T) {
 func TestCLI_NotesSearch_WithoutNotebook(t *testing.T) {
 	env := newTestEnv(t)
 
-	// Try to search from a directory that's not a notebook (no .opennotes.json)
+	// Try to search from a directory that's not a notebook (no .jot.json)
 	emptyDir := filepath.Join(env.tmpDir, "empty-dir")
 	err := os.MkdirAll(emptyDir, 0755)
 	if err != nil {

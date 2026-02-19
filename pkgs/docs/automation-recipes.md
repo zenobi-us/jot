@@ -1,12 +1,12 @@
 # Advanced Automation Recipes
 
-Master automation patterns to transform OpenNotes into a powerful knowledge management and reporting system. This guide provides production-ready scripts and patterns for real-world workflows.
+Master automation patterns to transform Jot into a powerful knowledge management and reporting system. This guide provides production-ready scripts and patterns for real-world workflows.
 
 ---
 
 ## Overview: Why Automation?
 
-OpenNotes excels when integrated into your existing workflows. Combine the CLI with shell scripts, cron jobs, and external tools to:
+Jot excels when integrated into your existing workflows. Combine the CLI with shell scripts, cron jobs, and external tools to:
 
 - **Automate insights generation** - Daily/weekly statistics without manual queries
 - **Build dashboards** - Generate markdown reports for teams or personal tracking
@@ -18,7 +18,7 @@ OpenNotes excels when integrated into your existing workflows. Combine the CLI w
 
 ## Personal Knowledge Base Automation
 
-Use OpenNotes to build automated reporting on your personal notes collection.
+Use Jot to build automated reporting on your personal notes collection.
 
 ### Daily Note Statistics
 
@@ -37,14 +37,14 @@ echo "# Note Statistics - $DATE"
 echo ""
 
 # Total notes in collection
-TOTAL=$(opennotes notes search --sql "SELECT COUNT(*) as count FROM read_markdown() WHERE file_path IS NOT NULL" 2>/dev/null | tail -1)
+TOTAL=$(jot notes search --sql "SELECT COUNT(*) as count FROM read_markdown() WHERE file_path IS NOT NULL" 2>/dev/null | tail -1)
 echo "**Total Notes**: $TOTAL"
 echo ""
 
 # Notes by folder
 echo "## Notes by Folder"
 echo ""
-opennotes notes search --sql "
+jot notes search --sql "
 SELECT 
   SUBSTRING(file_path FROM 1 FOR GREATEST(POSITION('/' IN REVERSE(file_path)) - 1, 1)) as folder,
   COUNT(*) as count
@@ -59,7 +59,7 @@ echo ""
 # Average metrics
 echo "## Writing Metrics"
 echo ""
-opennotes notes search --sql "
+jot notes search --sql "
 SELECT 
   ROUND(AVG(md_stats(content).words), 0) as avg_words,
   ROUND(AVG(md_stats(content).lines), 0) as avg_lines,
@@ -98,7 +98,7 @@ EOF
 
 # Notes created this week (requires date tracking in metadata)
 echo "## New Notes This Week" >> "$OUTPUT"
-opennotes notes search --sql "
+jot notes search --sql "
 SELECT 
   title,
   file_path,
@@ -112,7 +112,7 @@ LIMIT 5
 # Most referenced topics (word frequency analysis)
 echo "" >> "$OUTPUT"
 echo "## Top Topics" >> "$OUTPUT"
-opennotes notes search --sql "
+jot notes search --sql "
 SELECT 
   SUBSTRING(content FROM 1 FOR 50) as snippet,
   COUNT(*) as frequency
@@ -226,7 +226,7 @@ EOF
 # By folder
 echo "## By Folder" >> "$OUTPUT"
 echo "" >> "$OUTPUT"
-opennotes notes search --sql "
+jot notes search --sql "
 SELECT 
   SUBSTRING(file_path FROM 1 FOR POSITION('/' IN file_path) - 1) as folder,
   COUNT(*) as doc_count
@@ -249,14 +249,14 @@ echo "- [FAQ](docs/faq/)" >> "$OUTPUT"
 echo "" >> "$OUTPUT"
 echo "## Quick Search" >> "$OUTPUT"
 echo "" >> "$OUTPUT"
-echo "Use \`opennotes notes search\` to find documentation:" >> "$OUTPUT"
+echo "Use \`jot notes search\` to find documentation:" >> "$OUTPUT"
 echo "" >> "$OUTPUT"
 echo "\`\`\`bash" >> "$OUTPUT"
 echo "# Find all architecture decisions" >> "$OUTPUT"
-echo "opennotes notes search -i architecture" >> "$OUTPUT"
+echo "jot notes search -i architecture" >> "$OUTPUT"
 echo "" >> "$OUTPUT"
 echo "# Find SQL examples" >> "$OUTPUT"
-echo "opennotes notes search -i 'select\\|from'" >> "$OUTPUT"
+echo "jot notes search -i 'select\\|from'" >> "$OUTPUT"
 echo "\`\`\`" >> "$OUTPUT"
 
 echo "✅ Documentation index generated: $OUTPUT"
@@ -290,7 +290,7 @@ echo ""
 # Find TODO markers
 echo "## Items Needing Work"
 echo ""
-opennotes notes search --sql "
+jot notes search --sql "
 SELECT file_path, COUNT(*) as todo_count
 FROM read_markdown()
 WHERE content LIKE '%TODO%'
@@ -305,7 +305,7 @@ ORDER BY todo_count DESC
 echo "" >> 
 echo "## Sections Without Content"
 echo ""
-opennotes notes search --sql "
+jot notes search --sql "
 SELECT file_path
 FROM read_markdown()
 WHERE content LIKE '%^## %' 
@@ -347,7 +347,7 @@ echo ""
 # Find duplicate URLs
 echo "## Duplicate URLs"
 echo ""
-opennotes notes search --sql "
+jot notes search --sql "
 SELECT 
   url,
   COUNT(*) as occurrences,
@@ -369,7 +369,7 @@ LIMIT 20
 echo ""
 echo "## Possible Duplicate Citations"
 echo ""
-opennotes notes search --sql "
+jot notes search --sql "
 SELECT 
   SUBSTRING(content FROM 1 FOR 80) as citation_snippet,
   COUNT(*) as occurrences
@@ -419,7 +419,7 @@ REPORT=$(mktemp)
   echo ""
   
   echo "## Summary"
-  opennotes notes search --sql "
+  jot notes search --sql "
   SELECT 
     COUNT(*) as total_notes,
     SUM(md_stats(content).lines) as total_lines,
@@ -465,7 +465,7 @@ fi
 echo "🔍 Searching for: $PATTERN"
 echo ""
 
-RESULTS=$(opennotes notes search "$PATTERN" 2>/dev/null)
+RESULTS=$(jot notes search "$PATTERN" 2>/dev/null)
 COUNT=$(echo "$RESULTS" | grep -c "^-")
 
 if [ "$SHOW_COUNT" = "--count" ]; then
@@ -494,7 +494,7 @@ mkdir -p "$OUTPUT_DIR"
 case "$FORMAT" in
   json)
     echo "📤 Exporting to JSON..."
-    opennotes notes search --sql "
+    jot notes search --sql "
     SELECT 
       file_path,
       md_stats(content).words as words,
@@ -506,7 +506,7 @@ case "$FORMAT" in
     ;;
   csv)
     echo "📤 Exporting to CSV..."
-    opennotes notes search --sql "
+    jot notes search --sql "
     SELECT file_path, words, lines
     FROM (
       SELECT 
@@ -546,7 +546,7 @@ generate_daily_report() {
 ## Overview
 EOF
   
-  opennotes notes search --sql "
+  jot notes search --sql "
   SELECT 'Total Notes: ' || COUNT(*) as stat
   FROM read_markdown()
   " 2>/dev/null | tail -1 >> "$OUTPUT"
@@ -559,7 +559,7 @@ generate_weekly_report() {
 ## Overview
 EOF
 
-  opennotes notes search --sql "
+  jot notes search --sql "
   SELECT 'Notes Modified: ' || COUNT(*) as stat
   FROM read_markdown()
   WHERE file_path LIKE '%.md'
@@ -573,7 +573,7 @@ generate_monthly_report() {
 ## Statistics
 EOF
 
-  opennotes notes search --sql "
+  jot notes search --sql "
   SELECT 'Total Notes: ' || COUNT(*) as stat
   FROM read_markdown()
   " 2>/dev/null | tail -1 >> "$OUTPUT"
@@ -626,7 +626,7 @@ SHELL=/bin/bash
 PATH=/usr/local/bin:/usr/bin:/bin
 HOME=/home/user
 
-# Now your jobs will have access to opennotes in PATH
+# Now your jobs will have access to jot in PATH
 0 9 * * * cd /home/user/notes && ./daily-note-stats.sh >> stats-log.md
 ```
 
@@ -636,11 +636,11 @@ HOME=/home/user
 
 ### jq Pipelines for Data Transformation
 
-Transform OpenNotes output with jq:
+Transform Jot output with jq:
 
 ```bash
 # Export SQL results to JSON and process with jq
-opennotes notes search --sql "
+jot notes search --sql "
 SELECT file_path, md_stats(content).words as words
 FROM read_markdown()
 ORDER BY words DESC
@@ -648,12 +648,12 @@ LIMIT 10
 " | jq -r '.[] | "\(.file_path): \(.words) words"'
 
 # Count notes by folder depth
-opennotes notes search --sql "
+jot notes search --sql "
 SELECT file_path FROM read_markdown()
 " | jq -r '.[] | .file_path | split("/") | length' | sort | uniq -c
 
 # Find notes with specific metadata
-opennotes notes search --sql "
+jot notes search --sql "
 SELECT file_path, content FROM read_markdown()
 WHERE content LIKE '%author:%'
 " | jq -r '.[] | select(.content | contains("author:")) | .file_path'
@@ -661,7 +661,7 @@ WHERE content LIKE '%author:%'
 
 ### Git Workflow Integration
 
-Combine OpenNotes with git operations:
+Combine Jot with git operations:
 
 ```bash
 #!/bin/bash
@@ -688,11 +688,11 @@ echo "✅ Notes synced and stats generated"
 
 ### Obsidian Compatibility
 
-Use OpenNotes to analyze Obsidian vaults:
+Use Jot to analyze Obsidian vaults:
 
 ```bash
 #!/bin/bash
-# obsidian-analyzer.sh - Analyze Obsidian vault with OpenNotes
+# obsidian-analyzer.sh - Analyze Obsidian vault with Jot
 # Usage: ./obsidian-analyzer.sh [vault_path]
 
 VAULT="${1:-.}"
@@ -702,7 +702,7 @@ echo ""
 
 # Count notes with specific tags
 echo "## Notes by Tag"
-opennotes notes search --sql "
+jot notes search --sql "
 SELECT 
   SUBSTRING(content FROM POSITION('#' IN content) FOR 20) as tag,
   COUNT(*) as count
@@ -716,7 +716,7 @@ LIMIT 20
 # Find broken links
 echo ""
 echo "## Potential Broken Links"
-opennotes notes search --sql "
+jot notes search --sql "
 SELECT file_path, 
   SUBSTRING(content FROM POSITION('[[' IN content) FOR 50) as potential_link
 FROM read_markdown()
@@ -731,21 +731,21 @@ Migrate from Bear and keep analysis consistent:
 
 ```bash
 #!/bin/bash
-# bear-to-opennotes.sh - Process Bear export
-# Usage: ./bear-to-opennotes.sh [bear_export_dir] [notebook_name]
+# bear-to-jot.sh - Process Bear export
+# Usage: ./bear-to-jot.sh [bear_export_dir] [notebook_name]
 
 BEAR_DIR="${1:-.}"
 NOTEBOOK="${2:-Bear-Notes}"
 
 # Bear exports as individual files - create notebook
-opennotes notebook create "$NOTEBOOK" --path "$BEAR_DIR"
+jot notebook create "$NOTEBOOK" --path "$BEAR_DIR"
 
 # Analyze converted structure
 echo "✅ Imported from Bear"
-opennotes notes list
+jot notes list
 
 # Export statistics
-opennotes notes search --sql "
+jot notes search --sql "
 SELECT 
   COUNT(*) as total,
   SUM(md_stats(content).words) as total_words,
@@ -764,10 +764,10 @@ When automating queries across large note collections:
 
 ```bash
 # ❌ Slow: Processes entire content
-opennotes notes search --sql "SELECT * FROM read_markdown()"
+jot notes search --sql "SELECT * FROM read_markdown()"
 
 # ✅ Fast: Uses metadata only when possible
-opennotes notes search --sql "
+jot notes search --sql "
 SELECT file_path, md_stats(content).words
 FROM read_markdown()
 WHERE file_path LIKE '%.md'
@@ -775,13 +775,13 @@ LIMIT 100
 "
 
 # ❌ Slow: Full content scan for pattern
-opennotes notes search --sql "
+jot notes search --sql "
 SELECT * FROM read_markdown()
 WHERE content LIKE '%pattern%'
 "
 
 # ✅ Better: Combine with file pattern
-opennotes notes search --sql "
+jot notes search --sql "
 SELECT file_path FROM read_markdown()
 WHERE file_path LIKE '%docs/%'
 AND content LIKE '%pattern%'
@@ -793,7 +793,7 @@ LIMIT 50
 
 ```bash
 # For very large collections, limit results:
-opennotes notes search --sql "
+jot notes search --sql "
 SELECT file_path FROM read_markdown()
 LIMIT 1000
 "
@@ -802,7 +802,7 @@ LIMIT 1000
 LIMIT=100
 OFFSET=0
 while [ $OFFSET -lt 10000 ]; do
-  opennotes notes search --sql "
+  jot notes search --sql "
   SELECT file_path FROM read_markdown()
   LIMIT $LIMIT OFFSET $OFFSET
   "
@@ -829,19 +829,19 @@ Prevent cron jobs from overwhelming system:
 
 ## Troubleshooting Automation
 
-### Script Not Finding opennotes
+### Script Not Finding jot
 
-Make sure `opennotes` is in your PATH:
+Make sure `jot` is in your PATH:
 
 ```bash
-# Check if opennotes is available
-which opennotes
+# Check if jot is available
+which jot
 
 # If not found, add to your script:
 export PATH="/home/user/.local/bin:$PATH"
 
 # Or use full path:
-/home/user/.local/bin/opennotes notes search ...
+/home/user/.local/bin/jot notes search ...
 ```
 
 ### Cron Jobs Not Running

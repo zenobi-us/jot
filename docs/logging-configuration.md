@@ -1,6 +1,6 @@
 # Logging Configuration
 
-OpenNotes supports flexible logging configuration via environment variables.
+Jot supports flexible logging configuration via environment variables.
 
 ## Environment Variables
 
@@ -25,10 +25,10 @@ Controls which log messages are displayed based on severity.
 LOG_LEVEL=error mise run ci
 
 # Enable debug logging for troubleshooting
-LOG_LEVEL=debug opennotes notes list
+LOG_LEVEL=debug jot notes list
 
 # Quiet mode - errors only
-LOG_LEVEL=error opennotes notes search "query"
+LOG_LEVEL=error jot notes search "query"
 ```
 
 ### LOG_FORMAT
@@ -42,7 +42,7 @@ Controls the output format of log messages.
 Clean, readable format with short timestamps (HH:MM:SS).
 
 ```
-22:36:45 DBG loading config namespace=ConfigService path=/home/user/.config/opennotes/config.json
+22:36:45 DBG loading config namespace=ConfigService path=/home/user/.config/jot/config.json
 22:36:45 DBG database initialized namespace=DbService
 ```
 
@@ -53,7 +53,7 @@ Clean, readable format with short timestamps (HH:MM:SS).
 Standard colorized console format with 12-hour time.
 
 ```
-10:36PM DBG loading config namespace=ConfigService path=/home/user/.config/opennotes/config.json
+10:36PM DBG loading config namespace=ConfigService path=/home/user/.config/jot/config.json
 10:36PM DBG database initialized namespace=DbService
 ```
 
@@ -64,7 +64,7 @@ Standard colorized console format with 12-hour time.
 Structured JSON output for log aggregation and parsing.
 
 ```json
-{"level":"debug","namespace":"ConfigService","path":"/home/user/.config/opennotes/config.json","time":"2026-01-21T22:36:45+10:30","message":"loading config"}
+{"level":"debug","namespace":"ConfigService","path":"/home/user/.config/jot/config.json","time":"2026-01-21T22:36:45+10:30","message":"loading config"}
 {"level":"debug","namespace":"DbService","time":"2026-01-21T22:36:45+10:30","message":"database initialized"}
 ```
 
@@ -75,7 +75,7 @@ Structured JSON output for log aggregation and parsing.
 Non-colorized format with full ISO 8601 timestamps for CI/CD.
 
 ```
-2026-01-21T22:36:45+10:30 DBG loading config namespace=ConfigService path=/home/user/.config/opennotes/config.json
+2026-01-21T22:36:45+10:30 DBG loading config namespace=ConfigService path=/home/user/.config/jot/config.json
 2026-01-21T22:36:45+10:30 DBG database initialized namespace=DbService
 ```
 
@@ -85,13 +85,13 @@ Non-colorized format with full ISO 8601 timestamps for CI/CD.
 
 ```bash
 # JSON output for processing with jq
-LOG_FORMAT=json opennotes notes list 2>&1 | jq 'select(.level=="error")'
+LOG_FORMAT=json jot notes list 2>&1 | jq 'select(.level=="error")'
 
 # CI-friendly output
 LOG_FORMAT=ci LOG_LEVEL=info mise run ci
 
 # Compact format (default, explicit)
-LOG_FORMAT=compact opennotes notes search "test"
+LOG_FORMAT=compact jot notes search "test"
 ```
 
 ### DEBUG (Legacy)
@@ -100,8 +100,8 @@ Legacy flag that sets LOG_LEVEL to `debug`.
 
 ```bash
 # These are equivalent:
-DEBUG=1 opennotes notes list
-LOG_LEVEL=debug opennotes notes list
+DEBUG=1 jot notes list
+LOG_LEVEL=debug jot notes list
 ```
 
 **Note:** `LOG_LEVEL` takes precedence over `DEBUG` if both are set.
@@ -115,10 +115,10 @@ Environment variables can be combined for fine-grained control:
 LOG_LEVEL=error LOG_FORMAT=json mise run ci
 
 # Verbose debugging with full timestamps
-LOG_LEVEL=debug LOG_FORMAT=ci opennotes notes list
+LOG_LEVEL=debug LOG_FORMAT=ci jot notes list
 
 # Production-friendly: info level, JSON output
-LOG_LEVEL=info LOG_FORMAT=json opennotes notes search --sql "..."
+LOG_LEVEL=info LOG_FORMAT=json jot notes search --sql "..."
 ```
 
 ## Usage in .mise/tasks
@@ -152,10 +152,10 @@ mise build
 
 ```bash
 # Default: compact format, info level
-opennotes notes list
+jot notes list
 
 # Debug mode for troubleshooting
-LOG_LEVEL=debug opennotes notes search "query"
+LOG_LEVEL=debug jot notes search "query"
 ```
 
 ### CI/CD Pipeline
@@ -169,7 +169,7 @@ LOG_LEVEL=error LOG_FORMAT=ci mise run ci
 
 ```bash
 # Extract all error messages with jq
-LOG_FORMAT=json opennotes notes list 2>&1 | jq 'select(.level=="error")'
+LOG_FORMAT=json jot notes list 2>&1 | jq 'select(.level=="error")'
 
 # Count log messages by level
 LOG_FORMAT=json mise run test 2>&1 | jq -r '.level' | sort | uniq -c
@@ -179,7 +179,7 @@ LOG_FORMAT=json mise run test 2>&1 | jq -r '.level' | sort | uniq -c
 
 ```bash
 # JSON output for Datadog/Splunk/etc
-LOG_LEVEL=info LOG_FORMAT=json opennotes notes search --sql "..." | your-log-aggregator
+LOG_LEVEL=info LOG_FORMAT=json jot notes search --sql "..." | your-log-aggregator
 ```
 
 ## Migration from Previous Versions
@@ -188,10 +188,10 @@ If you were using `DEBUG=1`, you can now use:
 
 ```bash
 # Old way
-DEBUG=1 opennotes notes list
+DEBUG=1 jot notes list
 
 # New way (more control)
-LOG_LEVEL=debug LOG_FORMAT=compact opennotes notes list
+LOG_LEVEL=debug LOG_FORMAT=compact jot notes list
 ```
 
 The `DEBUG` variable still works but `LOG_LEVEL` provides more granular control.

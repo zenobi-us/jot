@@ -3,7 +3,7 @@ package parser
 import (
 	"strings"
 
-	"github.com/zenobi-us/opennotes/internal/search"
+	"github.com/zenobi-us/jot/internal/search"
 )
 
 // convert transforms the Participle AST into search.Query.

@@ -1,6 +1,6 @@
-# JSON SQL Query Guide for OpenNotes
+# JSON SQL Query Guide for Jot
 
-This guide teaches you how to use OpenNotes' JSON output format for SQL queries, enabling powerful automation and data processing workflows.
+This guide teaches you how to use Jot' JSON output format for SQL queries, enabling powerful automation and data processing workflows.
 
 ## Table of Contents
 
@@ -15,14 +15,14 @@ This guide teaches you how to use OpenNotes' JSON output format for SQL queries,
 
 ## Getting Started
 
-OpenNotes automatically outputs SQL query results in JSON format, making it easy to integrate with modern toolchains and automation scripts.
+Jot automatically outputs SQL query results in JSON format, making it easy to integrate with modern toolchains and automation scripts.
 
 ### Basic Syntax
 
 All SQL queries return JSON arrays of objects:
 
 ```bash
-opennotes notes search --sql "SELECT title, path FROM notes"
+jot notes search --sql "SELECT title, path FROM notes"
 ```
 
 **Example Output:**
@@ -52,7 +52,7 @@ opennotes notes search --sql "SELECT title, path FROM notes"
 
 ```bash
 # Get all note file paths
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) LIMIT 5"
+jot notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) LIMIT 5"
 ```
 
 **Output:**
@@ -71,7 +71,7 @@ opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', inc
 
 ```bash
 # Get file paths with word counts
-opennotes notes search --sql "
+jot notes search --sql "
   SELECT 
     file_path, 
     (md_stats(content)).word_count as word_count 
@@ -98,7 +98,7 @@ opennotes notes search --sql "
 
 ```bash
 # Find notes with more than 500 words, sorted by word count
-opennotes notes search --sql "
+jot notes search --sql "
   SELECT 
     file_path,
     (md_stats(content)).word_count as words
@@ -110,7 +110,7 @@ opennotes notes search --sql "
 
 ## Working with Complex Data Types
 
-OpenNotes handles complex data structures seamlessly in JSON output.
+Jot handles complex data structures seamlessly in JSON output.
 
 ### Nested Objects (Maps)
 
@@ -118,7 +118,7 @@ Markdown statistics return as nested JSON objects:
 
 ```bash
 # Get comprehensive statistics
-opennotes notes search --sql "
+jot notes search --sql "
   SELECT 
     file_path, 
     md_stats(content) as stats 
@@ -151,7 +151,7 @@ Extract links and code blocks as arrays:
 
 ```bash
 # Extract all links from notes
-opennotes notes search --sql "
+jot notes search --sql "
   SELECT 
     file_path,
     md_extract_links(content) as links
@@ -170,16 +170,16 @@ opennotes notes search --sql "
       {
         "is_reference": false,
         "line_number": 15,
-        "text": "OpenNotes Documentation",
+        "text": "Jot Documentation",
         "title": null,
-        "url": "https://github.com/zenobi-us/opennotes"
+        "url": "https://github.com/zenobi-us/jot"
       },
       {
         "is_reference": false,
         "line_number": 23,
         "text": "GitHub Issues",
         "title": null,
-        "url": "https://github.com/zenobi-us/opennotes/issues"
+        "url": "https://github.com/zenobi-us/jot/issues"
       }
     ]
   }
@@ -190,7 +190,7 @@ opennotes notes search --sql "
 
 ```bash
 # Extract code blocks with languages
-opennotes notes search --sql "
+jot notes search --sql "
   SELECT 
     file_path,
     md_extract_code_blocks(content) as code_blocks
@@ -227,19 +227,19 @@ opennotes notes search --sql "
 
 ### Using jq for Data Processing
 
-[jq](https://jqlang.github.io/jq/) is the perfect companion for processing JSON output from OpenNotes.
+[jq](https://jqlang.github.io/jq/) is the perfect companion for processing JSON output from Jot.
 
 #### Basic jq Operations
 
 ```bash
 # Extract just the file paths
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)" | \
+jot notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)" | \
 jq -r '.[].file_path'
 ```
 
 ```bash
 # Get notes with high word counts
-opennotes notes search --sql "
+jot notes search --sql "
   SELECT file_path, (md_stats(content)).word_count as words 
   FROM read_markdown('**/*.md', include_filepath:=true)
 " | \
@@ -250,7 +250,7 @@ jq '.[] | select(.words > 1000) | .file_path'
 
 ```bash
 # Create a summary report
-opennotes notes search --sql "
+jot notes search --sql "
   SELECT 
     file_path, 
     (md_stats(content)).word_count as words,
@@ -279,7 +279,7 @@ jq '{
 
 ```bash
 # Get all external links
-opennotes notes search --sql "
+jot notes search --sql "
   SELECT file_path, md_extract_links(content) as links
   FROM read_markdown('**/*.md', include_filepath:=true)
 " | \
@@ -297,13 +297,13 @@ jq -r '
 
 ```bash
 # Save all note paths to a file
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)" | \
+jot notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)" | \
 jq -r '.[].file_path' > note-list.txt
 ```
 
 ```bash
 # Get notes modified in last 7 days
-opennotes notes search --sql "
+jot notes search --sql "
   SELECT file_path 
   FROM read_markdown('**/*.md', include_filepath:=true)
   WHERE file_path IN (
@@ -322,7 +322,7 @@ done
 
 ```bash
 # Count words in each note and sort
-opennotes notes search --sql "
+jot notes search --sql "
   SELECT 
     file_path,
     (md_stats(content)).word_count as words
@@ -339,7 +339,7 @@ head -10
 
 ```bash
 # Convert to CSV for spreadsheet import
-opennotes notes search --sql "
+jot notes search --sql "
   SELECT 
     file_path,
     (md_stats(content)).word_count as words,
@@ -353,7 +353,7 @@ jq -r '["File", "Words", "Reading Time"], (.[] | [.file_path, .words, .reading_t
 
 ```bash
 # Prepare data for database import
-opennotes notes search --sql "
+jot notes search --sql "
   SELECT 
     file_path,
     content,
@@ -383,7 +383,7 @@ backup_dir="backup-$(date +%Y%m%d)"
 mkdir -p "$backup_dir"
 
 echo "Exporting notebook metadata..."
-opennotes notes search --sql "
+jot notes search --sql "
   SELECT 
     file_path,
     content,
@@ -417,7 +417,7 @@ echo "Backup complete in $backup_dir/"
 export_dir="exports"
 mkdir -p "$export_dir"
 
-opennotes notes search --sql "
+jot notes search --sql "
   SELECT 
     file_path,
     content,
@@ -453,7 +453,7 @@ echo "" >> daily-report.md
 
 # Note statistics
 echo "## Overview" >> daily-report.md
-opennotes notes search --sql "
+jot notes search --sql "
   SELECT 
     COUNT(*) as total_notes,
     SUM((md_stats(content)).word_count) as total_words,
@@ -470,7 +470,7 @@ opennotes notes search --sql "
 # Top notes by word count
 echo "" >> daily-report.md
 echo "## Longest Notes" >> daily-report.md
-opennotes notes search --sql "
+jot notes search --sql "
   SELECT 
     file_path,
     (md_stats(content)).word_count as words
@@ -490,7 +490,7 @@ echo "Report generated: daily-report.md"
 
 echo "Analyzing code usage across notes..."
 
-opennotes notes search --sql "
+jot notes search --sql "
   SELECT 
     file_path,
     md_extract_code_blocks(content) as code_blocks
@@ -521,7 +521,7 @@ opennotes notes search --sql "
 echo "Validating notebook documentation..."
 
 # Check for notes without titles
-missing_titles=$(opennotes notes search --sql "
+missing_titles=$(jot notes search --sql "
   SELECT file_path
   FROM read_markdown('**/*.md', include_filepath:=true)
   WHERE content NOT LIKE '#%'
@@ -529,7 +529,7 @@ missing_titles=$(opennotes notes search --sql "
 
 if [ "$missing_titles" -gt 0 ]; then
   echo "Warning: $missing_titles notes missing titles"
-  opennotes notes search --sql "
+  jot notes search --sql "
     SELECT file_path
     FROM read_markdown('**/*.md', include_filepath:=true)
     WHERE content NOT LIKE '#%'
@@ -538,7 +538,7 @@ fi
 
 # Check for broken internal links
 echo "Checking for broken links..."
-opennotes notes search --sql "
+jot notes search --sql "
   SELECT file_path, md_extract_links(content) as links
   FROM read_markdown('**/*.md', include_filepath:=true)
 " | jq -r '.[] | .links[] | select(.url | startswith("./") or startswith("../")) | .url' | \
@@ -555,7 +555,7 @@ done
 #!/bin/bash
 # quality-metrics.sh - Generate content quality metrics
 
-opennotes notes search --sql "
+jot notes search --sql "
   SELECT 
     file_path,
     (md_stats(content)).word_count as words,
@@ -586,7 +586,7 @@ opennotes notes search --sql "
 
 ```bash
 # Analyze content organization by directory structure
-opennotes notes search --sql "
+jot notes search --sql "
   SELECT 
     file_path,
     (md_stats(content)).word_count as words,
@@ -614,7 +614,7 @@ opennotes notes search --sql "
 echo "Analyzing note creation patterns..."
 
 # Get file modification times and content stats
-opennotes notes search --sql "
+jot notes search --sql "
   SELECT 
     file_path,
     (md_stats(content)).word_count as words
@@ -649,7 +649,7 @@ END {
 
 ```bash
 # Create link network data for visualization
-opennotes notes search --sql "
+jot notes search --sql "
   SELECT 
     file_path,
     md_extract_links(content) as links
@@ -683,7 +683,7 @@ opennotes notes search --sql "
 
 echo "Finding notes with shared external links..."
 
-opennotes notes search --sql "
+jot notes search --sql "
   SELECT 
     file_path,
     md_extract_links(content) as links
@@ -728,21 +728,21 @@ opennotes notes search --sql "
 1. **Empty Results**: Query returns no data
    ```bash
    # Check for empty results
-   opennotes notes search --sql "SELECT COUNT(*) as count FROM read_markdown('**/*.md')"
+   jot notes search --sql "SELECT COUNT(*) as count FROM read_markdown('**/*.md')"
    # Should return: [{"count": 0}] if no files found
    ```
 
 2. **File Access Issues**: Notebook path not found
    ```bash
    # Verify notebook directory
-   opennotes notebook list
+   jot notebook list
    # Ensure you're in the correct notebook
    ```
 
 3. **SQL Syntax Errors**: Query has syntax issues
    ```bash
    # Test with simple query first
-   opennotes notes search --sql "SELECT 'test' as message"
+   jot notes search --sql "SELECT 'test' as message"
    ```
 
 #### Malformed Complex Objects
@@ -753,10 +753,10 @@ opennotes notes search --sql "
 
 ```bash
 # Instead of this (may fail):
-opennotes notes search --sql "SELECT metadata FROM read_markdown('**/*.md')"
+jot notes search --sql "SELECT metadata FROM read_markdown('**/*.md')"
 
 # Use this (safer):
-opennotes notes search --sql "
+jot notes search --sql "
   SELECT 
     file_path,
     CASE 
@@ -807,19 +807,19 @@ jq '.[] | select((.word_count // 0) > 100)'
 1. **Use LIMIT clauses**:
    ```bash
    # Instead of all notes
-   opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md')"
+   jot notes search --sql "SELECT * FROM read_markdown('**/*.md')"
    
    # Use pagination
-   opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md') LIMIT 100 OFFSET 0"
+   jot notes search --sql "SELECT * FROM read_markdown('**/*.md') LIMIT 100 OFFSET 0"
    ```
 
 2. **Filter early**:
    ```bash
    # Instead of filtering in jq
-   opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md')" | jq '.[] | select(.words > 1000)'
+   jot notes search --sql "SELECT * FROM read_markdown('**/*.md')" | jq '.[] | select(.words > 1000)'
    
    # Filter in SQL
-   opennotes notes search --sql "
+   jot notes search --sql "
      SELECT * FROM read_markdown('**/*.md', include_filepath:=true)
      WHERE (md_stats(content)).word_count > 1000
    "
@@ -828,10 +828,10 @@ jq '.[] | select((.word_count // 0) > 100)'
 3. **Select specific columns**:
    ```bash
    # Instead of SELECT *
-   opennotes notes search --sql "SELECT file_path, content FROM read_markdown('**/*.md', include_filepath:=true)"
+   jot notes search --sql "SELECT file_path, content FROM read_markdown('**/*.md', include_filepath:=true)"
    
    # Select only needed columns
-   opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)"
+   jot notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)"
    ```
 
 #### Memory Usage with Complex Objects
@@ -850,7 +850,7 @@ offset=0
 while true; do
   echo "Processing batch starting at offset $offset..."
   
-  result=$(opennotes notes search --sql "
+  result=$(jot notes search --sql "
     SELECT file_path, md_stats(content) as stats
     FROM read_markdown('**/*.md', include_filepath:=true)
     LIMIT $batch_size OFFSET $offset
@@ -877,13 +877,13 @@ done
 
 ```bash
 # Test with simple query first
-opennotes notes search --sql "SELECT 'hello' as test"
+jot notes search --sql "SELECT 'hello' as test"
 
 # Verify file access
-opennotes notes search --sql "SELECT COUNT(*) as file_count FROM read_markdown('**/*.md')"
+jot notes search --sql "SELECT COUNT(*) as file_count FROM read_markdown('**/*.md')"
 
 # Test specific functions
-opennotes notes search --sql "SELECT md_stats('# Test\nContent') as stats"
+jot notes search --sql "SELECT md_stats('# Test\nContent') as stats"
 ```
 
 #### Validate JSON with jq
@@ -892,13 +892,13 @@ opennotes notes search --sql "SELECT md_stats('# Test\nContent') as stats"
 
 ```bash
 # Validate JSON structure
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)" | jq empty
+jot notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)" | jq empty
 
 # Check data types
-opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)" | jq 'type'
+jot notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)" | jq 'type'
 
 # Inspect first element
-opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md', include_filepath:=true) LIMIT 1" | jq '.[0]'
+jot notes search --sql "SELECT * FROM read_markdown('**/*.md', include_filepath:=true) LIMIT 1" | jq '.[0]'
 ```
 
 ## Performance Optimization
@@ -909,11 +909,11 @@ opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md', include_fil
 
 ```bash
 # Slow: Filter after reading all files
-opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md', include_filepath:=true)" | \
+jot notes search --sql "SELECT * FROM read_markdown('**/*.md', include_filepath:=true)" | \
 jq '.[] | select(.file_path | contains("project"))'
 
 # Fast: Filter with SQL WHERE clause
-opennotes notes search --sql "
+jot notes search --sql "
   SELECT * FROM read_markdown('**/*.md', include_filepath:=true)
   WHERE file_path LIKE '%project%'
 "
@@ -923,11 +923,11 @@ opennotes notes search --sql "
 
 ```bash
 # Slow: Get all data then limit in jq
-opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md', include_filepath:=true)" | \
+jot notes search --sql "SELECT * FROM read_markdown('**/*.md', include_filepath:=true)" | \
 jq '.[0:10]'
 
 # Fast: Limit in SQL
-opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md', include_filepath:=true) LIMIT 10"
+jot notes search --sql "SELECT * FROM read_markdown('**/*.md', include_filepath:=true) LIMIT 10"
 ```
 
 ### Processing Optimization
@@ -936,7 +936,7 @@ opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md', include_fil
 
 ```bash
 # For very large result sets, use jq streaming
-opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md', include_filepath:=true)" | \
+jot notes search --sql "SELECT * FROM read_markdown('**/*.md', include_filepath:=true)" | \
 jq -c '.[]' | \
 while read note; do
   # Process each note individually
@@ -951,7 +951,7 @@ done
 # parallel-analysis.sh - Process notes in parallel
 
 # Get all file paths
-paths=$(opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)" | jq -r '.[].file_path')
+paths=$(jot notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)" | jq -r '.[].file_path')
 
 # Process in parallel using GNU parallel
 echo "$paths" | parallel -j4 'echo "Processing: {}" && wc -w "{}"'
@@ -969,17 +969,17 @@ echo "Benchmarking different query approaches..."
 
 # Time SQL filtering
 echo "SQL filtering:"
-time opennotes notes search --sql "
+time jot notes search --sql "
   SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)
   WHERE (md_stats(content)).word_count > 500
 " > /dev/null
 
 # Time jq filtering
 echo "jq filtering:"
-time (opennotes notes search --sql "
+time (jot notes search --sql "
   SELECT file_path, (md_stats(content)).word_count as words
   FROM read_markdown('**/*.md', include_filepath:=true)
 " | jq '.[] | select(.words > 500) | .file_path' > /dev/null)
 ```
 
-This comprehensive guide covers all aspects of using JSON output with OpenNotes SQL queries, from basic usage to advanced automation patterns and troubleshooting. The examples are practical and tested to ensure they work correctly in real-world scenarios.
+This comprehensive guide covers all aspects of using JSON output with Jot SQL queries, from basic usage to advanced automation patterns and troubleshooting. The examples are practical and tested to ensure they work correctly in real-world scenarios.

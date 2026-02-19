@@ -3,7 +3,7 @@ package parser
 import (
 	"testing"
 
-	"github.com/zenobi-us/opennotes/internal/search"
+	"github.com/zenobi-us/jot/internal/search"
 )
 
 func TestParser_HasKeyword(t *testing.T) {

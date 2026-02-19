@@ -1,4 +1,4 @@
-module github.com/zenobi-us/opennotes
+module github.com/zenobi-us/jot
 
 go 1.24.7
 

@@ -1,33 +1,33 @@
 # Notebook Discovery
 
-OpenNotes automatically discovers and loads notebooks based on the user's current working directory using a sophisticated 3-tier priority system. This document outlines the complete algorithm and provides a visual flowchart of the discovery process.
+Jot automatically discovers and loads notebooks based on the user's current working directory using a sophisticated 3-tier priority system. This document outlines the complete algorithm and provides a visual flowchart of the discovery process.
 
 ## Overview
 
 The notebook discovery follows a **5-tier priority system** (first wins):
 
-1. **OPENNOTES_NOTEBOOK** (highest priority) - Environment variable
+1. **JOT_NOTEBOOK** (highest priority) - Environment variable
 2. **--notebook flag** (CLI override) - Command line argument
-3. **Current Directory** (direct check) - `.opennotes.json` in current working directory
+3. **Current Directory** (direct check) - `.jot.json` in current working directory
 4. **Registered Notebooks** (context matching) - Check each registered notebook for context match
-5. **Ancestor Search** (fallback) - Walk up directory tree looking for `.opennotes.json`
+5. **Ancestor Search** (fallback) - Walk up directory tree looking for `.jot.json`
 
 ## Discovery Flowchart
 
 ![Notebook Discovery Flowchart](notebook-discovery.svg)
 
-### 1. OPENNOTES_NOTEBOOK Environment Variable (Tier 1 - Highest Priority)
+### 1. JOT_NOTEBOOK Environment Variable (Tier 1 - Highest Priority)
 
-The system first checks if the `OPENNOTES_NOTEBOOK` environment variable is set:
+The system first checks if the `JOT_NOTEBOOK` environment variable is set:
 
 ```bash
-export OPENNOTES_NOTEBOOK=/path/to/notebook
-opennotes notes list  # Uses the notebook from envvar
+export JOT_NOTEBOOK=/path/to/notebook
+jot notes list  # Uses the notebook from envvar
 ```
 
 If the envvar is set:
 
-1. Check if `.opennotes.json` exists in that path
+1. Check if `.jot.json` exists in that path
 2. If yes: Load and open the notebook → **SUCCESS**
 3. If no: Continue to Tier 2
 
@@ -36,25 +36,25 @@ If the envvar is set:
 The system checks if the `--notebook` flag was provided on the command line:
 
 ```bash
-opennotes notes list --notebook /path/to/notebook
+jot notes list --notebook /path/to/notebook
 ```
 
 If a flag path exists:
 
-1. Check if `.opennotes.json` exists in that path
+1. Check if `.jot.json` exists in that path
 2. If yes: Load and open the notebook → **SUCCESS**
 3. If no: Continue to Tier 3
 
 ### 3. Current Directory (Tier 3)
 
-The system checks if `.opennotes.json` exists in the current working directory:
+The system checks if `.jot.json` exists in the current working directory:
 
 ```bash
-cd /home/user/project  # Contains .opennotes.json
-opennotes notes list   # Auto-discovers notebook in cwd
+cd /home/user/project  # Contains .jot.json
+jot notes list   # Auto-discovers notebook in cwd
 ```
 
-If `.opennotes.json` exists in current directory:
+If `.jot.json` exists in current directory:
 
 1. Load and open the notebook → **SUCCESS**
 2. If no: Continue to Tier 4
@@ -63,9 +63,9 @@ If `.opennotes.json` exists in current directory:
 
 The system checks notebooks registered in the global configuration:
 
-1. Load global config from `~/.config/opennotes/config.json`
+1. Load global config from `~/.config/jot/config.json`
 2. For each registered notebook path:
-   - Check if `.opennotes.json` exists
+   - Check if `.jot.json` exists
    - If exists: Load notebook configuration
    - Check if current directory matches any context path using **Context Matching Algorithm**
    - If match found: Load and open the notebook → **SUCCESS**
@@ -97,7 +97,7 @@ Result: TRUE → Context matches → Return this notebook
 If no environment variable, flag, current directory, or registered notebooks match, the system performs an ancestor directory search:
 
 1. Start with parent directory (not current, as that was checked in Tier 3)
-2. Check if `.opennotes.json` exists in current directory
+2. Check if `.jot.json` exists in current directory
 3. If yes: Load and open the notebook → **SUCCESS**
 4. If no: Move to parent directory
 5. Repeat until reaching filesystem root (`/`) or empty string
@@ -107,7 +107,7 @@ If no environment variable, flag, current directory, or registered notebooks mat
 
 ### Global Configuration
 
-**Location:** `~/.config/opennotes/config.json`
+**Location:** `~/.config/jot/config.json`
 
 ```json
 {
@@ -121,7 +121,7 @@ If no environment variable, flag, current directory, or registered notebooks mat
 
 ### Notebook Configuration
 
-**Location:** `<notebook_directory>/.opennotes.json`
+**Location:** `<notebook_directory>/.jot.json`
 
 ```json
 {
@@ -169,7 +169,7 @@ If no environment variable, flag, current directory, or registered notebooks mat
 
 ## State Transitions Summary
 
-1. **TIER 1: OPENNOTES_NOTEBOOK envvar** → Success or Continue to Tier 2
+1. **TIER 1: JOT_NOTEBOOK envvar** → Success or Continue to Tier 2
 2. **TIER 2: --notebook flag** → Success or Continue to Tier 3
 3. **TIER 3: Current Directory** → Success or Continue to Tier 4
 4. **TIER 4: REGISTERED SEARCH** → For each registered notebook:
@@ -178,4 +178,4 @@ If no environment variable, flag, current directory, or registered notebooks mat
 6. **SUCCESS** → Return notebook instance
 7. **NOT FOUND** → Return nil
 
-This discovery system ensures OpenNotes works seamlessly across different project environments while maintaining predictable, efficient behavior. The priority order follows the principle of least surprise: environment variable (global) → flag (explicit) → auto-detection (implicit).
+This discovery system ensures Jot works seamlessly across different project environments while maintaining predictable, efficient behavior. The priority order follows the principle of least surprise: environment variable (global) → flag (explicit) → auto-detection (implicit).

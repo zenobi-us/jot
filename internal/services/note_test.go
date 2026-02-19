@@ -9,8 +9,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/zenobi-us/opennotes/internal/services"
-	"github.com/zenobi-us/opennotes/internal/testutil"
+	"github.com/zenobi-us/jot/internal/services"
+	"github.com/zenobi-us/jot/internal/testutil"
 )
 
 func TestNoteService_SearchNotes_NoNotebookSelected(t *testing.T) {

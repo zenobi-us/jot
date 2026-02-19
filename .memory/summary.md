@@ -1,7 +1,7 @@
 # OpenNotes Project Summary
 
 ## Current Focus
-- **Future Epic**: [epic-8361d3a2](epic-8361d3a2-rename-to-jot.md) - **Rename Project to "Jot"**
+- **Active Epic**: [epic-8361d3a2](epic-8361d3a2-rename-to-jot.md) - **Rename Project to "Jot"**
   - Phase 1: Discovery — Identify all rename locations (in-repo and external)
   - Status: Planning
 - **Ready for Implementation**: [plan-b4e2f7a1](plan-b4e2f7a1-dsl-views-implementation.md) - DSL-based views
@@ -14,6 +14,13 @@
 - New module: `github.com/zenobi-us/jot`
 - New repo: `github.com/zenobi-us/jot`
 - New config: `~/.config/jot/`, `.jot.json`
+
+## In-Progress Epics
+
+### Pi-OpenNotes Extension (1f41631e) — Tasks & Phases Archived
+- All tasks (6) and phases (3) completed and archived to `archive/pi-opennotes-extension-1f41631e/`
+- Epic file retained pending final review and learnings distillation
+- See [epic-1f41631e](epic-1f41631e-pi-opennotes-extension.md)
 
 ## Completed Epics
 
@@ -28,22 +35,14 @@
 | Tests | All pass | 161+ passing ✅ |
 | DuckDB refs | 0 | 0 ✅ (except residual converter, deferred) |
 
-**Distilled Learnings** (4 new + 2 archived):
-- [learning-a1b2c3d4](learning-a1b2c3d4-parallel-research-methodology.md) — Parallel research methodology for technology decisions
-- [learning-b3c4d5e6](learning-b3c4d5e6-incremental-dependency-replacement.md) — Incremental dependency replacement strategy
-- [learning-c5d6e7f8](learning-c5d6e7f8-pure-go-cgo-elimination.md) — Pure Go / CGO elimination benefits
-- [learning-d7e8f9a0](learning-d7e8f9a0-interface-first-search-design.md) — Interface-first search design patterns
-
-**Residual work**: DSL views implementation (plan-b4e2f7a1), DuckDBConverter cleanup
+**Distilled Learnings** (4 files):
+- [learning-a1b2c3d4](learning-a1b2c3d4-parallel-research-methodology.md) — Parallel research methodology
+- [learning-b3c4d5e6](learning-b3c4d5e6-incremental-dependency-replacement.md) — Incremental dependency replacement
+- [learning-c5d6e7f8](learning-c5d6e7f8-pure-go-cgo-elimination.md) — Pure Go / CGO elimination
+- [learning-d7e8f9a0](learning-d7e8f9a0-interface-first-search-design.md) — Interface-first search design
 
 ### Semantic Search (7c9d2e1f) — ✅ Archived
 **Archive**: [archive/semantic-search-7c9d2e1f/](archive/semantic-search-7c9d2e1f/)
-
-## DSL Views Plan (b4e2f7a1) — Ready
-**Status**: Research complete, 10 TDD tasks ready
-- Replaces SQL view system with DSL pipe syntax
-- Estimated: 4-6 hours
-- Use `superpowers:executing-plans` skill
 
 ## Project State
 - Feature branch: `feat/remove-duckdb-migrate-to-afero-chromedb-with-bleve-search`

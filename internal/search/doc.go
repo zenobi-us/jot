@@ -1,4 +1,4 @@
-// Package search provides interfaces and types for the OpenNotes search system.
+// Package search provides interfaces and types for the Jot search system.
 //
 // This package defines the contracts for indexing and querying notes without
 // depending on any specific search backend. Implementations (like Bleve) are

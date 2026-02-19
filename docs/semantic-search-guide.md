@@ -1,6 +1,6 @@
 # Semantic Search Guide
 
-OpenNotes includes an optional **semantic search** capability that finds notes by meaning rather than exact keyword matching. This is useful when you want to find conceptually related content.
+Jot includes an optional **semantic search** capability that finds notes by meaning rather than exact keyword matching. This is useful when you want to find conceptually related content.
 
 ## Overview
 
@@ -14,16 +14,16 @@ OpenNotes includes an optional **semantic search** capability that finds notes b
 
 ```bash
 # Hybrid search (default mode)
-opennotes notes search semantic "project planning discussions"
+jot notes search semantic "project planning discussions"
 
 # Keyword-only mode (fastest, exact matching)
-opennotes notes search semantic "meeting" --mode keyword
+jot notes search semantic "meeting" --mode keyword
 
 # Semantic-only mode (meaning-based)
-opennotes notes search semantic "discussions about deadlines" --mode semantic
+jot notes search semantic "discussions about deadlines" --mode semantic
 
 # With explain output to understand matches
-opennotes notes search semantic "architecture" --explain
+jot notes search semantic "architecture" --explain
 ```
 
 ## When to Use Each Mode
@@ -35,8 +35,8 @@ opennotes notes search semantic "architecture" --explain
 - **Performance-critical** scenarios (fastest)
 
 ```bash
-opennotes notes search "TODO"
-opennotes notes search "2024-01-15"
+jot notes search "TODO"
+jot notes search "2024-01-15"
 ```
 
 ### Semantic Search (`notes search semantic`)
@@ -46,8 +46,8 @@ opennotes notes search "2024-01-15"
 - **Exploratory search**: When you don't know the exact terms used
 
 ```bash
-opennotes notes search semantic "improving team workflow"
-opennotes notes search semantic "architecture decisions"
+jot notes search semantic "improving team workflow"
+jot notes search semantic "architecture decisions"
 ```
 
 ## Command Reference
@@ -55,7 +55,7 @@ opennotes notes search semantic "architecture decisions"
 ### Basic Syntax
 
 ```bash
-opennotes notes search semantic [query] [flags]
+jot notes search semantic [query] [flags]
 ```
 
 ### Flags
@@ -73,13 +73,13 @@ opennotes notes search semantic [query] [flags]
 
 ```bash
 # Semantic search with tag filter
-opennotes notes search semantic "project updates" --and data.tag=work
+jot notes search semantic "project updates" --and data.tag=work
 
 # Exclude archived notes
-opennotes notes search semantic "meeting notes" --not data.status=archived
+jot notes search semantic "meeting notes" --not data.status=archived
 
 # Combine multiple filters
-opennotes notes search semantic "decisions" \
+jot notes search semantic "decisions" \
   --and data.tag=architecture \
   --not data.status=archived
 ```
@@ -89,7 +89,7 @@ opennotes notes search semantic "decisions" \
 The `--explain` flag shows how each result was matched:
 
 ```bash
-opennotes notes search semantic "workflow automation" --explain
+jot notes search semantic "workflow automation" --explain
 ```
 
 Output includes:
@@ -154,14 +154,14 @@ The semantic backend (chromem-go) may not be initialized. Try:
 
 ```bash
 # Use keyword-only mode
-opennotes notes search semantic "query" --mode keyword
+jot notes search semantic "query" --mode keyword
 ```
 
 ### No results in semantic mode
 
 - Try **hybrid mode** which combines keyword matching
 - Check that your query is conceptual rather than very specific keywords
-- Verify notes exist with `opennotes notes list`
+- Verify notes exist with `jot notes list`
 
 ### Different results between modes
 

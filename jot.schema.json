@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://opennotes.dev/schema/v1/notebook.json",
-  "title": "OpenNotes Notebook Configuration",
-  "description": "Configuration schema for .opennotes.json files",
+  "$id": "https://jot.dev/schema/v1/notebook.json",
+  "title": "Jot Notebook Configuration",
+  "description": "Configuration schema for .jot.json files",
   "type": "object",
   "required": ["root", "name"],
   "properties": {

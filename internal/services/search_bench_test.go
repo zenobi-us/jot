@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zenobi-us/opennotes/internal/services"
+	"github.com/zenobi-us/jot/internal/services"
 )
 
 // createBenchmarkNotes creates a slice of notes for benchmarking

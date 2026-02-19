@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/zenobi-us/opennotes/internal/services"
+	"github.com/zenobi-us/jot/internal/services"
 )
 
 // TestMain is called before any tests run in this package.
