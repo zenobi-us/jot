@@ -1,8 +1,8 @@
 # Getting Started with Jot: A Beginner's Guide
 
-Welcome to Jot! This guide is for you if you want to **manage your markdown notes with a simple CLI tool** without diving into SQL or advanced features. We'll get you up and running in 15 minutes.
+Welcome to Jot! This guide is for you if you want to **manage your markdown notes with a simple CLI tool** without diving into advanced workflows. We'll get you up and running in 15 minutes.
 
-**Note**: If you're already comfortable with SQL and want to unlock advanced querying capabilities, check out the [Getting Started for Power Users](getting-started-power-users.md) guide instead.
+**Note**: If you want advanced filtering, semantic retrieval, and automation patterns, jump to [Getting Started for Power Users](getting-started-power-users.md).
 
 ---
 
@@ -238,7 +238,7 @@ jot notes add "Projects/My Project" --path projects/my-project.md
 
 ## Part 4: Simple Searches (5 minutes)
 
-Now let's find notes without needing to know SQL. We'll use simple text searches.
+Now let's find notes with simple text search first.
 
 ### Search by Text
 
@@ -303,32 +303,34 @@ You've got Jot working! Here's what you can do next:
 
 ### Graduation Path to Advanced Features
 
-Once you're comfortable with basic note management, you have two paths:
+Once you're comfortable with the basics, take one of these paths:
 
-#### 🚀 Path 1: SQL Power User (30-60 minutes)
+#### 🚀 Path 1: Advanced Search + Views (20-40 minutes)
 
-Want to supercharge your searches? Jot can query your entire note collection using SQL:
+Use Jot’s supported advanced search workflows:
 
 ```bash
-# Find notes by word count
-jot notes search --sql \
-  "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) \
-   WHERE md_stats(content).word_count > 100 \
-   ORDER BY file_path"
+# Structured metadata/path filters
+jot notes search query --and data.status=active --and path=projects/**/*.md
+
+# Semantic retrieval for conceptual lookup
+jot notes search semantic "active project planning notes" --mode hybrid
+
+# Repeatable workflow with views
+jot notes view recent
 ```
 
-This lets you:
+This gives you:
 
-- Search by metadata (dates, tags, word count)
-- Find relationships between notes
-- Extract statistics and patterns
-- Automate workflows with JSON output
+- precise filtering with `--and/--or/--not`
+- typo-tolerant and semantic retrieval options
+- repeatable query workflows via views
 
-**Get Started**: [Getting Started for Power Users](getting-started-power-users.md) (15 minutes)
+**Get Started**: [Getting Started for Power Users](getting-started-power-users.md)
 
 #### 📚 Path 2: Structured Note-Taking (20 minutes)
 
-Use frontmatter (metadata at the top of your notes) to organize information:
+Use frontmatter metadata in notes:
 
 ```markdown
 ---
@@ -339,14 +341,12 @@ priority: high
 ---
 
 # Project Alpha Notes
-
-Content here...
 ```
 
-Then search by metadata:
+Then filter by metadata:
 
 ```bash
-jot notes search --data status=active
+jot notes search query --and data.status=active
 ```
 
 **Get Started**: [Import Workflow Guide](import-workflow-guide.md)
@@ -366,11 +366,10 @@ git commit -m "Initial notes commit"
 ```
 
 **With Shell Scripts**:
-Jot outputs JSON that works great with `jq`:
+Use JSON-capable commands (for example views) with `jq`:
 
 ```bash
-# Get all notes as JSON (once you learn the power user guide)
-jot notes list --format json | jq '.notes[] | .title'
+jot notes view recent --format json | jq 'length'
 ```
 
 ---
@@ -439,7 +438,7 @@ You now know:
 **Next Steps**:
 
 - Start using Jot daily with your real notes
-- When you're comfortable, explore the [Power Users Guide](getting-started-power-users.md) for SQL superpowers
+- When you're comfortable, explore the [Power Users Guide](getting-started-power-users.md) for advanced search and automation patterns
 - Check out [Automation Recipes](automation-recipes.md) to integrate with other tools
 
 Happy note-taking! 📝

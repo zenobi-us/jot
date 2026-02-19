@@ -21,6 +21,25 @@ go install github.com/zenobi-us/jot@latest
 
 *Requires Go 1.24+*
 
+## Migrating from OpenNotes
+
+If you used the old `opennotes` CLI/repo, use this migration guide:
+
+- **[OpenNotes → Jot Migration Guide](docs/migration-opennotes-to-jot.md)**
+
+Quick migration checks:
+
+```bash
+# Preview pending migrations
+jot notebook migrate list
+
+# Dry-run migration actions
+jot notebook migrate
+
+# Apply migrations
+jot notebook migrate --apply
+```
+
 ## Quick Start
 
 Get started in seconds:

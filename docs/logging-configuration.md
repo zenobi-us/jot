@@ -118,7 +118,7 @@ LOG_LEVEL=error LOG_FORMAT=json mise run ci
 LOG_LEVEL=debug LOG_FORMAT=ci jot notes list
 
 # Production-friendly: info level, JSON output
-LOG_LEVEL=info LOG_FORMAT=json jot notes search --sql "..."
+LOG_LEVEL=info LOG_FORMAT=json jot notes search "incident"
 ```
 
 ## Usage in .mise/tasks
@@ -179,7 +179,7 @@ LOG_FORMAT=json mise run test 2>&1 | jq -r '.level' | sort | uniq -c
 
 ```bash
 # JSON output for Datadog/Splunk/etc
-LOG_LEVEL=info LOG_FORMAT=json jot notes search --sql "..." | your-log-aggregator
+LOG_LEVEL=info LOG_FORMAT=json jot notes search "incident" | your-log-aggregator
 ```
 
 ## Migration from Previous Versions

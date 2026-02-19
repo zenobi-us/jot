@@ -838,7 +838,7 @@ cat "$METRICS_FILE" | jq .
 
 - **User Guide**: See [views-guide.md](views-guide.md) for complete documentation
 - **API Reference**: See [views-api.md](views-api.md) for schema details
-- **SQL Guide**: See [sql-guide.md](sql-guide.md) for custom queries
+- **Search Reference**: See [commands/notes-search.md](commands/notes-search.md) for query syntax
 - **Automation**: See [automation-recipes.md](automation-recipes.md) for more scripts
 
 ---

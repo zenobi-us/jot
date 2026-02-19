@@ -417,8 +417,8 @@ jot notes add "Bug Report" \
 
 ## See Also
 
-- **[Views Guide](views-guide.md)** - Query notes with custom views
-- **[SQL Guide](sql-guide.md)** - Advanced querying with SQL
+- **[Views Guide](views-guide.md)** - Query notes with reusable views
+- **[Search Command Reference](commands/notes-search.md)** - Advanced search workflows
 - **[Import Workflow](import-workflow-guide.md)** - Import existing notes
 
 ## Troubleshooting

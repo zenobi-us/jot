@@ -23,7 +23,7 @@ The Views System uses JSON configuration to define reusable query presets. This 
 
 - **ViewDefinition**: Complete view specification (name, parameters, query)
 - **Parameter**: Runtime input that makes views flexible
-- **Query**: SQL generation instructions (conditions, ordering)
+- **Query**: Query-generation instructions (conditions, ordering)
 - **Template Variable**: Dynamic values resolved at runtime
 
 ---
@@ -68,7 +68,7 @@ Complete specification for a view.
 | `name`        | `string` | ✅ Yes   | Unique view identifier (lowercase, alphanumeric + hyphens)      |
 | `description` | `string` | ❌ No    | Human-readable description                                      |
 | `parameters`  | `array`  | ❌ No    | Runtime parameters (see [Parameter Schema](#parameter-schema))  |
-| `query`       | `object` | ✅ Yes   | SQL generation instructions (see [Query Schema](#query-schema)) |
+| `query`       | `object` | ✅ Yes   | Query-generation instructions (see [Query Schema](#query-schema)) |
 
 ### Constraints
 
@@ -269,7 +269,7 @@ jot notes view my-view --param include_archived=false
 
 ## Query Schema
 
-Defines SQL generation instructions.
+Defines query-generation instructions.
 
 ### JSON Structure
 
@@ -292,13 +292,13 @@ Defines SQL generation instructions.
 | Field        | Type      | Required | Description                                                  |
 | ------------ | --------- | -------- | ------------------------------------------------------------ |
 | `conditions` | `array`   | ✅ Yes   | Query conditions (see [Condition Schema](#condition-schema)) |
-| `orderBy`    | `string`  | ❌ No    | SQL ORDER BY clause                                          |
+| `orderBy`    | `string`  | ❌ No    | Sort instruction (field and direction)                       |
 | `limit`      | `integer` | ❌ No    | Max results to return                                        |
 
 ### Constraints
 
 - **`conditions`**: At least 1 condition required, max 20
-- **`orderBy`**: Must be valid SQL ORDER BY syntax
+- **`orderBy`**: Must use supported sort syntax (field:direction)
 - **`limit`**: Must be positive integer (1-10000)
 
 ### Condition Schema
@@ -567,7 +567,7 @@ Complete specifications for all 6 built-in views.
 }
 ```
 
-**Note**: This view uses a special executor for graph analysis, not standard SQL generation.
+**Note**: This view uses a special executor for graph analysis, not standard query generation.
 
 ---
 
@@ -581,7 +581,7 @@ Complete specifications for all 6 built-in views.
 }
 ```
 
-**Note**: This view uses a special executor for link validation, not standard SQL generation.
+**Note**: This view uses a special executor for link validation, not standard query generation.
 
 ---
 
@@ -721,7 +721,7 @@ Views System error codes and descriptions.
 | ------------------------ | ---------------------------------------- | ------------------ | ------------------------------------------------------------ |
 | `QUERY_INVALID_FIELD`    | `Field '{field}' is not queryable`       | Invalid field name | Use valid fields (see [Queryable Fields](#queryable-fields)) |
 | `QUERY_INVALID_OPERATOR` | `Operator '{operator}' is not supported` | Invalid operator   | Use valid operators (see [Operators](#operators))            |
-| `QUERY_SQL_ERROR`        | `SQL generation failed: {details}`       | SQL error          | Check query syntax and field names                           |
+| `QUERY_BUILD_ERROR`      | `Query generation failed: {details}`     | Query build error  | Check query syntax and field names                           |
 
 ### Template Errors
 
@@ -835,7 +835,7 @@ Complete JSON Schema for view definitions (for validation).
 
 - **User Guide**: See [views-guide.md](views-guide.md) for usage documentation
 - **Examples**: See [views-examples.md](views-examples.md) for real-world use cases
-- **SQL Guide**: See [sql-guide.md](sql-guide.md) for custom SQL queries
+- **Search Reference**: See [commands/notes-search.md](commands/notes-search.md) for query syntax
 
 ---
 

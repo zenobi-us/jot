@@ -16,7 +16,7 @@
 
 ## Overview
 
-The Views System provides named, reusable query presets that make it easy to find and organize your notes without writing SQL. Views are perfect for:
+The Views System provides named, reusable query presets that make it easy to find and organize your notes without writing complex filter expressions repeatedly. Views are perfect for:
 
 - **Daily workflows**: Quick access to today's notes or recent changes
 - **Project tracking**: Organize notes by status (kanban-style)
@@ -875,7 +875,7 @@ jot notebooks info
 jot notes list
 
 # Check if notes have expected metadata
-jot notes search --sql "SELECT path, data FROM read_markdown('**/*.md') LIMIT 5"
+jot notes search query --and data.tag=project
 
 # Verify view query is correct
 jot notes view --list --format json | jq '.[] | select(.name == "my-view") | .query'
@@ -915,7 +915,7 @@ time jot notes view my-view
 
 - **Examples**: See [views-examples.md](views-examples.md) for real-world use cases
 - **API Reference**: See [views-api.md](views-api.md) for complete schema documentation
-- **SQL Guide**: See [sql-guide.md](sql-guide.md) for custom SQL queries
+- **Search Reference**: See [commands/notes-search.md](commands/notes-search.md) for query syntax
 - **Automation**: See [automation-recipes.md](automation-recipes.md) for scripting examples
 
 ---
