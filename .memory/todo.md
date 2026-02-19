@@ -20,6 +20,7 @@
 
 - [ ] **[NEEDS-HUMAN]** Phase 3: GitHub repo rename (`zenobi-us/opennotes` → `zenobi-us/jot`)
 - [ ] **[NEEDS-HUMAN]** Phase 4: External updates (pkg.go.dev, any published packages)
+- [ ] [task-8281af6b](task-8281af6b-notebook-migrate-versioned-framework.md) - Plan versioned `jot notebook migrate` framework (refined v1/v2 architecture proposal drafted)
 - [ ] Phase 4: Write migration guide for existing users (config path changes)
 - [ ] Regenerate `docs/notebook-discovery.svg` (contains embedded "opennotes" text)
 

@@ -106,6 +106,19 @@ func TestNotebookService_LoadConfig_ValidConfig(t *testing.T) {
 	assert.Equal(t, []string{notebookDir}, config.Contexts)
 }
 
+func TestNotebookService_LoadConfig_DefaultsLegacyConfigVersion(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := createTestNotebook(t, tmpDir, "legacy-notebook")
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	config, err := svc.LoadConfig(notebookDir)
+	require.NoError(t, err)
+
+	assert.Equal(t, NotebookConfigVersionBootstrap, config.ConfigVersion)
+}
+
 func TestNotebookService_LoadConfig_InvalidJSON(t *testing.T) {
 	tmpDir := t.TempDir()
 	notebookDir := filepath.Join(tmpDir, "invalid")

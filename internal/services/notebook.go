@@ -26,13 +26,21 @@ type NotebookGroup struct {
 	Template string         `json:"template,omitempty"`
 }
 
+// Notebook config version constants.
+const (
+	// NotebookConfigVersionBootstrap is assigned to legacy notebooks that do not
+	// yet declare a config_version value.
+	NotebookConfigVersionBootstrap Version = 1
+)
+
 // StoredNotebookConfig is what's stored in .jot.json.
 type StoredNotebookConfig struct {
-	Root      string            `json:"root"`
-	Name      string            `json:"name"`
-	Contexts  []string          `json:"contexts,omitempty"`
-	Templates map[string]string `json:"templates,omitempty"`
-	Groups    []NotebookGroup   `json:"groups,omitempty"`
+	ConfigVersion Version           `json:"config_version,omitempty"`
+	Root          string            `json:"root"`
+	Name          string            `json:"name"`
+	Contexts      []string          `json:"contexts,omitempty"`
+	Templates     map[string]string `json:"templates,omitempty"`
+	Groups        []NotebookGroup   `json:"groups,omitempty"`
 }
 
 // NotebookConfig includes runtime-resolved paths.
@@ -89,6 +97,10 @@ func (s *NotebookService) LoadConfig(path string) (*NotebookConfig, error) {
 		return nil, fmt.Errorf("invalid notebook config: %w", err)
 	}
 
+	if stored.ConfigVersion == 0 {
+		stored.ConfigVersion = NotebookConfigVersionBootstrap
+	}
+
 	// Resolve root path relative to config location
 	rootPath := filepath.Join(path, stored.Root)
 	if _, err := os.Stat(rootPath); err != nil {
@@ -104,11 +116,12 @@ func (s *NotebookService) LoadConfig(path string) (*NotebookConfig, error) {
 
 	return &NotebookConfig{
 		StoredNotebookConfig: StoredNotebookConfig{
-			Root:      rootPath, // Now absolute
-			Name:      stored.Name,
-			Contexts:  stored.Contexts,
-			Templates: stored.Templates,
-			Groups:    stored.Groups,
+			ConfigVersion: stored.ConfigVersion,
+			Root:          rootPath, // Now absolute
+			Name:          stored.Name,
+			Contexts:      stored.Contexts,
+			Templates:     stored.Templates,
+			Groups:        stored.Groups,
 		},
 		Path: configPath,
 	}, nil

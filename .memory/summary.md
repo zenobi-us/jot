@@ -5,7 +5,7 @@
   - Phase 1: Discovery — ✅ COMPLETE
   - Phase 2: In-Repo Changes — ✅ COMPLETE (all 10 steps done)
   - Phase 3: GitHub Rename — [NEEDS-HUMAN] manual repo rename
-  - Phase 4: External Updates — TODO after Phase 3
+  - Phase 4: External Updates — refined v1/v2 migration architecture drafted (task-8281af6b), execution after Phase 3
 
 ## Rename Epic (8361d3a2) Status
 **Goal**: Rebrand from "OpenNotes" → "Jot" — ✅ All code changes done
@@ -22,7 +22,7 @@
 | Tests | All passing, 0 lint issues |
 | Branch | `feat/rename-to-jot` (2 commits: `bcee714`, `8e332de`) |
 
-**Remaining**: GitHub repo rename (manual), external updates, migration guide
+**Remaining**: GitHub repo rename (manual), external updates, migration guide, and versioned migration framework review ([task-8281af6b](task-8281af6b-notebook-migrate-versioned-framework.md))
 
 ## In-Progress Epics
 
