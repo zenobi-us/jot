@@ -51,9 +51,11 @@ jot notes list
 ### Notebook resolution seems wrong
 
 Check precedence using docs:
+
 - [notebook-discovery.md](notebook-discovery.md)
 
 Typical fixes:
+
 - clear stale env var (`unset JOT_NOTEBOOK`)
 - pass `--notebook` explicitly
 - run from the intended notebook directory
@@ -107,6 +109,7 @@ jot notes search semantic "topic" --mode keyword
 ```
 
 See full guide:
+
 - [semantic-search-guide.md](semantic-search-guide.md)
 
 ---
@@ -138,6 +141,7 @@ Make sure command actually outputs JSON (e.g. `notes view --format json`).
 ## Migration issues (OpenNotes → Jot)
 
 Use:
+
 - [migration-opennotes-to-jot.md](migration-opennotes-to-jot.md)
 
 Quick checks:
@@ -152,6 +156,7 @@ jot notebook migrate --apply
 ## Still blocked?
 
 Capture:
+
 - exact command
 - exact error output
 - output of `jot --version`

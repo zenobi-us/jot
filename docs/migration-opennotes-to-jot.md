@@ -6,14 +6,14 @@ If you previously used `opennotes`, this guide explains what changed and how to 
 
 ## What Changed
 
-| Area | Old | New |
-| --- | --- | --- |
-| Repository | `github.com/zenobi-us/opennotes` | `github.com/zenobi-us/jot` |
-| CLI binary | `opennotes` | `jot` |
-| Go install path | `github.com/zenobi-us/opennotes@latest` | `github.com/zenobi-us/jot@latest` |
-| Go module path | `github.com/zenobi-us/opennotes` | `github.com/zenobi-us/jot` |
-| Notebook config filename | `.opennotes.json` | `.jot.json` |
-| Env var (notebook selection) | `OPENNOTES_NOTEBOOK` | `JOT_NOTEBOOK` |
+| Area                         | Old                                     | New                               |
+| ---------------------------- | --------------------------------------- | --------------------------------- |
+| Repository                   | `github.com/zenobi-us/opennotes`        | `github.com/zenobi-us/jot`        |
+| CLI binary                   | `opennotes`                             | `jot`                             |
+| Go install path              | `github.com/zenobi-us/opennotes@latest` | `github.com/zenobi-us/jot@latest` |
+| Go module path               | `github.com/zenobi-us/opennotes`        | `github.com/zenobi-us/jot`        |
+| Notebook config filename     | `.opennotes.json`                       | `.jot.json`                       |
+| Env var (notebook selection) | `OPENNOTES_NOTEBOOK`                    | `JOT_NOTEBOOK`                    |
 
 ---
 
@@ -102,6 +102,7 @@ Current search surfaces are:
 - `jot notes search semantic "..."` (semantic/hybrid)
 
 If you are migrating old workflows, verify command docs:
+
 - [Notes Search Command](commands/notes-search.md)
 - [Semantic Search Guide](semantic-search-guide.md)
 
@@ -142,5 +143,6 @@ Search and replace in shell config files:
 - `~/.config/fish/config.fish`
 
 Replace:
+
 - `opennotes` → `jot`
 - `OPENNOTES_` → `JOT_`

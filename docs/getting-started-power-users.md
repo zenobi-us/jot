@@ -70,6 +70,7 @@ jot notes search "test"
 ```
 
 If behavior looks wrong, use:
+
 - [Troubleshooting](getting-started-troubleshooting.md)
 - [Notebook discovery](notebook-discovery.md)
 

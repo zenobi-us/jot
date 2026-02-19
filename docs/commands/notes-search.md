@@ -99,11 +99,11 @@ jot notes search query [--and field=value] [--or field=value] [--not field=value
 
 ### Operators
 
-| Operator | Meaning |
-| --- | --- |
-| `--and` | all conditions must match |
-| `--or` | any condition can match |
-| `--not` | excludes matching notes |
+| Operator | Meaning                   |
+| -------- | ------------------------- |
+| `--and`  | all conditions must match |
+| `--or`   | any condition can match   |
+| `--not`  | excludes matching notes   |
 
 ### Supported Fields
 
@@ -203,6 +203,7 @@ jot notes search semantic "architecture" --mode hybrid --explain
 ```
 
 For full semantic behavior and troubleshooting, see:
+
 - [Semantic Search Guide](../semantic-search-guide.md)
 
 ---
@@ -211,22 +212,22 @@ For full semantic behavior and troubleshooting, see:
 
 `path`, `links-to`, and `linked-by` support globs.
 
-| Pattern | Meaning | Example |
-| --- | --- | --- |
-| `*` | any chars (single level) | `docs/*.md` |
-| `**` | recursive path depth | `**/*.md` |
-| `?` | single character | `task?.md` |
+| Pattern | Meaning                  | Example     |
+| ------- | ------------------------ | ----------- |
+| `*`     | any chars (single level) | `docs/*.md` |
+| `**`    | recursive path depth     | `**/*.md`   |
+| `?`     | single character         | `task?.md`  |
 
 ---
 
 ## Common Errors
 
-| Error | Cause | Fix |
-| --- | --- | --- |
-| `invalid field: X` | Unsupported field name | Use supported fields listed above |
-| `expected field=value` | Missing `=` | Use `field=value` format |
-| `value too long` | Condition value exceeds limit | Shorten value |
-| `at least one condition is required` | `query` called with no conditions | Add `--and`, `--or`, or `--not` |
+| Error                                | Cause                             | Fix                               |
+| ------------------------------------ | --------------------------------- | --------------------------------- |
+| `invalid field: X`                   | Unsupported field name            | Use supported fields listed above |
+| `expected field=value`               | Missing `=`                       | Use `field=value` format          |
+| `value too long`                     | Condition value exceeds limit     | Shorten value                     |
+| `at least one condition is required` | `query` called with no conditions | Add `--and`, `--or`, or `--not`   |
 
 ---
 

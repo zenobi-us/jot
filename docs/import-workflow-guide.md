@@ -24,6 +24,7 @@ jot notes list
 ```
 
 If running from multiple contexts, review:
+
 - [notebook-discovery.md](notebook-discovery.md)
 
 ## 3) Validate searchability
@@ -86,6 +87,7 @@ jot notebook migrate --apply
 ```
 
 See full details:
+
 - [migration-opennotes-to-jot.md](migration-opennotes-to-jot.md)
 
 ## Recommended post-import checklist

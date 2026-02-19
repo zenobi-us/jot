@@ -63,11 +63,11 @@ Complete specification for a view.
 
 ### Field Descriptions
 
-| Field         | Type     | Required | Description                                                     |
-| ------------- | -------- | -------- | --------------------------------------------------------------- |
-| `name`        | `string` | ✅ Yes   | Unique view identifier (lowercase, alphanumeric + hyphens)      |
-| `description` | `string` | ❌ No    | Human-readable description                                      |
-| `parameters`  | `array`  | ❌ No    | Runtime parameters (see [Parameter Schema](#parameter-schema))  |
+| Field         | Type     | Required | Description                                                       |
+| ------------- | -------- | -------- | ----------------------------------------------------------------- |
+| `name`        | `string` | ✅ Yes   | Unique view identifier (lowercase, alphanumeric + hyphens)        |
+| `description` | `string` | ❌ No    | Human-readable description                                        |
+| `parameters`  | `array`  | ❌ No    | Runtime parameters (see [Parameter Schema](#parameter-schema))    |
 | `query`       | `object` | ✅ Yes   | Query-generation instructions (see [Query Schema](#query-schema)) |
 
 ### Constraints
