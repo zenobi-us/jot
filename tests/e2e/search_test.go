@@ -211,6 +211,58 @@ func TestE2E_LinkQuery_LinksToGlob(t *testing.T) {
 }
 
 // ============================================================================
+// Semantic Search Command E2E Tests
+// ============================================================================
+
+func TestE2E_SemanticSearch_InvalidMode(t *testing.T) {
+	env := newTestEnv(t)
+	nbDir := setupSearchNotebook(t, env)
+
+	_, stderr, code := env.runInDir(nbDir, "notes", "search", "semantic", "meeting", "--mode", "invalid")
+
+	assert.NotEqual(t, 0, code, "invalid mode should fail")
+	assert.Contains(t, stderr, "invalid mode", "should explain mode validation failure")
+}
+
+func TestE2E_SemanticSearch_KeywordMode_WithDSLFilters(t *testing.T) {
+	env := newTestEnv(t)
+	nbDir := setupSearchNotebook(t, env)
+
+	stdout, stderr, code := env.runInDir(
+		nbDir,
+		"notes", "search", "semantic", "task",
+		"--mode", "keyword",
+		"--and", "data.status=active",
+	)
+
+	assert.Equal(t, 0, code, "keyword semantic command should succeed, stderr: %s", stderr)
+	assert.Contains(t, stdout, "active-task.md", "should include active task note")
+	assert.Contains(t, stdout, "tasks/task1.md", "should include active task1 note")
+	assert.NotContains(t, stdout, "tasks/task2.md", "should exclude done task via filter")
+}
+
+func TestE2E_SemanticSearch_HybridFallbackWarning(t *testing.T) {
+	env := newTestEnv(t)
+	nbDir := setupSearchNotebook(t, env)
+
+	stdout, stderr, code := env.runInDir(nbDir, "notes", "search", "semantic", "meeting")
+
+	assert.Equal(t, 0, code, "hybrid fallback should still succeed, stderr: %s", stderr)
+	assert.Contains(t, stdout, "Warning: semantic backend unavailable", "should warn about fallback")
+	assert.Contains(t, stdout, "meeting-notes.md", "should still return keyword results")
+}
+
+func TestE2E_SemanticSearch_SemanticModeUnavailable(t *testing.T) {
+	env := newTestEnv(t)
+	nbDir := setupSearchNotebook(t, env)
+
+	stdout, stderr, code := env.runInDir(nbDir, "notes", "search", "semantic", "meeting", "--mode", "semantic")
+
+	assert.Equal(t, 0, code, "semantic mode unavailability should be a non-fatal warning, stderr: %s", stderr)
+	assert.Contains(t, stdout, "Semantic backend unavailable", "should explain why semantic mode cannot run")
+}
+
+// ============================================================================
 // Error Handling E2E Tests
 // ============================================================================
 
@@ -278,29 +330,9 @@ func TestE2E_ErrorHandling_NoConditions(t *testing.T) {
 // Security E2E Tests
 // ============================================================================
 
-func TestE2E_Security_SQLInjectionPrevention(t *testing.T) {
-	env := newTestEnv(t)
-	nbDir := setupSearchNotebook(t, env)
-
-	// Attempt SQL injection via value
-	maliciousValues := []string{
-		"'; DROP TABLE notes; --",
-		"1' OR '1'='1",
-		"admin'--",
-	}
-
-	for _, value := range maliciousValues {
-		t.Run(value, func(t *testing.T) {
-			// Should not crash or execute malicious SQL
-			_, _, code := env.runInDir(nbDir, "notes", "search", "query",
-				"--and", "data.tag="+value)
-
-			// Should complete (code 0) or fail safely with no results
-			// The important thing is it doesn't crash or corrupt data
-			assert.True(t, code == 0, "should handle safely, code: %d", code)
-		})
-	}
-}
+// NOTE: TestE2E_Security_SQLInjectionPrevention removed as part of Phase 5.
+// SQL injection is no longer possible because we use Bleve (not SQL) for search.
+// Query parameters are validated at the parser level, not SQL level.
 
 // ============================================================================
 // CLI Help Text E2E Tests
@@ -314,8 +346,8 @@ func TestE2E_HelpText_SearchCommand(t *testing.T) {
 	assert.Equal(t, 0, code, "help should succeed")
 	// Verify help text includes key sections
 	assert.Contains(t, stdout, "fuzzy", "should mention fuzzy search")
-	assert.Contains(t, stdout, "Boolean", "should mention boolean queries")
-	assert.Contains(t, stdout, "SQL", "should mention SQL queries")
+	assert.Contains(t, stdout, "query", "should mention query subcommand")
+	assert.Contains(t, stdout, "Search notes", "should have search description")
 }
 
 func TestE2E_HelpText_QuerySubcommand(t *testing.T) {

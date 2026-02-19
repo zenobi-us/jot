@@ -119,6 +119,62 @@ func TestTuiRender_NoteList_Empty(t *testing.T) {
 	}
 }
 
+func TestTuiRender_NoteSearchSemantic_WithExplain(t *testing.T) {
+	note := Note{}
+	note.File.Relative = "notes/architecture.md"
+	note.File.Filepath = "/tmp/notes/architecture.md"
+	note.Metadata = map[string]any{"title": "Architecture Notes"}
+
+	hits := []SemanticSearchHit{{
+		Note:      note,
+		MatchType: MatchTypeHybrid,
+		Explain:   "This note mentions [architecture] review context",
+	}}
+
+	result, err := TuiRender("note-search-semantic", map[string]any{
+		"Hits":    hits,
+		"Explain": true,
+	})
+	if err != nil {
+		t.Fatalf("TuiRender() failed: %v", err)
+	}
+
+	if !strings.Contains(result, "Architecture Notes") {
+		t.Errorf("TuiRender() result = %q, want to contain note title", result)
+	}
+	if !strings.Contains(result, "Hybrid") {
+		t.Errorf("TuiRender() result = %q, want to contain match label", result)
+	}
+	if !strings.Contains(result, "Why:") {
+		t.Errorf("TuiRender() result = %q, want to contain Why snippet", result)
+	}
+}
+
+func TestTuiRender_NoteSearchSemantic_NoExplain(t *testing.T) {
+	note := Note{}
+	note.File.Relative = "notes/ops.md"
+	note.File.Filepath = "/tmp/notes/ops.md"
+	note.Metadata = map[string]any{"title": "Ops"}
+
+	hits := []SemanticSearchHit{{
+		Note:      note,
+		MatchType: MatchTypeExact,
+		Explain:   "This should be hidden",
+	}}
+
+	result, err := TuiRender("note-search-semantic", map[string]any{
+		"Hits":    hits,
+		"Explain": false,
+	})
+	if err != nil {
+		t.Fatalf("TuiRender() failed: %v", err)
+	}
+
+	if strings.Contains(result, "Why:") {
+		t.Errorf("TuiRender() result = %q, did not expect Why snippet", result)
+	}
+}
+
 func TestTuiRender_NotebookInfo_AllFields(t *testing.T) {
 	ctx := map[string]any{
 		"Config": NotebookConfig{
@@ -276,7 +332,7 @@ func TestTuiRender_NoteDetail(t *testing.T) {
 
 func TestTemplates_Loaded(t *testing.T) {
 	// Ensure all templates are loaded
-	templateNames := []string{"note-list", "note-detail", "notebook-info", "notebook-list"}
+	templateNames := []string{"note-list", "note-detail", "notebook-info", "notebook-list", "note-search-semantic"}
 
 	for _, name := range templateNames {
 		t.Run(name, func(t *testing.T) {

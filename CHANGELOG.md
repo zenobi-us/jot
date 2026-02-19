@@ -19,6 +19,99 @@
 
 ### Features
 
+#### Semantic Search (Optional Enhancement) ✨
+
+**Vector-based search for finding notes by meaning, not just keywords**
+
+OpenNotes now supports semantic search that understands concepts and paraphrases, supplementing the existing full-text search.
+
+**Command**:
+```bash
+opennotes notes search semantic [query] [--mode hybrid|keyword|semantic] [--explain]
+```
+
+**Search Modes**:
+- **Hybrid (default)**: Combines keyword + semantic retrieval using RRF merge
+- **Keyword**: Fast full-text search via Bleve index
+- **Semantic**: Meaning-based search via vector embeddings
+
+**Features**:
+- Hybrid retrieval with deterministic RRF (Reciprocal Rank Fusion) merge
+- Boolean filters work across all modes (`--and`, `--or`, `--not`)
+- Explain mode shows match type and reasoning per result
+- Graceful fallback to keyword-only when semantic backend unavailable
+- Sub-200ms latency for typical notebook sizes
+
+**Examples**:
+```bash
+# Hybrid search (default)
+opennotes notes search semantic "project planning discussions"
+
+# With filters
+opennotes notes search semantic "architecture" --and data.tag=design --not data.status=archived
+
+# Explain output
+opennotes notes search semantic "workflow" --explain
+```
+
+**When to use**:
+- **Regular search**: Exact keywords, specific terms, quick lookups
+- **Semantic search**: Conceptual queries, paraphrases, exploratory search
+
+**Documentation**: [Semantic Search Guide](docs/semantic-search-guide.md)
+
+**Implementation**: chromem-go vector backend with automatic indexing lifecycle
+
+---
+
+### BREAKING CHANGES
+
+#### Search Engine Migration: DuckDB → Bleve
+
+**SQL interface removed from NoteService**
+
+OpenNotes now uses Bleve full-text search exclusively. The SQL interface methods have been removed:
+- `ExecuteSQLSafe()` - removed
+- `Query()` - removed
+- `--sql` flag in `notes search` command - removed
+
+**Migration Guide**:
+
+**Before** (SQL):
+```bash
+opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md') WHERE content LIKE '%meeting%'"
+```
+
+**After** (Bleve):
+```bash
+# Simple text search
+opennotes notes search "meeting"
+
+# Boolean query
+opennotes notes search query --and data.tag=work --not data.status=archived
+```
+
+**Why?**
+- Eliminates DuckDB dependency (32MB+ binary size reduction)
+- Faster indexing and search for typical use cases
+- Simpler deployment (no C++ dependencies)
+- Better cross-platform compatibility
+
+**Affected Users**:
+- Custom SQL queries no longer supported
+- Power users should wait for Phase 5.3 (link graph) or use external tools
+
+See: Epic [epic-f661c068-remove-duckdb-alternative-search.md](.memory/epic-f661c068-remove-duckdb-alternative-search.md)
+
+**Known Issues**:
+- Tag filtering (`--and data.tag=value`) not working - under investigation (array indexing)
+- Fuzzy search needs tuning for optimal fuzziness distance
+- Link queries (`links-to`, `linked-by`) deferred to Phase 5.3 (requires graph index)
+
+See: [research-55e8a9f3-phase54-known-issues.md](.memory/research-55e8a9f3-phase54-known-issues.md)
+
+### Features
+
 #### Views System ✨
 **Complete reusable query presets for common workflows**
 

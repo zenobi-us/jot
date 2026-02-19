@@ -2,202 +2,153 @@
 id: a1b2c3d4
 title: OpenNotes Codebase Structure Map
 created_at: 2026-01-18T19:31:53+10:30
-updated_at: 2026-01-18T19:31:53+10:30
-status: in-progress
+updated_at: 2026-02-14T18:33:00+10:30
+status: active
 area: codebase-structure
-tags: [architecture, codebase, state-machine]
-learned_from: [test-improvement-epic, codebase-exploration, architecture-review]
+tags: [architecture, codebase, state-machine, bleve, search, pi-extension]
+learned_from: [codemapper-stats-2026-02-14, source-exploration]
 ---
 
 # OpenNotes Codebase Structure Map
 
 ## Overview
 
-OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks, using DuckDB for SQL-powered search and templates for display.
+OpenNotes is a Go CLI with a Bleve-backed search engine and a TypeScript Pi extension (`pkgs/pi-opennotes`) that wraps the CLI as tools.
 
-## Details
+## Stats Snapshot (CodeMapper)
 
-### ASCII State Machine Diagram
+- Whole repo: **381 files** (`go:79`, `typescript:39`, `markdown:263`)
+- `cmd/`: **15 Go files**, 28 functions
+- `internal/`: **54 Go files**, 474 functions, 134 methods
+- `pkgs/pi-opennotes/src`: **27 TS files**, 44 functions, 45 methods
+- `tests/`: e2e and stress coverage present
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           OPENNOTES CLI TOOL                           │
-│                         (Go-based Architecture)                        │
-└─────────────────────────────────────────────────────────────────────────┘
+## ASCII State Machine Codemap
 
-                                   [main.go]
-                                       │
-                                       ▼
-                              ┌─────────────────┐
-                              │   cmd/root.go   │
-                              │ (Service Init)  │
-                              │                 │
-                              │ ┌─ ConfigSvc   │
-                              │ ├─ DbSvc       │
-                              │ ├─ NotebookSvc │
-                              │ ├─ NoteSvc     │
-                              │ ├─ DisplaySvc  │
-                              │ └─ LoggerSvc   │
-                              └─────────────────┘
-                                       │
-                         ┌─────────────┼─────────────┐
-                         ▼             ▼             ▼
-                ┌─────────────┐ ┌──────────────┐ ┌──────────────┐
-                │    init     │ │   notebook   │ │    notes     │
-                │  commands   │ │   commands   │ │   commands   │
-                │             │ │              │ │              │
-                │ • init      │ │ • list       │ │ • add        │
-                │             │ │ • info       │ │ • list       │
-                │             │ │ • switch     │ │ • search     │
-                │             │ │              │ │ • show       │
-                └─────────────┘ └──────────────┘ └──────────────┘
+```text
+┌──────────────────────────────────────────────────────────────────────────┐
+│                            OPENNOTES SYSTEM                             │
+└──────────────────────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           SERVICE LAYER                                │
-└─────────────────────────────────────────────────────────────────────────┘
-
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│ Config Service  │    │ Notebook Svc    │    │  Note Service   │
-│                 │    │                 │    │                 │
-│ • LoadConfig    │◀───│ • Discover      │◀───│ • SearchNotes   │
-│ • SaveConfig    │    │ • LoadConfig    │    │ • GetNote       │
-│ • GetNotebooks  │    │ • Validate      │    │ • ExtractMeta   │
-│                 │    │                 │    │ • DisplayName   │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│  Database Svc   │    │  Display Svc    │    │  Logger Svc     │
-│                 │    │                 │    │                 │
-│ • GetReadDB     │    │ • TuiRender     │    │ • Info/Error    │
-│ • GetWriteDB    │    │ • RenderSQL     │    │ • Debug/Warn    │
-│ • CloseAll      │    │ • Templates     │    │ • WithField     │
-│                 │    │                 │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         DATA FLOW STATES                               │
-└─────────────────────────────────────────────────────────────────────────┘
-
-[Start] → [Find Notebook] → [Load Config] → [Initialize Services] → [Execute Command]
-   │            │               │                    │                │
-   │            ▼               ▼                    ▼                ▼
-   │      [Ancestor Search] [JSON Parse]      [DuckDB Connect]  [Parse Args]
-   │            │               │                    │                │
-   │            ▼               ▼                    ▼                ▼
-   │      [Config Override] [Validate]         [Markdown Ext]   [Command Logic]
-   │            │               │                    │                │
-   │            ▼               ▼                    ▼                ▼
-   └──────> [Notebook Ready] [Services Ready] [Database Ready] [Execute & Render]
+                      [User / Script / Pi Tool Call]
                                    │
                                    ▼
-                              [Template Render] → [Glamour Output] → [Success/Error]
+                         [main.go -> cmd/root.go]
+                                   │
+                                   ▼
+                 [PersistentPreRunE: InitLogger + Config + NotebookSvc]
+                                   │
+                 ┌─────────────────┴─────────────────┐
+                 ▼                                   ▼
+      [Cobra notebook/init/version]        [Cobra notes commands]
+                                            list/search/search query/view
 
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         LIFECYCLE STATES                               │
-└─────────────────────────────────────────────────────────────────────────┘
+NATIVE CLI SEARCH PATH
+======================
 
-Notebook Lifecycle:
-[Uninitialized] → [init command] → [.opennotes.json created] → [Ready]
-       │                               │                         │
-       ▼                               ▼                         ▼
-[Error: No Config] ←──────── [JSON Error] ←──────── [Config Operations]
+[notes search | notes list | notes search query]
+                    │
+                    ▼
+             [requireNotebook(cmd)]
+                    │
+                    ▼
+       [NotebookService.Infer/Open/Create]
+                    │
+                    ▼
+ [Load .opennotes.json + createIndex(notebookRoot)]
+                    │
+                    ▼
+ [walk *.md -> parse frontmatter -> build search.Document]
+                    │
+                    ▼
+           [Bleve Index.Add (in-memory)]
+                    │
+                    ▼
+               [NoteService]
+             ┌───────────────┬──────────────────────┐
+             ▼               ▼                      ▼
+      SearchNotes()   SearchWithConditions()     Count()
+             │               │
+             │               ▼
+             │      [SearchService.BuildQuery]
+             │               │
+             │               ▼
+             │      [search.Query AST (AND/OR/NOT)]
+             │               │
+             └───────┬───────┘
+                     ▼
+          [search.Index.Find / Count]
+                     │
+                     ▼
+       [bleve.TranslateFindOpts/TranslateQuery]
+                     │
+                     ▼
+               [Bleve Search]
+                     │
+                     ▼
+       [search.Results -> documentToNote]
+                     │
+                     ▼
+  [TuiRender(note-list) -> fallback fmt.Printf -> terminal]
 
-Note Lifecycle:
-[Template Selected] → [Create File] → [Edit Content] → [Save] → [Indexed by DuckDB]
-       │                    │             │            │              │
-       ▼                    ▼             ▼            ▼              ▼
-[Template Render] → [File Write] → [User Editor] → [Disk Sync] → [Search Ready]
+QUERY PARSER SUBSYSTEM (separate DSL path)
+==========================================
 
-Search Lifecycle:
-[Query Input] → [SQL Validation] → [DuckDB Execute] → [Format Results] → [Display]
-      │               │                  │                │               │
-      ▼               ▼                  ▼                ▼               ▼
-[Parse Args] → [Security Check] → [Read-Only Conn] → [Table Format] → [Terminal]
+[query string]
+    │
+    ▼
+[internal/search/parser.Parser]
+    │
+    ▼
+[Participle grammar AST]
+    │
+    ▼
+[convert.go -> search.Query AST]
+    │
+    ▼
+[bleve/query.go translator]
+
+PI EXTENSION PATH (pkgs/pi-opennotes)
+======================================
+
+[Pi agent starts session]
+          │
+          ▼
+[pi-opennotes/src/index.ts]
+          │
+          ├─ createServices(cli,pagination,search,list,note,notebook,views)
+          └─ registerTools(opennotes_search/list/get/create/notebooks/views)
+                     │
+                     ▼
+                [Tool execute()]
+                     │
+                     ▼
+            [Service method (TS layer)]
+                     │
+                     ▼
+      [CliAdapter.exec("opennotes", args...)]
+                     │
+                     ▼
+          [Go CLI command execution path]
+                     │
+                     ▼
+       [stdout JSON/text -> parse/format -> tool result]
+
+STATE GROUPS
+============
+
+Index lifecycle:
+[Unopened] -> [NewIndex] -> [Ready] -> [Find/Count] -> [Close]
+
+Notebook resolution lifecycle:
+[Env/Flag not set] -> [Infer current dir] -> [Context match] -> [Ancestor match] -> [Notebook ready | none]
+
+Search execution lifecycle:
+[Input] -> [Parse/validate] -> [Build query opts] -> [Index find] -> [Result mapping] -> [Render]
 ```
 
-### Component Relationships
+## Current Structural Notes
 
-```
-CLI Commands (cmd/)
-    ├── Thin orchestration layer
-    ├── Parse flags → Call services → Render output
-    └── Max 50-125 lines per command
-
-Internal Services (internal/services/)
-    ├── ConfigService: Global settings & notebook registry
-    ├── DbService: DuckDB connections (read/write isolation)
-    ├── NotebookService: Discovery, validation, lifecycle
-    ├── NoteService: SQL queries, metadata extraction
-    ├── DisplayService: Template rendering, table formatting
-    └── LoggerService: Structured logging (zap)
-
-Core Utilities (internal/core/)
-    ├── Validation: Input sanitization, path checking
-    └── Utils: String manipulation, slugification
-
-Test Structure (tests/)
-    ├── Unit tests: *_test.go alongside source
-    ├── Integration: Service interaction tests
-    ├── E2E: Full command execution tests
-    └── Performance: Stress tests, benchmarks
-```
-
-### Key Patterns
-
-1. **Singleton Services**: Initialized once in cmd/root.go
-2. **Read-Only Database**: Separate connections for safety
-3. **Template-Driven Output**: go:embed templates with glamour
-4. **Defense in Depth**: Validation at multiple layers
-5. **Error Propagation**: Explicit error handling throughout
-6. **Service-Oriented**: Fat services, thin commands
-
-### Quality Metrics
-
-- **Files**: 79 Go files, 307KB total
-- **Tests**: 202+ test functions, 84%+ coverage
-- **Performance**: Sub-100ms for typical operations
-- **Architecture**: Clean separation of concerns
-- **Status**: Production-ready, enterprise-validated
-
-### Planned: Pi-OpenNotes Extension
-
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                     PI-OPENNOTES EXTENSION (Planned)                   │
-│                         pkgs/pi-opennotes/                             │
-└────────────────────────────────────────────────────────────────────────┘
-
-                              [Pi Agent]
-                                  │
-                                  ▼
-┌─────────────────────────────────────────────────────────────┐
-│              pi-opennotes Extension (Bun/TS)               │
-│                                                             │
-│  ┌──────────────┐ ┌──────────────┐ ┌──────────────────┐    │
-│  │ search_notes │ │ list_notes   │ │ get_note         │    │
-│  └──────┬───────┘ └──────┬───────┘ └────────┬─────────┘    │
-│         │                │                   │              │
-│  ┌──────────────┐ ┌──────────────┐ ┌──────────────────┐    │
-│  │ create_note  │ │ notebooks    │ │ views            │    │
-│  └──────┬───────┘ └──────┬───────┘ └────────┬─────────┘    │
-│         │                │                   │              │
-│         └────────────────┼───────────────────┘              │
-│                          ▼                                  │
-│                 ┌─────────────────┐                         │
-│                 │   CLI Adapter   │ ← Executes via shell    │
-│                 └────────┬────────┘                         │
-└──────────────────────────┼──────────────────────────────────┘
-                           │
-                           ▼
-                  ┌─────────────────┐
-                  │  opennotes CLI  │ ← Go binary
-                  │  (dist/opennotes)│
-                  └────────┬────────┘
-                           │
-                           ▼
-                  ┌─────────────────┐
-                  │   DuckDB +      │
-                  │   Markdown Ext  │
-                  └─────────────────┘
-```
+1. Go CLI search is Bleve-based and no longer depends on DuckDB service code paths.
+2. `cmd/notes_view.go` currently supports **listing** views; execution path intentionally returns migration error text.
+3. Pi extension still contains SQL-oriented service logic (`--sql`, DuckDB-style assumptions), so there is an integration drift to reconcile in future phases.

@@ -1,12 +1,14 @@
 package services
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
 
 	"github.com/rs/zerolog"
 	"github.com/sahilm/fuzzy"
+	"github.com/zenobi-us/opennotes/internal/search"
 )
 
 // QueryCondition represents a single search condition for boolean queries.
@@ -392,4 +394,228 @@ func GlobToLike(pattern string) string {
 	result = strings.ReplaceAll(result, "?", "_")
 
 	return result
+}
+
+// BuildQuery converts QueryCondition structs to search.Query AST.
+// This mirrors the pattern of BuildWhereClauseWithGlob but outputs
+// a search.Query instead of SQL.
+//
+// Supported fields:
+//   - data.* (metadata fields: tag, status, priority, etc.)
+//   - path (with glob pattern support)
+//   - title
+//
+// Unsupported fields (return error):
+//   - links-to (requires Phase 5.3 link graph index)
+//   - linked-by (requires Phase 5.3 link graph index)
+//
+// Boolean logic:
+//   - AND conditions: All must match (implicit AND)
+//   - OR conditions: Any can match (nested OrExpr)
+//   - NOT conditions: Must not match (NotExpr wrapper)
+//
+// Example:
+//
+//	conditions := []QueryCondition{
+//	    {Type: "and", Field: "data.tag", Operator: "=", Value: "work"},
+//	    {Type: "and", Field: "data.status", Operator: "=", Value: "active"},
+//	}
+//	query, err := searchService.BuildQuery(ctx, conditions)
+//	// query.Expressions = [FieldExpr{...}, FieldExpr{...}]
+func (s *SearchService) BuildQuery(ctx context.Context, conditions []QueryCondition) (*search.Query, error) {
+	if len(conditions) == 0 {
+		return &search.Query{}, nil
+	}
+
+	var andExprs []search.Expr
+	var orExprs []search.Expr
+	var notExprs []search.Expr
+
+	// Convert each condition to an expression
+	for _, cond := range conditions {
+		// Check for unsupported link queries
+		if cond.Field == "links-to" || cond.Field == "linked-by" {
+			return nil, s.buildLinkQueryError(cond.Field)
+		}
+
+		// Convert to expression
+		expr, err := s.conditionToExpr(cond)
+		if err != nil {
+			return nil, err
+		}
+
+		// Group by type
+		switch cond.Type {
+		case "and":
+			andExprs = append(andExprs, expr)
+		case "or":
+			orExprs = append(orExprs, expr)
+		case "not":
+			notExprs = append(notExprs, search.NotExpr{Expr: expr})
+		default:
+			return nil, fmt.Errorf("unsupported condition type: %s", cond.Type)
+		}
+	}
+
+	// Build final expression tree
+	var allExprs []search.Expr
+
+	// Add AND expressions directly
+	allExprs = append(allExprs, andExprs...)
+
+	// Group OR expressions into nested OrExpr
+	if len(orExprs) > 0 {
+		if len(orExprs) == 1 {
+			allExprs = append(allExprs, orExprs[0])
+		} else {
+			// Build left-to-right OR tree: (a OR (b OR c))
+			orExpr := orExprs[0]
+			for i := 1; i < len(orExprs); i++ {
+				orExpr = search.OrExpr{Left: orExpr, Right: orExprs[i]}
+			}
+			allExprs = append(allExprs, orExpr)
+		}
+	}
+
+	// Add NOT expressions
+	allExprs = append(allExprs, notExprs...)
+
+	s.log.Debug().
+		Int("and_count", len(andExprs)).
+		Int("or_count", len(orExprs)).
+		Int("not_count", len(notExprs)).
+		Int("total_exprs", len(allExprs)).
+		Msg("built query from conditions")
+
+	return &search.Query{Expressions: allExprs}, nil
+}
+
+// conditionToExpr converts a single QueryCondition to a search.Expr.
+func (s *SearchService) conditionToExpr(cond QueryCondition) (search.Expr, error) {
+	switch {
+	case strings.HasPrefix(cond.Field, "data."):
+		// Metadata field: data.tag -> metadata.tag
+		return s.buildMetadataExpr(cond)
+
+	case cond.Field == "path":
+		// Path field with glob support
+		return s.buildPathExpr(cond)
+
+	case cond.Field == "title":
+		// Title field
+		return search.FieldExpr{
+			Field: "title",
+			Op:    search.OpEquals,
+			Value: cond.Value,
+		}, nil
+
+	default:
+		return nil, fmt.Errorf("unsupported field: %s (allowed: data.*, path, title)", cond.Field)
+	}
+}
+
+// buildMetadataExpr builds expression for metadata fields (data.*).
+func (s *SearchService) buildMetadataExpr(cond QueryCondition) (search.Expr, error) {
+	// Extract metadata field name: data.tag -> tag
+	field := strings.TrimPrefix(cond.Field, "data.")
+
+	// Normalize field name
+	// data.tags -> data.tag (alias)
+	if field == "tags" {
+		field = "tag"
+	}
+
+	// Build field expression
+	// Note: Bleve document has Metadata map[string]any
+	// We need to search in metadata.field
+	return search.FieldExpr{
+		Field: "metadata." + field,
+		Op:    search.OpEquals,
+		Value: cond.Value,
+	}, nil
+}
+
+// buildPathExpr builds expression for path field with glob support.
+func (s *SearchService) buildPathExpr(cond QueryCondition) (search.Expr, error) {
+	value := cond.Value
+
+	// Detect glob patterns
+	hasWildcard := strings.Contains(value, "*") || strings.Contains(value, "?")
+
+	if !hasWildcard {
+		// Exact path or prefix
+		// If ends with /, it's a prefix: projects/ -> projects/*
+		if strings.HasSuffix(value, "/") {
+			return search.FieldExpr{
+				Field: "path",
+				Op:    search.OpPrefix,
+				Value: value,
+			}, nil
+		}
+
+		// Exact path match
+		return search.FieldExpr{
+			Field: "path",
+			Op:    search.OpEquals,
+			Value: value,
+		}, nil
+	}
+
+	// Has wildcards - determine type
+	// Simple prefix: projects/* -> prefix query (fast)
+	// Complex: **/tasks/*.md -> wildcard query (slower)
+
+	if strings.HasSuffix(value, "/*") && !strings.Contains(strings.TrimSuffix(value, "/*"), "*") {
+		// Simple prefix pattern: projects/* -> projects/
+		prefix := strings.TrimSuffix(value, "*")
+		return search.FieldExpr{
+			Field: "path",
+			Op:    search.OpPrefix,
+			Value: prefix,
+		}, nil
+	}
+
+	// Complex wildcard pattern
+	wildcardType := detectWildcardType(value)
+	return search.WildcardExpr{
+		Field:   "path",
+		Pattern: value,
+		Type:    wildcardType,
+	}, nil
+}
+
+// detectWildcardType determines wildcard expression type.
+func detectWildcardType(pattern string) search.WildcardType {
+	hasPrefix := strings.HasPrefix(pattern, "*")
+	hasSuffix := strings.HasSuffix(pattern, "*")
+
+	if hasPrefix && hasSuffix {
+		return search.WildcardBoth
+	} else if hasPrefix {
+		return search.WildcardSuffix
+	} else if hasSuffix {
+		return search.WildcardPrefix
+	}
+
+	// Mid-pattern wildcard: foo*bar
+	return search.WildcardBoth
+}
+
+// buildLinkQueryError returns a clear error for unsupported link queries.
+func (s *SearchService) buildLinkQueryError(field string) error {
+	return fmt.Errorf(
+		"link queries are not yet supported\n\n"+
+			"Field '%s' requires a dedicated link graph index, which is planned for Phase 5.3.\n\n"+
+			"Temporary workaround: Use text search or path/title filters:\n"+
+			"  opennotes notes search \"project\"\n"+
+			"  opennotes notes search query --and path=docs/*.md\n\n"+
+			"Track implementation progress:\n"+
+			"  https://github.com/zenobi-us/opennotes/issues/XXX\n\n"+
+			"Supported fields:\n"+
+			"  - Metadata: data.tag, data.status, data.priority, data.assignee,\n"+
+			"              data.author, data.type, data.category, data.project, data.sprint\n"+
+			"  - Path: path (with glob support: *, **, ?)\n"+
+			"  - Title: title",
+		field,
+	)
 }

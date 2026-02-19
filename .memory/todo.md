@@ -1,96 +1,27 @@
 # OpenNotes TODO
 
-## Current Status
+## Active Epic
+- [epic-8361d3a2](epic-8361d3a2-rename-to-jot.md) - **Rename Project to "Jot"** (planning)
 
-**Phase 1: Research & Design** - ✅ COMPLETE  
-**Next**: Human review, then Phase 2 (Implementation)
+## Open Tasks
 
----
+### Epic: Rename to Jot (8361d3a2)
+- [ ] **[TASK] [TODO]** [task-b66d2263](task-b66d2263-identify-rename-locations.md) - Identify all rename locations (in-repo and external)
+  - Phase 1: Discovery
+  - Use lynx search to check for conflicts
 
-## ⏳ Awaiting Review
+### Residual Work from DuckDB Removal (f661c068) — Deferred
+- [ ] **[PLAN] [TODO]** [plan-b4e2f7a1](plan-b4e2f7a1-dsl-views-implementation.md) - Execute DSL views implementation (10 tasks)
+  - Use `superpowers:executing-plans` skill
+  - TDD approach with incremental commits
+  - Research complete: [archive/duckdb-removal-f661c068/](archive/duckdb-removal-f661c068/)
+- [ ] **[CLEANUP]** Remove residual `DuckDBConverter` from `internal/services/display.go` and `duckdb_converter.go` (part of DSL views plan)
 
-### Pi-OpenNotes Extension - Phase 1 Complete
+## Next Queue
+- Execute DSL views implementation plan (plan-b4e2f7a1)
+- After rename Phase 1: Plan and execute in-repo changes
 
-**Request**: Please review Phase 1 design documents before proceeding to implementation.
-
-**Documents to Review**:
-1. [task-a0236e7c-document-opennotes-cli.md](task-a0236e7c-document-opennotes-cli.md) - CLI interface reference
-2. [task-4b6f9ebd-design-tool-api.md](task-4b6f9ebd-design-tool-api.md) - Tool API specifications
-3. [task-f8bb9c5d-define-package-structure.md](task-f8bb9c5d-define-package-structure.md) - Package structure
-4. [task-e1x1x1x1-design-service-architecture.md](task-e1x1x1x1-design-service-architecture.md) - Service architecture
-5. [task-e2x2x2x2-design-error-handling.md](task-e2x2x2x2-design-error-handling.md) - Error handling
-6. [task-e3x3x3x3-design-test-strategy.md](task-e3x3x3x3-design-test-strategy.md) - Test strategy
-
-**Key Decisions for Review**:
-- [ ] Tool naming prefix: `opennotes_` (configurable)
-- [ ] Pagination: 75% budget + metadata
-- [ ] Service architecture: fat services, thin tools
-- [ ] Error hints: full installation guide for CLI_NOT_FOUND
-- [ ] Test pyramid: 70/25/5 (unit/integration/e2e)
-
----
-
-## 🔜 Phase 2: Implementation (Pending Approval)
-
-After review, these tasks will be created:
-
-### Core Infrastructure
-- [ ] Create `pkgs/pi-opennotes/` directory structure
-- [ ] Initialize package.json with pi manifest
-- [ ] Implement `CliAdapter` service
-- [ ] Implement `PaginationService`
-- [ ] Implement error utilities
-
-### Services
-- [ ] Implement `SearchService`
-- [ ] Implement `ListService`
-- [ ] Implement `NoteService`
-- [ ] Implement `NotebookService`
-- [ ] Implement `ViewsService`
-
-### Tools
-- [ ] Implement `opennotes_search` tool
-- [ ] Implement `opennotes_list` tool
-- [ ] Implement `opennotes_get` tool
-- [ ] Implement `opennotes_create` tool
-- [ ] Implement `opennotes_notebooks` tool
-- [ ] Implement `opennotes_views` tool
-
-### Tests
-- [ ] Unit tests for all services (62 tests)
-- [ ] Integration tests for all tools (27 tests)
-- [ ] E2E tests with real CLI (9 tests)
-
-### Documentation
-- [ ] Write README.md
-- [ ] Write CHANGELOG.md
-- [ ] Create examples
-
----
-
-## 📋 Future Phases
-
-### Phase 3: Testing & Distribution
-- [ ] Final test coverage validation
-- [ ] npm publish setup
-- [ ] Beta release
-- [ ] Documentation review
-- [ ] GA release
-
----
-
-## 🔧 Infrastructure Tasks
-
-### CI/CD Improvements
-- [ ] [task-9c4a2f8d-github-actions-moonrepo-releases.md](task-9c4a2f8d-github-actions-moonrepo-releases.md) - GitHub Actions with moonrepo + release-please
-  - Integrate moonrepo affected command in CI
-  - Setup release-please manifest mode
-  - Independent package releases with dependency graph safety
-
----
-
-## Notes
-
-- **Blocked**: Phase 2 cannot start until Phase 1 is reviewed
-- **Recommendation**: Review service interfaces first (task-e1x1x1x1)
-- **Time Estimate**: Phase 2 implementation ~4-6 hours
+## Recently Completed
+- ✅ **DuckDB Removal Epic** (f661c068) — Completed 2026-02-02, archived
+- ✅ DSL Views Research (b4e2f7a1) — All 6 phases complete
+- ✅ Semantic Search Enhancement Epic (7c9d2e1f) - Archived

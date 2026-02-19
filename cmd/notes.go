@@ -14,14 +14,13 @@ The notebook is automatically discovered from the current directory,
 or can be specified with the --notebook flag.
 
 POWER USER FEATURES:
-  🔍 Advanced SQL Queries: opennotes notes search --sql "SELECT ... FROM read_markdown('**/*.md')"
+  🔍 Advanced Query Filters: opennotes notes search query --and path=projects/*.md
   🤖 JSON Output for Automation: Results automatically JSON-formatted for jq and tool integration
-  📊 Markdown Analysis: Extract word counts, statistics, and structure using SQL functions
-  💾 Large Notebook Support: Efficiently query thousands of notes in seconds
+  ✨ Fuzzy Search: opennotes notes search --fuzzy "mtng"
+  💾 Large Notebook Support: Efficiently search thousands of notes in seconds
 
 DOCUMENTATION:
-  📚 SQL Query Guide: https://github.com/zenobi-us/opennotes/blob/main/docs/sql-guide.md
-  🚀 Automation & JSON: https://github.com/zenobi-us/opennotes/blob/main/docs/json-sql-guide.md
+  📚 Search Guide: https://github.com/zenobi-us/opennotes/blob/main/docs/commands/notes-search.md
 
 Examples:
   # List all notes
@@ -33,8 +32,8 @@ Examples:
   # Search notes by content
   opennotes notes search "project deadline"
 
-  # Query with SQL (see sql-guide.md for more examples)
-  opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md') WHERE content LIKE '%TODO%' ORDER BY file_path"
+  # Query with boolean filters
+  opennotes notes search query --and path=**/*.md --not path=archive/*
 
   # Remove a note
   opennotes notes remove my-note.md`,

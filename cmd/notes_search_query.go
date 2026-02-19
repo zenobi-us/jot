@@ -80,7 +80,6 @@ EXAMPLES:
       --not data.assignee=bob
 
 SECURITY:
-  - All queries use parameterized SQL (injection-safe)
   - Only whitelisted fields can be queried
   - Values limited to 1000 characters
 

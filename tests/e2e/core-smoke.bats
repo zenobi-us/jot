@@ -20,7 +20,7 @@ teardown() {
     export HOME="$HOME_BACKUP"
 }
 
-@test "Core workflow: init → create notebook → add note → list → search → SQL query" {
+@test "Core workflow: init → create notebook → add note → list → search → query" {
     # Initialize OpenNotes
     run opennotes init
     [[ "$status" -eq 0 ]]
@@ -35,7 +35,7 @@ teardown() {
     [[ -f "$notebook_dir/.opennotes.json" ]]
     
     # Add a note with content
-    run opennotes --notebook "$notebook_dir" notes add "project-alpha.md" --title "Project Alpha"
+    run opennotes --notebook "$notebook_dir" notes add "Project Alpha" "project-alpha.md"
     [[ "$status" -eq 0 ]]
     [[ "$output" =~ "Created note" ]]
     [[ -f "$notebook_dir/.notes/project-alpha.md" ]]
@@ -44,7 +44,7 @@ teardown() {
     echo -e "# Project Alpha\n\nThis is a **high priority** project.\n\nTasks:\n- Design phase\n- Implementation\n- Testing" > "$notebook_dir/.notes/project-alpha.md"
     
     # Add another note
-    run opennotes --notebook "$notebook_dir" notes add "meeting-notes.md" --title "Weekly Meeting"
+    run opennotes --notebook "$notebook_dir" notes add "Weekly Meeting" "meeting-notes.md"
     [[ "$status" -eq 0 ]]
     echo -e "# Weekly Meeting\n\nDiscussed project timeline and deliverables.\n\nAction items:\n- Review requirements\n- Schedule follow-up" > "$notebook_dir/.notes/meeting-notes.md"
     
@@ -60,17 +60,11 @@ teardown() {
     [[ "$output" =~ "project-alpha.md" ]]
     [[ ! "$output" =~ "meeting-notes.md" ]]
     
-    # Basic SQL query to find all markdown files
-    run opennotes --notebook "$notebook_dir" notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true)"
+    # Boolean query to find a specific note by path
+    run opennotes --notebook "$notebook_dir" notes search query --and path=project-alpha.md
     [[ "$status" -eq 0 ]]
     [[ "$output" =~ "project-alpha.md" ]]
-    [[ "$output" =~ "meeting-notes.md" ]]
-    
-    # SQL query with content filtering
-    run opennotes --notebook "$notebook_dir" notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) WHERE content LIKE '%timeline%'"
-    [[ "$status" -eq 0 ]]
-    [[ "$output" =~ "meeting-notes.md" ]]
-    [[ ! "$output" =~ "project-alpha.md" ]]
+    [[ ! "$output" =~ "meeting-notes.md" ]]
     
     # Remove a note
     run opennotes --notebook "$notebook_dir" notes remove "meeting-notes.md" --force
@@ -107,13 +101,12 @@ teardown() {
     [[ "$output" =~ "search" ]]
     [[ "$output" =~ "remove" ]]
     
-    # SQL help in search command
+    # Search help includes fuzzy + boolean query info
     run opennotes notes search --help
     [[ "$status" -eq 0 ]]
-    [[ "$output" =~ "SQL" ]]
-    [[ "$output" =~ "DuckDB" ]]
-    [[ "$output" =~ "read_markdown" ]]
-    [[ "$output" =~ "Path traversal" ]]
+    [[ "$output" =~ "Fuzzy" ]]
+    [[ "$output" =~ "BOOLEAN" ]]
+    [[ "$output" =~ "query" ]]
 }
 
 @test "Error handling works correctly" {
@@ -128,29 +121,25 @@ teardown() {
     [[ "$status" -ne 0 ]]
     [[ "$output" =~ "no such file or directory" || "$output" =~ "error" || "$output" =~ "does not exist" ]]
     
-    # Error with invalid SQL (malformed syntax)
+    # Error with invalid query field
     notebook_dir="$TEST_DIR/error-test"
     opennotes notebook create "$notebook_dir" --name "Error Test"
     
-    run opennotes --notebook "$notebook_dir" notes search --sql "INVALID SQL SYNTAX"
+    run opennotes --notebook "$notebook_dir" notes search query --and data.unknown=foo
     [[ "$status" -ne 0 ]]
-    [[ "$output" =~ "error" || "$output" =~ "failed" ]]
+    [[ "$output" =~ "invalid field" || "$output" =~ "allowed" ]]
 }
 
-@test "SQL security features work" {
+@test "Path filtering works with boolean queries" {
     opennotes init
     notebook_dir="$TEST_DIR/security-test"
     opennotes notebook create "$notebook_dir" --name "Security Test"
     echo "# Safe Note" > "$notebook_dir/.notes/safe.md"
+    echo "# Other Note" > "$notebook_dir/.notes/other.md"
     
-    # Test that path traversal attempts are handled (should error, not succeed)
-    run opennotes --notebook "$notebook_dir" notes search --sql "SELECT content FROM read_markdown('../../../etc/passwd')"
-    [[ "$status" -ne 0 ]]
-    # Error message indicates the path was rejected
-    [[ "$output" =~ "error" || "$output" =~ "Error" ]]
-    
-    # Valid query within notebook should work
-    run opennotes --notebook "$notebook_dir" notes search --sql "SELECT file_path FROM read_markdown('*.md', include_filepath:=true)"
+    # Path query should return only matching note
+    run opennotes --notebook "$notebook_dir" notes search query --and path=safe.md
     [[ "$status" -eq 0 ]]
     [[ "$output" =~ "safe.md" ]]
+    [[ ! "$output" =~ "other.md" ]]
 }

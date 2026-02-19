@@ -1,14 +1,21 @@
 package services
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog"
+	"github.com/spf13/afero"
+	"github.com/zenobi-us/opennotes/internal/search"
+	"github.com/zenobi-us/opennotes/internal/search/bleve"
+	"gopkg.in/yaml.v3"
 )
 
 // NotebookGroup defines a group of notes with shared properties.
@@ -43,15 +50,13 @@ type Notebook struct {
 // NotebookService manages notebook operations.
 type NotebookService struct {
 	configService *ConfigService
-	dbService     *DbService
 	log           zerolog.Logger
 }
 
 // NewNotebookService creates a notebook service.
-func NewNotebookService(cfg *ConfigService, db *DbService) *NotebookService {
+func NewNotebookService(cfg *ConfigService) *NotebookService {
 	return &NotebookService{
 		configService: cfg,
-		dbService:     db,
 		log:           Log("NotebookService"),
 	}
 }
@@ -116,12 +121,213 @@ func (s *NotebookService) Open(notebookPath string) (*Notebook, error) {
 		return nil, err
 	}
 
-	noteService := NewNoteService(s.configService, s.dbService, config.Root)
+	// Create Bleve index for this notebook
+	idx, err := s.createIndex(config.Root)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create search index: %w", err)
+	}
+
+	noteService := NewNoteService(s.configService, idx, config.Root)
+
+	semanticIdx, err := s.createSemanticIndex(config.Root)
+	if err != nil {
+		s.log.Warn().Err(err).Msg("failed to initialize semantic backend; using noop fallback")
+		semanticIdx = NewNoopSemanticIndex()
+	}
+	noteService.SetSemanticIndex(semanticIdx)
 
 	return &Notebook{
 		Config: *config,
 		Notes:  noteService,
 	}, nil
+}
+
+// createIndex creates and populates a Bleve index for the notebook
+func (s *NotebookService) createIndex(notebookRoot string) (search.Index, error) {
+	// For now, use in-memory index
+	// TODO: Consider persistent index for large notebooks
+	storage := bleve.MemStorage()
+	idx, err := bleve.NewIndex(storage, bleve.Options{InMemory: true})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create index: %w", err)
+	}
+
+	// Index all markdown files in the notebook
+	fs := afero.NewOsFs()
+	err = afero.Walk(fs, notebookRoot, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Skip directories
+		if info.IsDir() {
+			return nil
+		}
+
+		// Only process markdown files
+		if filepath.Ext(path) != ".md" {
+			return nil
+		}
+
+		// Get relative path from notebook root
+		relPath, err := filepath.Rel(notebookRoot, path)
+		if err != nil {
+			s.log.Warn().Err(err).Str("path", path).Msg("failed to get relative path")
+			return nil
+		}
+
+		// Read file content
+		content, err := afero.ReadFile(fs, path)
+		if err != nil {
+			s.log.Warn().Err(err).Str("path", path).Msg("failed to read file")
+			return nil
+		}
+
+		// Parse frontmatter and extract metadata
+		metadata, body := parseFrontmatter(content)
+
+		// Create document
+		doc := search.Document{
+			Path:     relPath,
+			Title:    extractTitle(metadata),
+			Body:     body,
+			Lead:     extractLead(body),
+			Tags:     extractTags(metadata),
+			Metadata: metadata,
+			Created:  extractTime(metadata, "created", info.ModTime()),
+			Modified: extractTime(metadata, "modified", info.ModTime()),
+		}
+
+		// Add to index
+		ctx := context.Background()
+		if err := idx.Add(ctx, doc); err != nil {
+			s.log.Warn().Err(err).Str("path", relPath).Msg("failed to index document")
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		_ = idx.Close()
+		return nil, fmt.Errorf("failed to index notebook: %w", err)
+	}
+
+	return idx, nil
+}
+
+// createSemanticIndex initializes semantic retrieval backend for a notebook.
+// Phase 3 starts with a safe noop backend and can be swapped with a real
+// semantic backend implementation without changing callers.
+func (s *NotebookService) createSemanticIndex(notebookRoot string) (SemanticIndex, error) {
+	s.log.Debug().Str("notebookRoot", notebookRoot).Msg("semantic backend not configured; using noop fallback")
+	return NewNoopSemanticIndex(), nil
+}
+
+// Helper functions for extracting metadata
+
+func extractTitle(metadata map[string]any) string {
+	if title, ok := metadata["title"].(string); ok && title != "" {
+		return title
+	}
+	return ""
+}
+
+func extractTags(metadata map[string]any) []string {
+	// Handle both "tag" and "tags" fields
+	if tag, ok := metadata["tag"].(string); ok && tag != "" {
+		return []string{tag}
+	}
+	if tags, ok := metadata["tags"].([]any); ok {
+		result := make([]string, 0, len(tags))
+		for _, t := range tags {
+			if s, ok := t.(string); ok {
+				result = append(result, s)
+			}
+		}
+		return result
+	}
+	if tags, ok := metadata["tags"].([]string); ok {
+		return tags
+	}
+	return nil
+}
+
+func extractTime(metadata map[string]any, field string, defaultTime time.Time) time.Time {
+	if t, ok := metadata[field].(time.Time); ok {
+		return t
+	}
+	if s, ok := metadata[field].(string); ok {
+		if parsed, err := time.Parse(time.RFC3339, s); err == nil {
+			return parsed
+		}
+	}
+	return defaultTime
+}
+
+func parseFrontmatter(content []byte) (map[string]any, string) {
+	// Check for frontmatter delimiter
+	if !bytes.HasPrefix(content, []byte("---\n")) {
+		return make(map[string]any), string(content)
+	}
+
+	// Find the end of frontmatter
+	rest := content[4:] // Skip first "---\n"
+	endIdx := bytes.Index(rest, []byte("\n---\n"))
+	if endIdx == -1 {
+		// No closing delimiter, treat as no frontmatter
+		return make(map[string]any), string(content)
+	}
+
+	// Extract frontmatter and body
+	frontmatterBytes := rest[:endIdx]
+	bodyBytes := rest[endIdx+5:] // Skip "\n---\n"
+
+	// Parse YAML frontmatter
+	var metadata map[string]any
+	if err := yaml.Unmarshal(frontmatterBytes, &metadata); err != nil {
+		// Failed to parse, return empty metadata
+		return make(map[string]any), string(content)
+	}
+
+	return metadata, string(bodyBytes)
+}
+
+func extractLead(body string) string {
+	lines := strings.Split(body, "\n")
+	var lead strings.Builder
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+
+		// Skip empty lines at the start
+		if lead.Len() == 0 && line == "" {
+			continue
+		}
+
+		// Skip headings
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		// Stop at first empty line after content
+		if lead.Len() > 0 && line == "" {
+			break
+		}
+
+		// Add line to lead
+		if line != "" {
+			if lead.Len() > 0 {
+				lead.WriteString(" ")
+			}
+			lead.WriteString(line)
+		}
+	}
+
+	result := lead.String()
+	if len(result) > 200 {
+		return result[:200] + "..."
+	}
+	return result
 }
 
 // Create creates a new notebook.
@@ -169,7 +375,21 @@ func (s *NotebookService) Create(name, path string, register bool) (*Notebook, e
 		return nil, err
 	}
 
-	noteService := NewNoteService(s.configService, s.dbService, notesDir)
+	// Create Bleve index for this notebook
+	idx, err := s.createIndex(notesDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create search index: %w", err)
+	}
+
+	noteService := NewNoteService(s.configService, idx, notesDir)
+
+	semanticIdx, semErr := s.createSemanticIndex(notesDir)
+	if semErr != nil {
+		s.log.Warn().Err(semErr).Msg("failed to initialize semantic backend; using noop fallback")
+		semanticIdx = NewNoopSemanticIndex()
+	}
+	noteService.SetSemanticIndex(semanticIdx)
+
 	notebook := &Notebook{
 		Config: config,
 		Notes:  noteService,

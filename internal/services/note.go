@@ -2,16 +2,14 @@ package services
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"path"
 	"path/filepath"
-	"reflect"
 	"strings"
-	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/zenobi-us/opennotes/internal/core"
+	"github.com/zenobi-us/opennotes/internal/search"
 )
 
 // Note represents a markdown note.
@@ -43,24 +41,109 @@ func (n *Note) DisplayName() string {
 	return core.Slugify(filename)
 }
 
+// documentToNote converts a search.Document to a Note.
+// Preserves the Note struct format for backward compatibility.
+func documentToNote(doc search.Document) Note {
+	note := Note{
+		Content:  doc.Body,
+		Metadata: make(map[string]any),
+	}
+
+	note.File.Relative = doc.Path
+	note.File.Filepath = doc.Path // Note: In index, Path is already relative
+
+	// Map Document metadata back to Note metadata
+	if doc.Title != "" {
+		note.Metadata["title"] = doc.Title
+	}
+	if len(doc.Tags) > 0 {
+		note.Metadata["tags"] = doc.Tags
+	}
+	if !doc.Created.IsZero() {
+		note.Metadata["created"] = doc.Created
+	}
+	if !doc.Modified.IsZero() {
+		note.Metadata["modified"] = doc.Modified
+	}
+
+	// Preserve any custom metadata
+	if doc.Metadata != nil {
+		for k, v := range doc.Metadata {
+			note.Metadata[k] = v
+		}
+	}
+
+	return note
+}
+
 // NoteService provides note query operations.
 type NoteService struct {
 	configService *ConfigService
-	dbService     *DbService
+	index         search.Index
+	semanticIndex SemanticIndex
 	searchService *SearchService
 	notebookPath  string
 	log           zerolog.Logger
 }
 
 // NewNoteService creates a note service for a notebook.
-func NewNoteService(cfg *ConfigService, db *DbService, notebookPath string) *NoteService {
+func NewNoteService(cfg *ConfigService, index search.Index, notebookPath string) *NoteService {
 	return &NoteService{
 		configService: cfg,
-		dbService:     db,
+		index:         index,
+		semanticIndex: NewNoopSemanticIndex(),
 		searchService: NewSearchService(),
 		notebookPath:  notebookPath,
 		log:           Log("NoteService"),
 	}
+}
+
+// SetSemanticIndex configures the semantic backend for this notebook.
+// Passing nil resets to a safe no-op backend.
+func (s *NoteService) SetSemanticIndex(idx SemanticIndex) {
+	if idx == nil {
+		s.semanticIndex = NewNoopSemanticIndex()
+		return
+	}
+	s.semanticIndex = idx
+}
+
+// GetIndex returns the search index for this notebook.
+// This is needed for view execution context.
+func (s *NoteService) GetIndex() search.Index {
+	return s.index
+}
+
+// GetNotebookPath returns the notebook path for this service.
+func (s *NoteService) GetNotebookPath() string {
+	return s.notebookPath
+}
+
+// SemanticAvailable reports whether semantic retrieval is currently available.
+func (s *NoteService) SemanticAvailable() bool {
+	return s.semanticIndex != nil && s.semanticIndex.IsAvailable()
+}
+
+// FindSemanticCandidates executes semantic retrieval through the configured backend.
+func (s *NoteService) FindSemanticCandidates(ctx context.Context, query string, topK int) ([]SemanticResult, error) {
+	if s.notebookPath == "" {
+		return nil, fmt.Errorf("no notebook selected")
+	}
+
+	if topK <= 0 {
+		topK = 10
+	}
+
+	if s.semanticIndex == nil || !s.semanticIndex.IsAvailable() {
+		return nil, ErrSemanticUnavailable
+	}
+
+	results, err := s.semanticIndex.FindSimilar(ctx, query, SemanticFindOpts{TopK: topK})
+	if err != nil {
+		return nil, fmt.Errorf("semantic search failed: %w", err)
+	}
+
+	return results, nil
 }
 
 // SearchNotes returns all notes in the notebook matching the query.
@@ -85,97 +168,36 @@ func (s *NoteService) SearchNotes(ctx context.Context, query string, fuzzy bool)
 }
 
 // getAllNotes retrieves all notes from the notebook without filtering.
+// Uses the Bleve Index to retrieve all indexed documents and converts them to Notes.
 func (s *NoteService) getAllNotes(ctx context.Context) ([]Note, error) {
-	db, err := s.dbService.GetDB(ctx)
+	if s.index == nil {
+		return nil, fmt.Errorf("index not initialized")
+	}
+
+	s.log.Debug().Msg("loading notes from index")
+
+	// Query index for all documents (empty query matches all)
+	count, err := s.index.Count(ctx, search.FindOpts{})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("index count failed: %w", err)
 	}
 
-	glob := filepath.Join(s.notebookPath, "**", "*.md")
-	s.log.Debug().Str("glob", glob).Msg("loading notes")
+	if count == 0 {
+		return []Note{}, nil
+	}
 
-	// Use DuckDB's read_markdown function with filepath included
-	sqlQuery := `SELECT * FROM read_markdown(?, include_filepath:=true)`
-	rows, err := db.QueryContext(ctx, sqlQuery, glob)
+	results, err := s.index.Find(ctx, search.FindOpts{Limit: int(count)})
 	if err != nil {
-		return nil, fmt.Errorf("query failed: %w", err)
-	}
-	defer func() {
-		if err := rows.Close(); err != nil {
-			s.log.Warn().Err(err).Msg("failed to close rows")
-		}
-	}()
-
-	var notes []Note
-	columns, err := rows.Columns()
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("index query failed: %w", err)
 	}
 
-	for rows.Next() {
-		// Create slice of interface{} to hold values
-		values := make([]interface{}, len(columns))
-		valuePtrs := make([]interface{}, len(columns))
-		for i := range values {
-			valuePtrs[i] = &values[i]
-		}
-
-		if err := rows.Scan(valuePtrs...); err != nil {
-			s.log.Warn().Err(err).Msg("failed to scan row")
-			continue
-		}
-
-		// Map columns to Note struct
-		note := Note{
-			Metadata: make(map[string]any),
-		}
-
-		for i, col := range columns {
-			val := values[i]
-			switch col {
-			case "filepath", "file_path", "filename":
-				if v, ok := val.(string); ok {
-					note.File.Filepath = v
-					note.File.Relative = strings.TrimPrefix(v, s.notebookPath+"/")
-				}
-			case "content", "body":
-				if v, ok := val.(string); ok {
-					note.Content = v
-				}
-			case "metadata":
-				// metadata column contains a DuckDB MAP with frontmatter data
-				// The type might be duckdb.Map or map[any]any
-				// Try to handle it as a map type by using reflection if needed
-				rv := reflect.ValueOf(val)
-				if rv.Kind() == reflect.Map {
-					// It's some kind of map - iterate over it
-					for _, key := range rv.MapKeys() {
-						if keyStr, ok := key.Interface().(string); ok {
-							note.Metadata[keyStr] = rv.MapIndex(key).Interface()
-						}
-					}
-				} else if v, ok := val.(map[any]any); ok {
-					for k, val := range v {
-						if keyStr, ok := k.(string); ok {
-							note.Metadata[keyStr] = val
-						}
-					}
-				} else if v, ok := val.(map[string]any); ok {
-					note.Metadata = v
-				}
-			default:
-				note.Metadata[col] = val
-			}
-		}
-
-		notes = append(notes, note)
+	// Convert search.Document results to Note objects
+	notes := make([]Note, len(results.Items))
+	for i, result := range results.Items {
+		notes[i] = documentToNote(result.Document)
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	s.log.Debug().Int("count", len(notes)).Msg("notes loaded")
+	s.log.Debug().Int("count", len(notes)).Msg("notes loaded from index")
 	return notes, nil
 }
 
@@ -185,281 +207,102 @@ func (s *NoteService) Count(ctx context.Context) (int, error) {
 		return 0, nil
 	}
 
-	db, err := s.dbService.GetDB(ctx)
+	if s.index == nil {
+		return 0, fmt.Errorf("index not initialized")
+	}
+
+	count, err := s.index.Count(ctx, search.FindOpts{})
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("index count failed: %w", err)
 	}
 
-	glob := filepath.Join(s.notebookPath, "**", "*.md")
-
-	var count int
-	row := db.QueryRowContext(ctx, `SELECT COUNT(*) FROM read_markdown(?)`, glob)
-	if err := row.Scan(&count); err != nil {
-		return 0, err
-	}
-
-	return count, nil
-}
-
-// ValidateSQL validates a user-provided SQL query for safety.
-// Only SELECT and WITH (CTE) queries are allowed.
-// Dangerous keywords (DROP, DELETE, UPDATE, etc.) are blocked.
-func ValidateSQL(query string) error {
-	// Trim and normalize to uppercase
-	normalized := strings.TrimSpace(strings.ToUpper(query))
-
-	if normalized == "" {
-		return fmt.Errorf("query cannot be empty")
-	}
-
-	// Check query type - only SELECT and WITH allowed
-	if !strings.HasPrefix(normalized, "SELECT") && !strings.HasPrefix(normalized, "WITH") {
-		return fmt.Errorf("only SELECT queries are allowed")
-	}
-
-	// Dangerous keywords blocklist - check with word boundaries
-	// Split query by spaces and other delimiters to find keywords
-	tokens := strings.FieldsFunc(normalized, func(r rune) bool {
-		return r == ' ' || r == '\t' || r == '\n' || r == '(' || r == ')' ||
-			r == ',' || r == ';' || r == '=' || r == '<' || r == '>'
-	})
-
-	dangerous := map[string]bool{
-		"DROP":     true,
-		"DELETE":   true,
-		"UPDATE":   true,
-		"INSERT":   true,
-		"ALTER":    true,
-		"CREATE":   true,
-		"TRUNCATE": true,
-		"REPLACE":  true,
-		"ATTACH":   true,
-		"DETACH":   true,
-		"PRAGMA":   true,
-	}
-
-	for _, token := range tokens {
-		if dangerous[token] {
-			return fmt.Errorf("keyword '%s' is not allowed", token)
-		}
-	}
-
-	return nil
-}
-
-// ExecuteSQLSafe executes a user-provided SQL query safely.
-// Validates the query, executes with a 30-second timeout on a read-only connection,
-// and returns results as maps.
-func (s *NoteService) ExecuteSQLSafe(ctx context.Context, query string) ([]map[string]any, error) {
-	// 1. Validate query
-	if err := ValidateSQL(query); err != nil {
-		s.log.Warn().Err(err).Msg("SQL query validation failed")
-		return nil, fmt.Errorf("invalid query: %w", err)
-	}
-
-	// 2. Preprocess query to resolve glob patterns relative to notebook root
-	processedQuery, err := s.dbService.preprocessSQL(query, s.notebookPath)
-	if err != nil {
-		s.log.Error().Err(err).Str("query", query).Msg("SQL query preprocessing failed")
-		return nil, fmt.Errorf("query preprocessing failed: %w", err)
-	}
-
-	// 3. Get read-only connection
-	db, err := s.dbService.GetReadOnlyDB(ctx)
-	if err != nil {
-		s.log.Error().Err(err).Msg("failed to get read-only database connection")
-		return nil, fmt.Errorf("database error: %w", err)
-	}
-
-	// 4. Create context with 30-second timeout
-	timeoutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-
-	s.log.Debug().Str("query", processedQuery).Msg("executing SQL query")
-
-	// 5. Execute query
-	rows, err := db.QueryContext(timeoutCtx, processedQuery)
-	if err != nil {
-		s.log.Error().Err(err).Str("query", processedQuery).Msg("query execution failed")
-		return nil, fmt.Errorf("query execution failed: %w", err)
-	}
-	defer func() {
-		if err := rows.Close(); err != nil {
-			s.log.Warn().Err(err).Msg("failed to close result rows")
-		}
-	}()
-
-	// 6. Convert rows to maps using local implementation
-	results, err := s.rowsToMaps(rows)
-	if err != nil {
-		s.log.Error().Err(err).Msg("failed to scan query results")
-		return nil, fmt.Errorf("failed to read results: %w", err)
-	}
-
-	s.log.Debug().Int("rows", len(results)).Msg("query executed successfully")
-	return results, nil
-}
-
-// Query executes a raw SQL query.
-func (s *NoteService) Query(ctx context.Context, sql string) ([]map[string]any, error) {
-	return s.dbService.Query(ctx, sql)
-}
-
-// rowsToMaps converts sql.Rows to a slice of maps.
-func (s *NoteService) rowsToMaps(rows *sql.Rows) ([]map[string]any, error) {
-	columns, err := rows.Columns()
-	if err != nil {
-		return nil, err
-	}
-
-	var results []map[string]any
-
-	for rows.Next() {
-		// Create slice of interface{} to hold values
-		values := make([]interface{}, len(columns))
-		valuePtrs := make([]interface{}, len(columns))
-		for i := range values {
-			valuePtrs[i] = &values[i]
-		}
-
-		if err := rows.Scan(valuePtrs...); err != nil {
-			return nil, err
-		}
-
-		// Create map for this row
-		row := make(map[string]any)
-		for i, col := range columns {
-			row[col] = values[i]
-		}
-		results = append(results, row)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return results, nil
+	return int(count), nil
 }
 
 // SearchWithConditions executes a boolean query with the given conditions.
-// Uses parameterized queries for security.
+// Uses Bleve Index for querying instead of DuckDB SQL.
 func (s *NoteService) SearchWithConditions(ctx context.Context, conditions []QueryCondition) ([]Note, error) {
 	if s.notebookPath == "" {
 		return nil, fmt.Errorf("no notebook selected")
 	}
 
-	db, err := s.dbService.GetDB(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	glob := filepath.Join(s.notebookPath, "**", "*.md")
-
-	// Build WHERE clause from conditions, passing glob for linked-by queries
-	whereClause, params, err := s.searchService.BuildWhereClauseWithGlob(conditions, glob)
+	// Build search.Query from conditions
+	query, err := s.searchService.BuildQuery(ctx, conditions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build query: %w", err)
 	}
 
-	// Build the SQL query with parameterized WHERE clause
-	// Start with base query including glob pattern
-	baseQuery := `SELECT * FROM read_markdown(?, include_filepath:=true)`
-
-	// Prepend the glob to params
-	allParams := append([]interface{}{glob}, params...)
-
-	// Add WHERE clause if we have conditions
-	query := baseQuery
-	if whereClause != "" {
-		query += " WHERE " + whereClause
-	}
-	query += " ORDER BY file_path"
-
 	s.log.Info().
-		Str("query", query).
-		Int("paramCount", len(allParams)).
 		Int("conditionCount", len(conditions)).
+		Bool("emptyQuery", query.IsEmpty()).
 		Msg("executing boolean query")
 
-	// Create context with timeout for safety
-	timeoutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-
-	rows, err := db.QueryContext(timeoutCtx, query, allParams...)
+	// Execute search using Index
+	results, err := s.index.Find(ctx, search.FindOpts{
+		Query: query,
+		Sort: search.SortSpec{
+			Field:     search.SortByPath,
+			Direction: search.SortAsc,
+		},
+	})
 	if err != nil {
-		return nil, fmt.Errorf("query failed: %w", err)
-	}
-	defer func() {
-		if err := rows.Close(); err != nil {
-			s.log.Warn().Err(err).Msg("failed to close rows")
-		}
-	}()
-
-	// Parse results into Note structs
-	var notes []Note
-	columns, err := rows.Columns()
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("search failed: %w", err)
 	}
 
-	for rows.Next() {
-		values := make([]interface{}, len(columns))
-		valuePtrs := make([]interface{}, len(columns))
-		for i := range values {
-			valuePtrs[i] = &values[i]
-		}
-
-		if err := rows.Scan(valuePtrs...); err != nil {
-			s.log.Warn().Err(err).Msg("failed to scan row")
-			continue
-		}
-
-		note := Note{
-			Metadata: make(map[string]any),
-		}
-
-		for i, col := range columns {
-			val := values[i]
-			switch col {
-			case "filepath", "file_path", "filename":
-				if v, ok := val.(string); ok {
-					note.File.Filepath = v
-					note.File.Relative = strings.TrimPrefix(v, s.notebookPath+"/")
-				}
-			case "content", "body":
-				if v, ok := val.(string); ok {
-					note.Content = v
-				}
-			case "metadata":
-				rv := reflect.ValueOf(val)
-				if rv.Kind() == reflect.Map {
-					for _, key := range rv.MapKeys() {
-						if keyStr, ok := key.Interface().(string); ok {
-							note.Metadata[keyStr] = rv.MapIndex(key).Interface()
-						}
-					}
-				} else if v, ok := val.(map[any]any); ok {
-					for k, val := range v {
-						if keyStr, ok := k.(string); ok {
-							note.Metadata[keyStr] = val
-						}
-					}
-				} else if v, ok := val.(map[string]any); ok {
-					note.Metadata = v
-				}
-			default:
-				note.Metadata[col] = val
-			}
-		}
-
-		notes = append(notes, note)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
+	// Convert results to Notes
+	notes := make([]Note, len(results.Items))
+	for i, result := range results.Items {
+		notes[i] = documentToNote(result.Document)
 	}
 
 	s.log.Debug().Int("count", len(notes)).Msg("boolean query completed")
+	return notes, nil
+}
+
+// SearchWithFindOpts executes a search using the provided FindOpts.
+// This provides direct access to the search index with full control over
+// query, sorting, pagination, and other options.
+func (s *NoteService) SearchWithFindOpts(ctx context.Context, opts search.FindOpts) ([]Note, error) {
+	if s.notebookPath == "" {
+		return nil, fmt.Errorf("no notebook selected")
+	}
+
+	if s.index == nil {
+		return nil, fmt.Errorf("index not initialized")
+	}
+
+	s.log.Debug().
+		Bool("hasQuery", opts.Query != nil).
+		Int("limit", opts.Limit).
+		Int("offset", opts.Offset).
+		Str("sortField", string(opts.Sort.Field)).
+		Msg("executing search with FindOpts")
+
+	// If no limit set, need to get count first to retrieve all results
+	if opts.Limit == 0 {
+		count, err := s.index.Count(ctx, search.FindOpts{})
+		if err != nil {
+			return nil, fmt.Errorf("failed to count documents: %w", err)
+		}
+		if count == 0 {
+			return []Note{}, nil
+		}
+		opts.Limit = int(count)
+	}
+
+	// Execute search using Index
+	results, err := s.index.Find(ctx, opts)
+	if err != nil {
+		return nil, fmt.Errorf("search failed: %w", err)
+	}
+
+	// Convert results to Notes
+	notes := make([]Note, len(results.Items))
+	for i, result := range results.Items {
+		notes[i] = documentToNote(result.Document)
+	}
+
+	s.log.Debug().Int("count", len(notes)).Msg("search with FindOpts completed")
 	return notes, nil
 }
 

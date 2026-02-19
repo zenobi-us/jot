@@ -19,29 +19,26 @@ var (
 var (
 	// Services initialized in PersistentPreRunE
 	cfgService      *services.ConfigService
-	dbService       *services.DbService
 	notebookService *services.NotebookService
 )
 
 var rootCmd = &cobra.Command{
 	Use:     "opennotes",
 	Version: "0.0.2", // This will be updated by the version setting in main()
-	Short:   "A CLI for managing markdown-based notes with SQL querying and automation",
+	Short:   "A CLI for managing markdown-based notes with fast search and automation",
 	Long: `OpenNotes is a CLI tool for managing your markdown-based notes
 organized in notebooks. Notes are stored as markdown files and can be
-queried using DuckDB's powerful SQL capabilities.
+searched using fast full-text queries.
 
 QUICK START:
   1. Import existing markdown: opennotes notebook create "My Notes" --path ~/my-notes
   2. List notes: opennotes notes list
-  3. Query with SQL: opennotes notes search --sql "SELECT * FROM read_markdown('**/*.md')"
+  3. Filter with queries: opennotes notes search query --and path=projects/*.md
   4. JSON output ready for jq and automation
 
 DOCUMENTATION:
-  📚 SQL Query Guide: https://github.com/zenobi-us/opennotes/blob/main/docs/sql-guide.md
-  🚀 Automation & JSON: https://github.com/zenobi-us/opennotes/blob/main/docs/json-sql-guide.md
+  📚 Search Guide: https://github.com/zenobi-us/opennotes/blob/main/docs/commands/notes-search.md
   📋 Notebook Management: https://github.com/zenobi-us/opennotes/blob/main/docs/notebook-discovery.md
-  🔧 Function Reference: https://github.com/zenobi-us/opennotes/blob/main/docs/sql-functions-reference.md
 
 Environment Variables:
   OPENNOTES_CONFIG    Path to config file (default: ~/.config/opennotes/config.json)
@@ -59,8 +56,8 @@ Examples:
   # List all notes
   opennotes notes list
 
-  # Search with SQL and automation
-  opennotes notes search --sql "SELECT file_path FROM read_markdown('**/*.md')" | jq`,
+  # Search with query filters and automation
+  opennotes notes search query --and path=projects/*.md | jq`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		// Initialize logger first
 		services.InitLogger()
@@ -72,22 +69,10 @@ Examples:
 			return err
 		}
 
-		// Initialize database service
-		dbService = services.NewDbService()
-
 		// Initialize notebook service
-		notebookService = services.NewNotebookService(cfgService, dbService)
+		notebookService = services.NewNotebookService(cfgService)
 
 		return nil
-	},
-	PersistentPostRun: func(cmd *cobra.Command, args []string) {
-		// Cleanup database connection
-		if dbService != nil {
-			if err := dbService.Close(); err != nil {
-				log := services.Log("cleanup")
-				log.Warn().Err(err).Msg("failed to close database")
-			}
-		}
 	},
 }
 

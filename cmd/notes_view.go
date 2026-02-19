@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
-	"time"
+	"sort"
 
 	"github.com/spf13/cobra"
 	"github.com/zenobi-us/opennotes/internal/core"
@@ -27,18 +27,68 @@ When called without arguments or with --list, displays all available views.
 
 BUILT-IN VIEWS:
 
-  today            - Notes created or updated today
-  recent           - Recently modified notes (last 20)
-  kanban           - Notes grouped by status column
-  untagged         - Notes without any tags
-  orphans          - Notes with no incoming links
-  broken-links     - Notes with broken references
+  View queries use DSL pipe syntax: filter | directives
+
+  today            modified:>=today | sort:modified:desc
+  recent           | sort:modified:desc limit:20
+  kanban           has:status | group:status sort:title:asc
+  untagged         missing:tag | sort:created:desc
+  orphans          (special) Notes with no incoming links
+  broken-links     (special) Notes with broken references
+
+DSL FILTER SYNTAX:
+
+  Filters go before the pipe (|). Multiple filters combine with AND.
+
+  Fields:
+    tag:<value>           Notes with a specific tag
+    status:<value>        Notes with a status value
+    title:<text>          Search within title
+    path:<prefix>         Notes under a path prefix
+    body:<text>           Search within body content
+    created:<date>        Notes created on date (YYYY-MM-DD)
+    modified:<date>       Notes modified on date (YYYY-MM-DD)
+
+  Operators (on date fields):
+    field:>=value         Greater than or equal
+    field:<=value         Less than or equal
+    field:>value          Greater than
+    field:<value          Less than
+
+  Existence checks:
+    has:<field>           Notes where field exists (e.g., has:tag)
+    missing:<field>       Notes where field is absent (e.g., missing:status)
+
+  Negation:
+    -<term>               Exclude notes matching term
+    -field:<value>        Exclude notes where field matches value
+
+  Text:
+    <word>                Full-text search term
+    "multi word phrase"   Quoted phrase search
+
+DIRECTIVES (after |):
+
+  sort:<field>:<dir>    Sort by field: modified, created, title, path, relevance
+                        Direction: asc (default) or desc
+  limit:<n>             Return at most n results
+  offset:<n>            Skip first n results (pagination)
+  group:<field>         Group results by field (e.g., group:status)
 
 CUSTOM VIEWS:
 
-  Define custom views in:
+  Define custom views using the same DSL pipe syntax in:
   - Global: ~/.config/opennotes/config.json
   - Notebook: <notebook>/.opennotes.json
+
+  Example custom view in .opennotes.json:
+    {
+      "views": [{
+        "name": "active-work",
+        "description": "Active work items sorted by modification",
+        "query": "tag:work status:todo | sort:modified:desc limit:50"
+      }]
+    }
 
 OUTPUT FORMATS:
 
@@ -49,13 +99,21 @@ OUTPUT FORMATS:
 EXAMPLES:
 
   opennotes notes view                                    # List all views
-  opennotes notes view --list                             # List all views explicitly
+  opennotes notes view --list                             # List all views
   opennotes notes view --list --format json               # List views as JSON
-  opennotes notes view today                              # Execute a view
-  opennotes notes view recent --format table              # Execute with table format
-  opennotes notes view kanban --param status=todo,done    # Execute with parameters
-  opennotes notes view orphans --format json              # Execute with JSON format
-  opennotes notes view my-workflow --param sprint=Q1-S3   # Execute custom view`,
+  opennotes notes view today                              # Notes modified today
+  opennotes notes view recent                             # Last 20 modified notes
+  opennotes notes view kanban                             # Notes grouped by status
+  opennotes notes view untagged                           # Notes without tags
+  opennotes notes view orphans --format json              # Orphaned notes as JSON
+  opennotes notes view my-workflow --param sprint=Q1-S3   # Custom view with params
+
+  DSL examples (use with custom views or 'notes search'):
+    tag:work status:todo                                  # Work items that are todo
+    tag:meeting modified:>=2026-01-01 | sort:modified:desc  # Recent meetings
+    has:status -tag:archived | group:status sort:title:asc  # Kanban without archived
+    missing:tag | sort:created:desc limit:10              # 10 newest untagged notes
+    "project plan" | sort:relevance:desc                  # Phrase search, best match first`,
 
 	Args: cobra.RangeArgs(0, 1),
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -78,10 +136,14 @@ EXAMPLES:
 		// Initialize ViewService
 		vs := services.NewViewService(cfgService, notebookDir)
 
+		// Set execution context for view execution
+		// This requires the search index and note service from the notebook
+		vs.SetExecutionContext(nb.Notes.GetIndex(), nb.Notes)
+
 		// Get the view definition
-		view, err := vs.GetView(viewName)
+		viewDef, err := vs.GetView(viewName)
 		if err != nil {
-			return fmt.Errorf("failed to load view: %w", err)
+			return fmt.Errorf("failed to get view '%s': %w", viewName, err)
 		}
 
 		// Parse user parameters
@@ -90,70 +152,153 @@ EXAMPLES:
 			return fmt.Errorf("failed to parse parameters: %w", err)
 		}
 
-		// Generate SQL query (note: returns read_markdown() query with placeholder for glob)
-		sqlQuery, sqlArgs, err := vs.GenerateSQL(view, userParams)
+		// Validate parameters against view definition
+		if err := vs.ValidateParameters(viewDef, userParams); err != nil {
+			return fmt.Errorf("invalid parameters: %w", err)
+		}
+
+		// Apply parameter defaults
+		userParams = vs.ApplyParameterDefaults(viewDef, userParams)
+
+		// Execute the view
+		ctx := context.Background()
+		results, err := vs.ExecuteView(ctx, viewDef, userParams)
 		if err != nil {
-			return fmt.Errorf("failed to generate query: %w", err)
+			return fmt.Errorf("failed to execute view '%s': %w", viewName, err)
 		}
 
-		// Prepend glob pattern to args (read_markdown() requires it as first parameter)
-		glob := fmt.Sprintf("%s/**/*.md", notebookDir)
-		finalArgs := append([]interface{}{glob}, sqlArgs...)
-
-		// Execute the query using raw database access
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer cancel()
-
-		db, err := dbService.GetDB(ctx)
-		if err != nil {
-			return fmt.Errorf("database connection failed: %w", err)
+		// Render results based on whether they are grouped or flat
+		if len(results.Groups) > 0 {
+			return displayGroupedViewResults(viewName, results.Groups, viewFormat)
 		}
 
-		rows, err := db.QueryContext(ctx, sqlQuery, finalArgs...)
-		if err != nil {
-			return fmt.Errorf("query execution failed: %w", err)
-		}
-		defer func() {
-			_ = rows.Close()
-		}()
-
-		// Convert rows to map format for display
-		columns, err := rows.Columns()
-		if err != nil {
-			return fmt.Errorf("failed to get columns: %w", err)
-		}
-
-		var results []map[string]interface{}
-		for rows.Next() {
-			values := make([]interface{}, len(columns))
-			for i := range columns {
-				values[i] = new(interface{})
-			}
-			if err := rows.Scan(values...); err != nil {
-				return fmt.Errorf("failed to scan row: %w", err)
-			}
-			row := make(map[string]interface{})
-			for i, col := range columns {
-				row[col] = *(values[i].(*interface{}))
-			}
-			results = append(results, row)
-		}
-
-		if err = rows.Err(); err != nil {
-			return fmt.Errorf("row iteration error: %w", err)
-		}
-
-		// Group results if needed
-		viewResults := vs.GroupResults(view, results)
-
-		// Return JSON output
-		jsonBytes, err := json.Marshal(viewResults)
-		if err != nil {
-			return fmt.Errorf("failed to marshal JSON: %w", err)
-		}
-		fmt.Println(string(jsonBytes))
-		return nil
+		return displayViewResults(viewName, results.Notes, viewFormat)
 	},
+}
+
+// displayViewResults displays flat view results (non-grouped)
+func displayViewResults(viewName string, notes []services.Note, format string) error {
+	if len(notes) == 0 {
+		fmt.Printf("View '%s': No notes found\n", viewName)
+		return nil
+	}
+
+	switch format {
+	case "json":
+		return displayViewResultsJSON(notes)
+	case "table":
+		fmt.Printf("View '%s' (%d notes):\n\n", viewName, len(notes))
+		return displayNoteList(notes)
+	case "list":
+		fallthrough
+	default:
+		fmt.Printf("View '%s' (%d notes):\n\n", viewName, len(notes))
+		return displayNoteList(notes)
+	}
+}
+
+// displayViewResultsJSON displays view results in JSON format
+func displayViewResultsJSON(notes []services.Note) error {
+	type ViewResultsResponse struct {
+		Notes []services.Note `json:"notes"`
+		Count int             `json:"count"`
+	}
+
+	response := ViewResultsResponse{
+		Notes: notes,
+		Count: len(notes),
+	}
+
+	jsonBytes, err := json.MarshalIndent(response, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal JSON: %w", err)
+	}
+
+	fmt.Println(string(jsonBytes))
+	return nil
+}
+
+// displayGroupedViewResults displays grouped view results (e.g., kanban)
+func displayGroupedViewResults(viewName string, groups map[string][]services.Note, format string) error {
+	// Count total notes
+	totalNotes := 0
+	for _, notes := range groups {
+		totalNotes += len(notes)
+	}
+
+	if totalNotes == 0 {
+		fmt.Printf("View '%s': No notes found\n", viewName)
+		return nil
+	}
+
+	switch format {
+	case "json":
+		return displayGroupedResultsJSON(groups)
+	case "table":
+		fallthrough
+	case "list":
+		fallthrough
+	default:
+		return displayGroupedResultsList(viewName, groups, totalNotes)
+	}
+}
+
+// displayGroupedResultsJSON displays grouped results in JSON format
+func displayGroupedResultsJSON(groups map[string][]services.Note) error {
+	type GroupedResultsResponse struct {
+		Groups map[string][]services.Note `json:"groups"`
+		Count  int                        `json:"count"`
+	}
+
+	totalNotes := 0
+	for _, notes := range groups {
+		totalNotes += len(notes)
+	}
+
+	response := GroupedResultsResponse{
+		Groups: groups,
+		Count:  totalNotes,
+	}
+
+	jsonBytes, err := json.MarshalIndent(response, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal JSON: %w", err)
+	}
+
+	fmt.Println(string(jsonBytes))
+	return nil
+}
+
+// displayGroupedResultsList displays grouped results in list format
+func displayGroupedResultsList(viewName string, groups map[string][]services.Note, totalNotes int) error {
+	fmt.Printf("View '%s' (%d notes in %d groups):\n\n", viewName, totalNotes, len(groups))
+
+	// Sort group keys for consistent output
+	keys := make([]string, 0, len(groups))
+	for k := range groups {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, key := range keys {
+		notes := groups[key]
+		fmt.Printf("## %s (%d)\n\n", key, len(notes))
+
+		for _, note := range notes {
+			// Get title from metadata or use filename
+			title := note.File.Relative
+			if t, ok := note.Metadata["title"]; ok {
+				if str, ok := t.(string); ok && str != "" {
+					title = str
+				}
+			}
+			fmt.Printf("  - %s\n", title)
+			fmt.Printf("    Path: %s\n", note.File.Relative)
+		}
+		fmt.Println()
+	}
+
+	return nil
 }
 
 // handleViewList lists all available views

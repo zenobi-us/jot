@@ -1,0 +1,14 @@
+{{- if eq (len .Hits) 0 -}}
+No notes found.
+{{- else -}}
+### Semantic Results ({{ len .Hits }})
+
+{{ range .Hits -}}
+- [{{ .Note.DisplayName }}] {{ .Note.File.Relative }} ({{ .MatchType }})
+{{ if and $.Explain .Explain -}}
+  Why: {{ .Explain }}
+{{ else if $.Explain -}}
+  Why: No snippet available
+{{ end }}
+{{ end -}}
+{{- end -}}

@@ -36,6 +36,10 @@ type ConfigService struct {
 
 // GlobalConfigFile returns the platform-specific config path.
 func GlobalConfigFile() string {
+	if override := strings.TrimSpace(os.Getenv("OPENNOTES_CONFIG")); override != "" {
+		return override
+	}
+
 	configDir, err := os.UserConfigDir()
 	if err != nil {
 		configDir = filepath.Join(os.Getenv("HOME"), ".config")

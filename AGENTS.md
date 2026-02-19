@@ -1,6 +1,6 @@
 # AGENTS.md
 
-**OpenNotes** is a **Go CLI tool** for managing markdown-based notes organized in notebooks. It uses DuckDB for SQL-powered search and supports templates. The project is production-ready with comprehensive testing and clean architecture.
+**OpenNotes** is a **Go CLI tool** for managing markdown-based notes organized in notebooks. It uses Bleve for full-text search with fuzzy matching and boolean queries. The project is production-ready with comprehensive testing and clean architecture.
 
 ## Build & Test Commands
 
@@ -166,7 +166,7 @@ Systematically scan for and refactor duplicated code. This prevents maintenance 
 - **Type**: CLI tool for managing markdown-based notes
 - **Language**: Go (1.18+)
 - **Runtime Target**: Native binary (Linux, macOS, Windows)
-- **Database**: DuckDB with markdown extension
+- **Search Engine**: Bleve (pure Go full-text search with BM25 ranking)
 - **Status**: Production-ready, fully tested
 
 ## Architecture Overview
@@ -176,9 +176,9 @@ Systematically scan for and refactor duplicated code. This prevents maintenance 
 Core services are singletons initialized in `cmd/root.go`:
 
 - **ConfigService** (`internal/services/config.go`): Global user config (~/.config/opennotes/config.json)
-- **DbService** (`internal/services/db.go`): DuckDB connections with markdown extension
-- **NotebookService** (`internal/services/notebook.go`): Notebook discovery & operations
-- **NoteService** (`internal/services/note.go`): Note queries via DuckDB SQL
+- **NotebookService** (`internal/services/notebook.go`): Notebook discovery & operations, index management
+- **NoteService** (`internal/services/note.go`): Note CRUD operations and search via Bleve Index
+- **SearchService** (`internal/services/search.go`): Query building and search operations
 - **DisplayService** (`internal/services/display.go`): Terminal rendering with glamour
 - **LoggerService** (`internal/services/logger.go`): Structured logging (zap-based)
 
@@ -191,21 +191,37 @@ Commands are defined in `cmd/` directory and follow standard Cobra CLI pattern w
 1. CLI parses arguments → Matches command
 2. `cmd/root.go` initializes services (lazy-loaded)
 3. Command handler retrieves notebook (via flag, config, or ancestor search)
-4. Services execute business logic (config, database, file operations)
-5. Results formatted and rendered via `TuiRender()` with templates
-6. Output displayed to user with glamour markdown rendering
+4. NotebookService creates/opens Bleve index for the notebook
+5. Services execute business logic (config, indexing, search operations)
+6. Results formatted and rendered via `TuiRender()` with templates
+7. Output displayed to user with glamour markdown rendering
 
 ### Key Components
 
 **ConfigService**: Manages registered notebooks, global settings. Supports env var overrides.
 
-**NotebookService**: Discovers notebooks, loads `.opennotes.json` config, manages notebook lifecycle.
+**NotebookService**: Discovers notebooks, loads `.opennotes.json` config, manages notebook lifecycle. Creates and manages Bleve indices per notebook.
 
-**NoteService**: Provides SQL query interface. Validates queries (SELECT/WITH only), handles metadata extraction.
+**NoteService**: Provides note CRUD operations and search interface. Uses Bleve Index for queries, handles metadata extraction from frontmatter.
 
-**DbService**: Manages DuckDB connections (read-write and read-only). Pre-loads markdown extension.
+**SearchService**: Builds search queries from conditions, translates to Bleve query AST. Supports boolean operators, metadata filters, and full-text search.
 
-**DisplayService**: Renders markdown with glamour, formats SQL results as ASCII tables.
+**DisplayService**: Renders markdown with glamour, formats search results as ASCII tables.
+
+### Search Architecture
+
+**Search Package** (`internal/search/`):
+- `types.go` - Core types: Document, FindOpts, Metadata
+- `index.go` - Index interface (Add/Remove/Find/Count/Stats)
+- `parser/` - Participle-based query parser for Gmail-style search
+- `bleve/` - Bleve backend implementation with BM25 ranking
+
+**Query Flow**:
+1. User query → Parser → AST (`search.Query`)
+2. SearchService.BuildQuery() → Conditions → Query AST
+3. Bleve backend translates AST → Bleve query
+4. Index.Find() executes search → Returns Documents
+5. documentToNote() converts → Note structs → Display
 
 ### Templates
 
@@ -275,14 +291,16 @@ When working on OpenNotes, use AI skills strategically to enhance code quality a
 
 - **Why**: Native binary compilation, simplicity, performance
 - **Performance**: Faster startup than Node/Bun, no runtime overhead
-- **Deployment**: Single binary, no external dependencies for users
+- **Deployment**: Single binary, pure Go (no CGO), no external dependencies
 - **Alternative**: Previously TypeScript/Bun (removed 2026-01-18)
 
-### Database: DuckDB
+### Search Engine: Bleve
 
-- **Why**: SQL support for notes, in-process, supports markdown extension
-- **Current**: Using neo DuckDB (C++ version)
-- **Future**: Considering wasm build when markdown extension support improves
+- **Why**: Pure Go full-text search, BM25 ranking, no CGO dependencies
+- **Features**: Fuzzy matching, boolean queries, field-specific search
+- **Performance**: Sub-millisecond search (0.754ms avg), fast indexing
+- **Binary Size**: 23MB (64% smaller than DuckDB version)
+- **Previous**: DuckDB with markdown extension (removed 2026-02-02)
 
 ### CLI Framework: Cobra
 
@@ -293,7 +311,7 @@ When working on OpenNotes, use AI skills strategically to enhance code quality a
 
 - **Pattern**: Singleton services initialized once
 - **Access**: Global variables in `cmd/root.go` (performance over purity)
-- **Thread-safety**: Safe for concurrent access (DuckDB handles locking)
+- **Thread-safety**: Safe for concurrent access (Bleve handles locking internally)
 
 ### Templates: go:embed
 

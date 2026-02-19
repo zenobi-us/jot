@@ -188,6 +188,17 @@ func TestGlobalConfigFile(t *testing.T) {
 	)
 }
 
+func TestGlobalConfigFile_EnvOverride(t *testing.T) {
+	tmpDir := t.TempDir()
+	overridePath := filepath.Join(tmpDir, "custom", "config.json")
+
+	t.Setenv("OPENNOTES_CONFIG", overridePath)
+
+	path := GlobalConfigFile()
+
+	assert.Equal(t, overridePath, path)
+}
+
 func TestConfigService_Path(t *testing.T) {
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "opennotes", "config.json")

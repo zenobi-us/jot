@@ -256,24 +256,25 @@ Goal: Complete mastery of all features and patterns
 
 ### By Feature
 
-| Feature              | Best Guide                                              | Details                          |
-| -------------------- | ------------------------------------------------------- | -------------------------------- |
-| **SELECT queries**   | [SQL Quick Reference](sql-quick-reference.md) - Level 1 | Basic queries and LIMIT          |
-| **Search queries**   | [SQL Quick Reference](sql-quick-reference.md) - Level 2 | LIKE, wildcards, text search     |
-| **Metadata**         | [SQL Quick Reference](sql-quick-reference.md) - Level 3 | Word count, line count, analysis |
-| **Complex queries**  | [SQL Quick Reference](sql-quick-reference.md) - Level 4 | GROUP BY, ORDER BY, aggregates   |
-| **Functions**        | [SQL Functions Reference](sql-functions-reference.md)   | Function parameters and returns  |
-| **read_markdown()**  | [SQL Functions Reference](sql-functions-reference.md)   | File reading and patterns        |
-| **md_stats()**       | [SQL Functions Reference](sql-functions-reference.md)   | Metadata extraction              |
-| **JSON output**      | [JSON-SQL Guide](json-sql-guide.md)                     | JSON export patterns             |
-| **jq integration**   | [JSON-SQL Guide](json-sql-guide.md)                     | jq pipelines and examples        |
-| **Import workflow**  | [Import Workflow Guide](import-workflow-guide.md)       | From any source                  |
-| **Obsidian import**  | [Import Workflow Guide](import-workflow-guide.md)       | Obsidian-specific steps          |
-| **Bear import**      | [Import Workflow Guide](import-workflow-guide.md)       | Bear-specific steps              |
-| **Daily reports**    | [Automation Recipes](automation-recipes.md)             | note-stats.sh, cron              |
-| **Weekly summaries** | [Automation Recipes](automation-recipes.md)             | weekly-note-summary.sh           |
-| **Backups**          | [Automation Recipes](automation-recipes.md)             | note-backup.sh, git              |
-| **Export**           | [Automation Recipes](automation-recipes.md)             | note-export.sh, formats          |
+| Feature              | Best Guide                                              | Details                           |
+| -------------------- | ------------------------------------------------------- | --------------------------------- |
+| **SELECT queries**   | [SQL Quick Reference](sql-quick-reference.md) - Level 1 | Basic queries and LIMIT           |
+| **Search queries**   | [SQL Quick Reference](sql-quick-reference.md) - Level 2 | LIKE, wildcards, text search      |
+| **Semantic search**  | [Semantic Search Guide](semantic-search-guide.md)       | Meaning-based search, hybrid mode |
+| **Metadata**         | [SQL Quick Reference](sql-quick-reference.md) - Level 3 | Word count, line count, analysis  |
+| **Complex queries**  | [SQL Quick Reference](sql-quick-reference.md) - Level 4 | GROUP BY, ORDER BY, aggregates    |
+| **Functions**        | [SQL Functions Reference](sql-functions-reference.md)   | Function parameters and returns   |
+| **read_markdown()**  | [SQL Functions Reference](sql-functions-reference.md)   | File reading and patterns         |
+| **md_stats()**       | [SQL Functions Reference](sql-functions-reference.md)   | Metadata extraction               |
+| **JSON output**      | [JSON-SQL Guide](json-sql-guide.md)                     | JSON export patterns              |
+| **jq integration**   | [JSON-SQL Guide](json-sql-guide.md)                     | jq pipelines and examples         |
+| **Import workflow**  | [Import Workflow Guide](import-workflow-guide.md)       | From any source                   |
+| **Obsidian import**  | [Import Workflow Guide](import-workflow-guide.md)       | Obsidian-specific steps           |
+| **Bear import**      | [Import Workflow Guide](import-workflow-guide.md)       | Bear-specific steps               |
+| **Daily reports**    | [Automation Recipes](automation-recipes.md)             | note-stats.sh, cron               |
+| **Weekly summaries** | [Automation Recipes](automation-recipes.md)             | weekly-note-summary.sh            |
+| **Backups**          | [Automation Recipes](automation-recipes.md)             | note-backup.sh, git               |
+| **Export**           | [Automation Recipes](automation-recipes.md)             | note-export.sh, formats           |
 
 ### By Audience
 

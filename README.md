@@ -6,11 +6,12 @@ A simple, fast, and powerful CLI tool for managing your markdown notes. OpenNote
 
 ## Features
 
-- Notebook Storage: choose where you want the notes stored, here in your repo, there in your home directory, or anywhere else on your filesystem.
-- Create, list, search, and view notes from the command line.
-- Associate default metadata based on groups or folders.
-- Preset queries: Kanban, Daily Notes, Tags, and more
-- Advanced SQL search powered by DuckDB
+- **Notebook Storage**: Choose where you want notes stored—in your repo, home directory, or anywhere on your filesystem
+- **Create, list, search, and view notes** from the command line
+- **Associate default metadata** based on groups or folders
+- **Preset queries**: Kanban, Daily Notes, Tags, and more
+- **Full-text search** with fuzzy matching and boolean queries
+- **Semantic search** (optional): Find notes by meaning using hybrid keyword + semantic retrieval
 
 ## Installation
 
@@ -97,8 +98,32 @@ Global configuration is stored in:
 - **macOS**: `~/Library/Preferences/opennotes/config.json`
 - **Windows**: `%APPDATA%\opennotes\config.json`
 
+## Semantic Search (Optional)
+
+Find notes by meaning, not just keywords. Semantic search understands concepts and paraphrases.
+
+```bash
+# Hybrid search (default): combines keyword + semantic ranking
+opennotes notes search semantic "meeting notes about project timeline"
+
+# Pure semantic mode: meaning-based, ideal for conceptual queries
+opennotes notes search semantic "discussions about deadlines" --mode semantic
+
+# With filters: combine semantic search with boolean conditions
+opennotes notes search semantic "architecture decisions" --and data.tag=design
+
+# Explain mode: see why each result matched
+opennotes notes search semantic "workflow improvements" --explain
+```
+
+**When to use semantic vs regular search:**
+- **Regular search**: Exact keywords, specific terms, quick lookups
+- **Semantic search**: Conceptual queries, paraphrases, "find notes about X"
+
+For more details, see **[Semantic Search Guide](docs/semantic-search-guide.md)**.
+
 ## Advanced Usage
 
-OpenNotes is built on DuckDB, allowing for powerful SQL querying, automation, and complex data extraction for power users.
+OpenNotes provides powerful search capabilities with full-text search, fuzzy matching, boolean query operators, and semantic retrieval for complex filtering.
 
-For advanced features like SQL search, JSON output for automation, and multi-notebook management, please see our **[Advanced Documentation](docs/getting-started-power-users.md)**.
+For advanced features like boolean queries, JSON output for automation, and multi-notebook management, please see our **[Advanced Documentation](docs/getting-started-power-users.md)**.

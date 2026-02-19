@@ -1,120 +1,50 @@
 # OpenNotes Project Summary
 
-## Project Status: Active Development
+## Current Focus
+- **Future Epic**: [epic-8361d3a2](epic-8361d3a2-rename-to-jot.md) - **Rename Project to "Jot"**
+  - Phase 1: Discovery — Identify all rename locations (in-repo and external)
+  - Status: Planning
+- **Ready for Implementation**: [plan-b4e2f7a1](plan-b4e2f7a1-dsl-views-implementation.md) - DSL-based views
+  - Research complete, 10-task implementation plan ready
+  - **Selected Design**: Option C (Hybrid — Pipe Syntax)
 
-**Current Focus**: pi-opennotes Extension (Phase 2 COMPLETE)
+## Rename Epic (8361d3a2) Overview
+**Goal**: Rebrand from "OpenNotes" → "Jot"
+- New binary: `jot`
+- New module: `github.com/zenobi-us/jot`
+- New repo: `github.com/zenobi-us/jot`
+- New config: `~/.config/jot/`, `.jot.json`
 
----
+## Completed Epics
 
-## Active Work
+### DuckDB Removal (f661c068) — ✅ Archived
+**Completed**: 2026-02-02 | **Duration**: 29 hours | **Archive**: [archive/duckdb-removal-f661c068/](archive/duckdb-removal-f661c068/)
 
-### Pi-OpenNotes Extension
-**Epic**: [epic-1f41631e-pi-opennotes-extension.md](epic-1f41631e-pi-opennotes-extension.md)  
-**Status**: Phase 2 Complete - Ready for Phase 3
+| Metric | Target | Achieved |
+|--------|--------|----------|
+| Binary | <15MB | 23MB (64% smaller than DuckDB) |
+| Startup | <100ms | 17ms ✅ |
+| Search | <25ms | 0.754ms ✅ |
+| Tests | All pass | 161+ passing ✅ |
+| DuckDB refs | 0 | 0 ✅ (except residual converter, deferred) |
 
-A pi extension that integrates OpenNotes into the pi coding agent, enabling AI assistants to search, query, and manage markdown notes.
+**Distilled Learnings** (4 new + 2 archived):
+- [learning-a1b2c3d4](learning-a1b2c3d4-parallel-research-methodology.md) — Parallel research methodology for technology decisions
+- [learning-b3c4d5e6](learning-b3c4d5e6-incremental-dependency-replacement.md) — Incremental dependency replacement strategy
+- [learning-c5d6e7f8](learning-c5d6e7f8-pure-go-cgo-elimination.md) — Pure Go / CGO elimination benefits
+- [learning-d7e8f9a0](learning-d7e8f9a0-interface-first-search-design.md) — Interface-first search design patterns
 
-| Phase | Status | Notes |
-|-------|--------|-------|
-| Phase 1: Research & Design | ✅ **Complete** | All 6 design tasks done |
-| Phase 2: Implementation | ✅ **Complete** | 72 tests passing |
-| Phase 3: Testing & Documentation | ✅ **Complete** | Comprehensive docs + E2E tests |
-| Phase 4: Distribution | 🔜 Next | npm publishing |
+**Residual work**: DSL views implementation (plan-b4e2f7a1), DuckDBConverter cleanup
 
-#### Phase 2 Deliverables
-- Full package implementation in `pkgs/pi-opennotes/`
-- 6 LLM-callable tools (search, list, get, create, notebooks, views)
-- Service-based architecture with dependency injection
-- TypeBox schemas for all parameters
-- Comprehensive error handling with installation hints
-- 72 unit/integration tests passing
+### Semantic Search (7c9d2e1f) — ✅ Archived
+**Archive**: [archive/semantic-search-7c9d2e1f/](archive/semantic-search-7c9d2e1f/)
 
----
+## DSL Views Plan (b4e2f7a1) — Ready
+**Status**: Research complete, 10 TDD tasks ready
+- Replaces SQL view system with DSL pipe syntax
+- Estimated: 4-6 hours
+- Use `superpowers:executing-plans` skill
 
-## Recent Completions
-
-### Pi-OpenNotes Phase 3 (2026-01-29)
-- Created comprehensive documentation suite
-  - Tool Usage Guide - detailed examples for all 6 tools
-  - Integration Guide - complete setup for pi users
-  - Troubleshooting Guide - common issues and solutions
-  - Configuration Reference - all options documented
-- E2E test infrastructure with TypeScript + BATS
-  - 72 unit/integration tests passing
-  - BATS smoke tests passing (4/4 core tests)
-  - TypeScript E2E tests ready for CLI JSON output support
-- Validated performance and pagination
-- Budget management ensures 75% context fit
-
-### Pi-OpenNotes Phase 2 (2026-01-29)
-- Implemented complete extension at `pkgs/pi-opennotes/`
-- Services: CliAdapter, PaginationService, SearchService, ListService, NoteService, NotebookService, ViewsService
-- Tools: opennotes_search, opennotes_list, opennotes_get, opennotes_create, opennotes_notebooks, opennotes_views
-- 72 tests passing (unit + integration)
-
-### Pi-OpenNotes Phase 1 (2026-01-29)
-- Documented OpenNotes CLI interface
-- Designed tool APIs with TypeBox schemas
-- Defined service-based package structure
-- Designed error handling with installation hints
-- Created comprehensive test strategy
-
-### SQL Flag Epic (2026-01-18)
-- Full `--sql` support for notes search
-- Security validation (SELECT/WITH only)
-- 30-second query timeout
-- Path traversal protection
-
----
-
-## Knowledge Base
-
-### Architecture
-- [learning-5e4c3f2a-codebase-architecture.md](learning-5e4c3f2a-codebase-architecture.md) - Core architecture overview
-- [knowledge-codemap.md](knowledge-codemap.md) - AST-based code analysis
-- [knowledge-data-flow.md](knowledge-data-flow.md) - Data flow documentation
-
-### Research
-- [research-aee7f336-pi-extension-patterns.md](research-aee7f336-pi-extension-patterns.md) - Pi extension API patterns
-- [research-4e873bd0-vfs-summary.md](research-4e873bd0-vfs-summary.md) - VFS integration research
-
-### Phase 1 Design Documents
-- [task-a0236e7c-document-opennotes-cli.md](task-a0236e7c-document-opennotes-cli.md) - CLI interface reference
-- [task-4b6f9ebd-design-tool-api.md](task-4b6f9ebd-design-tool-api.md) - Tool API specifications
-- [task-f8bb9c5d-define-package-structure.md](task-f8bb9c5d-define-package-structure.md) - Package structure
-- [task-e1x1x1x1-design-service-architecture.md](task-e1x1x1x1-design-service-architecture.md) - Service layer design
-- [task-e2x2x2x2-design-error-handling.md](task-e2x2x2x2-design-error-handling.md) - Error handling strategy
-- [task-e3x3x3x3-design-test-strategy.md](task-e3x3x3x3-design-test-strategy.md) - Test approach
-
-### Learnings
-- [learning-f9a8b7c6-phase1-design-insights.md](learning-f9a8b7c6-phase1-design-insights.md) - Phase 1 key decisions
-- [learning-p2i8m7k5-phase2-implementation.md](learning-p2i8m7k5-phase2-implementation.md) - Phase 2 implementation insights
-
----
-
-## Active Infrastructure Work
-
-### CI/CD Improvements
-**Task**: [task-9c4a2f8d-github-actions-moonrepo-releases.md](task-9c4a2f8d-github-actions-moonrepo-releases.md)  
-**Status**: Todo - Ready for implementation
-
-Modernize GitHub Actions workflows with:
-- moonrepo affected command for dependency-aware testing
-- release-please manifest mode for independent package releases
-- Combined "implicit detection + graph enforcement" strategy
-- Supports Go and TypeScript/Bun packages in monorepo
-
-**Key Benefits**:
-- Only test/build affected packages based on changes
-- Prevent releases if dependent packages break
-- Clean, independent version bumps per package
-- Automatic changelog generation
-
----
-
-## Quick Links
-
-- **Extension Package**: [pkgs/pi-opennotes/](../pkgs/pi-opennotes/)
-- **Main Docs**: [docs/](../docs/)
-- **CI Config**: [.github/workflows/](../.github/workflows/)
-- **Archive**: [archive/](archive/) - Completed work from previous phases
+## Project State
+- Feature branch: `feat/remove-duckdb-migrate-to-afero-chromedb-with-bleve-search`
+- Ready for: DSL views implementation OR Rename epic Phase 1 discovery

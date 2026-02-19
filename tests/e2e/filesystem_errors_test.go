@@ -121,8 +121,7 @@ func TestNotebookService_SymlinkHandling(t *testing.T) {
 	// Test notebook service with symlinked path
 	configService, err := services.NewConfigService()
 	require.NoError(t, err)
-	dbService := services.NewDbService()
-	notebookService := services.NewNotebookService(configService, dbService)
+	notebookService := services.NewNotebookService(configService)
 	exists := notebookService.HasNotebook(symlinkPath)
 	assert.True(t, exists, "Notebook should be found through symlink")
 
