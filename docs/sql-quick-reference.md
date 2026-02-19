@@ -38,7 +38,6 @@ LIMIT <how-many>
 ```
 
 **Components explained**:
-
 - **SELECT**: Which columns to return
 - **FROM**: Which table/function to query (usually `read_markdown()`)
 - **WHERE**: Filter conditions (optional)
@@ -58,7 +57,6 @@ jot notes search --sql "SELECT * FROM read_markdown('**/*.md', include_filepath:
 ```
 
 **Parameters**:
-
 - `'**/*.md'` - File pattern (required)
   - `'*.md'` - All .md in notebook root only
   - `'**/*.md'` - All .md recursively (includes subdirectories)
@@ -74,7 +72,6 @@ jot notes search --sql "SELECT * FROM read_markdown('**/*.md', include_filepath:
 ```
 
 Output:
-
 ```json
 [
   {
@@ -89,7 +86,6 @@ Output:
 ```
 
 **Breaking it down**:
-
 - `SELECT *` - Return all columns (file_path and content)
 - `FROM read_markdown('**/*.md', include_filepath:=true)` - From all .md files
 - `LIMIT 10` - Return maximum 10 results
@@ -100,15 +96,14 @@ Output:
 
 ### Your Learning Journey
 
-| Level       | Topic             | Time   | Difficulty   | Objective                        |
-| ----------- | ----------------- | ------ | ------------ | -------------------------------- |
-| **Level 1** | Basic Queries     | 5 min  | Beginner     | List all notes, count files      |
-| **Level 2** | Content Search    | 10 min | Beginner     | Find notes by text, use LIKE     |
+| Level | Topic | Time | Difficulty | Objective |
+|-------|-------|------|-----------|-----------|
+| **Level 1** | Basic Queries | 5 min | Beginner | List all notes, count files |
+| **Level 2** | Content Search | 10 min | Beginner | Find notes by text, use LIKE |
 | **Level 3** | Metadata Analysis | 15 min | Intermediate | Extract stats, analyze structure |
-| **Level 4** | Complex Queries   | 20 min | Advanced     | Joins, aggregations, conditions  |
+| **Level 4** | Complex Queries | 20 min | Advanced | Joins, aggregations, conditions |
 
 **Progression strategy**:
-
 1. Copy-paste Level 1 examples to verify they work
 2. Modify examples to match your data
 3. Combine patterns from multiple examples
@@ -132,8 +127,7 @@ jot notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_f
 
 **What it does**: Returns list of all markdown files in your notebook
 
-**Modify it**:
-
+**Modify it**: 
 - Limit to specific folder: `'projects/**/*.md'` instead of `'**/*.md'`
 - Include content: Add `content` to SELECT: `SELECT file_path, content FROM ...`
 
@@ -148,13 +142,11 @@ jot notes search --sql "SELECT COUNT(*) as total_notes FROM read_markdown('**/*.
 **What it does**: Returns single number—total count of notes
 
 **Output**:
-
 ```json
-[{ "total_notes": 157 }]
+[{"total_notes": 157}]
 ```
 
 **Modify it**:
-
 - Count specific folder: `read_markdown('projects/**/*.md')`
 - Count nested folders: `read_markdown('daily/**/*.md')`
 
@@ -183,7 +175,6 @@ jot notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_f
 **What it does**: Lists all notes sorted alphabetically
 
 **Modify it**:
-
 - Reverse order: `ORDER BY file_path DESC`
 - Sort by filename only: `ORDER BY file_path DESC` then parse in script
 
@@ -222,7 +213,6 @@ jot notes search --sql \
 **What it does**: Finds all notes containing exactly "TODO"
 
 **Modify it**:
-
 - Change search term: Replace `'%TODO%'` with your term
 - Different text: `LIKE '%deadline%'`
 
@@ -240,7 +230,6 @@ jot notes search --sql \
 **What it does**: Finds notes containing "python", "Python", or "PYTHON"
 
 **Modify it**:
-
 - Change term: Replace `'%python%'` with your search term
 - Include more context: Add other columns: `SELECT file_path, content`
 - Limit results: Change `LIMIT 10` to `LIMIT 20`, etc.
@@ -257,7 +246,6 @@ jot notes search --sql \
 **What it does**: Finds notes containing BOTH "deadline" AND "urgent"
 
 **Modify it**:
-
 - Match either term: Replace `AND` with `OR`
 - Add more conditions: Add more `AND content ILIKE '%term%'`
 
@@ -296,7 +284,7 @@ jot notes search --sql \
 
 ### Query 2.6: Find Notes with Specific Format
 
-````bash
+```bash
 # Notes with checked checkboxes [x]
 jot notes search --sql \
   "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) WHERE content LIKE '%[x]%'"
@@ -312,7 +300,7 @@ jot notes search --sql \
 # Notes with links
 jot notes search --sql \
   "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) WHERE content LIKE '%[%](%'  LIMIT 20"
-````
+```
 
 **What it does**: Search for structural elements in markdown
 
@@ -334,12 +322,11 @@ jot notes search --sql \
 **What it does**: Returns file path and word count, sorted by longest first
 
 **Output**:
-
 ```json
 [
-  { "file_path": "projects/alpha-spec.md", "words": 2847 },
-  { "file_path": "projects/beta-overview.md", "words": 1523 },
-  { "file_path": "daily/2024-01-15.md", "words": 342 }
+  {"file_path": "projects/alpha-spec.md", "words": 2847},
+  {"file_path": "projects/beta-overview.md", "words": 1523},
+  {"file_path": "daily/2024-01-15.md", "words": 342}
 ]
 ```
 
@@ -355,7 +342,6 @@ jot notes search --sql \
 **What it does**: Collection-wide statistics (total files, total words, average)
 
 **Output**:
-
 ```json
 [
   {
@@ -444,7 +430,6 @@ jot notes search --sql \
 **What it does**: Finds notes with unchecked but no checked items (likely incomplete)
 
 **Enhancement**: Filter to specific folder:
-
 ```bash
 jot notes search --sql \
   "SELECT file_path FROM read_markdown('projects/**/*.md', include_filepath:=true) WHERE content LIKE '%[ ]%'"
@@ -470,16 +455,15 @@ jot notes search --sql \
 
 ```bash
 jot notes search --sql \
-  "SELECT file_path, (md_stats(content)).word_count as words
-   FROM read_markdown('**/*.md', include_filepath:=true)
-   WHERE content ILIKE '%TODO%' AND (md_stats(content)).word_count > 100
+  "SELECT file_path, (md_stats(content)).word_count as words 
+   FROM read_markdown('**/*.md', include_filepath:=true) 
+   WHERE content ILIKE '%TODO%' AND (md_stats(content)).word_count > 100 
    ORDER BY words DESC"
 ```
 
 **What it does**: Find long TODO items (complex enough to track)
 
 **What's happening**:
-
 - Find notes with "TODO" (content filter)
 - AND have more than 100 words (metadata filter)
 - Sort longest first
@@ -488,7 +472,7 @@ jot notes search --sql \
 
 ### Query 4.4: Pattern Matching with Complex Conditions
 
-````bash
+```bash
 # Find code examples in documentation
 jot notes search --sql \
   "SELECT file_path, (md_stats(content)).word_count as words
@@ -502,7 +486,7 @@ jot notes search --sql \
    FROM read_markdown('docs/**/*.md', include_filepath:=true)
    WHERE (content LIKE '%FIXME%' OR content LIKE '%TODO%' OR content LIKE '%OUTDATED%')
    AND (md_stats(content)).word_count > 50"
-````
+```
 
 **What it does**: Practical patterns for real workflows
 
@@ -512,7 +496,7 @@ jot notes search --sql \
 
 ```bash
 -- Count notes by first-level folder (projects, daily, archive)
-SELECT
+SELECT 
   SUBSTRING(file_path, 1, POSITION('/' IN file_path) - 1) as folder,
   COUNT(*) as note_count,
   SUM((md_stats(content)).word_count) as total_words,
@@ -561,7 +545,6 @@ jot notes search --sql \
 ```
 
 **Available fields**:
-
 - `.word_count` - Number of words
 - `.line_count` - Number of lines
 - `.heading_count` - Number of headings
@@ -586,7 +569,6 @@ read_markdown('projects/**/*.md')
 ```
 
 **Patterns**:
-
 - `*.md` - Notebook root only
 - `**/*.md` - All files recursively
 - `folder/*.md` - Specific folder
@@ -606,7 +588,7 @@ SELECT * FROM read_markdown('**/*.md') WHERE (md_stats(content)).word_count > 10
 SELECT file_path FROM read_markdown('**/*.md') LIMIT 1000
 
 -- ✅ Better: Filter by pattern first
-SELECT file_path FROM read_markdown('projects/**/*.md')
+SELECT file_path FROM read_markdown('projects/**/*.md') 
 WHERE content ILIKE '%important%'
 ```
 
@@ -691,31 +673,26 @@ SELECT * FROM read_markdown('**/*.md') WHERE content LIKE '%anything%' LIMIT 10
 ### Use SQL When You Need:
 
 ✅ **Search across all notes quickly**
-
 ```bash
 Find all notes about "project alpha" in under 100ms
 ```
 
 ✅ **Statistical analysis**
-
 ```bash
 Which notes are longest? Most structured? Most recently updated?
 ```
 
 ✅ **Complex filtering**
-
 ```bash
 Find incomplete tasks that are also long (over 500 words)
 ```
 
 ✅ **Automation**
-
 ```bash
 Export note list for script processing
 ```
 
 ✅ **Batch operations**
-
 ```bash
 Get list of all notes matching criteria
 ```
@@ -723,19 +700,16 @@ Get list of all notes matching criteria
 ### Use Regular Search When You Need:
 
 ✅ **Quick keyword search**
-
 ```bash
 jot notes search "project alpha"
 ```
 
 ✅ **Simple content lookup**
-
 ```bash
 jot notes search "deadline"
 ```
 
 ✅ **Browse recent notes**
-
 ```bash
 jot notes list
 ```
@@ -745,28 +719,24 @@ jot notes list
 ## Practice Exercises
 
 **Exercise 1: Basic Query**
-
 ```bash
 # Try it: List first 5 notes in your notebook
 jot notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) LIMIT 5"
 ```
 
 **Exercise 2: Content Search**
-
 ```bash
 # Try it: Find all notes with "TODO" in them
 jot notes search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepath:=true) WHERE content ILIKE '%todo%'"
 ```
 
 **Exercise 3: Metadata Analysis**
-
 ```bash
 # Try it: Find your longest notes
 jot notes search --sql "SELECT file_path, (md_stats(content)).word_count as words FROM read_markdown('**/*.md', include_filepath:=true) ORDER BY words DESC LIMIT 5"
 ```
 
 **Exercise 4: Combine Everything**
-
 ```bash
 # Try it: Find long TODO notes (complex tasks)
 jot notes search --sql "SELECT file_path, (md_stats(content)).word_count FROM read_markdown('**/*.md', include_filepath:=true) WHERE content ILIKE '%todo%' AND (md_stats(content)).word_count > 500"
@@ -793,3 +763,4 @@ jot notes search --sql "SELECT file_path, (md_stats(content)).word_count FROM re
 5. **Check [SQL Query Guide](sql-guide.md)** for advanced patterns
 
 Happy querying! 🎯
+

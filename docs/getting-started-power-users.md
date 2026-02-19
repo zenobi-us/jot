@@ -343,7 +343,6 @@ You now understand the Jot power-user workflow. Here's what's available for deep
 2. **Security** — Understanding query validation and sandbox restrictions
 3. **Custom Workflows** — Building shell scripts and automation
 4. **Integration** — Connecting with other tools and systems
-5. **[Logging Configuration](logging-configuration.md)** — Control output format and verbosity
 
 ---
 

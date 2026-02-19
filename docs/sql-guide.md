@@ -46,7 +46,7 @@ Jot returns SQL query results in **JSON format** by default:
     "content": "# Project Ideas\n\nSome ideas for new..."
   },
   {
-    "file_path": "/path/to/notebook/notes/meeting-notes.md",
+    "file_path": "/path/to/notebook/notes/meeting-notes.md", 
     "content": "# Meeting Notes\n\nDiscussed the new..."
   },
   {
@@ -57,7 +57,6 @@ Jot returns SQL query results in **JSON format** by default:
 ```
 
 **JSON Benefits:**
-
 - Perfect for automation and scripting
 - Easy integration with tools like `jq`
 - Structured data for complex processing
@@ -71,12 +70,12 @@ Jot returns SQL query results in **JSON format** by default:
 
 ### Pattern Types Supported
 
-| Pattern             | Description                                           | Example Matches                                              |
-| ------------------- | ----------------------------------------------------- | ------------------------------------------------------------ |
-| `*.md`              | All markdown files in notebook root                   | `README.md`, `notes.md`                                      |
-| `**/*.md`           | All markdown files recursively in entire notebook     | `docs/guide.md`, `projects/todo.md`, `archive/2023/notes.md` |
-| `subfolder/*.md`    | All markdown files in specific subfolder              | `projects/project1.md`, `projects/status.md`                 |
-| `**/subfolder/*.md` | All markdown files in any subfolder named 'subfolder' | `work/projects/todo.md`, `personal/projects/ideas.md`        |
+| Pattern | Description | Example Matches |
+|---------|-------------|-----------------|
+| `*.md` | All markdown files in notebook root | `README.md`, `notes.md` |
+| `**/*.md` | All markdown files recursively in entire notebook | `docs/guide.md`, `projects/todo.md`, `archive/2023/notes.md` |
+| `subfolder/*.md` | All markdown files in specific subfolder | `projects/project1.md`, `projects/status.md` |
+| `**/subfolder/*.md` | All markdown files in any subfolder named 'subfolder' | `work/projects/todo.md`, `personal/projects/ideas.md` |
 
 ### Resolution Behavior
 
@@ -96,7 +95,7 @@ cd /tmp && jot notes search --sql "SELECT * FROM read_markdown('**/*.md')" --not
 jot notes search --sql "SELECT * FROM read_markdown('../secret/*.md')"
 jot notes search --sql "SELECT * FROM read_markdown('/etc/passwd')"
 
-# ✅ These patterns work correctly
+# ✅ These patterns work correctly  
 jot notes search --sql "SELECT * FROM read_markdown('**/*.md')"
 jot notes search --sql "SELECT * FROM read_markdown('projects/*.md')"
 ```
@@ -135,22 +134,18 @@ SELECT file_path FROM read_markdown('new-pattern/*.md', include_filepath:=true) 
 ### Table Functions
 
 #### `read_markdown(glob, include_filepath:=boolean)`
-
 Reads markdown files matching the glob pattern.
 
 **Parameters:**
-
 - `glob` (string): File pattern (e.g., `**/*.md`, `notes/*.md`)
 - `include_filepath` (boolean, optional): Include filepath column
 
 **Returns:** Table with columns:
-
 - `content` (string): Full markdown content
 - `filepath` (string): Full file path (if include_filepath=true)
 - `metadata` (map): Frontmatter as key-value pairs
 
 **Examples:**
-
 ```sql
 -- All notes with file paths
 SELECT * FROM read_markdown('**/*.md', include_filepath:=true)
@@ -165,19 +160,16 @@ SELECT * FROM read_markdown('README.md')
 ### Scalar Functions
 
 #### `md_stats(content)`
-
 Returns statistics about markdown content.
 
 **Returns:** Struct with:
-
 - `word_count` (integer): Number of words
 - `character_count` (integer): Number of characters
 - `line_count` (integer): Number of lines
 
 **Example:**
-
 ```sql
-SELECT
+SELECT 
     file_path,
     (md_stats(content)).word_count as words,
     (md_stats(content)).line_count as lines
@@ -186,18 +178,15 @@ WHERE (md_stats(content)).word_count < 100
 ```
 
 #### `md_extract_links(content)`
-
 Extracts all markdown links from content.
 
 **Returns:** Array of structs with:
-
 - `text` (string): Link text
 - `url` (string): Link URL
 
 **Example:**
-
 ```sql
-SELECT
+SELECT 
     file_path,
     UNNEST(md_extract_links(content)) as link_info
 FROM read_markdown('**/*.md', include_filepath:=true)
@@ -205,18 +194,15 @@ WHERE array_length(md_extract_links(content)) > 0
 ```
 
 #### `md_extract_code_blocks(content)`
-
 Extracts code blocks from content.
 
 **Returns:** Array of structs with:
-
 - `language` (string): Programming language
 - `code` (string): Code content
 
 **Example:**
-
 ```sql
-SELECT
+SELECT 
     file_path,
     cb.language,
     cb.code
@@ -229,18 +215,18 @@ WHERE cb.language = 'python'
 
 ### `read_markdown()` Columns
 
-| Column      | Type   | Description                                                      |
-| ----------- | ------ | ---------------------------------------------------------------- |
-| `content`   | string | Full markdown content including frontmatter                      |
+| Column | Type | Description |
+|--------|------|-------------|
+| `content` | string | Full markdown content including frontmatter |
 | `file_path` | string | Relative file path from notebook root (if include_filepath=true) |
-| `metadata`  | map    | Frontmatter parsed as key-value pairs                            |
+| `metadata` | map | Frontmatter parsed as key-value pairs |
 
 ### Frontmatter Access
 
 Access frontmatter fields using map syntax:
 
 ```sql
-SELECT
+SELECT 
     file_path,
     metadata['title'] as title,
     metadata['tags'] as tags,
@@ -291,7 +277,7 @@ WHERE metadata['author'] = 'John Doe'
 
 ```sql
 -- Word count analysis
-SELECT
+SELECT 
     file_path,
     (md_stats(content)).word_count as words
 FROM read_markdown('**/*.md', include_filepath:=true)
@@ -299,7 +285,7 @@ ORDER BY words DESC
 LIMIT 10
 
 -- Average words per note
-SELECT
+SELECT 
     COUNT(*) as note_count,
     AVG((md_stats(content)).word_count) as avg_words,
     MAX((md_stats(content)).word_count) as max_words
@@ -316,7 +302,7 @@ ORDER BY words ASC
 
 ```sql
 -- Find all Python code
-SELECT
+SELECT 
     file_path,
     cb.code
 FROM read_markdown('**/*.md', include_filepath:=true),
@@ -324,7 +310,7 @@ FROM read_markdown('**/*.md', include_filepath:=true),
 WHERE cb.language = 'python'
 
 -- Count code blocks by language
-SELECT
+SELECT 
     cb.language,
     COUNT(*) as block_count
 FROM read_markdown('**/*.md'),
@@ -333,7 +319,7 @@ GROUP BY cb.language
 ORDER BY block_count DESC
 
 -- Find notes with most code blocks
-SELECT
+SELECT 
     file_path,
     array_length(md_extract_code_blocks(content)) as code_blocks
 FROM read_markdown('**/*.md', include_filepath:=true)
@@ -345,7 +331,7 @@ ORDER BY code_blocks DESC
 
 ```sql
 -- Find all external links
-SELECT
+SELECT 
     file_path,
     link.text,
     link.url
@@ -354,7 +340,7 @@ FROM read_markdown('**/*.md', include_filepath:=true),
 WHERE link.url LIKE 'http%'
 
 -- Find broken internal links (simple check)
-SELECT
+SELECT 
     file_path,
     link.url as potentially_broken
 FROM read_markdown('**/*.md', include_filepath:=true),
@@ -362,7 +348,7 @@ FROM read_markdown('**/*.md', include_filepath:=true),
 WHERE link.url LIKE './%' OR link.url LIKE '../%'
 
 -- Count links per note
-SELECT
+SELECT 
     file_path,
     array_length(md_extract_links(content)) as link_count
 FROM read_markdown('**/*.md', include_filepath:=true)
@@ -375,7 +361,7 @@ ORDER BY link_count DESC
 ```sql
 -- Most active writing days
 WITH daily_stats AS (
-    SELECT
+    SELECT 
         metadata['date'] as date,
         COUNT(*) as notes_written,
         SUM((md_stats(content)).word_count) as words_written
@@ -389,13 +375,13 @@ ORDER BY date DESC
 
 -- Tag analysis
 WITH tag_stats AS (
-    SELECT
+    SELECT 
         UNNEST(string_split(metadata['tags'], ',')) as tag,
         file_path
     FROM read_markdown('**/*.md', include_filepath:=true)
     WHERE metadata['tags'] IS NOT NULL
 )
-SELECT
+SELECT 
     TRIM(tag) as tag,
     COUNT(*) as usage_count
 FROM tag_stats
@@ -408,7 +394,6 @@ ORDER BY usage_count DESC
 ### Common Errors
 
 #### "Only SELECT queries are allowed"
-
 **Cause:** Trying to use INSERT, UPDATE, DELETE, or other write operations.
 **Solution:** Use only SELECT or WITH statements.
 
@@ -421,7 +406,6 @@ jot search --sql "SELECT * FROM read_markdown('**/*.md')"
 ```
 
 #### "File or directory does not exist"
-
 **Cause:** No files match your glob pattern.
 **Solution:** Check your file pattern and notebook path.
 
@@ -434,7 +418,6 @@ jot search --sql "SELECT * FROM read_markdown('**/*.md')"
 ```
 
 #### "path traversal detected: query would access files outside notebook"
-
 **Cause:** Query contains `../` or attempts to access files outside the notebook directory.
 **Solution:** Use relative paths from notebook root, remove `../` patterns.
 
@@ -449,7 +432,6 @@ jot search --sql "SELECT * FROM read_markdown('**/*.md')"
 ```
 
 #### "query preprocessing failed: malformed pattern"
-
 **Cause:** Invalid glob pattern syntax or quote mismatch.
 **Solution:** Check quote matching and pattern format.
 
@@ -457,7 +439,7 @@ jot search --sql "SELECT * FROM read_markdown('**/*.md')"
 # ❌ Mismatched quotes
 jot search --sql "SELECT * FROM read_markdown('**/*.md\")"
 
-# ❌ Unclosed quotes
+# ❌ Unclosed quotes  
 jot search --sql "SELECT * FROM read_markdown('**/*.md"
 
 # ✅ Proper quotes
@@ -465,12 +447,10 @@ jot search --sql "SELECT * FROM read_markdown('**/*.md')"
 ```
 
 #### "keyword 'DROP' is not allowed"
-
 **Cause:** Using blocked dangerous keywords.
 **Solution:** Remove dangerous keywords from your query.
 
 #### Query times out after 30 seconds
-
 **Cause:** Query is too complex or dataset too large.
 **Solution:** Add LIMIT clauses or simplify the query.
 
@@ -512,7 +492,7 @@ jot search --sql "SELECT file_path FROM read_markdown('**/*.md', include_filepat
 # 1. Test root files only
 jot search --sql "SELECT COUNT(*) FROM read_markdown('*.md')"
 
-# 2. Test specific subfolder
+# 2. Test specific subfolder  
 jot search --sql "SELECT COUNT(*) FROM read_markdown('projects/*.md')"
 
 # 3. Test recursive pattern
@@ -522,7 +502,6 @@ jot search --sql "SELECT COUNT(*) FROM read_markdown('**/*.md')"
 ## Security Model
 
 ### Read-Only Access
-
 - Only SELECT and WITH (Common Table Expression) queries allowed
 - No data modification possible (INSERT, UPDATE, DELETE blocked)
 - No schema changes possible (CREATE, ALTER, DROP blocked)
@@ -538,7 +517,6 @@ jot search --sql "SELECT COUNT(*) FROM read_markdown('**/*.md')"
 - Security violations are logged for monitoring
 
 **Examples of blocked patterns**:
-
 ```sql
 -- ❌ These are automatically blocked
 SELECT * FROM read_markdown('../secrets/*.md')           -- Path traversal
@@ -548,7 +526,6 @@ SELECT * FROM read_markdown('../../other-notebook/*')   -- Multi-level traversal
 ```
 
 **Safe patterns that work correctly**:
-
 ```sql
 -- ✅ These patterns are safe and work as intended
 SELECT * FROM read_markdown('**/*.md')                  -- All notebook files
@@ -558,9 +535,7 @@ SELECT * FROM read_markdown('docs/archive/*.md')        -- Nested subfolder
 ```
 
 ### Validation
-
 Queries are validated before execution to block:
-
 - `INSERT`, `UPDATE`, `DELETE`
 - `DROP`, `CREATE`, `ALTER`
 - `TRUNCATE`, `REPLACE`
@@ -570,27 +545,23 @@ Queries are validated before execution to block:
 ### Pattern Processing Security
 
 **Automatic Resolution**: File patterns are processed before query execution to:
-
 - Convert relative patterns to absolute paths from notebook root
-- Validate all resolved paths stay within notebook boundaries
+- Validate all resolved paths stay within notebook boundaries  
 - Log security violations for monitoring and audit trails
 - Ensure consistent behavior regardless of current working directory
 
 **Security Logging**: All security violations are logged with details including:
-
 - Original query pattern
 - Attempted resolved path
 - User context and timestamp
 - Specific security rule violated
 
 ### Timeout Protection
-
 - All queries have a 30-second timeout
 - Prevents runaway queries from blocking the system
 - Long-running queries are automatically cancelled
 
 ### Isolation
-
 - Separate read-only database connection
 - No access to Jot internal tables
 - Cannot affect notebook files on disk
@@ -599,7 +570,6 @@ Queries are validated before execution to block:
 ## Performance Tips
 
 ### Use Specific Glob Patterns
-
 ```sql
 -- ❌ Slow: searches all files (may include non-markdown)
 SELECT * FROM read_markdown('**/*')
@@ -615,18 +585,16 @@ SELECT * FROM read_markdown('README.md')
 ```
 
 ### Pattern Specificity Impact
-
 More specific patterns significantly improve performance by reducing the number of files processed:
 
-| Pattern         | Performance Impact | Use Case           |
-| --------------- | ------------------ | ------------------ |
-| `'file.md'`     | Fastest            | Single known file  |
-| `'folder/*.md'` | Fast               | Specific folder    |
-| `'**/*.md'`     | Moderate           | All notebook files |
-| `'**/*'`        | Slowest            | All files (avoid)  |
+| Pattern | Performance Impact | Use Case |
+|---------|-------------------|----------|
+| `'file.md'` | Fastest | Single known file |
+| `'folder/*.md'` | Fast | Specific folder |
+| `'**/*.md'` | Moderate | All notebook files |
+| `'**/*'` | Slowest | All files (avoid) |
 
 ### Limit Results
-
 ```sql
 -- ❌ Returns all results (potentially thousands)
 SELECT * FROM read_markdown('**/*.md')
@@ -639,7 +607,6 @@ SELECT * FROM read_markdown('**/*.md') LIMIT 50 OFFSET 100
 ```
 
 ### Filter Early
-
 ```sql
 -- ❌ Processes all notes then filters
 SELECT * FROM (
@@ -661,25 +628,22 @@ WHERE (md_stats(content)).word_count > 1000
 ### Pattern Resolution Performance
 
 **One-time Cost**: Pattern resolution happens once per query before execution:
-
 - Pattern processing adds <1ms overhead per pattern
-- Resolved paths are cached for query duration
+- Resolved paths are cached for query duration  
 - Security validation is lightweight
 - Overall impact negligible for typical queries
 
 **Optimization Strategy**: Structure your notebook for efficient patterns:
-
 ```
 notebook/
 ├── daily/           # Daily notes
-├── projects/        # Project documentation
+├── projects/        # Project documentation  
 ├── archive/         # Old content
 ├── templates/       # Note templates
 └── reference/       # Reference materials
 ```
 
 **Efficient queries for this structure**:
-
 ```sql
 -- Target specific areas
 SELECT * FROM read_markdown('projects/*.md') WHERE content LIKE '%urgent%'
@@ -688,9 +652,7 @@ SELECT * FROM read_markdown('reference/**/*.md') WHERE metadata['type'] = 'guide
 ```
 
 ### Use Appropriate Indexes
-
 DuckDB automatically optimizes many queries, but you can help by:
-
 - Filtering on metadata fields early
 - Using specific patterns instead of broad searches
 - Limiting result sets
@@ -699,26 +661,24 @@ DuckDB automatically optimizes many queries, but you can help by:
 ### Query Optimization Examples
 
 **Content Search Optimization**:
-
 ```sql
 -- ❌ Inefficient: searches all content
-SELECT * FROM read_markdown('**/*.md')
+SELECT * FROM read_markdown('**/*.md') 
 WHERE content LIKE '%search_term%'
 
 -- ✅ More efficient: specific folder + limit
-SELECT * FROM read_markdown('projects/*.md')
-WHERE content LIKE '%search_term%'
+SELECT * FROM read_markdown('projects/*.md') 
+WHERE content LIKE '%search_term%' 
 LIMIT 20
 
 -- ✅ Most efficient: metadata first, then content
-SELECT * FROM read_markdown('projects/*.md')
+SELECT * FROM read_markdown('projects/*.md') 
 WHERE metadata['tags'] LIKE '%urgent%'
   AND content LIKE '%search_term%'
 LIMIT 10
 ```
 
 **Statistical Analysis Optimization**:
-
 ```sql
 -- ❌ Processes all files for simple count
 SELECT COUNT(*) FROM read_markdown('**/*.md')

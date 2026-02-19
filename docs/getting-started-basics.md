@@ -13,7 +13,6 @@ Let's get Jot installed and verify it's working.
 ### What You'll Need
 
 **System Requirements** (super minimal!):
-
 - macOS, Linux, or Windows with WSL
 - Terminal or command prompt
 - ~5 MB of disk space
@@ -23,26 +22,41 @@ Let's get Jot installed and verify it's working.
 
 Choose the method that works best for you:
 
-#### Option 1: Download Binary (All Platforms)
+#### Option 1: Homebrew (macOS/Linux) - Easiest
+
+If you have Homebrew installed:
+
+```bash
+brew tap zenobi-us/tools
+brew install jot
+```
+
+Verify it worked:
+```bash
+jot --version
+```
+
+#### Option 2: Download Binary (All Platforms)
 
 Go to the [Jot Releases](https://github.com/zenobi-us/jot/releases) page and download the binary for your system:
-
 - macOS: `jot-darwin-arm64` (Apple Silicon) or `jot-darwin-amd64` (Intel)
 - Linux: `jot-linux-amd64`
 - Windows: `jot-windows-amd64.exe`
 
 Make it executable (macOS/Linux):
-
 ```bash
 chmod +x jot
 # optionally move it to your PATH
 mv jot /usr/local/bin/
 ```
 
-#### Option 2: Install from Source (Requires Go)
+#### Option 3: Build from Source (For Developers)
 
 ```bash
-go install https://github.com/zenobi-us/jot.git
+git clone https://github.com/zenobi-us/jot.git
+cd jot
+go build -o jot
+./jot --version
 ```
 
 ### Verify Installation
@@ -74,7 +88,6 @@ Now let's create a notebook from your existing markdown files. A **notebook** is
 ### Find Your Notes Folder
 
 First, think about where your markdown notes currently live. Common locations:
-
 - `~/Documents/Notes`
 - `~/my-notes`
 - `~/Desktop/Notes`
@@ -93,7 +106,6 @@ jot notebook create ~/Documents/Notes --name "My Notes"
 Replace `~/Documents/Notes` with the actual path to your markdown files.
 
 **What just happened?**
-
 - Jot scanned your folder for all `.md` files
 - It extracted titles from frontmatter (YAML at the top of files) or used filenames
 - It registered your notebook so you can use it anytime
@@ -119,7 +131,6 @@ jot notebook list
 ```
 
 You should see output like:
-
 ```
 ## Notebooks (2)
 
@@ -134,7 +145,7 @@ You should see output like:
 • **Root:** ~/learning-notes
 ```
 
-Perfect! You now have a notebook registered.
+Perfect! You now have a notebook registered. Jot will automatically use the most recent notebook you created.
 
 ---
 
@@ -187,7 +198,6 @@ jot notes list
 ```
 
 Output looks like:
-
 ```
 ### Notes (3)
 
@@ -197,7 +207,6 @@ Output looks like:
 ```
 
 Each note shows:
-
 - **Title** (extracted from the note or filename)
 - **Filename** (the path where it's stored)
 
@@ -272,13 +281,11 @@ You've got Jot working! Here's what you can do next:
 ### Continue with the Basics
 
 **Master Notebook Management**:
-
 - Learn how to organize notes across multiple notebooks
 - Understand how to use notebooks for different projects or topics
 - See [Notebook Management Guide](notebook-discovery.md)
 
 **Better Search Techniques**:
-
 - Use fuzzy matching for approximate searches
 - Search by file patterns and locations
 - See examples in the [Troubleshooting Guide](getting-started-troubleshooting.md)
@@ -300,7 +307,6 @@ jot notes search --sql \
 ```
 
 This lets you:
-
 - Search by metadata (dates, tags, word count)
 - Find relationships between notes
 - Extract statistics and patterns
@@ -326,7 +332,6 @@ Content here...
 ```
 
 Then search by metadata:
-
 ```bash
 jot notes search --data status=active
 ```
@@ -336,7 +341,6 @@ jot notes search --data status=active
 ### Integration with Your Workflow
 
 **With Git**:
-
 ```bash
 # Initialize your notes folder as a git repo
 cd ~/Documents/Notes
@@ -392,7 +396,6 @@ jot notes add "New Note"
 ### "I can't find the note I created"
 
 **Solutions**:
-
 1. Check you're in the right directory
 2. List all notebooks to see which one you created the note in:
    ```bash
@@ -419,9 +422,9 @@ You now know:
 ✅ Where to learn more
 
 **Next Steps**:
-
 - Start using Jot daily with your real notes
 - When you're comfortable, explore the [Power Users Guide](getting-started-power-users.md) for SQL superpowers
 - Check out [Automation Recipes](automation-recipes.md) to integrate with other tools
 
 Happy note-taking! 📝
+
