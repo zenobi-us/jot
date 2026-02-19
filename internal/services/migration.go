@@ -27,6 +27,9 @@ type FileMigration struct {
 	From   string
 	To     string
 	Status string
+
+	CurrentVersion Version
+	TargetVersion  Version
 }
 
 // ProfileReference identifies shell profile files that still mention legacy config/env names.
@@ -173,14 +176,23 @@ func readNotebookPathsFromConfig(path string) ([]string, string, error) {
 }
 
 func migrateGlobalConfig(legacyConfigPath, jotConfigPath string, apply bool) (FileMigration, error) {
-	result := FileMigration{From: legacyConfigPath, To: jotConfigPath}
+	result := FileMigration{From: legacyConfigPath, To: jotConfigPath, TargetVersion: 1}
 
-	if _, err := os.Stat(legacyConfigPath); os.IsNotExist(err) {
+	legacyExists := fileExists(legacyConfigPath)
+	jotExists := fileExists(jotConfigPath)
+	if jotExists {
+		result.CurrentVersion = 1
+	}
+
+	if !legacyExists {
 		result.Status = "missing-source"
+		if jotExists {
+			result.Status = "already-current"
+		}
 		return result, nil
 	}
 
-	if _, err := os.Stat(jotConfigPath); err == nil {
+	if jotExists {
 		result.Status = "skipped-target-exists"
 		return result, nil
 	}
@@ -215,9 +227,10 @@ func migrateNotebookConfigs(notebooks []string, apply bool, registry Registry) (
 	for _, notebookPath := range notebooks {
 		from := filepath.Join(notebookPath, legacyNotebookConfigFile)
 		to := filepath.Join(notebookPath, NotebookConfigFile)
-		result := FileMigration{From: from, To: to}
+		result := FileMigration{From: from, To: to, TargetVersion: latest}
 
 		current := detectNotebookVersion(from, to)
+		result.CurrentVersion = current
 		if current == 0 && !fileExists(from) {
 			result.Status = "missing-source"
 			results = append(results, result)
@@ -255,7 +268,10 @@ func migrateNotebookConfigsLegacy(notebooks []string, apply bool) ([]FileMigrati
 	for _, notebookPath := range notebooks {
 		from := filepath.Join(notebookPath, legacyNotebookConfigFile)
 		to := filepath.Join(notebookPath, NotebookConfigFile)
-		result := FileMigration{From: from, To: to}
+		result := FileMigration{From: from, To: to, TargetVersion: 1}
+		if fileExists(to) {
+			result.CurrentVersion = 1
+		}
 
 		if _, err := os.Stat(from); os.IsNotExist(err) {
 			result.Status = "missing-source"
