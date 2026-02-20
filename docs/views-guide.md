@@ -68,6 +68,24 @@ jot notes view orphans
 jot notes view broken-links
 ```
 
+### Save and Delete Notebook Views
+
+```bash
+# Save a notebook-scoped custom view
+jot notes view --save work-inbox "tag:work status:todo | sort:created:desc" --description "Work queue"
+
+# Overwrite an existing notebook view with the same name
+jot notes view --save work-inbox "tag:work | sort:modified:desc"
+
+# Delete a notebook-scoped custom view
+jot notes view --delete work-inbox
+```
+
+Notes:
+- `--save` requires exactly one query argument.
+- `--delete` does not accept positional args.
+- `--save/--delete` cannot be combined with `--list`, normal view execution, `--param`, or non-default `--format`.
+
 ### Use Parameters
 
 ```bash

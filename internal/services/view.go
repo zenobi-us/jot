@@ -157,6 +157,131 @@ func (vs *ViewService) loadNotebookView(name string) (*core.ViewDefinition, erro
 	return core.ParseViewDefinition(rawData)
 }
 
+// SaveNotebookView validates and persists a view definition to notebook .jot.json.
+// Returns true when an existing view was overwritten.
+func (vs *ViewService) SaveNotebookView(view *core.ViewDefinition) (bool, error) {
+	if vs.notebookPath == "" {
+		return false, fmt.Errorf("notebook context required")
+	}
+
+	if strings.TrimSpace(view.Query) == "" {
+		return false, fmt.Errorf("view query cannot be empty")
+	}
+
+	if err := vs.ValidateViewDefinition(view); err != nil {
+		return false, err
+	}
+
+	configPath := filepath.Join(vs.notebookPath, NotebookConfigFile)
+	config, err := vs.loadOrCreateNotebookConfig(configPath)
+	if err != nil {
+		return false, err
+	}
+
+	views, ok := config["views"].(map[string]interface{})
+	if !ok || views == nil {
+		views = make(map[string]interface{})
+	}
+
+	overwritten := false
+	if _, exists := views[view.Name]; exists {
+		overwritten = true
+	}
+
+	viewJSON, err := json.Marshal(view)
+	if err != nil {
+		return false, fmt.Errorf("failed to marshal view: %w", err)
+	}
+
+	var viewData map[string]interface{}
+	if err := json.Unmarshal(viewJSON, &viewData); err != nil {
+		return false, fmt.Errorf("failed to parse marshaled view: %w", err)
+	}
+
+	views[view.Name] = viewData
+	config["views"] = views
+
+	if err := vs.writeNotebookConfig(configPath, config); err != nil {
+		return false, err
+	}
+
+	return overwritten, nil
+}
+
+// DeleteNotebookView removes a view from notebook .jot.json.
+// Returns true when a view existed and was deleted.
+func (vs *ViewService) DeleteNotebookView(name string) (bool, error) {
+	if vs.notebookPath == "" {
+		return false, fmt.Errorf("notebook context required")
+	}
+
+	if !isValidViewName(name) {
+		return false, fmt.Errorf("invalid view name: %s (must be alphanumeric with hyphens)", name)
+	}
+
+	configPath := filepath.Join(vs.notebookPath, NotebookConfigFile)
+	config, err := vs.loadOrCreateNotebookConfig(configPath)
+	if err != nil {
+		return false, err
+	}
+
+	views, ok := config["views"].(map[string]interface{})
+	if !ok || views == nil {
+		return false, nil
+	}
+
+	if _, exists := views[name]; !exists {
+		return false, nil
+	}
+
+	delete(views, name)
+	if len(views) == 0 {
+		delete(config, "views")
+	} else {
+		config["views"] = views
+	}
+
+	if err := vs.writeNotebookConfig(configPath, config); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (vs *ViewService) loadOrCreateNotebookConfig(configPath string) (map[string]interface{}, error) {
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return make(map[string]interface{}), nil
+		}
+		return nil, fmt.Errorf("failed to read notebook config: %w", err)
+	}
+
+	var config map[string]interface{}
+	if err := json.Unmarshal(data, &config); err != nil {
+		return nil, fmt.Errorf("failed to parse notebook config: %w", err)
+	}
+
+	if config == nil {
+		config = make(map[string]interface{})
+	}
+
+	return config, nil
+}
+
+func (vs *ViewService) writeNotebookConfig(configPath string, config map[string]interface{}) error {
+	data, err := json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal notebook config: %w", err)
+	}
+
+	if err := os.WriteFile(configPath, data, 0644); err != nil {
+		return fmt.Errorf("failed to write notebook config: %w", err)
+	}
+
+	return nil
+}
+
 // loadGlobalView loads a view from global config
 func (vs *ViewService) loadGlobalView(name string) (*core.ViewDefinition, error) {
 	configPath := vs.globalConfigPath

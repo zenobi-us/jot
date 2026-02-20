@@ -1105,3 +1105,100 @@ func TestCLI_ViewDiscovery_Sorting(t *testing.T) {
 		}
 	}
 }
+
+func TestCLI_ViewSaveDelete_SaveOverwriteDelete(t *testing.T) {
+	env := newTestEnv(t)
+	notebookDir := env.createNotebook("view-save-delete-test")
+
+	stdout, stderr, exitCode := env.runInDir(
+		notebookDir,
+		"notes", "view", "--save", "work-inbox", "tag:work status:todo | sort:created:desc", "--description", "Work queue",
+	)
+	if exitCode != 0 {
+		t.Fatalf("save view failed with exit code %d, stderr: %s", exitCode, stderr)
+	}
+	if !strings.Contains(stdout, "Saved notebook view 'work-inbox'") {
+		t.Fatalf("expected save confirmation, got: %s", stdout)
+	}
+
+	stdout, stderr, exitCode = env.runInDir(
+		notebookDir,
+		"notes", "view", "--save", "work-inbox", "tag:work | sort:modified:desc",
+	)
+	if exitCode != 0 {
+		t.Fatalf("overwrite view failed with exit code %d, stderr: %s", exitCode, stderr)
+	}
+	if !strings.Contains(stdout, "Updated notebook view 'work-inbox'") {
+		t.Fatalf("expected overwrite confirmation, got: %s", stdout)
+	}
+
+	stdout, stderr, exitCode = env.runInDir(notebookDir, "notes", "view", "--list", "--format", "json")
+	if exitCode != 0 {
+		t.Fatalf("view list failed with exit code %d, stderr: %s", exitCode, stderr)
+	}
+	if !strings.Contains(stdout, "work-inbox") {
+		t.Fatalf("expected saved view in list output, got: %s", stdout)
+	}
+
+	configPath := filepath.Join(notebookDir, ".jot.json")
+	configBytes, err := os.ReadFile(configPath)
+	if err != nil {
+		t.Fatalf("failed reading notebook config: %v", err)
+	}
+	if !strings.Contains(string(configBytes), "tag:work | sort:modified:desc") {
+		t.Fatalf("expected overwritten query persisted, got: %s", string(configBytes))
+	}
+
+	stdout, stderr, exitCode = env.runInDir(notebookDir, "notes", "view", "--delete", "work-inbox")
+	if exitCode != 0 {
+		t.Fatalf("delete view failed with exit code %d, stderr: %s", exitCode, stderr)
+	}
+	if !strings.Contains(stdout, "Deleted notebook view 'work-inbox'") {
+		t.Fatalf("expected delete confirmation, got: %s", stdout)
+	}
+
+	stdout, stderr, exitCode = env.runInDir(notebookDir, "notes", "view", "--list", "--format", "json")
+	if exitCode != 0 {
+		t.Fatalf("view list after delete failed with exit code %d, stderr: %s", exitCode, stderr)
+	}
+	if strings.Contains(stdout, "work-inbox") {
+		t.Fatalf("expected deleted view to be absent, got: %s", stdout)
+	}
+}
+
+func TestCLI_ViewSaveDelete_FailureModes(t *testing.T) {
+	env := newTestEnv(t)
+	notebookDir := env.createNotebook("view-save-delete-failure-test")
+
+	_, stderr, exitCode := env.runInDir(notebookDir, "notes", "view", "--save", "work-inbox")
+	if exitCode == 0 {
+		t.Fatalf("expected save without query to fail")
+	}
+	if !strings.Contains(stderr, "--save requires exactly one query argument") {
+		t.Fatalf("expected save usage error, got: %s", stderr)
+	}
+
+	_, stderr, exitCode = env.runInDir(notebookDir, "notes", "view", "--save", "work-inbox", "tag:work", "--list")
+	if exitCode == 0 {
+		t.Fatalf("expected save/list conflict to fail")
+	}
+	if !strings.Contains(stderr, "cannot combine --save with --list") {
+		t.Fatalf("expected conflict error, got: %s", stderr)
+	}
+
+	_, stderr, exitCode = env.runInDir(notebookDir, "notes", "view", "--delete", "work-inbox", "extra")
+	if exitCode == 0 {
+		t.Fatalf("expected delete with positional args to fail")
+	}
+	if !strings.Contains(stderr, "--delete does not accept positional arguments") {
+		t.Fatalf("expected delete argument error, got: %s", stderr)
+	}
+
+	_, stderr, exitCode = env.runInDir(notebookDir, "notes", "view", "--save", "bad", "tag:work | limit:not-a-number")
+	if exitCode == 0 {
+		t.Fatalf("expected invalid query save to fail")
+	}
+	if !strings.Contains(stderr, "invalid directives") {
+		t.Fatalf("expected DSL validation failure, got: %s", stderr)
+	}
+}

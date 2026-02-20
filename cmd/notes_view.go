@@ -13,9 +13,12 @@ import (
 )
 
 var (
-	viewFormat string
-	viewParams string
-	viewList   bool
+	viewFormat      string
+	viewParams      string
+	viewList        bool
+	viewSave        string
+	viewDelete      string
+	viewDescription string
 )
 
 var notesViewCmd = &cobra.Command{
@@ -77,17 +80,22 @@ DIRECTIVES (after |):
 
 CUSTOM VIEWS:
 
-  Define custom views using the same DSL pipe syntax in:
-  - Global: ~/.config/jot/config.json
+  Define custom views using the same DSL pipe syntax in notebook config:
   - Notebook: <notebook>/.jot.json
+
+  Save/delete from CLI:
+    jot notes view --save active-work "tag:work status:todo | sort:modified:desc limit:50" --description "Active work items"
+    jot notes view --delete active-work
 
   Example custom view in .jot.json:
     {
-      "views": [{
-        "name": "active-work",
-        "description": "Active work items sorted by modification",
-        "query": "tag:work status:todo | sort:modified:desc limit:50"
-      }]
+      "views": {
+        "active-work": {
+          "name": "active-work",
+          "description": "Active work items sorted by modification",
+          "query": "tag:work status:todo | sort:modified:desc limit:50"
+        }
+      }
     }
 
 OUTPUT FORMATS:
@@ -107,6 +115,9 @@ EXAMPLES:
   jot notes view untagged                           # Notes without tags
   jot notes view orphans --format json              # Orphaned notes as JSON
   jot notes view my-workflow --param sprint=Q1-S3   # Custom view with params
+  jot notes view --save work-inbox "tag:work status:todo | sort:created:desc"
+  jot notes view --save work-inbox "tag:work | sort:modified:desc" --description "Work queue"
+  jot notes view --delete work-inbox
 
   DSL examples (use with custom views or 'notes search'):
     tag:work status:todo                                  # Work items that are todo
@@ -117,6 +128,18 @@ EXAMPLES:
 
 	Args: cobra.RangeArgs(0, 1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := validateViewCommandUsage(args, viewSave, viewDelete, viewList, viewDescription, viewParams, viewFormat); err != nil {
+			return err
+		}
+
+		if viewSave != "" {
+			return handleViewSave(cmd, viewSave, viewDescription, args[0])
+		}
+
+		if viewDelete != "" {
+			return handleViewDelete(cmd, viewDelete)
+		}
+
 		// Handle list mode
 		if viewList || len(args) == 0 {
 			return handleViewList(cmd, viewFormat)
@@ -174,6 +197,94 @@ EXAMPLES:
 
 		return displayViewResults(viewName, results.Notes, viewFormat)
 	},
+}
+
+func validateViewCommandUsage(args []string, saveName, deleteName string, list bool, description, params, format string) error {
+	if saveName != "" && deleteName != "" {
+		return fmt.Errorf("cannot use --save and --delete together")
+	}
+
+	mutatingMode := saveName != "" || deleteName != ""
+
+	if mutatingMode && params != "" {
+		return fmt.Errorf("cannot combine --save/--delete with --param or --format")
+	}
+
+	if mutatingMode && format != "list" {
+		return fmt.Errorf("cannot combine --save/--delete with --param or --format")
+	}
+
+	if saveName != "" {
+		if list {
+			return fmt.Errorf("cannot combine --save with --list")
+		}
+		if len(args) != 1 {
+			return fmt.Errorf("--save requires exactly one query argument: jot notes view --save <name> \"<query>\"")
+		}
+	}
+
+	if deleteName != "" {
+		if list {
+			return fmt.Errorf("cannot combine --delete with --list")
+		}
+		if description != "" {
+			return fmt.Errorf("--description can only be used with --save")
+		}
+		if len(args) != 0 {
+			return fmt.Errorf("--delete does not accept positional arguments")
+		}
+	}
+
+	return nil
+}
+
+func handleViewSave(cmd *cobra.Command, name, description, query string) error {
+	nb, err := requireNotebook(cmd)
+	if err != nil {
+		return err
+	}
+
+	notebookDir := filepath.Dir(nb.Config.Path)
+	vs := services.NewViewService(cfgService, notebookDir)
+
+	overwritten, err := vs.SaveNotebookView(&core.ViewDefinition{
+		Name:        name,
+		Description: description,
+		Query:       query,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to save view '%s': %w", name, err)
+	}
+
+	if overwritten {
+		fmt.Printf("Updated notebook view '%s' in %s\n", name, filepath.Join(notebookDir, services.NotebookConfigFile))
+		return nil
+	}
+
+	fmt.Printf("Saved notebook view '%s' in %s\n", name, filepath.Join(notebookDir, services.NotebookConfigFile))
+	return nil
+}
+
+func handleViewDelete(cmd *cobra.Command, name string) error {
+	nb, err := requireNotebook(cmd)
+	if err != nil {
+		return err
+	}
+
+	notebookDir := filepath.Dir(nb.Config.Path)
+	vs := services.NewViewService(cfgService, notebookDir)
+
+	deleted, err := vs.DeleteNotebookView(name)
+	if err != nil {
+		return fmt.Errorf("failed to delete view '%s': %w", name, err)
+	}
+
+	if !deleted {
+		return fmt.Errorf("view '%s' does not exist in notebook config", name)
+	}
+
+	fmt.Printf("Deleted notebook view '%s' from %s\n", name, filepath.Join(notebookDir, services.NotebookConfigFile))
+	return nil
 }
 
 // displayViewResults displays flat view results (non-grouped)
@@ -406,6 +517,9 @@ func init() {
 	notesViewCmd.Flags().StringVar(&viewFormat, "format", "list", "Output format: list, table, or json")
 	notesViewCmd.Flags().StringVar(&viewParams, "param", "", "View parameters (key=value,key2=value2)")
 	notesViewCmd.Flags().BoolVar(&viewList, "list", false, "List all available views")
+	notesViewCmd.Flags().StringVar(&viewSave, "save", "", "Save a notebook view name")
+	notesViewCmd.Flags().StringVar(&viewDelete, "delete", "", "Delete a notebook view name")
+	notesViewCmd.Flags().StringVar(&viewDescription, "description", "", "Optional description when saving a view")
 
 	notesCmd.AddCommand(notesViewCmd)
 }

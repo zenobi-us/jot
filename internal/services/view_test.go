@@ -945,3 +945,88 @@ func TestViewService_ResolveTemplateVariables_EnvironmentVariableWithDefaultOver
 	result := vs.ResolveTemplateVariables("{{env:default_value:TEST_OVERRIDE_VAR}}")
 	assert.Equal(t, envValue, result)
 }
+
+func TestViewService_SaveNotebookView_CreatesAndOverwrites(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, tmpDir)
+
+	created, err := vs.SaveNotebookView(&core.ViewDefinition{
+		Name:        "work-inbox",
+		Description: "Work inbox",
+		Query:       "tag:work status:todo | sort:modified:desc",
+	})
+	require.NoError(t, err)
+	assert.False(t, created)
+
+	view, err := vs.GetView("work-inbox")
+	require.NoError(t, err)
+	assert.Equal(t, "Work inbox", view.Description)
+	assert.Equal(t, "tag:work status:todo | sort:modified:desc", view.Query)
+
+	overwritten, err := vs.SaveNotebookView(&core.ViewDefinition{
+		Name:        "work-inbox",
+		Description: "Updated work inbox",
+		Query:       "tag:work | sort:created:desc",
+	})
+	require.NoError(t, err)
+	assert.True(t, overwritten)
+
+	updated, err := vs.GetView("work-inbox")
+	require.NoError(t, err)
+	assert.Equal(t, "Updated work inbox", updated.Description)
+	assert.Equal(t, "tag:work | sort:created:desc", updated.Query)
+}
+
+func TestViewService_SaveNotebookView_FailsValidation(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, tmpDir)
+
+	_, err = vs.SaveNotebookView(&core.ViewDefinition{
+		Name:  "bad name with spaces",
+		Query: "tag:work",
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid view name")
+
+	_, err = vs.SaveNotebookView(&core.ViewDefinition{
+		Name:  "bad-query",
+		Query: "tag:work | limit:not-a-number",
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid directives")
+}
+
+func TestViewService_DeleteNotebookView_RemovesView(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	cfg, err := NewConfigServiceWithPath(":memory:")
+	require.NoError(t, err)
+
+	vs := NewViewService(cfg, tmpDir)
+
+	_, err = vs.SaveNotebookView(&core.ViewDefinition{
+		Name:  "cleanup",
+		Query: "tag:cleanup",
+	})
+	require.NoError(t, err)
+
+	deleted, err := vs.DeleteNotebookView("cleanup")
+	require.NoError(t, err)
+	assert.True(t, deleted)
+
+	_, err = vs.GetView("cleanup")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "view not found")
+
+	deleted, err = vs.DeleteNotebookView("cleanup")
+	require.NoError(t, err)
+	assert.False(t, deleted)
+}
