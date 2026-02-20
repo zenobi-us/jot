@@ -1194,6 +1194,30 @@ func TestCLI_ViewSaveDelete_FailureModes(t *testing.T) {
 		t.Fatalf("expected delete argument error, got: %s", stderr)
 	}
 
+	_, stderr, exitCode = env.runInDir(notebookDir, "notes", "view", "today", "--description", "x")
+	if exitCode == 0 {
+		t.Fatalf("expected description without save to fail")
+	}
+	if !strings.Contains(stderr, "--description can only be used with --save") {
+		t.Fatalf("expected description usage error, got: %s", stderr)
+	}
+
+	_, stderr, exitCode = env.runInDir(notebookDir, "notes", "view", "--delete")
+	if exitCode == 0 {
+		t.Fatalf("expected delete without view name to fail")
+	}
+	if !strings.Contains(stderr, "flag needs an argument: --delete") {
+		t.Fatalf("expected missing delete argument error, got: %s", stderr)
+	}
+
+	_, stderr, exitCode = env.runInDir(notebookDir, "notes", "view", "--delete", "missing-view")
+	if exitCode == 0 {
+		t.Fatalf("expected deleting missing view to fail")
+	}
+	if !strings.Contains(stderr, "does not exist in notebook config") {
+		t.Fatalf("expected missing view behavior text, got: %s", stderr)
+	}
+
 	_, stderr, exitCode = env.runInDir(notebookDir, "notes", "view", "--save", "bad", "tag:work | limit:not-a-number")
 	if exitCode == 0 {
 		t.Fatalf("expected invalid query save to fail")

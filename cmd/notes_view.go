@@ -204,14 +204,26 @@ func validateViewCommandUsage(args []string, saveName, deleteName string, list b
 		return fmt.Errorf("cannot use --save and --delete together")
 	}
 
-	mutatingMode := saveName != "" || deleteName != ""
-
-	if mutatingMode && params != "" {
-		return fmt.Errorf("cannot combine --save/--delete with --param or --format")
+	if description != "" && saveName == "" {
+		return fmt.Errorf("--description can only be used with --save")
 	}
 
-	if mutatingMode && format != "list" {
-		return fmt.Errorf("cannot combine --save/--delete with --param or --format")
+	if saveName != "" {
+		if params != "" {
+			return fmt.Errorf("cannot use --param with --save")
+		}
+		if format != "list" {
+			return fmt.Errorf("cannot use --format=%s with --save", format)
+		}
+	}
+
+	if deleteName != "" {
+		if params != "" {
+			return fmt.Errorf("cannot use --param with --delete")
+		}
+		if format != "list" {
+			return fmt.Errorf("cannot use --format=%s with --delete", format)
+		}
 	}
 
 	if saveName != "" {
@@ -226,9 +238,6 @@ func validateViewCommandUsage(args []string, saveName, deleteName string, list b
 	if deleteName != "" {
 		if list {
 			return fmt.Errorf("cannot combine --delete with --list")
-		}
-		if description != "" {
-			return fmt.Errorf("--description can only be used with --save")
 		}
 		if len(args) != 0 {
 			return fmt.Errorf("--delete does not accept positional arguments")
