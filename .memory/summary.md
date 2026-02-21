@@ -1,54 +1,26 @@
 # Jot Project Summary
 
 ## Current Focus
-- **Active Epic**: [epic-8361d3a2](epic-8361d3a2-rename-to-jot.md) - **Rename Project to "Jot"**
-  - Phase 1: Discovery — ✅ COMPLETE
-  - Phase 2: In-Repo Changes — ✅ COMPLETE (all 10 steps done)
-  - Phase 3: GitHub Rename — [NEEDS-HUMAN] manual repo rename
-  - Phase 4: External Updates — refined v1/v2 migration architecture drafted (task-8281af6b), execution after Phase 3
+- Active execution under phase `4adb81db` (DSL views deferred follow-ups).
+- Task `6c834006` (Task 1: `notes view --save/--delete`) is **complete**.
+- Task `ddbaa84b` (execution override flags) and `a82526f2` (DSL OR syntax) are **complete**.
+- Fix cycle commit: `39ea50cbc6b472e1f4ae9bed0ed4db2c24056c1e`.
+- Review verdict: **PASS** (no blocking findings).
+- Next milestone: begin Task 3 (`task-684a9a73`) for parameter substitution.
 
-## Rename Epic (8361d3a2) Status
-**Goal**: Rebrand from "OpenNotes" → "Jot" — ✅ All code changes done
-
-| Completed | Detail |
-|-----------|--------|
-| Go module | `github.com/zenobi-us/jot` |
-| Binary | `dist/jot` |
-| Config dir | `~/.config/jot/` |
-| Notebook config | `.jot.json` |
-| Index dir | `.jot/index/` |
-| Env vars | `JOT_CONFIG`, `JOT_NOTEBOOK` |
-| Pi extension | `pkgs/pi-jot/` (was `pkgs/pi-opennotes/`) |
-| Tests | All passing, 0 lint issues |
-| Branch | `feat/rename-to-jot` (2 commits: `bcee714`, `8e332de`) |
-
-**Remaining**: GitHub repo rename (manual), external updates, migration guide, and versioned migration framework review ([task-8281af6b](task-8281af6b-notebook-migrate-versioned-framework.md))
-
-## In-Progress Epics
-
-### Pi Extension (1f41631e) — Tasks & Phases Archived
-- All tasks (6) and phases (3) completed and archived to `archive/pi-opennotes-extension-1f41631e/`
-- Epic file retained pending final review and learnings distillation
-- See [epic-1f41631e](epic-1f41631e-pi-opennotes-extension.md)
-
-## Completed Epics
-
-### DuckDB Removal (f661c068) — ✅ Archived
-**Completed**: 2026-02-02 | **Archive**: [archive/duckdb-removal-f661c068/](archive/duckdb-removal-f661c068/)
-
-**Distilled Learnings**:
-- [learning-a1b2c3d4](learning-a1b2c3d4-parallel-research-methodology.md) — Parallel research methodology
-- [learning-b3c4d5e6](learning-b3c4d5e6-incremental-dependency-replacement.md) — Incremental dependency replacement
-- [learning-c5d6e7f8](learning-c5d6e7f8-pure-go-cgo-elimination.md) — Pure Go / CGO elimination
-- [learning-d7e8f9a0](learning-d7e8f9a0-interface-first-search-design.md) — Interface-first search design
-
-### Semantic Search (7c9d2e1f) — ✅ Archived
-**Archive**: [archive/semantic-search-7c9d2e1f/](archive/semantic-search-7c9d2e1f/)
+## Archived (Cleanup)
+- [epic-8361d3a2](archive/rename-to-jot-8361d3a2/epic-8361d3a2-rename-to-jot.md) — Rename Project from OpenNotes to Jot
+- [task-b66d2263](archive/rename-to-jot-8361d3a2/task-b66d2263-identify-rename-locations.md)
+- [task-8281af6b](archive/rename-to-jot-8361d3a2/task-8281af6b-notebook-migrate-versioned-framework.md)
 
 ## Parked Work
-- [plan-b4e2f7a1](plan-b4e2f7a1-dsl-views-implementation.md) — DSL views implementation (10 TDD tasks, ready)
 - [task-9c4a2f8d](task-9c4a2f8d-github-actions-moonrepo-releases.md) — GitHub Actions CI/CD
+- [plan-b4e2f7a1](plan-b4e2f7a1-dsl-views-implementation.md) — DSL views implementation
+- [phase-4adb81db](phase-4adb81db-dsl-views-deferred-followups.md) — Deferred DSL views follow-up phase
 
-## Project State
-- Branch: `feat/rename-to-jot`
-- Next: Human review → merge → GitHub repo rename → external updates
+## Deferred Follow-up Tasks (from plan-b4e2f7a1)
+- [task-6c834006](task-6c834006-view-save-delete-cli-flags.md) — `notes view --save/--delete` (completed; fix cycle closed, review PASS)
+- [x] [task-ddbaa84b](task-ddbaa84b-view-cli-override-flags.md) — execution override flags (`--sort`, `--limit`, etc.)
+- [x] [task-a82526f2](task-a82526f2-dsl-or-syntax-support.md) — OR syntax in DSL grammar
+- [ ] [task-684a9a73](task-684a9a73-view-parameter-substitution.md) — `{{param_name}}` substitution
+- [task-e19963c7](task-e19963c7-global-views-config-support.md) — global views in user config
