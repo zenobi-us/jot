@@ -258,3 +258,17 @@ func TestNormalizeField(t *testing.T) {
 		})
 	}
 }
+func TestTranslateQuery_AndExpr(t *testing.T) {
+	andExpr := search.AndExpr{
+		Expressions: []search.Expr{
+			search.FieldExpr{Field: "tag", Value: "work"},
+			search.FieldExpr{Field: "status", Value: "todo"},
+		},
+	}
+
+	query := &search.Query{Expressions: []search.Expr{andExpr}}
+
+	q, err := TranslateQuery(query)
+	require.NoError(t, err)
+	assert.NotNil(t, q)
+}

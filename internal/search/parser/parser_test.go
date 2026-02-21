@@ -391,3 +391,83 @@ func TestParser_Interface(t *testing.T) {
 	// Verify Parser implements search.Parser
 	var _ search.Parser = New()
 }
+func TestParser_Parse_OrExpressions(t *testing.T) {
+	p := New()
+
+	t.Run("simple or", func(t *testing.T) {
+		query, err := p.Parse("tag:work OR tag:personal")
+		if err != nil {
+			t.Fatalf("Parse() error = %v", err)
+		}
+
+		if len(query.Expressions) != 1 {
+			t.Fatalf("expected single expression, got %d", len(query.Expressions))
+		}
+
+		orExpr, ok := query.Expressions[0].(search.OrExpr)
+		if !ok {
+			t.Fatalf("expected OrExpr, got %T", query.Expressions[0])
+		}
+
+		left, ok := orExpr.Left.(search.FieldExpr)
+		if !ok || left.Field != "tag" || left.Value != "work" {
+			t.Fatalf("unexpected left operand: %#v", orExpr.Left)
+		}
+
+		right, ok := orExpr.Right.(search.FieldExpr)
+		if !ok || right.Field != "tag" || right.Value != "personal" {
+			t.Fatalf("unexpected right operand: %#v", orExpr.Right)
+		}
+	})
+
+	t.Run("and precedence over or", func(t *testing.T) {
+		query, err := p.Parse("tag:work status:todo OR tag:personal")
+		if err != nil {
+			t.Fatalf("Parse() error = %v", err)
+		}
+
+		if len(query.Expressions) != 1 {
+			t.Fatalf("expected single expression, got %d", len(query.Expressions))
+		}
+
+		orExpr, ok := query.Expressions[0].(search.OrExpr)
+		if !ok {
+			t.Fatalf("expected OrExpr, got %T", query.Expressions[0])
+		}
+
+		leftAnd, ok := orExpr.Left.(search.AndExpr)
+		if !ok {
+			t.Fatalf("expected AndExpr on left, got %T", orExpr.Left)
+		}
+
+		if len(leftAnd.Expressions) != 2 {
+			t.Fatalf("expected 2 AND expressions, got %d", len(leftAnd.Expressions))
+		}
+	})
+
+	t.Run("multiple or chain", func(t *testing.T) {
+		query, err := p.Parse("tag:work OR tag:personal OR status:todo")
+		if err != nil {
+			t.Fatalf("Parse() error = %v", err)
+		}
+
+		if len(query.Expressions) != 1 {
+			t.Fatalf("expected single expression, got %d", len(query.Expressions))
+		}
+
+		outer, ok := query.Expressions[0].(search.OrExpr)
+		if !ok {
+			t.Fatalf("expected OrExpr, got %T", query.Expressions[0])
+		}
+
+		_, leftIsOr := outer.Left.(search.OrExpr)
+		if !leftIsOr {
+			t.Fatalf("expected nested OrExpr on left")
+		}
+
+		rightField, ok := outer.Right.(search.FieldExpr)
+		if !ok || rightField.Field != "status" {
+			t.Fatalf("unexpected right operand: %#v", outer.Right)
+		}
+	})
+}

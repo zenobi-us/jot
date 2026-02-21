@@ -21,6 +21,15 @@ type ViewResults struct {
 	Groups map[string][]Note
 }
 
+// ViewDirectiveOverrides captures runtime overrides for directives supplied via CLI flags.
+type ViewDirectiveOverrides struct {
+	SortField     string
+	SortDirection string
+	Limit         *int
+	Offset        *int
+	GroupBy       *string
+}
+
 // ViewExecutor provides a unified interface for executing views.
 // It requires a search.Index to execute queries.
 type ViewExecutor struct {
@@ -39,7 +48,7 @@ func NewViewExecutor(index search.Index, noteService *NoteService) *ViewExecutor
 // ExecuteView executes a view definition and returns results.
 // For DSL-based views, parses the query, builds FindOpts, and executes search.
 // For special views, delegates to the special view executor.
-func (ve *ViewExecutor) ExecuteView(ctx context.Context, view *core.ViewDefinition, params map[string]string, viewService *ViewService) (*ViewResults, error) {
+func (ve *ViewExecutor) ExecuteView(ctx context.Context, view *core.ViewDefinition, params map[string]string, overrides *ViewDirectiveOverrides, viewService *ViewService) (*ViewResults, error) {
 	// Handle special views
 	if view.IsSpecialView() {
 		return ve.executeSpecialView(ctx, view)
@@ -65,6 +74,8 @@ func (ve *ViewExecutor) ExecuteView(ctx context.Context, view *core.ViewDefiniti
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse directives: %w", err)
 	}
+
+	directives = applyDirectiveOverrides(directives, overrides)
 
 	// Build FindOpts
 	opts := search.FindOpts{
@@ -101,6 +112,37 @@ func (ve *ViewExecutor) ExecuteView(ctx context.Context, view *core.ViewDefiniti
 	}
 
 	return &ViewResults{Notes: notes}, nil
+}
+
+func applyDirectiveOverrides(base *ViewDirectives, overrides *ViewDirectiveOverrides) *ViewDirectives {
+	if base == nil {
+		base = &ViewDirectives{}
+	}
+
+	if overrides == nil {
+		return base
+	}
+
+	if overrides.SortField != "" {
+		base.SortField = overrides.SortField
+		if overrides.SortDirection != "" {
+			base.SortDirection = overrides.SortDirection
+		}
+	}
+
+	if overrides.Limit != nil {
+		base.Limit = *overrides.Limit
+	}
+
+	if overrides.Offset != nil {
+		base.Offset = *overrides.Offset
+	}
+
+	if overrides.GroupBy != nil {
+		base.GroupBy = *overrides.GroupBy
+	}
+
+	return base
 }
 
 // executeSearch executes a search with the given options and returns notes.
@@ -299,11 +341,16 @@ func convertMapSliceToNotes(results []map[string]interface{}) []Note {
 // ExecuteView is a convenience method on ViewService that creates a ViewExecutor and executes the view.
 // Requires index and noteService to be set via SetExecutionContext.
 func (vs *ViewService) ExecuteView(ctx context.Context, view *core.ViewDefinition, params map[string]string) (*ViewResults, error) {
+	return vs.ExecuteViewWithOverrides(ctx, view, params, nil)
+}
+
+// ExecuteViewWithOverrides executes a view definition with directive overrides.
+func (vs *ViewService) ExecuteViewWithOverrides(ctx context.Context, view *core.ViewDefinition, params map[string]string, overrides *ViewDirectiveOverrides) (*ViewResults, error) {
 	if vs.executor == nil {
 		return nil, fmt.Errorf("view executor not initialized - call SetExecutionContext first")
 	}
 
-	return vs.executor.ExecuteView(ctx, view, params, vs)
+	return vs.executor.ExecuteView(ctx, view, params, overrides, vs)
 }
 
 // SetExecutionContext sets the index and note service for view execution.

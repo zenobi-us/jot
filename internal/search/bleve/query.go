@@ -45,6 +45,8 @@ func translateExpr(expr search.Expr) (bquery.Query, error) {
 		return translateNotExpr(e)
 	case search.OrExpr:
 		return translateOrExpr(e)
+	case search.AndExpr:
+		return translateAndExpr(e)
 	case search.DateExpr:
 		return translateDateExpr(e)
 	case search.RangeExpr:
@@ -132,6 +134,26 @@ func translateOrExpr(e search.OrExpr) (bquery.Query, error) {
 		return nil, err
 	}
 	return bquery.NewDisjunctionQuery([]bquery.Query{left, right}), nil
+}
+
+func translateAndExpr(e search.AndExpr) (bquery.Query, error) {
+	queries := make([]bquery.Query, 0, len(e.Expressions))
+	for _, expr := range e.Expressions {
+		q, err := translateExpr(expr)
+		if err != nil {
+			return nil, err
+		}
+		queries = append(queries, q)
+	}
+
+	switch len(queries) {
+	case 0:
+		return bquery.NewMatchAllQuery(), nil
+	case 1:
+		return queries[0], nil
+	default:
+		return bquery.NewConjunctionQuery(queries), nil
+	}
 }
 
 // translateDateExpr translates a date-based filter.

@@ -110,6 +110,27 @@ jot notes view today --format json
 ```
 
 ---
+### Override View Directives at Runtime
+
+Need to tweak a saved view without editing its definition? Use runtime overrides:
+
+```bash
+# Limit the number of results
+jot notes view recent --limit 5
+
+# Change sort field/direction
+jot notes view kanban --sort title:asc
+
+# Skip the first page of results
+jot notes view today --offset 10 --limit 10
+
+# Force grouping even if the view is flat
+jot notes view untagged --group status
+```
+
+> Overrides are only available while executing a view. They can't be combined with `--list`, `--save`, or `--delete`.
+
+---
 
 ## Built-in Views
 

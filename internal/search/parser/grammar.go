@@ -10,7 +10,19 @@ import (
 
 // queryAST is the root grammar node.
 type queryAST struct {
-	Expressions []*expressionAST `parser:"@@*"`
+	Clause *clauseAST     `parser:"@@?"`
+	Or     []*orClauseAST `parser:"(@@)*"`
+}
+
+// clauseAST represents a chain of expressions combined via implicit AND.
+type clauseAST struct {
+	Expressions []*expressionAST `parser:"@@+"`
+}
+
+// orClauseAST represents an OR clause: OR <clause>
+type orClauseAST struct {
+	Operator string     `parser:"@OrKeyword"`
+	Clause   *clauseAST `parser:"@@"`
 }
 
 // expressionAST represents a single expression in the query.
@@ -49,6 +61,7 @@ type termAST struct {
 var queryLexer = lexer.MustSimple([]lexer.SimpleRule{
 	// Existence keywords must come before Field to be matched first
 	{Name: "ExistenceKeyword", Pattern: `(has|missing)`},
+	{Name: "OrKeyword", Pattern: `(?i)OR`},
 	{Name: "Field", Pattern: `(tag|title|path|created|modified|body|status)`},
 	{Name: "String", Pattern: `"[^"]*"`},
 	// Date patterns must come before Word to capture dates properly

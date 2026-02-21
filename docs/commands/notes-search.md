@@ -171,6 +171,18 @@ jot notes search "| sort:title:asc"
 - `created:>date`, `created:<date`
 - `modified:>date`, `modified:<date`
 
+### Boolean Operators
+
+Use `OR` (case-insensitive) to join filters. Implicit AND still applies between whitespace-separated expressions and has higher precedence than OR.
+
+```bash
+# Either work or personal tagged notes
+jot notes search "tag:work OR tag:personal"
+
+# (tag:work AND status:todo) OR status:done
+jot notes search "tag:work status:todo OR status:done"
+```
+
 ### Directives
 
 - `sort:<field>:<dir>` where field is `modified|created|title|path`, dir is `asc|desc`

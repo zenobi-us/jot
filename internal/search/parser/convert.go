@@ -8,22 +8,66 @@ import (
 
 // convert transforms the Participle AST into search.Query.
 func convert(ast *queryAST) *search.Query {
-	if ast == nil || len(ast.Expressions) == 0 {
+	if ast == nil || ast.Clause == nil {
 		return &search.Query{}
 	}
 
-	exprs := make([]search.Expr, 0, len(ast.Expressions))
-	for _, e := range ast.Expressions {
+	baseExprs := convertClause(ast.Clause)
+
+	if len(ast.Or) == 0 {
+		return &search.Query{Expressions: baseExprs}
+	}
+
+	left := clauseToExpr(baseExprs)
+	if left == nil {
+		return &search.Query{}
+	}
+
+	for _, orClause := range ast.Or {
+		if orClause == nil || orClause.Clause == nil {
+			continue
+		}
+		rightExpr := clauseToExpr(convertClause(orClause.Clause))
+		if rightExpr == nil {
+			continue
+		}
+
+		left = search.OrExpr{
+			Left:  left,
+			Right: rightExpr,
+		}
+	}
+
+	return &search.Query{Expressions: []search.Expr{left}}
+}
+
+func convertClause(clause *clauseAST) []search.Expr {
+	if clause == nil {
+		return nil
+	}
+
+	exprs := make([]search.Expr, 0, len(clause.Expressions))
+	for _, e := range clause.Expressions {
 		if expr := convertExpr(e); expr != nil {
 			exprs = append(exprs, expr)
 		}
 	}
 
-	return &search.Query{
-		Expressions: exprs,
+	return exprs
+}
+
+func clauseToExpr(exprs []search.Expr) search.Expr {
+	switch len(exprs) {
+	case 0:
+		return nil
+	case 1:
+		return exprs[0]
+	default:
+		return search.AndExpr{Expressions: exprs}
 	}
 }
 
+// convertExpr converts a single expression AST node.
 // convertExpr converts a single expression AST node.
 func convertExpr(e *expressionAST) search.Expr {
 	if e == nil {

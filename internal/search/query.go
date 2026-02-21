@@ -98,6 +98,13 @@ type OrExpr struct {
 
 func (OrExpr) exprNode() {}
 
+// AndExpr represents a grouped AND combination of expressions, primarily used as an operand within OrExpr.
+type AndExpr struct {
+	Expressions []Expr
+}
+
+func (AndExpr) exprNode() {}
+
 // DateExpr represents a date-based filter.
 //
 // Example: "created:>2024-01-01" matches notes created after Jan 1, 2024.

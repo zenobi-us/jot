@@ -296,3 +296,68 @@ func TestViewService_HasExecutionContext(t *testing.T) {
 		assert.True(t, vs.HasExecutionContext())
 	})
 }
+func TestViewService_ExecuteView_WithOverrides(t *testing.T) {
+	ctx := context.Background()
+	tmpDir := t.TempDir()
+
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "override-notebook")
+
+	testutil.CreateTestNoteWithFrontmatter(t, notebookDir, "alpha.md",
+		map[string]interface{}{"title": "Alpha", "status": "todo"},
+		"# Alpha\n\nFirst note.")
+	testutil.CreateTestNoteWithFrontmatter(t, notebookDir, "beta.md",
+		map[string]interface{}{"title": "Beta", "status": "done"},
+		"# Beta\n\nSecond note.")
+
+	idx := testutil.CreateTestIndex(t, notebookDir)
+	cfg, err := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+	require.NoError(t, err)
+
+	noteService := services.NewNoteService(cfg, idx, notebookDir)
+	vs := services.NewViewService(cfg, notebookDir)
+	vs.SetExecutionContext(idx, noteService)
+
+	t.Run("limit and sort overrides take precedence", func(t *testing.T) {
+		view := &core.ViewDefinition{
+			Name:  "recent",
+			Query: "| limit:10 sort:title:desc",
+		}
+
+		overrides := &services.ViewDirectiveOverrides{
+			Limit:         intPtr(1),
+			SortField:     "title",
+			SortDirection: "asc",
+		}
+
+		results, err := vs.ExecuteViewWithOverrides(ctx, view, nil, overrides)
+		require.NoError(t, err)
+		require.NotNil(t, results)
+		assert.Len(t, results.Notes, 1)
+		assert.Equal(t, "Alpha", results.Notes[0].Metadata["title"])
+	})
+
+	t.Run("group override produces grouped results", func(t *testing.T) {
+		view := &core.ViewDefinition{
+			Name:  "ungrouped",
+			Query: "status:todo",
+		}
+
+		overrides := &services.ViewDirectiveOverrides{
+			GroupBy: stringPtr("status"),
+		}
+
+		results, err := vs.ExecuteViewWithOverrides(ctx, view, nil, overrides)
+		require.NoError(t, err)
+		require.NotNil(t, results)
+		require.NotNil(t, results.Groups)
+		assert.Contains(t, results.Groups, "todo")
+	})
+}
+
+func intPtr(v int) *int {
+	return &v
+}
+
+func stringPtr(v string) *string {
+	return &v
+}

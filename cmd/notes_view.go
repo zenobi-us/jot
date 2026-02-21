@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/zenobi-us/jot/internal/core"
@@ -13,13 +14,27 @@ import (
 )
 
 var (
-	viewFormat      string
-	viewParams      string
-	viewList        bool
-	viewSave        string
-	viewDelete      string
-	viewDescription string
+	viewFormat         string
+	viewParams         string
+	viewList           bool
+	viewSave           string
+	viewDelete         string
+	viewDescription    string
+	viewSortOverride   string
+	viewLimitOverride  int
+	viewOffsetOverride int
+	viewGroupOverride  string
 )
+
+type viewDirectiveOverrideState struct {
+	Sort      string
+	LimitSet  bool
+	Limit     int
+	OffsetSet bool
+	Offset    int
+	GroupSet  bool
+	Group     string
+}
 
 var notesViewCmd = &cobra.Command{
 	Use:   "view [name]",
@@ -128,7 +143,9 @@ EXAMPLES:
 
 	Args: cobra.RangeArgs(0, 1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := validateViewCommandUsage(args, viewSave, viewDelete, viewList, viewDescription, viewParams, viewFormat); err != nil {
+		overridesState := collectViewOverrideState(cmd)
+
+		if err := validateViewCommandUsage(args, viewSave, viewDelete, viewList, viewDescription, viewParams, viewFormat, overridesState); err != nil {
 			return err
 		}
 
@@ -183,9 +200,14 @@ EXAMPLES:
 		// Apply parameter defaults
 		userParams = vs.ApplyParameterDefaults(viewDef, userParams)
 
+		directiveOverrides, err := buildDirectiveOverrides(overridesState)
+		if err != nil {
+			return err
+		}
+
 		// Execute the view
 		ctx := context.Background()
-		results, err := vs.ExecuteView(ctx, viewDef, userParams)
+		results, err := vs.ExecuteViewWithOverrides(ctx, viewDef, userParams, directiveOverrides)
 		if err != nil {
 			return fmt.Errorf("failed to execute view '%s': %w", viewName, err)
 		}
@@ -199,13 +221,124 @@ EXAMPLES:
 	},
 }
 
-func validateViewCommandUsage(args []string, saveName, deleteName string, list bool, description, params, format string) error {
+func collectViewOverrideState(cmd *cobra.Command) viewDirectiveOverrideState {
+	state := viewDirectiveOverrideState{Sort: viewSortOverride}
+
+	if cmd.Flags().Changed("limit") {
+		state.LimitSet = true
+		state.Limit = viewLimitOverride
+	}
+
+	if cmd.Flags().Changed("offset") {
+		state.OffsetSet = true
+		state.Offset = viewOffsetOverride
+	}
+
+	if cmd.Flags().Changed("group") {
+		state.GroupSet = true
+		state.Group = viewGroupOverride
+	}
+
+	return state
+}
+
+func buildDirectiveOverrides(state viewDirectiveOverrideState) (*services.ViewDirectiveOverrides, error) {
+	hasOverride := false
+	overrides := &services.ViewDirectiveOverrides{}
+
+	if strings.TrimSpace(state.Sort) != "" {
+		field, direction, err := parseSortOverride(state.Sort)
+		if err != nil {
+			return nil, err
+		}
+		overrides.SortField = field
+		overrides.SortDirection = direction
+		hasOverride = true
+	}
+
+	if state.LimitSet {
+		if state.Limit <= 0 {
+			return nil, fmt.Errorf("--limit override must be greater than 0")
+		}
+		limit := state.Limit
+		overrides.Limit = &limit
+		hasOverride = true
+	}
+
+	if state.OffsetSet {
+		if state.Offset < 0 {
+			return nil, fmt.Errorf("--offset override must be zero or greater")
+		}
+		offset := state.Offset
+		overrides.Offset = &offset
+		hasOverride = true
+	}
+
+	if state.GroupSet {
+		group := strings.TrimSpace(state.Group)
+		if group == "" {
+			return nil, fmt.Errorf("--group override requires a field name")
+		}
+		groupLower := strings.ToLower(group)
+		overrides.GroupBy = &groupLower
+		hasOverride = true
+	}
+
+	if !hasOverride {
+		return nil, nil
+	}
+
+	return overrides, nil
+}
+
+func parseSortOverride(value string) (string, string, error) {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return "", "", fmt.Errorf("--sort override cannot be empty")
+	}
+
+	parts := strings.Split(trimmed, ":")
+	if len(parts) > 2 {
+		return "", "", fmt.Errorf("invalid --sort value %q (use field[:asc|desc])", value)
+	}
+
+	field := strings.ToLower(strings.TrimSpace(parts[0]))
+	if field == "" {
+		return "", "", fmt.Errorf("--sort override requires a field name")
+	}
+
+	direction := "asc"
+	if len(parts) == 2 {
+		dir := strings.ToLower(strings.TrimSpace(parts[1]))
+		if dir == "" {
+			return "", "", fmt.Errorf("--sort override direction cannot be empty")
+		}
+		if dir != "asc" && dir != "desc" {
+			return "", "", fmt.Errorf("invalid sort direction %q (use asc or desc)", parts[1])
+		}
+		direction = dir
+	}
+
+	return field, direction, nil
+}
+
+func validateViewCommandUsage(args []string, saveName, deleteName string, list bool, description, params, format string, overrides viewDirectiveOverrideState) error {
 	if saveName != "" && deleteName != "" {
 		return fmt.Errorf("cannot use --save and --delete together")
 	}
 
 	if description != "" && saveName == "" {
 		return fmt.Errorf("--description can only be used with --save")
+	}
+
+	if err := ensureOverridesDisallowed("save", saveName != "", overrides); err != nil {
+		return err
+	}
+	if err := ensureOverridesDisallowed("delete", deleteName != "", overrides); err != nil {
+		return err
+	}
+	if err := ensureOverridesDisallowed("list", list, overrides); err != nil {
+		return err
 	}
 
 	if saveName != "" {
@@ -231,7 +364,7 @@ func validateViewCommandUsage(args []string, saveName, deleteName string, list b
 			return fmt.Errorf("cannot combine --save with --list")
 		}
 		if len(args) != 1 {
-			return fmt.Errorf("--save requires exactly one query argument: jot notes view --save <name> \"<query>\"")
+			return fmt.Errorf(`--save requires exactly one query argument: jot notes view --save <name> "<query>"`)
 		}
 	}
 
@@ -245,6 +378,34 @@ func validateViewCommandUsage(args []string, saveName, deleteName string, list b
 	}
 
 	return nil
+}
+
+func ensureOverridesDisallowed(mode string, active bool, overrides viewDirectiveOverrideState) error {
+	if !active {
+		return nil
+	}
+
+	if overrides.Sort != "" {
+		return overrideUsageError(mode, "sort")
+	}
+	if overrides.LimitSet {
+		return overrideUsageError(mode, "limit")
+	}
+	if overrides.OffsetSet {
+		return overrideUsageError(mode, "offset")
+	}
+	if overrides.GroupSet {
+		return overrideUsageError(mode, "group")
+	}
+
+	return nil
+}
+
+func overrideUsageError(mode, flag string) error {
+	if mode == "list" {
+		return fmt.Errorf("cannot combine --%s with --list", flag)
+	}
+	return fmt.Errorf("cannot use --%s with --%s", flag, mode)
 }
 
 func handleViewSave(cmd *cobra.Command, name, description, query string) error {
@@ -529,6 +690,10 @@ func init() {
 	notesViewCmd.Flags().StringVar(&viewSave, "save", "", "Save a notebook view name")
 	notesViewCmd.Flags().StringVar(&viewDelete, "delete", "", "Delete a notebook view name")
 	notesViewCmd.Flags().StringVar(&viewDescription, "description", "", "Optional description when saving a view")
+	notesViewCmd.Flags().StringVar(&viewSortOverride, "sort", "", "Override sort directive (field[:direction])")
+	notesViewCmd.Flags().IntVar(&viewLimitOverride, "limit", 0, "Override result limit")
+	notesViewCmd.Flags().IntVar(&viewOffsetOverride, "offset", 0, "Override result offset")
+	notesViewCmd.Flags().StringVar(&viewGroupOverride, "group", "", "Override group directive (e.g., status)")
 
 	notesCmd.AddCommand(notesViewCmd)
 }
