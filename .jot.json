@@ -1,0 +1,13 @@
+{
+  "$schema": "jot.schema.json",
+  "root": ".memory",
+  "name": "opennotes-project-memory",
+  "contexts": ["/mnt/Store/Projects/Mine/Github/opennotes"],
+  "groups": [
+    {
+      "name": "Default",
+      "globs": ["**/*.md"],
+      "metadata": {}
+    }
+  ]
+}

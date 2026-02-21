@@ -82,6 +82,7 @@ jot notes view --delete work-inbox
 ```
 
 Notes:
+
 - `--save` requires exactly one query argument.
 - `--delete` does not accept positional args.
 - `--save/--delete` cannot be combined with `--list`, normal view execution, `--param`, or non-default `--format`.
@@ -110,6 +111,7 @@ jot notes view today --format json
 ```
 
 ---
+
 ### Override View Directives at Runtime
 
 Need to tweak a saved view without editing its definition? Use runtime overrides:
