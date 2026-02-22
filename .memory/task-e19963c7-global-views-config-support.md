@@ -2,8 +2,8 @@
 id: e19963c7
 title: Add global views support in user config hierarchy
 created_at: 2026-02-20T19:14:00+10:30
-updated_at: 2026-02-20T19:14:00+10:30
-status: todo
+updated_at: 2026-02-22T22:53:00+10:30
+status: done
 epic_id: f661c068
 phase_id: b4e2f7a1-plan
 assigned_to: null
@@ -33,8 +33,13 @@ Users can define once in global config and run the same view in any notebook, wi
 
 ## Actual Outcome
 
-Not started.
+Implemented with TDD:
+- added RED coverage for list-origin precedence and malformed global config fallback
+- updated `ListAllViews()` to apply effective precedence (`notebook > global > built-in`) when duplicate names exist
+- verified global config parse failures do not block built-in view lookup
+- updated views guide config examples and list precedence wording
+- full test suite passed via `mise run test`
 
 ## Lessons Learned
 
-Pending implementation.
+`GetView()` and `ListAllViews()` can silently diverge in precedence behavior unless both are covered by explicit collision tests.

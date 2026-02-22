@@ -17,4 +17,4 @@
 
 ## Active Deferred Follow-up Tasks (phase-4adb81db)
 - [x] [task-684a9a73](task-684a9a73-view-parameter-substitution.md) - Implement named view parameter substitution (completed)
-- [ ] [task-e19963c7](task-e19963c7-global-views-config-support.md) - Add global views support in config hierarchy
+- [x] [task-e19963c7](task-e19963c7-global-views-config-support.md) - Add global views support in config hierarchy

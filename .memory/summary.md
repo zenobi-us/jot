@@ -21,7 +21,7 @@
 
 ## Open Tasks (Phase 4adb81db)
 - [x] [task-684a9a73](task-684a9a73-view-parameter-substitution.md) — `{{param_name}}` substitution
-- [ ] [task-e19963c7](task-e19963c7-global-views-config-support.md) — global views in user config
+- [x] [task-e19963c7](task-e19963c7-global-views-config-support.md) — global views in user config
 
 ## Learnings
 - Added: [learning-f1c2d3e4](learning-f1c2d3e4-dsl-views-cleanup-archive-pattern.md) documenting cleanup/archive decisions and implications.

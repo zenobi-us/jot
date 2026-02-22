@@ -2,7 +2,7 @@
 
 ## Current Session
 - **Session ID**: 3e30a6e5-e7ec-404d-b31b-82946451beb0
-- **Status**: Completed `task-684a9a73` (GREEN + refactor + docs + verification).
+- **Status**: Completed `task-e19963c7` (global views precedence in list output + malformed global config fallback + docs + full verification).
 - **Epic**: f661c068
 - **Phase**: 4adb81db (dsl-views-deferred-followups)
 - **Branch**: feat/remove-duckdb-migrate-to-afero-chromedb-with-bleve-search
