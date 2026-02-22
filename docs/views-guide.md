@@ -756,13 +756,13 @@ Location: `~/.config/jot/config.json`
 
 ```json
 {
-  "views": [
-    {
+  "views": {
+    "my-global-view": {
       "name": "my-global-view",
       "description": "Available in all notebooks",
-      "query": { ... }
+      "query": "tag:work status:todo | sort:modified:desc"
     }
-  ]
+  }
 }
 ```
 
@@ -783,13 +783,13 @@ Location: `.jot.json` in notebook root
   "notebook": {
     "name": "My Project"
   },
-  "views": [
-    {
+  "views": {
+    "my-notebook-view": {
       "name": "my-notebook-view",
       "description": "Only in this notebook",
-      "query": { ... }
+      "query": "project:my-project | sort:modified:desc"
     }
-  ]
+  }
 }
 ```
 
@@ -813,7 +813,7 @@ Given:
 jot notes view --list
 ```
 
-Shows views from all three sources, with notebook views taking precedence.
+Shows one effective definition per view name from all three sources. If names collide, the listed origin follows precedence: notebook > global > built-in.
 
 ---
 

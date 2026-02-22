@@ -724,6 +724,78 @@ func TestViewService_Precedence_GlobalOverBuiltin(t *testing.T) {
 	assert.Equal(t, "Global override of built-in", view.Description)
 }
 
+func TestViewService_ListAllViews_UsesHighestPrecedenceOrigin(t *testing.T) {
+	tmpDir := t.TempDir()
+	globalConfigPath := filepath.Join(tmpDir, "global-config.json")
+	notebookDir := filepath.Join(tmpDir, "notebook")
+	notebookConfigPath := filepath.Join(notebookDir, NotebookConfigFile)
+
+	require.NoError(t, os.Mkdir(notebookDir, 0755))
+
+	globalConfig := map[string]interface{}{
+		"views": map[string]interface{}{
+			"today": map[string]interface{}{
+				"name":        "today",
+				"description": "Global today",
+				"query":       "tag:global",
+			},
+		},
+	}
+	globalJSON, err := json.Marshal(globalConfig)
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(globalConfigPath, globalJSON, 0644))
+
+	notebookConfig := map[string]interface{}{
+		"views": map[string]interface{}{
+			"today": map[string]interface{}{
+				"name":        "today",
+				"description": "Notebook today",
+				"query":       "tag:notebook",
+			},
+		},
+	}
+	notebookJSON, err := json.Marshal(notebookConfig)
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(notebookConfigPath, notebookJSON, 0644))
+
+	cfg, err := NewConfigServiceWithPath(globalConfigPath)
+	require.NoError(t, err)
+
+	vs := NewViewServiceWithConfigPath(cfg, notebookDir, globalConfigPath)
+	views, err := vs.ListAllViews()
+	require.NoError(t, err)
+
+	var today *core.ViewInfo
+	for i := range views {
+		if views[i].Name == "today" {
+			today = &views[i]
+			break
+		}
+	}
+
+	require.NotNil(t, today)
+	assert.Equal(t, "notebook", today.Origin)
+	assert.Equal(t, "Notebook today", today.Description)
+}
+
+func TestViewService_GetView_InvalidGlobalConfigFallsBackToBuiltin(t *testing.T) {
+	tmpDir := t.TempDir()
+	globalConfigPath := filepath.Join(tmpDir, "global-config.json")
+
+	require.NoError(t, os.WriteFile(globalConfigPath, []byte(`{"views": {`), 0644))
+
+	cfg, err := NewConfigServiceWithPath(globalConfigPath)
+	require.NoError(t, err)
+
+	vs := NewViewServiceWithConfigPath(cfg, "", globalConfigPath)
+	view, err := vs.GetView("today")
+
+	require.NoError(t, err)
+	require.NotNil(t, view)
+	assert.Equal(t, "today", view.Name)
+	assert.Equal(t, "Notes created or updated today", view.Description)
+}
+
 // Time arithmetic tests
 
 func TestViewService_ResolveTemplateVariables_TodayPlusN(t *testing.T) {

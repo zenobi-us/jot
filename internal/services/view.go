@@ -703,33 +703,37 @@ func (vs *ViewService) ParseViewParameters(paramStr string) (map[string]string, 
 }
 
 // ListAllViews returns all available views across all sources (built-in, global, notebook)
-// sorted by origin: built-in first, then global, then notebook
+// applying the same precedence contract as GetView: notebook > global > built-in.
 func (vs *ViewService) ListAllViews() ([]core.ViewInfo, error) {
 	var allViews []core.ViewInfo
-	seenViews := make(map[string]bool) // Track seen view names to avoid duplicates
+	viewIndex := make(map[string]int) // name -> position in allViews
 
-	// 1. Add built-in views
-	builtinViews := vs.ListBuiltinViews()
-	for _, view := range builtinViews {
+	upsert := func(view core.ViewInfo) {
+		if idx, exists := viewIndex[view.Name]; exists {
+			allViews[idx] = view
+			return
+		}
+		viewIndex[view.Name] = len(allViews)
 		allViews = append(allViews, view)
-		seenViews[view.Name] = true
 	}
 
-	// 2. Add global views (if not already in built-in)
+	// 1. Seed with built-in views
+	for _, view := range vs.ListBuiltinViews() {
+		upsert(view)
+	}
+
+	// 2. Overlay global views
 	globalViews, err := vs.LoadAllGlobalViews()
 	if err != nil {
 		vs.log.Warn().Err(err).Msg("Failed to load global views")
-		// Don't fail - continue with what we have
+		// Don't fail - continue with built-ins
 	} else {
 		for _, view := range globalViews {
-			if !seenViews[view.Name] {
-				allViews = append(allViews, view)
-				seenViews[view.Name] = true
-			}
+			upsert(view)
 		}
 	}
 
-	// 3. Add notebook-specific views (if not already in built-in or global)
+	// 3. Overlay notebook views
 	if vs.notebookPath != "" {
 		notebookViews, err := vs.LoadAllNotebookViews()
 		if err != nil {
@@ -737,10 +741,7 @@ func (vs *ViewService) ListAllViews() ([]core.ViewInfo, error) {
 			// Don't fail - continue with what we have
 		} else {
 			for _, view := range notebookViews {
-				if !seenViews[view.Name] {
-					allViews = append(allViews, view)
-					seenViews[view.Name] = true
-				}
+				upsert(view)
 			}
 		}
 	}
