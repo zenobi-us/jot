@@ -628,6 +628,9 @@ func (vs *ViewService) validateParamType(param *core.ViewParameter, value string
 			}
 		}
 	case "date":
+		if strings.HasPrefix(value, "{{") && strings.HasSuffix(value, "}}") {
+			return nil
+		}
 		if _, err := time.Parse("2006-01-02", value); err != nil {
 			return fmt.Errorf("invalid date format (expected YYYY-MM-DD)")
 		}

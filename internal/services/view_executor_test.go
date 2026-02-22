@@ -267,6 +267,93 @@ func TestViewService_ExecuteView_ParameterSubstitution(t *testing.T) {
 		require.NotNil(t, results)
 		assert.Len(t, results.Notes, 1)
 	})
+
+	t.Run("applies defaults for missing parameters", func(t *testing.T) {
+		view := &core.ViewDefinition{
+			Name:  "parameterized-default",
+			Query: "tag:{{tag_name}}",
+			Parameters: []core.ViewParameter{
+				{Name: "tag_name", Type: "string", Default: "personal"},
+			},
+		}
+
+		results, err := vs.ExecuteView(ctx, view, nil)
+		require.NoError(t, err)
+		require.NotNil(t, results)
+		assert.Len(t, results.Notes, 1)
+		assert.Contains(t, results.Notes[0].File.Relative, "note2.md")
+	})
+
+	t.Run("errors when required parameter is missing", func(t *testing.T) {
+		view := &core.ViewDefinition{
+			Name:  "required-param",
+			Query: "tag:{{tag_name}}",
+			Parameters: []core.ViewParameter{
+				{Name: "tag_name", Type: "string", Required: true},
+			},
+		}
+
+		_, err := vs.ExecuteView(ctx, view, nil)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "missing required parameter")
+	})
+
+	t.Run("errors on unknown parameter", func(t *testing.T) {
+		view := &core.ViewDefinition{
+			Name:  "known-params-only",
+			Query: "tag:{{tag_name}}",
+			Parameters: []core.ViewParameter{
+				{Name: "tag_name", Type: "string", Required: true},
+			},
+		}
+
+		_, err := vs.ExecuteView(ctx, view, map[string]string{"tag_name": "work", "extra": "value"})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "unknown parameter")
+	})
+
+	t.Run("errors on invalid parameter type", func(t *testing.T) {
+		view := &core.ViewDefinition{
+			Name:  "parameterized-date-invalid",
+			Query: "modified:>={{since}}",
+			Parameters: []core.ViewParameter{
+				{Name: "since", Type: "date", Required: true},
+			},
+		}
+
+		_, err := vs.ExecuteView(ctx, view, map[string]string{"since": "not-a-date"})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid parameter since")
+	})
+
+	t.Run("resolves template variables inside parameter values", func(t *testing.T) {
+		view := &core.ViewDefinition{
+			Name:  "parameterized-date",
+			Query: "modified:>={{since}}",
+			Parameters: []core.ViewParameter{
+				{Name: "since", Type: "date", Required: true},
+			},
+		}
+
+		params := map[string]string{"since": "{{today-30}}"}
+		results, err := vs.ExecuteView(ctx, view, params)
+		require.NoError(t, err)
+		require.NotNil(t, results)
+	})
+
+	t.Run("supports template defaults for date parameters", func(t *testing.T) {
+		view := &core.ViewDefinition{
+			Name:  "parameterized-template-default",
+			Query: "modified:>={{since}}",
+			Parameters: []core.ViewParameter{
+				{Name: "since", Type: "date", Default: "{{today-30}}"},
+			},
+		}
+
+		results, err := vs.ExecuteView(ctx, view, nil)
+		require.NoError(t, err)
+		require.NotNil(t, results)
+	})
 }
 
 func TestViewExecutor_GroupNotesByField(t *testing.T) {

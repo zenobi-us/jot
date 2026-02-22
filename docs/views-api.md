@@ -451,8 +451,10 @@ Dynamic values resolved at query execution time.
 
 1. User-provided parameters (via `--param`)
 2. Parameter defaults
-3. Template variables
-4. Literal values
+3. Parameter validation (required, unknown, type)
+4. Named parameter substitution in query (`{{param_name}}`)
+5. Template variable resolution (`{{today}}`, `{{today-7}}`, etc.)
+6. Literal values
 
 ---
 

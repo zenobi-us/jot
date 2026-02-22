@@ -483,6 +483,10 @@ func TestViewService_ValidateParamType_Date(t *testing.T) {
 	err = vs.validateParamType(param, "2026-01-20")
 	assert.NoError(t, err)
 
+	// Valid template date
+	err = vs.validateParamType(param, "{{today-30}}")
+	assert.NoError(t, err)
+
 	// Invalid date
 	err = vs.validateParamType(param, "2026/01/20")
 	assert.Error(t, err)

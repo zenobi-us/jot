@@ -54,16 +54,9 @@ func (ve *ViewExecutor) ExecuteView(ctx context.Context, view *core.ViewDefiniti
 		return ve.executeSpecialView(ctx, view)
 	}
 
-	// Resolve template variables ({{today}}, {{param_name}}, etc.)
-	resolvedQuery := view.Query
-	if viewService != nil {
-		resolvedQuery = viewService.ResolveTemplateVariables(view.Query)
-	}
-
-	// Apply parameter substitutions
-	for name, value := range params {
-		placeholder := "{{" + name + "}}"
-		resolvedQuery = strings.ReplaceAll(resolvedQuery, placeholder, value)
+	resolvedQuery, err := ve.resolveQueryWithParameters(view, params, viewService)
+	if err != nil {
+		return nil, err
 	}
 
 	// Split query into filter and directives
@@ -112,6 +105,33 @@ func (ve *ViewExecutor) ExecuteView(ctx context.Context, view *core.ViewDefiniti
 	}
 
 	return &ViewResults{Notes: notes}, nil
+}
+
+func (ve *ViewExecutor) resolveQueryWithParameters(view *core.ViewDefinition, runtimeParams map[string]string, viewService *ViewService) (string, error) {
+	resolvedQuery := view.Query
+
+	mergedParams := runtimeParams
+	if mergedParams == nil {
+		mergedParams = map[string]string{}
+	}
+
+	if viewService != nil {
+		mergedParams = viewService.ApplyParameterDefaults(view, runtimeParams)
+		if err := viewService.ValidateParameters(view, mergedParams); err != nil {
+			return "", fmt.Errorf("invalid view parameters: %w", err)
+		}
+	}
+
+	for name, value := range mergedParams {
+		placeholder := "{{" + name + "}}"
+		resolvedQuery = strings.ReplaceAll(resolvedQuery, placeholder, value)
+	}
+
+	if viewService != nil {
+		resolvedQuery = viewService.ResolveTemplateVariables(resolvedQuery)
+	}
+
+	return resolvedQuery, nil
 }
 
 func applyDirectiveOverrides(base *ViewDirectives, overrides *ViewDirectiveOverrides) *ViewDirectives {

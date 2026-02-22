@@ -542,8 +542,10 @@ jot notes view my-view
 Jot validates parameters before query execution:
 
 - **Required parameters**: Must be provided or have defaults
+- **Unknown parameters**: Runtime params must be declared in the view
 - **Type checking**: Values must match declared types
-- **Format validation**: Dates must be valid ISO format
+- **Format validation**: Dates must be valid ISO format or template variables (for example `{{today-30}}`)
+- **Execution order**: runtime params → defaults → validation → `{{param}}` substitution → template variable resolution
 
 **Error Example**:
 
