@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.2.0](https://github.com/zenobi-us/jot/compare/v0.1.0...v0.2.0) (2026-02-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* **memory:** Step 3 has been updated to reflect that release-please is already configured
+
+### Features
+
+* **docs:** add basic getting started guide for non-power users ([2ebe37c](https://github.com/zenobi-us/jot/commit/2ebe37cf617f9b1609c1600c58a5489bf676613c))
+* implement pi-opennotes extension phase 2 ([c75c891](https://github.com/zenobi-us/jot/commit/c75c891340170535a10e377886f7b25048de7800))
+* **notebook:** improve migrate list status output ([#18](https://github.com/zenobi-us/jot/issues/18)) ([d537a76](https://github.com/zenobi-us/jot/commit/d537a765793e4024d32768555c5481a9089c128c))
+* **notes-view:** add save/delete flags for notebook custom views ([c9a9542](https://github.com/zenobi-us/jot/commit/c9a95423fdb03d7fa0929da8bdaeb7ec3714d74c))
+* remove DuckDB, migrate to Bleve search with semantic search enhancement ([#17](https://github.com/zenobi-us/jot/issues/17)) ([c81925e](https://github.com/zenobi-us/jot/commit/c81925e487dcbc103b8dc4ff41f621e7b6345238))
+* **search,views:** add OR DSL support and view execution overrides ([354f290](https://github.com/zenobi-us/jot/commit/354f29075727c5b340a6dfd6c2cebf52db064d7e))
+* use "." as root when initializing in existing directories ([80e767a](https://github.com/zenobi-us/jot/commit/80e767ac484000c35811fe7d455df2c606472092))
+* **view:** implement GROUP BY, DISTINCT, OFFSET, HAVING, aggregates, and template enhancements (task-3d477ab8) ([#16](https://github.com/zenobi-us/jot/issues/16)) ([bb83706](https://github.com/zenobi-us/jot/commit/bb8370667ee78608cec32b91e47acf7c243f3028))
+
+
+### Bug Fixes
+
+* force next release to 0.2.0 ([25e02f6](https://github.com/zenobi-us/jot/commit/25e02f678540ea32ccd121e953b87aedc6a3a8e4))
+* **notes-view:** tighten mutating flag validation errors ([39ea50c](https://github.com/zenobi-us/jot/commit/39ea50cbc6b472e1f4ae9bed0ed4db2c24056c1e))
+* **view:** honor view precedence when listing ([0a92ef9](https://github.com/zenobi-us/jot/commit/0a92ef9b03b3a00c29ea1c030fbcc44250e0cbb3))
+* **view:** validate and resolve parameters in deterministic order ([8cf2be8](https://github.com/zenobi-us/jot/commit/8cf2be82dcc59a663cc1d91bc6b73a5b7e52c304))
+
+
+### Documentation
+
+* **memory:** update GitHub Actions CI/CD task with current repo state ([7c19e94](https://github.com/zenobi-us/jot/commit/7c19e941692e8e3833f0363f187320ab7daed41e))
+
 ## [0.1.0](https://github.com/zenobi-us/jot/compare/v0.0.3...v0.1.0) (2026-01-25)
 
 
